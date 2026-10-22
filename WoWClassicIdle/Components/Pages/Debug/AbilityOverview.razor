@@ -1,0 +1,206 @@
+@page "/debug/abilities"
+@using Models
+
+<PageTitle>Ability Overview (Debug)</PageTitle>
+
+<div class="wow-page">
+    <h2>Ability Overview <span class="wow-badge">DEBUG</span></h2>
+    <p class="wow-hint">
+        All abilities from all classes as defined in <code>ClassAbilityRegistry</code>.
+        Hover an ability name for the full tooltip.
+    </p>
+
+    @foreach (var cls in Enum.GetValues<CharacterClass>())
+    {
+        var abilities = ClassAbilityRegistry.GetAbilitiesFor(cls);
+        <div class="wow-card ability-class-card">
+            <div class="ability-class-header class-@cls.ToString().ToLowerInvariant()">
+                @cls
+                <span class="ability-count">@abilities.Count @(abilities.Count == 1 ? "ability" : "abilities")</span>
+            </div>
+
+            <table class="ability-table">
+                <thead>
+                    <tr>
+                        <th class="col-icon"></th>
+                        <th class="col-name">Name</th>
+                        <th>Rank</th>
+                        <th>Level</th>
+                        <th>Type</th>
+                        <th>Cooldown</th>
+                        <th>Cost</th>
+                        <th class="col-effect">Effect</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ability in abilities.OrderBy(a => a.LevelRequired).ThenBy(a => a.Rank))
+                    {
+                        <tr>
+                            <td class="col-icon">
+                                @if (!string.IsNullOrEmpty(ability.IconUrl))
+                                {
+                                    <img src="@ability.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                                }
+                            </td>
+                            <td class="col-name">
+                                <AbilityTooltip Ability="ability">
+                                    <span class="ability-name">@ability.Name</span>
+                                </AbilityTooltip>
+                            </td>
+                            <td class="col-right">@ability.Rank</td>
+                            <td class="col-right">@ability.LevelRequired</td>
+                            <td>@TypeTags(ability)</td>
+                            <td class="col-right col-cd">@CooldownText(ability)</td>
+                            <td class="col-right">@CostText(ability)</td>
+                            <td class="col-effect">@EffectSummary(ability)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@{
+    // ─── Hilfsmethoden ───
+
+    RenderFragment TypeTags(Ability a) => __builder =>
+    {
+        if (a.ReplacesAutoAttack)
+        {
+            <span class="type-tag melee">Melee</span>
+        }
+        else if (a.AddsWeaponDamage)
+        {
+            <span class="type-tag melee">Weapon</span>
+        }
+
+        if (a.IsDamage && !a.AddsWeaponDamage && !a.ReplacesAutoAttack)
+        {
+            <span class="type-tag dmg">Damage</span>
+        }
+
+        if (a.IsHeal)
+        {
+            <span class="type-tag heal">Heal</span>
+        }
+
+        if (a.IsHot)
+        {
+            <span class="type-tag hot">HoT</span>
+        }
+        else if (a.IsBuff && !a.IsHot)
+        {
+            <span class="type-tag buff">Buff</span>
+        }
+
+        if (a.IsDebuffDot)
+        {
+            <span class="type-tag dot">DoT</span>
+        }
+        else if (a.IsDebuff && !a.IsDebuffDot)
+        {
+            <span class="type-tag debuff">Debuff</span>
+        }
+    };
+
+    string CooldownText(Ability a)
+    {
+        if (a.ReplacesAutoAttack) return "On swing";
+        if (a.Cooldown <= 0) return "GCD";
+        return a.Cooldown < 60
+            ? $"{a.Cooldown:0.#}s"
+            : $"{a.Cooldown / 60:0.#}min";
+    }
+
+    string CostText(Ability a)
+    {
+        if (a.ManaCost == 0) return "–";
+        return a.ManaCost.ToString();
+    }
+
+    string EffectSummary(Ability a)
+    {
+        var parts = new System.Collections.Generic.List<string>();
+
+        if (a.ReplacesAutoAttack || a.AddsWeaponDamage)
+            parts.Add($"+{a.Damage} weapon dmg");
+        else if (a.IsDamage)
+            parts.Add($"{a.Damage} dmg");
+
+        if (a.IsHeal)
+            parts.Add($"{a.Heal} heal");
+
+        if (a.IsHot)
+            parts.Add($"{a.HotTotalHeal} heal over {a.BuffDuration:0}s ({a.HotTickCount} ticks)");
+
+        if (a.IsBuff && !a.IsHot)
+        {
+            var buffParts = new System.Collections.Generic.List<string>();
+            if (a.BuffDamageBonus > 0)    buffParts.Add($"+{a.BuffDamageBonus:P0} dmg");
+            if (a.BuffAttackSpeedBonus > 0) buffParts.Add($"+{a.BuffAttackSpeedBonus:P0} attack speed");
+            if (a.BuffWeaponDamageBonus > 0) buffParts.Add($"+{a.BuffWeaponDamageBonus:P0} weapon dmg");
+            if (a.BuffIntellectBonus > 0)  buffParts.Add($"+{a.BuffIntellectBonus} Int");
+            if (a.BuffSpiritBonus > 0)     buffParts.Add($"+{a.BuffSpiritBonus} Spi");
+            parts.Add($"{string.Join(", ", buffParts)} for {a.BuffDuration:0}s");
+        }
+
+        if (a.IsDebuffDot)
+            parts.Add($"{a.DebuffDotDamage} dmg/tick × {a.DebuffDotTickCount} over {a.DebuffDuration:0}s");
+
+        if (a.IsDebuff && !a.IsDebuffDot && a.DebuffDamageTakenBonus > 0)
+            parts.Add($"+{a.DebuffDamageTakenBonus:P0} dmg taken for {a.DebuffDuration:0}s");
+
+        return string.Join(" · ", parts);
+    }
+}
+
+<style>
+    .ability-class-card { padding: 0; overflow: hidden; }
+
+    .ability-class-header {
+        padding: 8px 14px;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        background: #1a150d;
+        border-bottom: 1px solid #4a3d22;
+    }
+    .ability-count { font-size: .75rem; font-weight: 400; color: #9a8a64; }
+
+    .ability-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .ability-table th { color: #ffd100; font-weight: 600; padding: 5px 10px; border-bottom: 1px solid #3a2f1a; text-align: left; white-space: nowrap; }
+    .ability-table td { padding: 5px 10px; border-bottom: 1px solid #1e1810; color: #e0d8c8; vertical-align: middle; white-space: nowrap; }
+    .ability-table tr:last-child td { border-bottom: none; }
+    .ability-table tr:hover td { background: #1e1810; }
+
+    .col-icon { width: 32px; padding-right: 4px; }
+    .col-icon img { width: 24px; height: 24px; border-radius: 3px; display: block; }
+    .col-name { min-width: 140px; }
+    .col-right { text-align: right; }
+    .col-cd { min-width: 70px; }
+    .col-effect { color: #9a8a64; font-size: .8rem; white-space: normal; min-width: 200px; }
+
+    .ability-name { cursor: default; color: #ffd100; font-weight: 600; }
+
+    /* Typ-Tags */
+    .type-tag {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: .72rem;
+        font-weight: 700;
+        margin-right: 3px;
+        letter-spacing: .03em;
+    }
+    .type-tag.melee  { background: #4a2a10; color: #ff8a65; }
+    .type-tag.dmg    { background: #4a1010; color: #ff6b5b; }
+    .type-tag.heal   { background: #0e3a14; color: #7ddc6f; }
+    .type-tag.hot    { background: #0e3a14; color: #4ddc9f; }
+    .type-tag.buff   { background: #1a2a50; color: #80aaff; }
+    .type-tag.dot    { background: #3a1050; color: #cc80ff; }
+    .type-tag.debuff { background: #2a1040; color: #9a60cc; }
+</style>

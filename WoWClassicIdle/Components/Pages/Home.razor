@@ -1,0 +1,55 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<div class="wow-page narrow home-page">
+    <div class="text-center pt-4">
+        <img src="images/wow_idle_game_logo.png" alt="WoW Classic Idle" class="wow-logo mb-3" style="max-width:250px; height:auto;" />
+
+        <p class="wow-subtitle mb-0">
+            A small browser game in the style of World of Warcraft.
+        </p>
+    </div>
+
+    <div class="home-features">
+        <div class="wow-card">
+            <h4>⚔️ Classes</h4>
+            <p class="mb-0">
+                Choose one of several classes and build your own combat character.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>🛠️ Professions</h4>
+            <p class="mb-0">
+                Train professions like Mining, Alchemy or Blacksmithing and craft your own items.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>🏆 Achievements</h4>
+            <p class="mb-0">
+                Complete challenges to earn achievement points and track your progress across all categories.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>🎒 Items</h4>
+            <p class="mb-0">
+                Collect loot, equip weapons and armor and manage your character's inventory.
+            </p>
+        </div>
+    </div>
+
+    <p class="mt-4 text-center wow-footer">
+        Everything runs right in your browser – no installation required.
+    </p>
+</div>
+
+<style>
+    .home-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0 16px;
+        margin-top: 1.5rem;
+    }
+
+    .home-features p { color: #d4c9a8; }
+</style>

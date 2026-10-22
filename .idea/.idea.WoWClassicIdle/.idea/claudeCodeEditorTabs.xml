@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ClaudeCodeEditorTabs">
+    <option name="activeSessionId" value="79dd13f8-062f-4c89-b0b8-cb257a98ceb6" />
+    <option name="openSessionIds">
+      <list>
+        <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
+        <option value="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" />
+        <option value="88f52352-966a-4861-9bfa-78edf3989ba4" />
+        <option value="11b24615-6c11-4eff-be84-3d562e5d074e" />
+        <option value="b2eecd85-176f-4088-a55a-91160926310e" />
+        <option value="79dd13f8-062f-4c89-b0b8-cb257a98ceb6" />
+      </list>
+    </option>
+    <option name="sessionPaths">
+      <map>
+        <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="/sessions/ca74c7ae-e88f-48ab-9d08-f40289b4c0b5" />
+        <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="/switch-account" />
+        <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="/sessions/6b71fc4f-339c-4914-ab12-e2f5e40a451f" />
+        <entry key="79dd13f8-062f-4c89-b0b8-cb257a98ceb6" value="/sessions/76b65f6d-93c3-40b3-a98f-064faf95e793" />
+        <entry key="88f52352-966a-4861-9bfa-78edf3989ba4" value="/sessions/90a94596-a48e-4790-8070-ce8589c258e1" />
+        <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="/sessions/new" />
+      </map>
+    </option>
+    <option name="sessionTitles">
+      <map>
+        <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="Das Default UI sieht irgendwie unsauber aus und sc" />
+        <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="Claude Code" />
+        <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="Kann ich dir auch einfach eine Frage stellen ohne" />
+        <entry key="79dd13f8-062f-4c89-b0b8-cb257a98ceb6" value="Fehlerhafte Item-Drops im Spielerinventar" />
+        <entry key="88f52352-966a-4861-9bfa-78edf3989ba4" value="Es soll ein Achivement-System eingebaut werden - d" />
+        <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="Claude Code" />
+      </map>
+    </option>
+  </component>
+</project>

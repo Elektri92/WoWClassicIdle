@@ -1,0 +1,385 @@
+@page "/talents"
+@using Models
+@inject IdleGameEngine Engine
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>Talents</PageTitle>
+
+<div class="wow-page talents-page">
+    <h2>Talents</h2>
+
+    <div class="wow-card char-preview">
+        <img src="@IconUrls.RaceIconUrl(Engine.Race, Engine.Gender)"
+             alt="@Engine.Race"
+             class="char-preview-icon"
+             onerror="this.style.display='none'" />
+        <div class="char-preview-text">
+            <span class="char-preview-race">@Engine.Race</span>
+            <span class="char-preview-level">Lv. @Engine.Player.Level</span>
+        </div>
+        <div class="char-preview-class class-@Engine.PlayerClass.ToString().ToLowerInvariant()">
+            @Engine.PlayerClass
+        </div>
+        <img src="@IconUrls.ClassIconUrl(Engine.PlayerClass)"
+             alt="@Engine.PlayerClass"
+             class="char-preview-icon"
+             onerror="this.style.display='none'" />
+        <div class="talent-points-badge">
+            <span class="pts-label">Unspent</span>
+            <span class="pts-value @(AvailablePoints > 0 ? "pts-available" : "pts-zero")">@AvailablePoints</span>
+        </div>
+    </div>
+
+    @if (Engine.Player.Level < 10)
+    {
+        <div class="wow-alert warning">Talent points are earned starting at level 10.</div>
+    }
+
+    <div class="trees-wrapper">
+        @for (int ti = 0; ti < 3; ti++)
+        {
+            var treeIndex = ti;
+            var treeName  = TreeNames[treeIndex];
+            var invested  = Engine.Player.TalentState.TotalInvestedInTree(Engine.PlayerClass, treeIndex);
+            var talents   = TalentRegistry.GetTalents(Engine.PlayerClass)
+                                .Where(t => t.TreeIndex == treeIndex).ToList();
+            int maxRow    = talents.Any() ? talents.Max(t => t.Row) : 0;
+
+            <div class="talent-tree">
+                <div class="tree-header">
+                    <span class="tree-name">@treeName</span>
+                    <span class="tree-points">@invested pts</span>
+                </div>
+
+                <div class="talent-rows">
+                    @for (int row = 0; row <= maxRow; row++)
+                    {
+                        var currentRow   = row;
+                        bool rowUnlocked = Engine.Player.TalentState.IsRowUnlocked(
+                                               Engine.PlayerClass, treeIndex, currentRow);
+
+                        <div class="talent-row">
+                            @for (int col = 0; col < 4; col++)
+                            {
+                                var currentCol = col;
+                                var talent     = talents.FirstOrDefault(t => t.Row == currentRow && t.Column == currentCol);
+
+                                if (talent is not null)
+                                {
+                                    var ranks    = Engine.Player.TalentState.GetRanks(talent.Id);
+                                    var canSpend = Engine.Player.TalentState.CanInvest(talent, AvailablePoints);
+                                    var maxed    = ranks >= talent.MaxRanks;
+                                    var locked   = !rowUnlocked || (talent.RequiresTalentId is not null &&
+                                                   Engine.Player.TalentState.GetRanks(talent.RequiresTalentId) == 0);
+
+                                    string stateClass = maxed    ? "talent-maxed"
+                                                      : locked   ? "talent-locked"
+                                                      : ranks > 0 ? "talent-partial"
+                                                      : "talent-empty";
+
+                                    string? lockReason = locked
+                                        ? (!rowUnlocked
+                                            ? $"Requires {currentRow * 5} points in {treeName} tree"
+                                            : $"Requires {talent.RequiresTalentId}")
+                                        : null;
+
+                                    <div class="talent-cell">
+                                        <TalentTooltip Talent="talent" Ranks="ranks" Locked="locked" LockReason="lockReason">
+                                            <div class="talent-node @stateClass @(canSpend ? "talent-clickable" : "")"
+                                                 @onclick="() => OnTalentClick(talent)">
+                                                <img src="@talent.IconUrl"
+                                                     alt="@talent.Name"
+                                                     class="talent-icon"
+                                                     onerror="this.style.display='none'" />
+                                                <span class="talent-ranks @(maxed ? "ranks-maxed" : "")">
+                                                    @ranks/@talent.MaxRanks
+                                                </span>
+                                            </div>
+                                        </TalentTooltip>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="talent-cell talent-cell-empty"></div>
+                                }
+                            }
+                        </div>
+
+                        @* Reihen-Freischalt-Balken nach jeder Reihe (außer der letzten möglichen) *@
+                        @if (currentRow < 6)
+                        {
+                            int required      = (currentRow + 1) * 5;
+                            int progress      = Math.Min(invested, required);
+                            bool nextUnlocked = invested >= required;
+                            int pct           = nextUnlocked ? 100 : (int)(progress * 100.0 / required);
+
+                            <div class="row-sep @(nextUnlocked ? "sep-unlocked" : "sep-locked")">
+                                <div class="sep-fill @(nextUnlocked ? "sep-fill-done" : "")"
+                                     style="width:@pct%"></div>
+                                <span class="sep-label">
+                                    @if (nextUnlocked)
+                                    {
+                                        <span class="sep-check">&#10003;</span>
+                                        @($" {required}/{required} pts")
+                                    }
+                                    else
+                                    {
+                                        @($"{progress}/{required} pts")
+                                    }
+                                </span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (TotalSpent > 0)
+    {
+        <div class="reset-row">
+            <button class="wow-btn wow-btn-danger" @onclick="OnReset">
+                Reset Talents
+            </button>
+            <span class="reset-hint">Resets all @TotalSpent talent point@(TotalSpent != 1 ? "s" : "") for @Engine.PlayerClass.</span>
+        </div>
+    }
+
+    @if (_message is not null)
+    {
+        <div class="wow-alert @(_messagePositive ? "success" : "warning")">@_message</div>
+    }
+</div>
+
+<style>
+    .talents-page { max-width: 960px; }
+
+    .char-preview { display: flex; align-items: center; gap: 14px; margin-bottom: 1rem; }
+    .char-preview-icon {
+        width: 48px; height: 48px; object-fit: cover; border-radius: 6px;
+        border: 2px solid #c5a55a; background: #0e0b07; box-shadow: 0 0 8px rgba(0,0,0,.7);
+    }
+    .char-preview-text { display: flex; flex-direction: column; line-height: 1.3; }
+    .char-preview-race { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; color: #fff; }
+    .char-preview-level { font-size: .85rem; color: #ffd100; font-weight: 700; }
+    .char-preview-class { margin-left: auto; font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700; }
+    .talent-points-badge { display: flex; flex-direction: column; align-items: center; margin-left: 10px; }
+    .pts-label { font-size: .7rem; text-transform: uppercase; color: #9a8a64; }
+    .pts-value { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .pts-available { color: #ffd100; text-shadow: 0 0 8px rgba(255,209,0,.5); }
+    .pts-zero { color: #5a4a28; }
+
+    .trees-wrapper {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 0.5rem;
+    }
+
+    .talent-tree {
+        background: rgba(0,0,0,.5);
+        border: 1px solid #3a2e18;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .tree-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 6px 10px;
+        background: linear-gradient(180deg, #2b2214 0%, #1a1509 100%);
+        border-bottom: 1px solid #3a2e18;
+    }
+    .tree-name { font-family: 'Cinzel', serif; font-size: .9rem; font-weight: 700; color: #c5a55a; }
+    .tree-points { font-size: .8rem; color: #9a8a64; }
+
+    /* ── Reihen-Layout ── */
+    .talent-rows {
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+        gap: 0;
+    }
+
+    .talent-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        justify-items: center;
+    }
+
+    /* ── Freischalt-Balken zwischen Reihen ── */
+    .row-sep {
+        position: relative;
+        height: 18px;
+        margin: 4px 2px;
+        border-radius: 3px;
+        overflow: hidden;
+        background: #120f08;
+        border: 1px solid #2a2010;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sep-fill {
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        background: linear-gradient(90deg, #3a2808, #8a5c14);
+        transition: width .4s ease;
+    }
+    .sep-fill.sep-fill-done {
+        background: linear-gradient(90deg, #0e2a08, #1a7a10);
+    }
+
+    .sep-label {
+        position: relative;
+        z-index: 1;
+        font-size: .63rem;
+        font-weight: 700;
+        letter-spacing: .3px;
+        text-shadow: 0 1px 3px #000, 0 0 4px #000;
+    }
+    .sep-locked  .sep-label { color: #c5a55a; }
+    .sep-unlocked .sep-label { color: #1eff00; }
+
+    .sep-check { font-size: .7rem; }
+
+    /* ── Talent-Zellen ── */
+    .talent-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .talent-cell-empty { pointer-events: none; width: 52px; height: 52px; }
+
+    .talent-node {
+        position: relative;
+        width: 52px; height: 52px;
+        border: 2px solid #3a2e18;
+        border-radius: 6px;
+        background: #0a0806;
+        cursor: default;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: border-color .15s, box-shadow .15s;
+        overflow: hidden;
+    }
+
+    .talent-icon {
+        width: 40px; height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .talent-ranks {
+        position: absolute;
+        bottom: 1px; right: 3px;
+        font-size: .65rem; font-weight: 700;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000, 0 0 3px #000;
+        line-height: 1;
+    }
+    .ranks-maxed { color: #1eff00; }
+
+    /* Zustände */
+    .talent-locked .talent-icon   { filter: grayscale(1) brightness(.35); }
+    .talent-locked .talent-ranks  { color: #5a4a28; }
+    .talent-locked                { border-color: #221a0a; }
+
+    .talent-empty .talent-icon    { filter: grayscale(.7) brightness(.6); }
+
+    .talent-partial               { border-color: #8a7444; }
+    .talent-partial .talent-icon  { filter: none; }
+
+    .talent-maxed {
+        border-color: #1eff00;
+        box-shadow: 0 0 6px rgba(30,255,0,.3);
+    }
+
+    .talent-clickable {
+        cursor: pointer;
+        border-color: #c5a55a;
+    }
+    .talent-clickable:hover {
+        border-color: #ffd100;
+        box-shadow: 0 0 10px rgba(255,209,0,.4);
+    }
+
+    /* ── Reset-Zeile ── */
+    .reset-row {
+        margin-top: 1rem;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .reset-hint { font-size: .85rem; color: #9a8a64; }
+
+    .wow-btn {
+        padding: 6px 16px;
+        border-radius: 4px;
+        border: 1px solid;
+        font-family: 'Cinzel', serif;
+        font-size: .85rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: .5px;
+        transition: background .15s, border-color .15s;
+    }
+    .wow-btn-danger {
+        background: #2a0e0e; border-color: #8a2222; color: #e87878;
+    }
+    .wow-btn-danger:hover { background: #3d1515; border-color: #c54444; color: #ff9999; }
+
+    @@media (max-width: 760px) {
+        .trees-wrapper { grid-template-columns: 1fr; }
+    }
+</style>
+
+@code {
+    private string? _message;
+    private bool _messagePositive;
+
+    private CharacterClass ActiveClass => Engine.PlayerClass;
+    private int AvailablePoints       => Engine.Player.GetAvailableTalentPoints(ActiveClass);
+    private int TotalSpent            => Engine.Player.TalentState.TotalInvested(ActiveClass);
+    private string[] TreeNames        => TalentRegistry.GetTreeNames(ActiveClass);
+
+    protected override void OnInitialized()
+    {
+        Engine.TickUpdated += OnEngineTick;
+    }
+
+    private void OnEngineTick() => InvokeAsync(StateHasChanged);
+
+    private void OnTalentClick(TalentDefinition talent)
+    {
+        bool ok = Engine.InvestTalentPoint(talent.Id);
+        if (ok)
+        {
+            _message = $"{talent.Name}: rank {Engine.Player.TalentState.GetRanks(talent.Id)}/{talent.MaxRanks}.";
+            _messagePositive = true;
+        }
+        else
+        {
+            _message = AvailablePoints <= 0
+                ? "No talent points available."
+                : Engine.Player.TalentState.GetRanks(talent.Id) >= talent.MaxRanks
+                    ? $"{talent.Name} is already maxed."
+                    : "Cannot invest in this talent yet.";
+            _messagePositive = false;
+        }
+        StateHasChanged();
+    }
+
+    private void OnReset()
+    {
+        Engine.ResetTalents(ActiveClass);
+        _message = $"All {ActiveClass} talents reset.";
+        _messagePositive = true;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Engine.TickUpdated -= OnEngineTick;
+    }
+}

@@ -1,0 +1,353 @@
+@page "/ability-loadout"
+@using Models
+@using Services
+@inject IAbilityLoadoutService LoadoutService
+@inject IdleGameEngine Engine
+@rendermode InteractiveServer
+
+<PageTitle>Ability Loadout</PageTitle>
+
+<div class="wow-page narrow ability-loadout-page">
+    <h2>Ability Loadout</h2>
+    <p class="wow-hint">Click an ability on the right to equip it / click a slot on the left to remove it (max. @ClassAbilityRegistry.MaxSlotsPerClass).</p>
+
+    <div class="wow-card char-preview">
+        <img src="@IconUrls.RaceIconUrl(Engine.Race, Engine.Gender)"
+             alt="@Engine.Race"
+             class="char-preview-icon"
+             onerror="this.style.display='none'" />
+        <div class="char-preview-text">
+            <span class="char-preview-race">@Engine.Race</span>
+            <span class="char-preview-faction @((Engine.Faction == Faction.Alliance ? "alliance" : "horde"))-color">@Engine.Faction</span>
+            <span class="char-preview-level">Lv. @Engine.Player.Level</span>
+        </div>
+        <div class="char-preview-class class-@Engine.PlayerClass.ToString().ToLowerInvariant()">
+            @Engine.PlayerClass
+        </div>
+        <img src="@IconUrls.ClassIconUrl(Engine.PlayerClass)"
+             alt="@Engine.PlayerClass"
+             class="char-preview-icon"
+             onerror="this.style.display='none'" />
+    </div>
+
+    @if (CurrentPool.Count == 0)
+    {
+        <div class="wow-alert warning">No abilities available for this class.</div>
+    }
+    else
+    {
+        <div class="loadout-grid">
+
+            <div class="wow-card slot-column">
+                <h4>Equipped</h4>
+                @for (int i = 0; i < ClassAbilityRegistry.MaxSlotsPerClass; i++)
+                {
+                    var slotIndex = i;
+                    var equippedId = slotIndex < CurrentLoadout.EquippedAbilityIds.Count
+                        ? CurrentLoadout.EquippedAbilityIds[slotIndex]
+                        : null;
+                    var equippedAbility = equippedId != null
+                        ? CurrentPool.FirstOrDefault(a => a.Id == equippedId)
+                        : null;
+
+                    <AbilityTooltip @key="@($"{slotIndex}:{equippedAbility?.Id ?? "empty"}")"
+                                    Ability="equippedAbility is null ? null : Engine.Player.GetEffectiveAbility(equippedAbility)"
+                                    PlayerLevel="Engine.Player.Level" Class="tt-block">
+                        <div class="slot @(equippedAbility != null ? "filled" : "empty")"
+                             @onclick="() => OnSlotClicked(slotIndex)">
+                            <span class="slot-number">@(slotIndex + 1)</span>
+                            @if (equippedAbility != null)
+                            {
+                                <img src="@equippedAbility.IconUrl" alt="@equippedAbility.Name" width="40" height="40" />
+                                <span class="slot-label">
+                                    @equippedAbility.Name
+                                    @if (_multiRankNames.Contains(equippedAbility.Name))
+                                    {
+                                        <span class="rank-badge">R@(equippedAbility.Rank)</span>
+                                    }
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="slot-placeholder">empty</span>
+                            }
+                        </div>
+                    </AbilityTooltip>
+                }
+            </div>
+
+            <div class="wow-card pool-column">
+                <h4>Abilities</h4>
+
+                @foreach (var ability in UnlockedAbilities)
+                {
+                    var eff = Engine.Player.GetEffectiveAbility(ability);
+                    var isEquipped = CurrentLoadout.IsEquipped(ability.Id);
+                    var summary = AbilityText.ShortSummary(eff);
+                    var summaryClass = AbilityText.ShortSummaryClass(eff);
+                    <AbilityTooltip Ability="eff" PlayerLevel="Engine.Player.Level" Class="tt-block">
+                        <div class="pool-item @(isEquipped ? "equipped" : "")"
+                             @onclick="() => OnPoolClicked(ability)">
+                            <img src="@ability.IconUrl" alt="@ability.Name" width="40" height="40" />
+                            <div class="pool-info">
+                                <strong>
+                                    @ability.Name
+                                    @if (_multiRankNames.Contains(ability.Name))
+                                    {
+                                        <span class="rank-badge">R@(ability.Rank)</span>
+                                    }
+                                </strong>
+                                <small>
+                                    @if (summary != "")
+                                    {
+                                        <span class="@summaryClass">@summary</span>
+                                        <span class="sep"> · </span>
+                                    }
+                                    <span>@AbilityText.TimingText(eff)</span>
+                                    @if (eff.ManaCost > 0)
+                                    {
+                                        <span class="sep"> · </span><span>@AbilityText.CostText(eff)</span>
+                                    }
+                                    <span class="sep"> · </span><span class="req-level">Lv. @ability.LevelRequired</span>
+                                </small>
+                            </div>
+                            <span class="pool-action">
+                                @(isEquipped ? "Remove" : "Equip")
+                            </span>
+                        </div>
+                    </AbilityTooltip>
+                }
+
+                @if (LockedAbilities.Count > 0)
+                {
+                    <div class="pool-divider">Coming Up</div>
+                    @foreach (var ability in LockedAbilities)
+                    {
+                        var eff = Engine.Player.GetEffectiveAbility(ability);
+                        var summary = AbilityText.ShortSummary(eff);
+                        var summaryClass = AbilityText.ShortSummaryClass(eff);
+                        <AbilityTooltip Ability="eff" PlayerLevel="Engine.Player.Level" Class="tt-block">
+                            <div class="pool-item locked">
+                                <img src="@ability.IconUrl" alt="@ability.Name" width="40" height="40" />
+                                <div class="pool-info">
+                                    <strong>
+                                        @ability.Name
+                                        @if (_multiRankNames.Contains(ability.Name))
+                                        {
+                                            <span class="rank-badge">R@(ability.Rank)</span>
+                                        }
+                                    </strong>
+                                    <small>
+                                        @if (summary != "")
+                                        {
+                                            <span class="@summaryClass">@summary</span>
+                                            <span class="sep"> · </span>
+                                        }
+                                        <span>@AbilityText.TimingText(ability)</span>
+                                    </small>
+                                </div>
+                                <span class="pool-action locked-badge">Lv. @ability.LevelRequired</span>
+                            </div>
+                        </AbilityTooltip>
+                    }
+                }
+            </div>
+        </div>
+
+        @if (_statusMessage != "")
+        {
+            <div class="wow-alert @(_statusPositive ? "success" : "warning")">@_statusMessage</div>
+        }
+    }
+</div>
+
+<style>
+    .char-preview { display: flex; align-items: center; gap: 14px; }
+    .char-preview-icon {
+        width: 52px; height: 52px; object-fit: cover; border-radius: 6px;
+        border: 2px solid #c5a55a; background: #0e0b07; box-shadow: 0 0 8px rgba(0,0,0,.7);
+    }
+    .char-preview-text { display: flex; flex-direction: column; line-height: 1.3; }
+    .char-preview-race { font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700; color: #fff; }
+    .char-preview-faction { font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; }
+    .char-preview-level { font-size: .85rem; color: #ffd100; font-weight: 700; margin-top: 2px; }
+    .char-preview-class { margin-left: auto; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; }
+
+    .loadout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+
+    .slot {
+        display: flex; align-items: center; gap: 10px;
+        padding: 6px 10px; margin-bottom: 6px; min-height: 56px;
+        border: 2px dashed #4a3d22; border-radius: 6px; background: #0e0b07;
+        cursor: pointer; user-select: none;
+        transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+    .slot img { border-radius: 4px; border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,.8); }
+    .slot-number { width: 18px; text-align: center; font-family: 'Cinzel', serif; font-weight: 700; color: #5a4a28; }
+    .slot.filled { border-style: solid; border-color: #8a7444; background: linear-gradient(180deg, #2b2418 0%, #1a150d 100%); }
+    .slot.filled .slot-number { color: #c5a55a; }
+    .slot.filled:hover { border-color: #b32121; background: #2a1210; box-shadow: 0 0 8px rgba(179,33,33,.35); }
+    .slot.empty { color: #5a4a28; }
+    .slot.empty:hover { border-color: #8a7444; }
+    .slot-label { font-size: .95rem; font-weight: 600; color: #fff; }
+    .slot-placeholder { font-style: italic; }
+
+    .pool-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 6px 10px; margin-bottom: 5px;
+        border: 1px solid #4a3d22; border-radius: 6px; background: #0e0b07;
+        cursor: pointer; user-select: none;
+        transition: background .15s, border-color .15s, opacity .15s;
+    }
+    .pool-item img { border-radius: 4px; border: 1px solid #000; }
+    .pool-item:not(.locked):hover { background: #2b2418; border-color: #c5a55a; }
+    .pool-item.equipped { opacity: .5; }
+    .pool-item.locked { cursor: default; opacity: .4; }
+    .pool-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .pool-info strong { color: #fff; }
+    .pool-info small { color: #9a8a64; }
+    .pool-action {
+        font-size: .72rem; color: #9a8a64; white-space: nowrap; text-transform: uppercase;
+        padding: 2px 8px; border: 1px solid #4a3d22; border-radius: 3px;
+    }
+    .pool-item:not(.locked):hover .pool-action { color: #ffd100; border-color: #c5a55a; }
+    .locked-badge { color: #7a3a3a !important; border-color: #4a2020 !important; }
+    .req-level { color: #ffd100; font-weight: 600; }
+    .sep { color: #5a4a28; }
+
+    .pool-divider {
+        font-family: 'Cinzel', serif; font-size: .7rem; font-weight: 700;
+        color: #5a4a28; text-transform: uppercase; letter-spacing: 1.5px;
+        padding: 8px 2px 5px; margin-top: 4px; border-top: 1px solid #2a2010;
+    }
+
+    @@media (max-width: 700px) {
+        .loadout-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+@code {
+    private ClassLoadout CurrentLoadout { get; set; } = new();
+    private IReadOnlyList<Ability> CurrentPool { get; set; } = Array.Empty<Ability>();
+    private HashSet<string> _multiRankNames = new();
+    private string _statusMessage = "";
+    private bool _statusPositive;
+
+    private CharacterClass SelectedClass => Engine.PlayerClass;
+
+    private IReadOnlyList<Ability> UnlockedAbilities => CurrentPool.Where(a => a.LevelRequired <= Engine.Player.Level).ToList();
+    private IReadOnlyList<Ability> LockedAbilities   => CurrentPool.Where(a => a.LevelRequired >  Engine.Player.Level).ToList();
+
+    protected override void OnInitialized()
+    {
+        LoadCurrentClass();
+        Engine.TickUpdated += OnEngineTick;
+    }
+
+    private void OnEngineTick()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void LoadCurrentClass()
+    {
+        CurrentLoadout = LoadoutService.GetLoadout(SelectedClass, Engine.Player.Level);
+        CurrentPool = ClassAbilityRegistry.GetAbilitiesFor(SelectedClass).ToList();
+        _multiRankNames = CurrentPool
+            .GroupBy(a => a.Name)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet();
+    }
+
+    private void OnSlotClicked(int slotIndex)
+    {
+        if (slotIndex >= CurrentLoadout.EquippedAbilityIds.Count)
+        {
+            _statusMessage = "Slot is empty.";
+            _statusPositive = false;
+            StateHasChanged();
+            return;
+        }
+
+        CurrentLoadout.RemoveSlot(slotIndex);
+        LoadoutService.SaveLoadout(CurrentLoadout);
+        _statusMessage = "Ability removed.";
+        _statusPositive = true;
+        StateHasChanged();
+    }
+
+    private void OnPoolClicked(Ability ability)
+    {
+        if (ability.LevelRequired > Engine.Player.Level)
+        {
+            _statusMessage = $"Level {ability.LevelRequired} required (current: {Engine.Player.Level}).";
+            _statusPositive = false;
+            StateHasChanged();
+            return;
+        }
+
+        if (CurrentLoadout.IsEquipped(ability.Id))
+        {
+            int idx = CurrentLoadout.EquippedAbilityIds.ToList().FindIndex(x => x == ability.Id);
+            if (idx >= 0) CurrentLoadout.RemoveSlot(idx);
+            _statusMessage = $"{ability.Name} removed.";
+            _statusPositive = true;
+        }
+        else
+        {
+            // Gleicher Spell-Name (anderer Rank): vorhandenen Rank in-place ersetzen
+            var sameSpell = CurrentPool
+                .FirstOrDefault(a => a.Name == ability.Name
+                                  && a.Id != ability.Id
+                                  && CurrentLoadout.IsEquipped(a.Id));
+            if (sameSpell != null)
+            {
+                int sameIdx = CurrentLoadout.EquippedAbilityIds.ToList().FindIndex(x => x == sameSpell.Id);
+                CurrentLoadout.SetSlot(sameIdx, ability.Id);
+                LoadoutService.SaveLoadout(CurrentLoadout);
+                _statusMessage = $"{ability.Name} Rank {sameSpell.Rank} replaced by Rank {ability.Rank}.";
+                _statusPositive = true;
+                StateHasChanged();
+                return;
+            }
+
+            // Exklusiv-Gruppe: vorhandene Ability derselben Gruppe ersetzen
+            if (!string.IsNullOrEmpty(ability.ExclusiveGroup))
+            {
+                var conflict = CurrentPool
+                    .FirstOrDefault(a => a.ExclusiveGroup == ability.ExclusiveGroup
+                                      && CurrentLoadout.IsEquipped(a.Id));
+                if (conflict != null)
+                {
+                    int conflictIdx = CurrentLoadout.EquippedAbilityIds.ToList().FindIndex(x => x == conflict.Id);
+                    CurrentLoadout.SetSlot(conflictIdx, ability.Id);
+                    LoadoutService.SaveLoadout(CurrentLoadout);
+                    _statusMessage = $"{conflict.Name} replaced by {ability.Name}.";
+                    _statusPositive = true;
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            int nextSlot = CurrentLoadout.EquippedAbilityIds.Count;
+            if (nextSlot >= ClassAbilityRegistry.MaxSlotsPerClass)
+            {
+                _statusMessage = "All slots are full!";
+                _statusPositive = false;
+                StateHasChanged();
+                return;
+            }
+            CurrentLoadout.SetSlot(nextSlot, ability.Id);
+            _statusMessage = $"{ability.Name} → Slot {nextSlot + 1}.";
+            _statusPositive = true;
+        }
+        LoadoutService.SaveLoadout(CurrentLoadout);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Engine.TickUpdated -= OnEngineTick;
+    }
+}

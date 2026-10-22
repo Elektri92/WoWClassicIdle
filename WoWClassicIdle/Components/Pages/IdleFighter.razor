@@ -1,0 +1,1524 @@
+@page "/idle"
+@rendermode InteractiveServer
+@using Models
+@using Services
+@inject IdleGameEngine _engine
+@inject IAbilityLoadoutService _loadoutService
+@inject IJSRuntime _js
+@implements IAsyncDisposable
+
+<PageTitle>Idle Fighter</PageTitle>
+
+<div class="wow-page narrow idle-page">
+<h2>Idle Fighter</h2>
+<p class="wow-hint">Your character fights on its own – watch the battle, the damage meter and the action log.</p>
+
+<div class="battlefield">
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  PLAYER FRAME  (links)                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="unit-frame player-frame">
+        <div class="combat-text-overlay">
+            @foreach (var f in SnapshotFloats(_playerFloats))
+            {
+                <span @key="f.Id" class="combat-text @FloatCssClass(f)"
+                      style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;">@FloatText(f)</span>
+            }
+        </div>
+        <div class="frame-header">
+            <div class="portrait-area">
+                <img class="race-portrait"
+                     src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                     alt="" onerror="this.style.display='none'" />
+                <img class="class-badge"
+                     src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
+                     alt="" onerror="this.style.display='none'" />
+            </div>
+            <div class="frame-info">
+                <div class="name-line">
+                    <span class="char-name">@_engine.Player.Name</span>
+                    <span class="level">Lv. @_engine.Player.Stats.Level</span>
+                </div>
+                <div class="bar-row">
+                    <div class="hp-bar">
+                        <div class="hp-fill"
+                             style="width: @(CalcPct(_engine.Player.CurrentHp, _engine.Player.Stats.MaxHp))%"></div>
+                        <span class="bar-text">@_engine.Player.CurrentHp / @_engine.Player.Stats.MaxHp</span>
+                    </div>
+                </div>
+                <div class="bar-row">
+                    @{ int effectiveMaxMana = _engine.Player.Stats.MaxMana + _engine.Player.Buffs.BonusMaxMana; }
+                    <div class="mana-bar mana-bar-@(_engine.Player.ActiveClass.ToString().ToLowerInvariant())">
+                        <div class="mana-fill"
+                             style="width: @(CalcPct(_engine.Player.CurrentMana, effectiveMaxMana))%"></div>
+                        <span class="bar-text">@_engine.Player.CurrentMana / @effectiveMaxMana</span>
+                    </div>
+                </div>
+                <div class="xp-row">
+                    <div class="xp-bar">
+                        <div class="xp-fill"
+                             style="width: @(CalcPct(_engine.Player.Xp, _engine.Player.XpToNextLevel))%"></div>
+                        <span class="bar-text">@_engine.Player.Xp / @_engine.Player.XpToNextLevel</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <!-- ═══ ACTIVE BUFFS ═══ -->
+            @{ var buffs = _engine.Player.Buffs.Snapshot(); }
+            @if (buffs.Count > 0)
+            {
+                <div class="buff-bar">
+                    @foreach (var buff in buffs)
+                    {
+                        <AbilityTooltip @key="buff.Source.Id" Ability="buff.Source" BuffRemaining="buff.Remaining">
+                            <span class="buff-icon">
+                                <img src="@buff.Source.IconUrl" alt="@buff.Source.Name" onerror="this.style.visibility='hidden'" />
+                                <span class="buff-time @(buff.Remaining <= 5 ? "expiring" : "")">@FormatBuffTime(buff.Remaining)</span>
+                            </span>
+                        </AbilityTooltip>
+                    }
+                </div>
+            }
+
+            <!-- ═══ EQUIPPED ABILITIES ═══ -->
+            <div class="ability-bar">
+                @for (int i = 0; i < ClassAbilityRegistry.MaxSlotsPerClass; i++)
+                {
+                    var equipped = i < _engine.Player.EquippedAbilities.Count
+                        ? _engine.Player.EquippedAbilities[i]
+                        : null;
+
+                    @if (equipped != null)
+                    {
+                        double remaining = _engine.Player.Cooldowns.GetRemaining(equipped.Id);
+                        bool onCooldown = remaining > 0;
+                        <AbilityTooltip Ability="_engine.Player.GetEffectiveAbility(equipped)" PlayerLevel="_engine.Player.Level">
+                            <span class="ability-slot filled @(onCooldown ? "on-cooldown" : "ready")">
+                                <img src="@equipped.IconUrl" alt="@equipped.Name"
+                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
+                                @if (onCooldown)
+                                {
+                                    <span class="cooldown-overlay">
+                                        <span class="cooldown-text">@remaining.ToString("0.#")</span>
+                                    </span>
+                                }
+                            </span>
+                        </AbilityTooltip>
+                    }
+                    else
+                    {
+                        <span class="ability-slot empty"></span>
+                    }
+                }
+            </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  VS INDICATOR                               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="vs-divider">
+        <span>⚔️</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  ENEMY FRAME  (rechts)                      -->
+    <!-- ═══════════════════════════════════════════ -->
+        <div class="unit-frame enemy-frame @(_engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
+            <div class="combat-text-overlay">
+                @foreach (var f in SnapshotFloats(_enemyFloats))
+                {
+                    <span @key="f.Id" class="combat-text @FloatCssClass(f)"
+                          style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;">@FloatText(f)</span>
+                }
+            </div>
+            <div class="frame-header">
+                <div class="portrait-area">
+                    @if (_engine.IsAtSpiritHealer)
+                    {
+                        <img class="race-portrait enemy-portrait spirit-healer-portrait"
+                             src="@SpiritHealerIconUrl"
+                             alt="Spirit Healer"
+                             onerror="this.src='images/enemy_placeholder.png'" />
+                    }
+                    else if (_engine.CurrentEnemy is { IsAlive: true } en && !string.IsNullOrEmpty(en.ImageUrl))
+                    {
+                        <img class="race-portrait enemy-portrait"
+                             src="@en.ImageUrl"
+                             alt="@en.Name"
+                             onerror="this.src='images/enemy_placeholder.png'" />
+                    }
+                    else
+                    {
+                        <img class="race-portrait enemy-portrait"
+                             src="images/enemy_placeholder.png"
+                             alt=""
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23333%22 width=%2264%22 height=%2264%22 rx=%228%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22>👹</text></svg>'" />
+                    }
+                </div>
+            <div class="frame-info">
+                @{ var enemyDebuffs = _engine.CurrentEnemy?.Debuffs.Snapshot() ?? new List<ActiveDebuff>(); }
+                @if (_engine.IsAtSpiritHealer)
+                {
+                    <div class="name-line">
+                        <span class="char-name spirit-healer-name">Spirit Healer</span>
+                    </div>
+                    <div class="bar-row">
+                        <div class="hp-bar spirit-bar">
+                            <div class="spirit-fill"
+                                 style="width: @(CalcPct((int)((_engine.RespawnDuration - _engine.RespawnRemaining) * 10), (int)(_engine.RespawnDuration * 10)))%"></div>
+                            <span class="bar-text">Resurrecting in @Math.Ceiling(_engine.RespawnRemaining)s</span>
+                        </div>
+                    </div>
+                }
+                else if (_engine.CurrentEnemy is { IsAlive: true } enemy)
+                {
+                    <div class="name-line">
+                        <span class="char-name enemy-name @(enemy.IsRare ? "rare-name" : "")">@enemy.Name</span>
+                        <span class="level">Lv. @enemy.Stats.Level</span>
+                        @if (enemy.IsRare)
+                        {
+                            <span class="rare-badge">RARE</span>
+                        }
+                    </div>
+                    <div class="bar-row">
+                        <div class="hp-bar enemy-hp">
+                            <div class="hp-fill"
+                                 style="width: @(CalcPct(enemy.CurrentHp, enemy.Stats.MaxHp))%"></div>
+                            <span class="bar-text">@enemy.CurrentHp / @enemy.Stats.MaxHp</span>
+                        </div>
+                    </div>
+                    @if (enemyDebuffs.Count > 0)
+                    {
+                        <div class="buff-bar debuff-bar">
+                            @foreach (var debuff in enemyDebuffs)
+                            {
+                                <AbilityTooltip @key="debuff.Source.Id" Ability="debuff.Source" BuffRemaining="debuff.Remaining">
+                                    <span class="buff-icon debuff-icon">
+                                        <img src="@debuff.Source.IconUrl" alt="@debuff.Source.Name" onerror="this.style.visibility='hidden'" />
+                                        <span class="buff-time @(debuff.Remaining <= 5 ? "expiring" : "")">@FormatBuffTime(debuff.Remaining)</span>
+                                    </span>
+                                </AbilityTooltip>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="name-line">
+                        <span class="char-name enemy-name">Spawning…</span>
+                    </div>
+                    <div class="bar-row">
+                        <div class="hp-bar enemy-hp">
+                            <div class="hp-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@{ var notifications = SnapshotNotifications(); }
+@if (notifications.Length > 0)
+{
+    <div class="ability-notifications">
+        @foreach (var n in notifications)
+        {
+            <div @key="n.Id" class="ability-notification" @onclick="() => EquipAndDismiss(n)">
+                <img src="@n.Ability.IconUrl" alt="@n.Ability.Name" class="notif-icon"
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
+                <div class="notif-text">
+                    <span class="notif-title">New Ability Unlocked!</span>
+                    <span class="notif-name">
+                        @n.Ability.Name
+                        @if (_multiRankNames.Contains(n.Ability.Name))
+                        {
+                            <span class="rank-badge">R@(n.Ability.Rank)</span>
+                        }
+                    </span>
+                </div>
+                <span class="notif-close">×</span>
+            </div>
+        }
+    </div>
+}
+
+@{ var meter = _engine.Meter.GetSnapshot(); }
+<div class="combat-panel">
+    <!-- ═══ DAMAGE METER ═══ -->
+    <div class="meter-box">
+        <div class="meter-header">
+            <span class="meter-title">📊 Damage Meter</span>
+            <button class="wow-btn small" @onclick="ResetMeter" title="Reset meter">⟲ Reset</button>
+        </div>
+        <div class="meter-summary">
+            <span>DMG <b>@FormatNumber(meter.TotalDamage)</b></span>
+            <span>DPS <b>@meter.Dps.ToString("0.0")</b></span>
+            <span>Heal <b class="heal-text">@FormatNumber(meter.TotalHealing)</b></span>
+            <span>HPS <b class="heal-text">@meter.Hps.ToString("0.0")</b></span>
+            <span>⏱ <b>@FormatElapsed(meter.CombatSeconds)</b></span>
+        </div>
+        @if (meter.Rows.Count == 0)
+        {
+            <div class="meter-empty">— no combat data yet —</div>
+        }
+        else
+        {
+            var topTotal = Math.Max(1, meter.Rows.Max(r => r.Total));
+            <div class="meter-rows">
+                @foreach (var row in meter.Rows)
+                {
+                    var kindTotal = row.Kind == CombatActionKind.Heal ? meter.TotalHealing : meter.TotalDamage;
+                    var share = kindTotal > 0 ? row.Total * 100.0 / kindTotal : 0;
+                    bool isAutoAttack = row.Name == CombatMeter.AutoAttackName;
+                    var rowRaw     = isAutoAttack ? null : ClassAbilityRegistry.FindByName(_engine.Player.ActiveClass, row.Name);
+                    var rowAbility = rowRaw is null ? null : _engine.Player.GetEffectiveAbility(rowRaw);
+                    var rowContent = new RenderFragment(b => {
+                        b.OpenElement(0, "div");
+                        b.AddAttribute(1, "class", $"meter-row {(row.Kind == CombatActionKind.Heal ? "meter-heal" : "meter-dmg")}");
+                        if (!isAutoAttack && rowAbility is null)
+                            b.AddAttribute(2, "title", $"{row.Name}: {row.Count} casts, max {row.Max}, avg {(row.Count > 0 ? row.Total / row.Count : 0)}");
+                        b.OpenElement(3, "div");
+                        b.AddAttribute(4, "class", "meter-fill");
+                        b.AddAttribute(5, "style", $"width: {(row.Total * 100.0 / topTotal).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}%");
+                        b.CloseElement();
+                        b.OpenElement(6, "img");
+                        b.AddAttribute(7, "class", "meter-icon");
+                        b.AddAttribute(8, "src", row.IconUrl);
+                        b.AddAttribute(9, "alt", "");
+                        b.AddAttribute(10, "onerror", "this.style.visibility='hidden'");
+                        b.CloseElement();
+                        b.OpenElement(11, "span");
+                        b.AddAttribute(12, "class", "meter-name");
+                        b.AddContent(13, row.Name);
+                        b.CloseElement();
+                        b.OpenElement(14, "span");
+                        b.AddAttribute(15, "class", "meter-value");
+                        b.AddMarkupContent(16, $"{FormatNumber(row.Total)} <small>({share.ToString("0.0")}%)</small>");
+                        b.CloseElement();
+                        b.CloseElement();
+                    });
+                    @if (isAutoAttack)
+                    {
+                        <WeaponTooltip Weapon="_engine.Player.EquippedWeapon" Class="tt-block">
+                            @rowContent
+                        </WeaponTooltip>
+                    }
+                    else
+                    {
+                        <AbilityTooltip Ability="rowAbility" Class="tt-block">
+                            @rowContent
+                        </AbilityTooltip>
+                    }
+                }
+            </div>
+        }
+    </div>
+
+    <!-- ═══ ACTION HISTORY ═══ -->
+    <div class="meter-box">
+        <div class="meter-header">
+            <span class="meter-title">📜 Action History</span>
+        </div>
+        @if (meter.History.Count == 0)
+        {
+            <div class="meter-empty">— no actions yet —</div>
+        }
+        else
+        {
+            <div class="history-list">
+                @foreach (var action in meter.History)
+                {
+                    bool isHeal = action.Kind == CombatActionKind.Heal;
+                    <AbilityTooltip @key="action.Id" Ability="ClassAbilityRegistry.FindByName(_engine.Player.ActiveClass, action.Name) is {} histAbility ? _engine.Player.GetEffectiveAbility(histAbility) : null" Class="tt-block">
+                        <div class="history-row">
+                            <span class="history-time">@FormatElapsed(action.GameTime)</span>
+                            <img class="meter-icon" src="@action.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                            <span class="history-name">@action.Name</span>
+                            <span class="history-amount @(isHeal ? "heal-text" : "dmg-text")">
+                                @(isHeal ? $"+{action.Amount} HP" : $"{action.Amount} DMG")
+                            </span>
+                        </div>
+                    </AbilityTooltip>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+    @if (BuildInfo.IsDebug)
+    {
+        <div class="wow-card debug-panel">
+            <h4 class="debug-title">Debug Info <span class="wow-badge">DEBUG</span></h4>
+            <div class="debug-status-row">
+                <span>Build: <b>DEBUG</b></span>
+                <span>Engine: <b>@(_running ? "🟢 Running" : "🔴 Paused")</b></span>
+                <span>⏱ Game-Time: <b>@FormatElapsed(_gameElapsedSeconds)</b></span>
+                <span>⚡ Speed: <b>@_speedMultiplier.ToString("0.#")×</b></span>
+                <span>Last: @_engine.LastLog</span>
+            </div>
+
+            <div class="debug-speed-row">
+                <span class="debug-speed-label">Speed:</span>
+                @foreach (var s in new[] { 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 100, 200, 500, 1000, 5000 })
+                {
+                    <button class="wow-tab @(_speedMultiplier == s ? "active" : "")"
+                            @onclick="() => SetSpeed(s)">
+                        @s.ToString("0.#")×
+                    </button>
+                }
+            </div>
+            <div class="debug-level-row">
+                <span class="debug-speed-label">Level:</span>
+                <input type="number" min="1" max="60" @bind="_debugTargetLevel" class="debug-level-input" />
+                <button class="wow-btn small" @onclick="SetDebugLevel">Set</button>
+                <span class="wow-muted">Current: <b>@_engine.Player.Level</b></span>
+            </div>
+            @* *@
+            @* <div class="debug-columns"> *@
+            @*     <!-- ═══ PLAYER STATS ═══ --> *@
+            @*     <div class="debug-col"> *@
+            @*         <div class="debug-col-header player-header">🧝 Player</div> *@
+            @*         <div class="debug-stats-list"> *@
+            @*             <span>Name: <b>@_engine.Player.Name</b></span> *@
+            @*             <span>Class: <b>@_engine.Player.ActiveClass</b></span> *@
+            @*             <span>Race: <b>@_engine.Player.Race</b></span> *@
+            @*             <span>Level: <b>@_engine.Player.Stats.Level</b></span> *@
+            @*             <span>HP: <b>@_engine.Player.CurrentHp / @_engine.Player.Stats.MaxHp</b></span> *@
+            @*             <span>Mana: <b>@_engine.Player.CurrentMana / @_engine.Player.Stats.MaxMana</b></span> *@
+            @*             <span>Attack Power: <b>@_engine.Player.Stats.AttackPower</b></span> *@
+            @*             <span>Weapon: <b>@_engine.Player.Stats.WeaponMinDamage–@_engine.Player.Stats.WeaponMaxDamage @@ @_engine.Player.Stats.Speed.ToString("0.0#")s</b></span> *@
+            @*             <span>Defense: <b>@_engine.Player.Stats.Defense</b></span> *@
+            @*             <span>Speed: <b>@_engine.Player.Stats.Speed</b></span> *@
+            @*             <span>Strength: <b>@_engine.Player.Stats.Primary.Strength</b></span> *@
+            @*             <span>Agility: <b>@_engine.Player.Stats.Primary.Agility</b></span> *@
+            @*             <span>Stamina: <b>@_engine.Player.Stats.Primary.Stamina</b></span> *@
+            @*             <span>Intelligence: <b>@_engine.Player.Stats.Primary.Intelligence</b></span> *@
+            @*             <span>Spirit: <b>@_engine.Player.Stats.Primary.Spirit</b></span> *@
+            @*             $1$ <span>Crit Chance: <b>@_engine.Player.Stats.CriticalChance</b>%</span> #1# *@
+            @*             $1$ <span>Crit Damage: <b>@_engine.Player.Stats.CriticalDamage</b>%</span> #1# *@
+            @*             <span>XP: <b>@_engine.Player.Xp / @_engine.Player.XpToNextLevel</b></span> *@
+            @*             <span>Kills: <b>@_engine.TotalKills</b></span> *@
+            @*         </div> *@
+            @*     </div> *@
+            @* *@
+            @*     <!-- ═══ ENEMY STATS ═══ --> *@
+            @*     <div class="debug-col"> *@
+            @*         <div class="debug-col-header enemy-header">👹 Enemy</div> *@
+            @*         @if (_engine.IsAtSpiritHealer) *@
+            @*         { *@
+            @*             <div class="debug-stats-list"> *@
+            @*                 <span>Spirit Healer — respawn in <b>@_engine.RespawnRemaining.ToString("0.0")s</b></span> *@
+            @*             </div> *@
+            @*         } *@
+            @*         else if (_engine.CurrentEnemy is { IsAlive: true } dbgEnemy) *@
+            @*         { *@
+            @*             <div class="debug-stats-list"> *@
+            @*                 <span>Name: <b>@dbgEnemy.Name</b></span> *@
+            @*                 <span>Level: <b>@dbgEnemy.Stats.Level</b></span> *@
+            @*                 <span>HP: <b>@dbgEnemy.CurrentHp / @dbgEnemy.Stats.MaxHp</b></span> *@
+            @*                 $1$ <span>Mana: <b>@dbgEnemy.CurrentMana / @dbgEnemy.Stats.MaxMana</b></span> #1# *@
+            @*                 <span>Attack: <b>@dbgEnemy.Stats.Attack</b></span> *@
+            @*                 <span>Defense: <b>@dbgEnemy.Stats.Defense</b></span> *@
+            @*                 <span>Speed: <b>@dbgEnemy.Stats.Speed</b></span> *@
+            @*                 $1$ <span>Crit Chance: <b>@dbgEnemy.Stats.CriticalChance</b>%</span> #1# *@
+            @*                 $1$ <span>Crit Damage: <b>@dbgEnemy.Stats.CriticalDamage</b>%</span> #1# *@
+            @*                 <span>Image: <b>@(string.IsNullOrEmpty(dbgEnemy.ImageUrl) ? "placeholder" : "custom")</b></span> *@
+            @*             </div> *@
+            @*         } *@
+            @*         else *@
+            @*         { *@
+            @*             <div class="debug-stats-list"> *@
+            @*                 <span class="debug-empty">— no active enemy —</span> *@
+            @*             </div> *@
+            @*         } *@
+            @*     </div> *@
+            @* </div> *@
+        </div>
+    }
+</div>
+
+<style>
+    .battlefield {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin: 1rem 0;
+    }
+
+    .unit-frame {
+        flex: 1;
+        min-width: 260px;
+        max-width: 420px;
+        background: linear-gradient(180deg, #2b2418 0%, #1a150d 100%);
+        border: 2px solid #5a4a28;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444;
+        position: relative;
+        overflow: visible;
+    }
+
+    .enemy-frame {
+        background: linear-gradient(180deg, #2e1812 0%, #1a0d0a 100%);
+        border-color: #6a2e22;
+        box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #9a4a34;
+    }
+
+    .rare-frame {
+        border-color: #c8a000 !important;
+        box-shadow: 0 0 18px rgba(200,160,0,.55), inset 0 0 0 1px #e8c840 !important;
+    }
+
+    .rare-name {
+        color: #e8c840 !important;
+        text-shadow: 0 0 8px rgba(232, 200, 64, 0.6) !important;
+    }
+
+    .rare-badge {
+        font-family: 'Cinzel', serif;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #c8a000;
+        background: rgba(200,160,0,.15);
+        border: 1px solid #c8a000;
+        border-radius: 3px;
+        padding: 1px 4px;
+        text-shadow: 0 0 4px rgba(200,160,0,.5);
+    }
+
+    /* ── Floating Combat Text (WoW style) ── */
+    .combat-text-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .combat-text {
+        position: absolute;
+        transform: translateX(-50%);
+        font-family: 'Arial Black', 'Impact', 'Segoe UI', sans-serif;
+        font-weight: 900;
+        font-size: 1.5rem;
+        line-height: 1;
+        white-space: nowrap;
+        letter-spacing: .02em;
+        -webkit-text-stroke: 1px #000;
+        paint-order: stroke fill;
+        text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 6px rgba(0,0,0,.8);
+        animation: combatTextRise 1.5s ease-out forwards;
+    }
+
+    /* Auto attack on enemy: white */
+    .ct-auto {
+        color: #ffffff;
+    }
+
+    /* Ability on enemy: yellow, bigger, with "pop" */
+    .ct-ability {
+        color: #ffd100;
+        font-size: 1.9rem;
+        animation: combatTextPop 1.6s ease-out forwards;
+    }
+
+    /* Damage taken: red */
+    .ct-taken {
+        color: #ff2020;
+    }
+
+    /* Healing: green */
+    .ct-heal {
+        color: #20ff20;
+        font-size: 1.7rem;
+        animation: combatTextPop 1.6s ease-out forwards;
+    }
+
+    /* Kritischer Treffer: größer, mit goldenem Glühen */
+    .ct-crit {
+        font-size: 2.4rem;
+        -webkit-text-stroke: 1.5px #000;
+        text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000,
+                     0 0 10px rgba(255,209,0,.9), 0 0 20px rgba(255,140,0,.6);
+        animation: combatTextCrit 1.7s ease-out forwards;
+    }
+
+    @@keyframes combatTextCrit {
+        0%   { transform: translate(-50%, 0) scale(.5); opacity: 0; }
+        10%  { transform: translate(-50%, -6px) scale(1.9); opacity: 1; }
+        28%  { transform: translate(-50%, -12px) scale(1.1); opacity: 1; }
+        70%  { opacity: 1; }
+        100% { transform: translate(-50%, -70px) scale(1); opacity: 0; }
+    }
+
+    @@keyframes combatTextRise {
+        0%   { transform: translate(-50%, 0) scale(1.15); opacity: 1; }
+        15%  { transform: translate(-50%, -6px) scale(1); opacity: 1; }
+        70%  { opacity: 1; }
+        100% { transform: translate(-50%, -55px) scale(.9); opacity: 0; }
+    }
+
+    @@keyframes combatTextPop {
+        0%   { transform: translate(-50%, 0) scale(.4); opacity: 0; }
+        10%  { transform: translate(-50%, -4px) scale(1.6); opacity: 1; }
+        25%  { transform: translate(-50%, -8px) scale(1); opacity: 1; }
+        70%  { opacity: 1; }
+        100% { transform: translate(-50%, -60px) scale(.95); opacity: 0; }
+    }
+
+    .frame-header {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .portrait-area {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+    }
+
+    .race-portrait {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        object-fit: cover;
+        background: #0e0b07;
+        box-shadow: 0 0 8px rgba(0,0,0,.8);
+    }
+
+    .enemy-portrait {
+        border-color: #b33a2a;
+    }
+
+    .class-badge {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        background: #0e0b07;
+        object-fit: contain;
+    }
+
+    .frame-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .name-line {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .char-name {
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .enemy-name {
+        color: #ff6b5b;
+    }
+
+    .spirit-healer-name {
+        color: #9fd8ff;
+    }
+
+    .spirit-healer-portrait {
+        filter: drop-shadow(0 0 6px #7fc8ff);
+    }
+
+    .spirit-fill {
+        height: 100%;
+        background: linear-gradient(180deg, #bfe6ff 0%, #4a8fc0 100%);
+        transition: width .4s ease;
+    }
+
+    .level {
+        font-size: .8rem;
+        color: #9a8a64;
+    }
+
+    .bar-row,
+    .xp-row {
+        width: 100%;
+    }
+
+    .hp-bar, .mana-bar, .xp-bar {
+        position: relative;
+        height: 20px;
+        background: #0e0b07;
+        border-radius: 3px;
+        overflow: hidden;
+        border: 1px solid #5a4a28;
+        box-shadow: inset 0 0 4px #000;
+    }
+
+    .hp-fill, .mana-fill, .xp-fill {
+        height: 100%;
+        transition: width .4s ease;
+    }
+
+    .hp-fill {
+        background: linear-gradient(180deg, #3fbf3f 0%, #1e7a1e 100%);
+    }
+
+    .enemy-hp .hp-fill {
+        background: linear-gradient(180deg, #e03a2a 0%, #8b1a1a 100%);
+    }
+
+    .mana-bar {
+        height: 16px;
+    }
+
+    .mana-fill {
+        background: linear-gradient(180deg, #3a7fe0 0%, #1a3f9a 100%);
+    }
+
+    .mana-bar-warrior .mana-fill {
+        background: linear-gradient(180deg, #e03a2a 0%, #8b1a1a 100%);
+    }
+
+    .mana-bar-rogue .mana-fill {
+        background: linear-gradient(180deg, #ffe14a 0%, #c99a10 100%);
+    }
+
+    .bar-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .75rem;
+        font-weight: 600;
+        color: #fff;
+        text-shadow: 0 1px 2px #000;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .xp-bar {
+        height: 14px;
+    }
+
+    /* Classic XP bar: purple */
+    .xp-fill {
+        background: linear-gradient(180deg, #a050e0 0%, #5a1f8a 100%);
+    }
+
+    .xp-bar .bar-text {
+        font-size: .65rem;
+    }
+
+    .vs-divider {
+        font-size: 1.6rem;
+        flex-shrink: 0;
+        filter: drop-shadow(0 0 6px rgba(197,165,90,.5));
+    }
+
+    /* ── Buff Bar ── */
+    .buff-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .buff-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 30px;
+    }
+
+    .buff-icon img {
+        width: 26px;
+        height: 26px;
+        border-radius: 3px;
+        border: 1px solid #c5a55a;
+        box-shadow: 0 0 4px rgba(0,0,0,.8);
+    }
+
+    .buff-time {
+        font-size: .65rem;
+        font-weight: 700;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .buff-time.expiring {
+        color: #ff6b5b;
+    }
+
+    /* ── Debuff Bar (on enemy) ── */
+    .debuff-bar {
+        margin-top: 4px;
+    }
+
+    .debuff-icon img {
+        border-color: #c03020;
+        box-shadow: 0 0 4px rgba(200, 50, 50, .5);
+    }
+
+    /* ── Ability Bar ── */
+    .ability-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid #5a4a28;
+    }
+
+    .ability-slot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 4px;
+        border: 2px solid #4a3d22;
+        background: #0e0b07;
+        box-shadow: inset 0 0 6px #000;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .ability-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity .25s, filter .25s;
+    }
+
+    .ability-slot.filled {
+        border-color: #8a7444;
+    }
+
+    .ability-slot.filled:hover {
+        border-color: #ffd100;
+        box-shadow: 0 0 8px rgba(255, 209, 0, .45);
+    }
+
+    .ability-slot.empty {
+        border-style: dashed;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    /* ── Cooldown state ── */
+    .ability-slot.on-cooldown {
+        border-color: #4a3d22;
+    }
+
+    .ability-slot.on-cooldown img {
+        opacity: 0.35;
+        filter: grayscale(0.9);
+    }
+
+    .cooldown-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.45);
+        pointer-events: none;
+    }
+
+    .cooldown-text {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #ffd100;
+        text-shadow: 0 1px 3px #000;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Ready glow ── */
+    .ability-slot.ready {
+        border-color: #c5a55a;
+        box-shadow: 0 0 6px rgba(197, 165, 90, .45);
+    }
+
+    /* ── Damage Meter / Action History ── */
+    .combat-panel {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .meter-box {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 12px;
+        background: linear-gradient(180deg, #2b2418 0%, #1a150d 100%);
+        border: 2px solid #5a4a28;
+        border-radius: 8px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444;
+        font-size: .8rem;
+        color: #c9b88c;
+    }
+
+    .meter-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+
+    .meter-title {
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: .95rem;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .meter-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #5a4a28;
+        font-variant-numeric: tabular-nums;
+        color: #9a8a64;
+    }
+
+    .meter-summary b {
+        color: #fff;
+    }
+
+    .meter-empty {
+        color: #9a8a64;
+        font-style: italic;
+        padding: 6px 0;
+    }
+
+    .meter-rows,
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .history-list {
+        max-height: 230px;
+        overflow-y: auto;
+        scrollbar-color: #5a4a28 #0e0b07;
+        scrollbar-width: thin;
+    }
+
+    .meter-row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 22px;
+        padding: 0 6px 0 2px;
+        background: #0e0b07;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .meter-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        transition: width .4s ease;
+    }
+
+    .meter-dmg .meter-fill {
+        background: linear-gradient(90deg, #5a1a10 0%, #8b2a1a 100%);
+    }
+
+    .meter-heal .meter-fill {
+        background: linear-gradient(90deg, #163f12 0%, #2a6e1f 100%);
+    }
+
+    .meter-icon {
+        position: relative;
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+
+    .meter-name,
+    .history-name {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #fff;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .meter-value {
+        position: relative;
+        font-variant-numeric: tabular-nums;
+        color: #fff;
+        text-shadow: 0 1px 2px #000;
+        white-space: nowrap;
+    }
+
+    .meter-value small {
+        color: #c9b88c;
+    }
+
+    .history-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 4px;
+        border-radius: 3px;
+        background: #0e0b07;
+        animation: historyIn .3s ease-out;
+    }
+
+    .history-time {
+        font-variant-numeric: tabular-nums;
+        font-size: .72rem;
+        color: #9a8a64;
+    }
+
+    .history-amount {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .dmg-text {
+        color: #ff8a65;
+    }
+
+    .heal-text {
+        color: #7ddc6f !important;
+    }
+
+    @@keyframes historyIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Debug panel ── */
+    .debug-panel {
+        margin-bottom: 2rem;
+        font-size: .8rem;
+    }
+
+    .debug-status-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .debug-status-row b,
+    .debug-stats-list b {
+        color: #fff;
+    }
+
+    .debug-speed-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .debug-speed-label {
+        color: #ffd100;
+        margin-right: 4px;
+    }
+
+    .debug-level-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .debug-level-input {
+        width: 64px;
+        background: #0e0b07;
+        border: 1px solid #5a4a28;
+        border-radius: 4px;
+        color: #fff;
+        padding: 2px 6px;
+        font-size: .85rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .debug-columns {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .debug-col {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .debug-col-header {
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: .85rem;
+        margin-bottom: 6px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background: #0e0b07;
+        border: 1px solid #4a3d22;
+    }
+
+    .debug-col-header.player-header {
+        color: #ffd100;
+    }
+
+    .debug-col-header.enemy-header {
+        color: #ff6b5b;
+    }
+
+    .debug-stats-list {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        color: #9a8a64;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .debug-empty {
+        font-style: italic;
+    }
+
+    /* ── Ability Unlock Notifications ── */
+    .ability-notifications {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 8px 0;
+    }
+
+    .ability-notification {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: linear-gradient(90deg, #1a150d 0%, #2b2010 50%, #1a150d 100%);
+        border: 2px solid #c5a55a;
+        border-radius: 6px;
+        box-shadow: 0 0 12px rgba(197,165,90,.35), inset 0 0 0 1px #8a7444;
+        cursor: pointer;
+        animation: notifIn .35s ease-out;
+    }
+
+    .ability-notification:hover {
+        border-color: #ffd100;
+        box-shadow: 0 0 18px rgba(255,209,0,.45), inset 0 0 0 1px #ffd100;
+    }
+
+    .notif-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 4px;
+        border: 2px solid #c5a55a;
+        flex-shrink: 0;
+    }
+
+    .notif-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .notif-title {
+        font-family: 'Cinzel', serif;
+        font-size: .75rem;
+        color: #ffd100;
+        text-shadow: 0 1px 3px #000;
+        letter-spacing: .04em;
+    }
+
+    .notif-name {
+        font-size: .9rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .notif-close {
+        font-size: 1.1rem;
+        color: #9a8a64;
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
+    @@keyframes notifIn {
+        from { opacity: 0; transform: translateY(-8px) scale(.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @@media (max-width: 700px) {
+        .battlefield {
+            flex-direction: column;
+        }
+        .vs-divider {
+            transform: rotate(90deg);
+        }
+        .unit-frame {
+            max-width: 100%;
+            width: 100%;
+        }
+        .debug-columns {
+            flex-direction: column;
+        }
+        .combat-panel {
+            flex-direction: column;
+        }
+    }
+</style>
+
+        @code {
+            private bool _running;
+            private double _speedMultiplier = 1.0;
+            private HashSet<string> _multiRankNames = new();
+            private double _gameElapsedSeconds = 0.0;
+            private int _debugTargetLevel = 1;
+            private DateTime _lastRealTick = DateTime.UtcNow;
+            private System.Timers.Timer? _uiTimer;
+            private DotNetObjectReference<IdleFighter>? _selfRef;
+            private IJSObjectReference? _visibilityHandle;
+
+            private record CombatFloat(int Id, CombatTextKind Kind, bool OnPlayer, int Amount, int XOffset, int YOffset, DateTime Created, bool IsCrit = false);
+            private record AbilityNotification(int Id, Ability Ability, DateTime Created);
+
+            private static readonly TimeSpan NotificationLifetime = TimeSpan.FromSeconds(8);
+            private readonly List<AbilityNotification> _abilityNotifications = new();
+            private int _nextNotifId;
+
+            private const string SpiritHealerIconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_resurrection.jpg";
+            private const int MaxFloatsPerFrame = 12; // bei hoher Spielgeschwindigkeit nicht das Frame zuschütten
+            private static readonly TimeSpan FloatLifetime = TimeSpan.FromSeconds(1.7);
+            private readonly List<CombatFloat> _playerFloats = new();
+            private readonly List<CombatFloat> _enemyFloats = new();
+            private int _nextFloatId;
+            private static readonly Random _rng = new();
+            private Character? _subscribedPlayer;
+            private CharacterClass _lastSeenClass = default;
+
+            protected override void OnInitialized()
+            {
+                _engine.TickUpdated += OnTick;
+                _engine.CombatTextRaised += OnCombatText;
+                _engine.AbilityUnlocked += OnAbilityUnlocked;
+                ApplySavedLoadout();
+                _running = _engine.IsGameRunning;
+                StartUiTimer();
+            }
+
+            // Fight only runs while this page is open and the browser tab is visible.
+            // Started here (not in OnInitialized) so prerendering doesn't kick off the engine.
+            protected override async Task OnAfterRenderAsync(bool firstRender)
+            {
+                if (!firstRender) return;
+                _selfRef = DotNetObjectReference.Create(this);
+                try
+                {
+                    _visibilityHandle = await _js.InvokeAsync<IJSObjectReference>("pageVisibility.register", _selfRef);
+                    SetEngineRunning(await _js.InvokeAsync<bool>("pageVisibility.isVisible"));
+                }
+                catch (JSDisconnectedException)
+                {
+                }
+            }
+
+            [JSInvokable]
+            public void OnVisibilityChanged(bool visible)
+            {
+                SetEngineRunning(visible);
+                StateHasChanged();
+            }
+
+            private void SetEngineRunning(bool run)
+            {
+                if (run && !_engine.IsGameRunning)
+                {
+                    _engine.Start();
+                    _lastRealTick = DateTime.UtcNow;
+                }
+                else if (!run && _engine.IsGameRunning)
+                {
+                    _engine.Stop();
+                }
+
+                _running = _engine.IsGameRunning;
+            }
+
+            private void DetectClassChange()
+            {
+                var current = _engine.Player.ActiveClass;
+                if (current != _lastSeenClass)
+                {
+                    _lastSeenClass = current;
+                    _engine.Player.SetClass(current); // erzwingt frisches Loadout auf Character-Basis
+                    ApplySavedLoadout();
+                }
+            }
+
+            private void ApplySavedLoadout()
+            {
+                var cls = _engine.Player.ActiveClass;
+                var loadout = _loadoutService.GetLoadout(cls, _engine.Player.Level);
+                _engine.Player.ApplyLoadout(loadout);
+                _multiRankNames = ClassAbilityRegistry.GetAbilitiesFor(cls)
+                    .GroupBy(a => a.Name)
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToHashSet();
+            }
+
+            private void StartUiTimer()
+            {
+                _uiTimer = new System.Timers.Timer(100);
+                _uiTimer.Elapsed += (_, _) =>
+                {
+                    var now = DateTime.UtcNow;
+                    var delta = (now - _lastRealTick).TotalSeconds;
+                    _lastRealTick = now;
+                    if (_running)
+                        _gameElapsedSeconds += delta * _speedMultiplier;
+                    CleanupOldFloats();
+                    _ = InvokeAsync(StateHasChanged);
+                };
+                _uiTimer.AutoReset = true;
+                _uiTimer.Start();
+            }
+
+            private void OnTick()
+            {
+                DetectPlayerChange();
+                DetectClassChange();
+                _ = InvokeAsync(StateHasChanged);
+            }
+
+            private void DetectPlayerChange()
+            {
+                if (_engine.Player != _subscribedPlayer)
+                {
+                    _subscribedPlayer = _engine.Player;
+                    ApplySavedLoadout();
+                }
+            }
+
+            private void OnAbilityUnlocked(Ability ability)
+            {
+                lock (_abilityNotifications)
+                    _abilityNotifications.Add(new AbilityNotification(
+                        Interlocked.Increment(ref _nextNotifId), ability, DateTime.UtcNow));
+
+                _ = InvokeAsync(() =>
+                {
+                    ApplySavedLoadout();
+                    StateHasChanged();
+                });
+            }
+
+            private void EquipAndDismiss(AbilityNotification n)
+            {
+                var cls = _engine.Player.ActiveClass;
+                var loadout = _loadoutService.GetLoadout(cls, _engine.Player.Level);
+                if (!loadout.IsEquipped(n.Ability.Id))
+                {
+                    var pool = ClassAbilityRegistry.GetAbilitiesFor(cls);
+                    // Gleicher Spell-Name (anderer Rank): vorhandenen Rank in-place ersetzen
+                    var sameSpell = pool.FirstOrDefault(a => a.Name == n.Ability.Name
+                                                          && a.Id != n.Ability.Id
+                                                          && loadout.IsEquipped(a.Id));
+                    if (sameSpell != null)
+                    {
+                        int idx = loadout.EquippedAbilityIds.IndexOf(sameSpell.Id);
+                        loadout.SetSlot(idx, n.Ability.Id);
+                    }
+                    else if (!string.IsNullOrEmpty(n.Ability.ExclusiveGroup))
+                    {
+                        // Exklusiv-Gruppe: vorhandene Ability derselben Gruppe in-place ersetzen
+                        var conflict = pool.FirstOrDefault(a => a.ExclusiveGroup == n.Ability.ExclusiveGroup
+                                                              && loadout.IsEquipped(a.Id));
+                        if (conflict != null)
+                        {
+                            int idx = loadout.EquippedAbilityIds.IndexOf(conflict.Id);
+                            loadout.SetSlot(idx, n.Ability.Id);
+                        }
+                        else if (loadout.Count < ClassAbilityRegistry.MaxSlotsPerClass)
+                        {
+                            loadout.EquippedAbilityIds.Add(n.Ability.Id);
+                        }
+                    }
+                    else if (loadout.Count < ClassAbilityRegistry.MaxSlotsPerClass)
+                    {
+                        loadout.EquippedAbilityIds.Add(n.Ability.Id);
+                    }
+                    _loadoutService.SaveLoadout(loadout);
+                    _engine.Player.ApplyLoadout(loadout);
+                }
+                lock (_abilityNotifications)
+                    _abilityNotifications.RemoveAll(x => x.Id == n.Id);
+            }
+
+            private void DismissNotification(int id)
+            {
+                lock (_abilityNotifications)
+                    _abilityNotifications.RemoveAll(n => n.Id == id);
+            }
+
+            private AbilityNotification[] SnapshotNotifications()
+            {
+                lock (_abilityNotifications) return _abilityNotifications.ToArray();
+            }
+
+            private void OnCombatText(CombatText ct)
+            {
+                bool onPlayer = ct.Target == CombatTextTarget.Player;
+                var list = onPlayer ? _playerFloats : _enemyFloats;
+                lock (list)
+                {
+                    list.Add(new CombatFloat(
+                        Interlocked.Increment(ref _nextFloatId), ct.Kind, onPlayer, ct.Amount,
+                        _rng.Next(-45, 46), _rng.Next(0, 22), DateTime.UtcNow, ct.IsCrit));
+                    if (list.Count > MaxFloatsPerFrame)
+                        list.RemoveRange(0, list.Count - MaxFloatsPerFrame);
+                }
+            }
+
+            private void CleanupOldFloats()
+            {
+                var cutoff = DateTime.UtcNow - FloatLifetime;
+                lock (_playerFloats)
+                    _playerFloats.RemoveAll(f => f.Created < cutoff);
+                lock (_enemyFloats)
+                    _enemyFloats.RemoveAll(f => f.Created < cutoff);
+
+                var notifCutoff = DateTime.UtcNow - NotificationLifetime;
+                lock (_abilityNotifications)
+                    _abilityNotifications.RemoveAll(n => n.Created < notifCutoff);
+            }
+
+            private static CombatFloat[] SnapshotFloats(List<CombatFloat> list)
+            {
+                lock (list) return list.ToArray();
+            }
+
+            private static string FloatCssClass(CombatFloat f)
+            {
+                var baseClass = f.Kind switch
+                {
+                    CombatTextKind.Heal => "ct-heal",
+                    _ when f.OnPlayer => "ct-taken",
+                    CombatTextKind.Ability => "ct-ability",
+                    _ => "ct-auto",
+                };
+                return f.IsCrit ? $"{baseClass} ct-crit" : baseClass;
+            }
+
+            private static string FloatText(CombatFloat f)
+            {
+                var text = f.Kind switch
+                {
+                    CombatTextKind.Heal => $"+{f.Amount}",
+                    _ when f.OnPlayer => $"-{f.Amount}",
+                    _ => f.Amount.ToString(),
+                };
+                return f.IsCrit ? $"{text}!" : text;
+            }
+
+            private void SetSpeed(double s)
+            {
+                _speedMultiplier = s;
+                _engine.SetSpeed(s);
+                _lastRealTick = DateTime.UtcNow;
+            }
+
+            private void SetDebugLevel()
+            {
+                _engine.SetPlayerLevel(_debugTargetLevel);
+                ApplySavedLoadout();
+            }
+
+            private static string FormatElapsed(double totalSeconds)
+            {
+                var ts = TimeSpan.FromSeconds(totalSeconds);
+                return $"{(int)ts.TotalHours:00}:{ts.Minutes:00}:{ts.Seconds:00}";
+            }
+
+            private void ResetMeter() => _engine.Meter.Reset();
+
+            private static string FormatNumber(long value) => value switch
+            {
+                >= 1_000_000 => $"{value / 1_000_000.0:0.##}M",
+                >= 10_000 => $"{value / 1_000.0:0.#}k",
+                _ => value.ToString()
+            };
+
+            private static string FormatBuffTime(double seconds) =>
+                seconds >= 60 ? $"{(int)seconds / 60}m" : $"{Math.Ceiling(seconds):0}s";
+
+            private static int CalcPct(int current, int max) =>
+                max <= 0 ? 0 : Math.Clamp(current * 100 / max, 0, 100);
+
+            public async ValueTask DisposeAsync()
+            {
+                _engine.TickUpdated -= OnTick;
+                _uiTimer?.Stop();
+                _uiTimer?.Dispose();
+                _engine.CombatTextRaised -= OnCombatText;
+                _engine.AbilityUnlocked -= OnAbilityUnlocked;
+
+                // Leaving the page stops the fight. Prerendered instances never started it.
+                if (_selfRef != null)
+                    _engine.Stop();
+
+                if (_visibilityHandle != null)
+                {
+                    try
+                    {
+                        await _visibilityHandle.InvokeVoidAsync("dispose");
+                        await _visibilityHandle.DisposeAsync();
+                    }
+                    catch (JSDisconnectedException)
+                    {
+                    }
+                }
+
+                _selfRef?.Dispose();
+            }
+
+        }

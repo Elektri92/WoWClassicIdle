@@ -1,0 +1,42 @@
+@using Models
+
+@* Zeigt beim Hovern einen Talent-Tooltip im WoW-Stil. *@
+@if (Talent is null)
+{
+    @ChildContent
+}
+else
+{
+    bool isMaxed = Ranks >= Talent.MaxRanks;
+
+    <span class="tt-host" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
+        @ChildContent
+        <span class="wow-tooltip" role="tooltip">
+            <span class="tt-line">
+                <span class="tt-name">@Talent.Name</span>
+                <span class="tt-rank">@Ranks / @Talent.MaxRanks</span>
+            </span>
+            @if (Locked && LockReason is not null)
+            {
+                <span class="tt-req-missing">@LockReason</span>
+            }
+            <span class="tt-desc">@Talent.Description</span>
+            @if (Ranks > 0)
+            {
+                <span class="tt-effect">Current: @Talent.EffectDescription(Ranks)</span>
+            }
+            @if (!isMaxed)
+            {
+                <span class="tt-next">Next rank: @Talent.EffectDescription(Ranks + 1)</span>
+            }
+        </span>
+    </span>
+}
+
+@code {
+    [Parameter] public TalentDefinition? Talent { get; set; }
+    [Parameter] public int Ranks { get; set; }
+    [Parameter] public bool Locked { get; set; }
+    [Parameter] public string? LockReason { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

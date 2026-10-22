@@ -1,0 +1,18 @@
+@using Models
+
+@* Umhüllt eine Stat-Zeile und zeigt beim Hovern einen WoW-Tooltip.
+   Positionierung per js/tooltip.js (position: fixed). *@
+<span class="tt-host tt-block" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
+    @ChildContent
+    <span class="wow-tooltip" role="tooltip">
+        <span class="tt-stat-name">@StatName</span>
+        <span class="tt-stat-desc @(IsUseless ? "tt-stat-no-benefit" : "")">@Description</span>
+    </span>
+</span>
+
+@code {
+    [Parameter] public string StatName { get; set; } = "";
+    [Parameter] public string Description { get; set; } = "";
+    [Parameter] public bool IsUseless { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

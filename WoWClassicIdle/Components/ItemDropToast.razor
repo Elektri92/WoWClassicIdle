@@ -1,0 +1,226 @@
+@rendermode InteractiveServer
+@using Models
+@inject IdleGameEngine _engine
+@implements IDisposable
+
+@if (_toasts.Count > 0)
+{
+    <div class="item-toast-container">
+        @foreach (var t in SnapshotToasts())
+        {
+            <div @key="t.Id" class="item-toast" @onclick="() => Dismiss(t.Id)">
+                <div class="item-toast-header">Item Found!</div>
+                <div class="item-toast-body">
+                    <div class="item-toast-icon-wrap" style="border-color: @ItemQualityColors.Hex(t.Item.Quality);">
+                        <img class="item-toast-icon"
+                             src="@t.Item.IconUrl"
+                             alt="@t.Item.Name"
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22><rect fill=%22%23333%22 width=%2256%22 height=%2256%22 rx=%226%22/></svg>'" />
+                    </div>
+                    <div class="item-toast-text">
+                        <span class="item-toast-name" style="color: @ItemQualityColors.Hex(t.Item.Quality);">@t.Item.Name</span>
+                        <span class="item-toast-slot">@ArmorSlots.Label(t.Item.Slot)</span>
+                        @foreach (var line in t.Item.Bonuses.DescribeBonuses())
+                        {
+                            <span class="item-toast-stat">@line</span>
+                        }
+                        @if (t.Equipped)
+                        {
+                            <span class="item-toast-equipped">Equipped!</span>
+                        }
+                        else
+                        {
+                            <span class="item-toast-inventory">Added to inventory</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .item-toast-container {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 10px;
+        pointer-events: none;
+    }
+
+    .item-toast {
+        pointer-events: all;
+        width: 300px;
+        background: linear-gradient(180deg, #1a1a0a 0%, #0e0e06 50%, #080808 100%);
+        border: 2px solid #1eff00;
+        border-radius: 6px;
+        box-shadow:
+            0 0 0 1px #0a8a00,
+            0 0 20px rgba(30, 255, 0, 0.3),
+            0 6px 24px rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+        animation: itemToastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        overflow: hidden;
+    }
+
+    .item-toast::before {
+        content: '';
+        display: block;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #1eff00, #00aa00, #1eff00, transparent);
+    }
+
+    .item-toast-header {
+        font-family: 'Cinzel', serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #1eff00;
+        text-shadow: 0 0 8px rgba(30, 255, 0, 0.6);
+        text-align: center;
+        padding: 5px 12px 3px;
+        border-bottom: 1px solid #0a4a00;
+    }
+
+    .item-toast-body {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 12px 12px;
+    }
+
+    .item-toast-icon-wrap {
+        width: 52px;
+        height: 52px;
+        border-radius: 5px;
+        border: 2px solid #1eff00;
+        box-shadow: 0 0 10px rgba(30, 255, 0, 0.4), inset 0 0 0 1px #0a4a00;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .item-toast-icon {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .item-toast-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .item-toast-name {
+        font-family: 'Cinzel', serif;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1eff00;
+        text-shadow: 0 1px 3px #000;
+        line-height: 1.2;
+    }
+
+    .item-toast-slot {
+        font-size: 0.72rem;
+        color: #c9b88c;
+    }
+
+    .item-toast-stat {
+        font-size: 0.78rem;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .item-toast-equipped {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #4af04a;
+        margin-top: 3px;
+        text-shadow: 0 0 6px rgba(74, 240, 74, 0.6);
+    }
+
+    .item-toast-inventory {
+        font-size: 0.72rem;
+        color: #c9b88c;
+        margin-top: 3px;
+        font-style: italic;
+    }
+
+    @@keyframes itemToastSlideIn {
+        from {
+            opacity: 0;
+            transform: translateX(60px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+    }
+</style>
+
+@code {
+    private record ToastEntry(int Id, ArmorItem Item, bool Equipped, DateTime Created);
+
+    private readonly List<ToastEntry> _toasts = new();
+    private int _nextId;
+    private static readonly TimeSpan ToastLifetime = TimeSpan.FromSeconds(8);
+    private System.Timers.Timer? _cleanupTimer;
+
+    protected override void OnInitialized()
+    {
+        _engine.ItemDropped += OnItemDropped;
+        _cleanupTimer = new System.Timers.Timer(1000) { AutoReset = true };
+        _cleanupTimer.Elapsed += (_, _) => CleanupExpired();
+        _cleanupTimer.Start();
+    }
+
+    private void OnItemDropped(ArmorItem item)
+    {
+        // Drops landen standardmäßig nur im Inventar; "Equipped!" gibt es nur,
+        // wenn das Item direkt angelegt wurde (Debug-Seiten).
+        bool equipped = _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var current)
+                        && current == item;
+
+        lock (_toasts)
+            _toasts.Add(new ToastEntry(Interlocked.Increment(ref _nextId), item, equipped, DateTime.UtcNow));
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void Dismiss(int id)
+    {
+        lock (_toasts) _toasts.RemoveAll(t => t.Id == id);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void CleanupExpired()
+    {
+        var cutoff = DateTime.UtcNow - ToastLifetime;
+        bool changed;
+        lock (_toasts)
+        {
+            int before = _toasts.Count;
+            _toasts.RemoveAll(t => t.Created < cutoff);
+            changed = _toasts.Count != before;
+        }
+        if (changed)
+            _ = InvokeAsync(StateHasChanged);
+    }
+
+    private ToastEntry[] SnapshotToasts()
+    {
+        lock (_toasts) return _toasts.ToArray();
+    }
+
+    public void Dispose()
+    {
+        _engine.ItemDropped -= OnItemDropped;
+        _cleanupTimer?.Stop();
+        _cleanupTimer?.Dispose();
+    }
+}

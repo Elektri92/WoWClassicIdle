@@ -1,0 +1,330 @@
+/* ============================================
+   WoW Classic – shared page theme
+   (look & feel of the Simulation page)
+   ============================================ */
+
+:root, html {
+    color-scheme: dark;
+}
+
+:root {
+    --wow-gold: #ffd100;
+    --wow-gold-soft: #c5a55a;
+    --wow-gold-pale: #ffec9b;
+    --wow-text: #c9b88c;
+    --wow-muted: #9a8a64;
+    --wow-border: #5a4a28;
+    --wow-border-dark: #4a3d22;
+    --wow-border-inner: #8a7444;
+    --wow-bg-deep: #0e0b07;
+    --wow-panel-top: #2b2418;
+    --wow-panel-bottom: #1a150d;
+    --wow-font-title: 'Cinzel', 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+    --wow-font-body: 'Segoe UI', 'Noto Sans', system-ui, sans-serif;
+}
+
+/* ----- Page ----- */
+.wow-page {
+    max-width: 1100px;
+    margin: 1rem auto;
+    color: var(--wow-text);
+    font-family: var(--wow-font-body);
+}
+
+.wow-page.narrow { max-width: 900px; }
+.wow-page.wide   { max-width: 1400px; }
+
+.wow-page h1, .wow-page h2, .wow-page h3, .wow-page h4 {
+    font-family: var(--wow-font-title);
+    color: var(--wow-gold);
+    text-shadow: 0 1px 2px #000;
+}
+
+.wow-page h2 { margin-bottom: .25rem; }
+.wow-page h4 { margin: 0 0 .5rem; font-size: 1.05rem; }
+
+.wow-hint { font-size: .85rem; color: var(--wow-muted); margin: .25rem 0 .75rem; }
+.wow-muted { color: var(--wow-muted); }
+
+.wow-badge {
+    font-family: var(--wow-font-body);
+    font-size: .7rem;
+    vertical-align: middle;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #8b1a1a;
+    color: #fff;
+    text-shadow: none;
+}
+
+/* ----- Cards ----- */
+.wow-card {
+    margin-top: 1rem;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px var(--wow-border-inner);
+}
+
+.wow-card.hostile {
+    background: linear-gradient(180deg, #2e1812 0%, #1a0d0a 100%);
+    border-color: #6a2e22;
+    box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #9a4a34;
+}
+
+.wow-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Recessed inner panel */
+.wow-inset {
+    background: var(--wow-bg-deep);
+    border: 1px solid var(--wow-border);
+    border-radius: 4px;
+}
+
+/* ----- Form controls ----- */
+.wow-page input[type=number],
+.wow-page input[type=text],
+.wow-page select {
+    background: var(--wow-bg-deep);
+    color: #fff;
+    border: 1px solid var(--wow-border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    min-width: 90px;
+}
+
+.wow-page input:focus,
+.wow-page select:focus {
+    outline: none;
+    border-color: var(--wow-gold-soft);
+    box-shadow: 0 0 6px rgba(197,165,90,.35);
+}
+
+.wow-link-btn {
+    background: none;
+    border: none;
+    color: var(--wow-gold-soft);
+    font-size: .75rem;
+    text-decoration: underline;
+    padding: 0 4px;
+    cursor: pointer;
+}
+
+/* ----- Buttons ----- */
+.wow-btn {
+    padding: 8px 16px;
+    margin: 3px;
+    border: 1px solid #3d3420;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #2a2218 0%, #1a1410 100%);
+    color: var(--wow-text);
+    cursor: pointer;
+    font-family: var(--wow-font-title);
+    font-size: .9rem;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    transition: all .25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.wow-btn:hover {
+    border-color: var(--wow-gold-soft);
+    color: var(--wow-gold-pale);
+    background: linear-gradient(180deg, #3a3020 0%, #251f14 100%);
+    box-shadow: 0 0 8px rgba(197,165,90,.25), inset 0 1px 0 rgba(255,236,155,.1);
+    text-shadow: 0 0 4px rgba(255,236,155,.3);
+}
+
+.wow-btn.active {
+    border: 2px solid var(--wow-gold-soft);
+    color: var(--wow-gold-pale);
+    background: linear-gradient(180deg, #3d3220 0%, #2a2215 100%);
+    box-shadow: inset 0 0 10px rgba(197,165,90,.15), 0 0 10px rgba(197,165,90,.2);
+    text-shadow: 0 0 6px rgba(255,236,155,.4);
+}
+
+/* Red "action" button with gold rim (classic UI panel button) */
+.wow-btn.primary {
+    font-weight: 700;
+    color: var(--wow-gold);
+    padding: 6px 22px;
+    background: linear-gradient(180deg, #8b1a1a 0%, #4a0b0b 100%);
+    border: 2px solid var(--wow-gold-soft);
+    border-radius: 6px;
+}
+
+.wow-btn.primary:hover {
+    background: linear-gradient(180deg, #a52222 0%, #5e0f0f 100%);
+    color: var(--wow-gold-pale);
+}
+
+.wow-btn.small {
+    padding: 2px 10px;
+    margin: 0;
+    font-size: .72rem;
+}
+
+.wow-btn:disabled,
+.wow-btn.disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Icon buttons (race / class pictures) */
+.wow-btn-icon {
+    padding: 6px 12px;
+    min-width: 60px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: .75rem;
+}
+
+.wow-btn-icon img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    pointer-events: none;
+    border-radius: 4px;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
+}
+
+.wow-btn-icon.active img {
+    filter: drop-shadow(0 0 6px rgba(255,236,155,.5));
+}
+
+.wow-button-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+/* Small toggle tabs (metric tabs, speed buttons …) */
+.wow-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.wow-tab {
+    background: var(--wow-bg-deep);
+    color: var(--wow-text);
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: .8rem;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+
+.wow-tab:hover { color: #fff; border-color: var(--wow-border-inner); }
+.wow-tab.active { color: var(--wow-gold); border-color: var(--wow-gold-soft); background: #3a3022; }
+
+/* ----- Alerts ----- */
+.wow-alert {
+    margin-top: 1rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: .9rem;
+}
+
+.wow-alert.error   { background: #4a0b0b; border: 1px solid #b32121; color: #fff; }
+.wow-alert.warning { background: #3d2e0a; border: 1px solid #c58a1a; color: #ffd27a; }
+.wow-alert.success { background: #13300f; border: 1px solid #3f8a2f; color: #b4f0a4; }
+.wow-alert.info    { background: #1e1810; border: 1px solid var(--wow-border); color: var(--wow-gold-pale); }
+
+/* ----- Progress bar ----- */
+.wow-progress {
+    position: relative;
+    height: 22px;
+    background: var(--wow-bg-deep);
+    border: 1px solid var(--wow-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.wow-progress .bar { height: 100%; background: linear-gradient(90deg, #2a6e1f, #4fa83a); transition: width .2s; }
+.wow-progress span {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; color: #fff; text-shadow: 0 1px 2px #000;
+}
+
+/* ----- Key/value lists ----- */
+.wow-stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: .9rem;
+    line-height: 1.6;
+}
+
+.wow-stat-row > :first-child { color: var(--wow-gold); }
+.wow-stat-row > :last-child  { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ----- Colors ----- */
+.wow-dmg  { color: #ff8a65; }
+.wow-heal { color: #7ddc6f !important; }
+.alliance-color { color: #6ab0ff; }
+.horde-color    { color: #ff6a6a; }
+
+/* WoW class colors */
+.class-warrior { color: #c79c6e !important; }
+.class-paladin { color: #f58cba !important; }
+.class-hunter  { color: #abd473 !important; }
+.class-rogue   { color: #fff569 !important; }
+.class-priest  { color: #ffffff !important; }
+.class-shaman  { color: #0070de !important; }
+.class-mage    { color: #69ccf0 !important; }
+.class-warlock { color: #9482c9 !important; }
+.class-druid   { color: #ff7d0a !important; }
+
+/* ----- Scrollbars ----- */
+.wow-page * {
+    scrollbar-color: var(--wow-border) var(--wow-bg-deep);
+    scrollbar-width: thin;
+}
+
+/* ============================================
+   Home page
+   ============================================ */
+.wow-logo { filter: drop-shadow(0 4px 12px rgba(0,0,0,.8)); }
+
+.wow-subtitle {
+    color: var(--wow-muted) !important;
+    font-size: 1.1rem;
+    letter-spacing: .3px;
+}
+
+.wow-footer {
+    color: #5a5040 !important;
+    font-size: .85rem;
+    font-style: italic;
+}
+
+/* ============================================
+   Reconnect modal
+   ============================================ */
+#components-reconnect-modal {
+    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%) !important;
+    color: var(--wow-text) !important;
+    border: 2px solid var(--wow-border) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,.7), inset 0 0 0 1px var(--wow-border-inner) !important;
+    font-family: var(--wow-font-body);
+}
+
+/* ── Rank Badge (shared: AbilityLoadout, IdleFighter) ── */
+.rank-badge {
+    font-size: .65rem; font-weight: 700; color: #ffd100;
+    background: rgba(0,0,0,.45); border: 1px solid #5a4a22;
+    border-radius: 3px; padding: 0 4px; margin-left: 4px;
+    letter-spacing: .5px; vertical-align: middle;
+}
+

@@ -1,0 +1,1010 @@
+@page "/debug/simulation"
+@rendermode InteractiveServer
+@using Models
+@using DebugTools
+@implements IDisposable
+@inject IJSRuntime JS
+
+<PageTitle>Class Simulation (Debug)</PageTitle>
+
+<div class="wow-page wide">
+    <h2>Class Simulation <span class="wow-badge">DEBUG</span></h2>
+    <p class="wow-hint">
+        Runs every selected class headless against the regular enemy spawns –
+        same combat logic as the live game, without touching your character.
+        Loadout and talents are selected automatically at each level.
+    </p>
+
+    <!-- ═══ MODUS ═══ -->
+    <div class="wow-tabs mode-tabs">
+        <button class="wow-tab @(_mode == "bench" ? "active" : "")" @onclick='() => _mode = "bench"' disabled="@_running">Level Benchmark</button>
+        <button class="wow-tab @(_mode == "race" ? "active" : "")" @onclick='() => _mode = "race"' disabled="@_running">Leveling Race</button>
+    </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <div class="wow-card sim-settings">
+        <div class="setting">
+            <label>Level from</label>
+            <input type="number" min="1" max="60" @bind="_levelFrom" disabled="@_running" />
+        </div>
+        <div class="setting">
+            <label>Level to</label>
+            <input type="number" min="1" max="60" @bind="_levelTo" disabled="@_running" />
+        </div>
+        <div class="setting">
+            <label>@(_mode == "race" ? "Max game time per class" : "Game time per run")</label>
+            <select @bind="_minutesPerRun" disabled="@_running">
+                <option value="10">10 min</option>
+                <option value="30">30 min</option>
+                <option value="60">1 h</option>
+                <option value="180">3 h</option>
+                <option value="600">10 h</option>
+                <option value="36000">Until target (cap: 600 h)</option>
+            </select>
+        </div>
+        <div class="setting">
+            <label>Outlier threshold</label>
+            <select @bind="_outlierPercent">
+                <option value="15">±15 %</option>
+                <option value="25">±25 %</option>
+                <option value="35">±35 %</option>
+                <option value="50">±50 %</option>
+            </select>
+        </div>
+
+        <div class="setting class-picker">
+            <label>
+                Classes
+                <button class="wow-link-btn" @onclick="SelectAllClasses" disabled="@_running">all</button>
+                <button class="wow-link-btn" @onclick="() => _selectedClasses.Clear()" disabled="@_running">none</button>
+            </label>
+            <div class="class-toggles">
+                @foreach (var cls in AllClasses)
+                {
+                    var c = cls;
+                    <label class="class-toggle @(_selectedClasses.Contains(c) ? "on" : "")">
+                        <input type="checkbox" checked="@_selectedClasses.Contains(c)" disabled="@_running"
+                               @onchange="e => ToggleClass(c, (bool)e.Value!)" />
+                        <span class="class-@ClassCss(c)">@c</span>
+                    </label>
+                }
+            </div>
+        </div>
+
+        <div class="setting actions">
+            @if (_running)
+            {
+                <button class="wow-btn" @onclick="Cancel">Cancel</button>
+            }
+            else
+            {
+                <button class="wow-btn primary" @onclick="RunSimulationAsync" disabled="@(!CanStart)">▶ Simulate</button>
+            }
+        </div>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="wow-alert error">@_error</div>
+    }
+
+    @if (_running || _results.Count > 0 || _levelingResults.Count > 0)
+    {
+        int _progressCount = _mode == "race" ? _levelingResults.Count : _results.Count;
+        string _progressUnit = _mode == "race" ? "classes" : "runs";
+        var _wallTime = _running ? DateTime.UtcNow - _startedAt : _elapsed;
+        <div class="wow-progress sim-progress">
+            <div class="bar" style="width:@(ProgressPercent.ToString("0.#", Inv))%"></div>
+            <span>@_progressCount / @_totalRuns @_progressUnit @(_running ? $"… {_wallTime.TotalSeconds:0.0}s" : $"· {_wallTime.TotalSeconds:0.0}s")</span>
+        </div>
+    }
+
+    @if (_results.Count > 0)
+    {
+        var results = Snapshot();
+        var levels  = results.Select(r => r.Level).Distinct().OrderBy(l => l).ToList();
+        var classes = results.Select(r => r.Class).Distinct().ToList();
+        var metric  = Metrics[_metricKey];
+
+        @if (results.Any(r => r.SpawnErrors > 0))
+        {
+            <div class="wow-alert warning">
+                ⚠ The enemy spawner failed @results.Sum(r => r.SpawnErrors).ToString("N0", Inv) times
+                (no enemy template for the rolled level) – affected levels:
+                @string.Join(", ", results.Where(r => r.SpawnErrors > 0).Select(r => r.Level).Distinct().OrderBy(l => l))
+            </div>
+        }
+
+        <!-- ═══ MATRIX ═══ -->
+        <div class="wow-card">
+            <div class="wow-card-header">
+                <h4>Overview</h4>
+                <div class="wow-tabs">
+                    @foreach (var (key, m) in Metrics)
+                    {
+                        var k = key;
+                        <button class="wow-tab @(k == _metricKey ? "active" : "")" @onclick="() => _metricKey = k">@m.Label</button>
+                    }
+                </div>
+            </div>
+            <p class="wow-hint">
+                Coloring = deviation from the median of all classes on the same level
+                (green = better, red = worse). Cells beyond @_outlierPercent % are marked ◆.
+            </p>
+
+            <div class="table-wrap">
+                <table class="sim-table matrix">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            @foreach (var lv in levels)
+                            {
+                                <th>Lv @lv</th>
+                            }
+                            <th>Ø Dev.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cls in classes)
+                        {
+                            var devs = new List<double>();
+                            <tr>
+                                <td class="class-@ClassCss(cls) cls-name">@cls</td>
+                                @foreach (var lv in levels)
+                                {
+                                    var r = results.FirstOrDefault(x => x.Class == cls && x.Level == lv);
+                                    if (r is null)
+                                    {
+                                        <td class="na">–</td>
+                                        continue;
+                                    }
+                                    double v   = metric.Value(r);
+                                    double dev = Deviation(metric, v, MedianFor(results, metric, lv));
+                                    if (!double.IsNaN(dev)) devs.Add(dev);
+                                    bool outlier = !double.IsNaN(dev) && Math.Abs(dev) >= OutlierThreshold;
+                                    <td style="@CellStyle(dev)" title="@(double.IsNaN(dev) ? "" : $"{dev:+0%;-0%;0%} vs. level median")">
+                                        @metric.Format(v)@(outlier ? " ◆" : "")
+                                    </td>
+                                }
+                                @{ double avgDev = devs.Count > 0 ? devs.Average() : double.NaN; }
+                                <td style="@CellStyle(avgDev)" class="avg-dev">@(double.IsNaN(avgDev) ? "–" : avgDev.ToString("+0%;-0%;0%", Inv))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Median</td>
+                            @foreach (var lv in levels)
+                            {
+                                <td>@metric.Format(MedianFor(results, metric, lv))</td>
+                            }
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ OUTLIERS ═══ -->
+        var outliers = FindOutliers(results).ToList();
+        <div class="wow-card">
+            <h4>Outliers (DPS · Kills/min · Deaths/h, ≥ @_outlierPercent %)</h4>
+            <p class="wow-hint">+ = better than the level median, − = worse (for Deaths/h: + means fewer deaths).</p>
+            @if (outliers.Count == 0)
+            {
+                <p class="wow-hint">Nobody steps out of line. 🎉</p>
+            }
+            else
+            {
+                <ul class="outlier-list">
+                    @foreach (var o in outliers)
+                    {
+                        <li>
+                            <span class="dev @(o.Better ? "good" : "bad")">@o.Deviation.ToString("+0%;-0%", Inv)</span>
+                            <span class="class-@ClassCss(o.Class)">@o.Class</span>
+                            <span class="wow-muted">@o.Metric · Lv @o.Levels</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <!-- ═══ AI EXPORT ═══ -->
+        <div class="wow-card">
+            <div class="wow-card-header">
+                <h4>AI Export</h4>
+                <button class="wow-btn @(_copied ? "primary" : "")" @onclick="CopyAiSummaryAsync">
+                    @(_copied ? "✓ Copied" : "Copy for AI")
+                </button>
+            </div>
+            <p class="wow-hint">
+                Structured summary of all metrics, outliers, and ability breakdowns —
+                paste directly into an AI chat to get concrete balance suggestions.
+            </p>
+            <textarea class="ai-export-text" readonly>@_aiSummary</textarea>
+        </div>
+
+        <!-- ═══ DETAILS ═══ -->
+        <div class="wow-card">
+            <div class="wow-card-header">
+                <h4>All runs</h4>
+                <select @bind="_detailLevelFilter">
+                    <option value="0">All levels</option>
+                    @foreach (var lv in levels)
+                    {
+                        <option value="@lv">Level @lv</option>
+                    }
+                </select>
+            </div>
+            <p class="wow-hint">Click a column to sort, click a row for the ability breakdown.</p>
+
+            <div class="table-wrap">
+                <table class="sim-table details">
+                    <thead>
+                        <tr>
+                            @foreach (var col in DetailColumns)
+                            {
+                                var c = col;
+                                <th class="sortable" @onclick="() => SortBy(c.Key)">
+                                    @c.Label@(c.Key == _sortKey ? (_sortDesc ? " ▼" : " ▲") : "")
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in SortedDetails(results))
+                        {
+                            var row = r;
+                            bool open = _expanded.Contains((row.Class, row.Level));
+                            <tr class="detail-row @(open ? "open" : "")" @onclick="() => ToggleExpanded(row)">
+                                @foreach (var col in DetailColumns)
+                                {
+                                    if (col.Key == "class")
+                                    {
+                                        <td class="class-@ClassCss(row.Class) cls-name">@row.Class</td>
+                                    }
+                                    else
+                                    {
+                                        <td class="@(col.Key == "spawnerr" && row.SpawnErrors > 0 ? "warn" : "")">@col.Format(row)</td>
+                                    }
+                                }
+                            </tr>
+                            @if (open)
+                            {
+                                <tr class="breakdown-row">
+                                    <td colspan="@DetailColumns.Length">
+                                        <div class="breakdown">
+                                            <div class="breakdown-stats">
+                                                <span>HP <b>@row.Stats.MaxHp</b></span>
+                                                <span>Resource <b>@row.Stats.MaxMana</b></span>
+                                                <span>Mana/5 <b>@row.Stats.ManaRegenPer5</b></span>
+                                                <span>AP <b>@row.Stats.AttackPower</b></span>
+                                                <span>Weapon <b>@row.Stats.WeaponMinDamage–@row.Stats.WeaponMaxDamage @@ @row.Stats.Speed.ToString("0.0#", Inv)s</b></span>
+                                                <span>Str/Agi/Sta/Int/Spi <b>@row.Stats.Primary.Strength/@row.Stats.Primary.Agility/@row.Stats.Primary.Stamina/@row.Stats.Primary.Intelligence/@row.Stats.Primary.Spirit</b></span>
+                                                <span>Combat time <b>@FormatMinutes(row.CombatSeconds / 60)</b></span>
+                                            </div>
+                                            <table class="sim-table inner">
+                                                <thead>
+                                                    <tr><th>Source</th><th>Type</th><th>Total</th><th>Share</th><th>Hits</th><th>Avg</th><th>Max</th><th>Per sec</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var b in row.Breakdown)
+                                                    {
+                                                        long kindTotal = b.Kind == CombatActionKind.Heal ? row.TotalHealing : row.TotalDamage;
+                                                        double share = kindTotal > 0 ? (double)b.Total / kindTotal : 0;
+                                                        <tr>
+                                                            <td class="src">
+                                                                <AbilityTooltip Ability="ClassAbilityRegistry.FindByName(row.Class, b.Name)" PlayerLevel="row.Level">
+                                                                    <span class="src-inner">
+                                                                        @if (!string.IsNullOrEmpty(b.IconUrl))
+                                                                        {
+                                                                            <img src="@b.IconUrl" alt="" onerror="this.style.display='none'" />
+                                                                        }
+                                                                        @b.Name
+                                                                    </span>
+                                                                </AbilityTooltip>
+                                                            </td>
+                                                            <td class="@(b.Kind == CombatActionKind.Heal ? "heal" : "dmg")">@b.Kind</td>
+                                                            <td>@b.Total.ToString("N0", Inv)</td>
+                                                            <td>
+                                                                <div class="share-bar @(b.Kind == CombatActionKind.Heal ? "heal" : "dmg")">
+                                                                    <div style="width:@((share * 100).ToString("0.#", Inv))%"></div>
+                                                                    <span>@share.ToString("0.0%", Inv)</span>
+                                                                </div>
+                                                            </td>
+                                                            <td>@b.Count.ToString("N0", Inv)</td>
+                                                            <td>@(b.Count > 0 ? ((double)b.Total / b.Count).ToString("0.0", Inv) : "–")</td>
+                                                            <td>@b.Max</td>
+                                                            <td>@(row.CombatSeconds > 0 ? (b.Total / row.CombatSeconds).ToString("0.00", Inv) : "–")</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- ═══ LEVELING RACE ERGEBNISSE ═══ -->
+    @if (_levelingResults.Count > 0)
+    {
+        var lrList    = LevelingSnapshot();
+        var rankOrder = lrList.OrderBy(r => r.ReachedTarget ? r.SimSecondsToTarget : double.MaxValue).ToList();
+
+        @if (lrList.Any(r => r.SpawnErrors > 0))
+        {
+            <div class="wow-alert warning">
+                ⚠ Spawn errors: @lrList.Sum(r => r.SpawnErrors).ToString("N0", Inv) – some levels may be underrepresented.
+            </div>
+        }
+
+        <!-- Standings -->
+        <div class="wow-card">
+            <h4>Race Standings: Level @(lrList[0].LevelFrom) → @(lrList[0].LevelTo)</h4>
+            <p class="wow-hint">Sorted by simulated game time to reach the target level. DNF = did not finish within the cap.</p>
+            <div class="table-wrap">
+                <table class="sim-table race-standings">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Class</th>
+                            <th>Result</th>
+                            <th>Time (simulated)</th>
+                            <th>Kills</th>
+                            <th>Deaths</th>
+                            <th>Money/h</th>
+                            <th>Talents</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int ri = 0; ri < rankOrder.Count; ri++)
+                        {
+                            var r = rankOrder[ri];
+                            int rank = ri + 1;
+                            string medal = rank == 1 ? "🥇" : rank == 2 ? "🥈" : rank == 3 ? "🥉" : $"#{rank}";
+                            <tr>
+                                <td class="race-rank">@medal</td>
+                                <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                <td class="@(r.ReachedTarget ? "race-reached" : "race-dnf")">
+                                    @(r.ReachedTarget ? $"✓ Level {r.LevelTo}" : $"DNF (reached Lv {r.FinalLevel})")
+                                </td>
+                                <td>@(r.ReachedTarget ? FormatGameTime(r.SimSecondsToTarget) : "–")</td>
+                                <td>@r.TotalKills.ToString("N0", Inv)</td>
+                                <td>@r.TotalDeaths.ToString("N0", Inv)</td>
+                                <td>@Money.Format((long)r.CopperPerHour)</td>
+                                <td class="talent-col">@r.TalentSummary</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Level Timeline -->
+        @if (GetMilestoneLevels(lrList[0].LevelFrom, lrList[0].LevelTo) is { Count: > 0 } milestones)
+        {
+            <div class="wow-card">
+                <h4>Level Timeline</h4>
+                <p class="wow-hint">Simulated game time to reach each level. Green = faster than median, red = slower.</p>
+                <div class="table-wrap">
+                    <table class="sim-table timeline-table">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                @foreach (var lv in milestones)
+                                {
+                                    <th>Lv @lv</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in rankOrder)
+                            {
+                                <tr>
+                                    <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                    @foreach (var lv in milestones)
+                                    {
+                                        var timing = r.LevelTimings.FirstOrDefault(t => t.Level == lv);
+                                        if (timing is null)
+                                        {
+                                            <td class="na">–</td>
+                                        }
+                                        else
+                                        {
+                                            double dev = LevelTimingDeviation(lrList, lv, timing.SimSecondsToReach);
+                                            <td style="@CellStyle(dev)" title="@FormatGameTime(timing.SimSecondsToReach)">@FormatGameTime(timing.SimSecondsToReach)</td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- Ability-Breakdown -->
+        <div class="wow-card">
+            <div class="wow-card-header">
+                <h4>Ability Breakdown (full run)</h4>
+            </div>
+            <p class="wow-hint">Click a row to expand the ability breakdown for the entire leveling run.</p>
+            <div class="table-wrap">
+                <table class="sim-table details">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Final Lv</th>
+                            <th>DPS (overall)</th>
+                            <th>Kills</th>
+                            <th>Deaths</th>
+                            <th>K/D</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in rankOrder)
+                        {
+                            bool open = _lrExpanded.Contains(r.Class);
+                            <tr class="detail-row @(open ? "open" : "")" @onclick="() => ToggleLrExpanded(r.Class)">
+                                <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                <td>@r.FinalLevel</td>
+                                <td>@F(r.Dps, "0.00")</td>
+                                <td>@r.TotalKills.ToString("N0", Inv)</td>
+                                <td>@r.TotalDeaths.ToString("N0", Inv)</td>
+                                <td>@(r.TotalDeaths > 0 ? ((double)r.TotalKills / r.TotalDeaths).ToString("0.0", Inv) : "∞")</td>
+                            </tr>
+                            @if (open)
+                            {
+                                <tr class="breakdown-row">
+                                    <td colspan="6">
+                                        <div class="breakdown">
+                                            <table class="sim-table inner">
+                                                <thead>
+                                                    <tr><th>Source</th><th>Type</th><th>Total</th><th>Share</th><th>Hits</th><th>Avg</th><th>Max</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var b in r.FinalBreakdown.OrderByDescending(b => b.Total))
+                                                    {
+                                                        long kindTotal = b.Kind == CombatActionKind.Heal ? r.TotalHealing : r.TotalDamage;
+                                                        double share = kindTotal > 0 ? (double)b.Total / kindTotal : 0;
+                                                        <tr>
+                                                            <td class="src">
+                                                                <AbilityTooltip Ability="ClassAbilityRegistry.FindByName(r.Class, b.Name)" PlayerLevel="r.FinalLevel">
+                                                                    <span class="src-inner">
+                                                                        @if (!string.IsNullOrEmpty(b.IconUrl))
+                                                                        {
+                                                                            <img src="@b.IconUrl" alt="" onerror="this.style.display='none'" />
+                                                                        }
+                                                                        @b.Name
+                                                                    </span>
+                                                                </AbilityTooltip>
+                                                            </td>
+                                                            <td class="@(b.Kind == CombatActionKind.Heal ? "heal" : "dmg")">@b.Kind</td>
+                                                            <td>@b.Total.ToString("N0", Inv)</td>
+                                                            <td>
+                                                                <div class="share-bar @(b.Kind == CombatActionKind.Heal ? "heal" : "dmg")">
+                                                                    <div style="width:@((share * 100).ToString("0.#", Inv))%"></div>
+                                                                    <span>@share.ToString("0.0%", Inv)</span>
+                                                                </div>
+                                                            </td>
+                                                            <td>@b.Count.ToString("N0", Inv)</td>
+                                                            <td>@(b.Count > 0 ? ((double)b.Total / b.Count).ToString("0.0", Inv) : "–")</td>
+                                                            <td>@b.Max</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    /* ----- Settings ----- */
+    .sim-settings { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
+    .setting { display: flex; flex-direction: column; gap: 4px; }
+    .setting label { font-size: .8rem; color: #ffd100; }
+    .class-picker { flex-basis: 100%; }
+    .class-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
+    .class-toggle { display: flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid #4a3d22; border-radius: 4px; background: #0e0b07; cursor: pointer; font-weight: 600; opacity: .55; }
+    .class-toggle.on { opacity: 1; border-color: #c5a55a; }
+    .class-toggle input { accent-color: #c5a55a; }
+    .actions { margin-left: auto; }
+
+    .sim-progress { margin-top: 1rem; }
+
+    /* ----- Tables ----- */
+    .table-wrap { overflow-x: auto; }
+    .sim-table { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+    .sim-table th { color: #ffd100; font-weight: 600; text-align: right; padding: 5px 8px; border-bottom: 1px solid #5a4a28; white-space: nowrap; }
+    .sim-table td { text-align: right; padding: 4px 8px; border-bottom: 1px solid #2a2214; color: #fff; white-space: nowrap; }
+    .sim-table th:first-child, .sim-table td:first-child { text-align: left; }
+    .sim-table tfoot td { color: #9a8a64; border-top: 1px solid #5a4a28; font-style: italic; }
+    .sim-table .cls-name { font-weight: 700; }
+    .sim-table .na { color: #5a4a28; }
+    .sim-table .warn { color: #ffb347; font-weight: 700; }
+    .matrix td { min-width: 70px; }
+    .matrix .avg-dev { font-weight: 700; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: #fff; }
+    .detail-row { cursor: pointer; }
+    .detail-row:hover td, .detail-row.open td { background: #2b2418; }
+
+    .breakdown { padding: 8px 4px 12px 16px; background: #0e0b07; border-left: 3px solid #c5a55a; }
+    .breakdown-stats { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: .8rem; color: #9a8a64; margin-bottom: 8px; }
+    .breakdown-stats b { color: #fff; }
+    .sim-table.inner td, .sim-table.inner th { border-bottom-color: #1e1810; }
+    .sim-table.inner .src,
+    .sim-table.inner .src-inner { display: flex; align-items: center; gap: 6px; }
+    .sim-table.inner .src img { width: 18px; height: 18px; border-radius: 3px; }
+    .sim-table .dmg { color: #ff8a65; }
+    .sim-table .heal { color: #7ddc6f; }
+    .share-bar { position: relative; width: 120px; height: 14px; background: #1a150d; border-radius: 3px; overflow: hidden; margin-left: auto; }
+    .share-bar div { height: 100%; }
+    .share-bar.dmg div { background: #8b2a1a; }
+    .share-bar.heal div { background: #2a6e1f; }
+    .share-bar span { position: absolute; inset: 0; font-size: .7rem; line-height: 14px; text-align: center; color: #fff; }
+
+    .ai-export-text { width: 100%; height: 220px; background: #0a0806; color: #bfaf96; border: 1px solid #4a3d22; border-radius: 4px; padding: 8px; font-size: .75rem; font-family: monospace; resize: vertical; box-sizing: border-box; }
+
+    .outlier-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 4px 16px; }
+    .outlier-list li { display: flex; gap: 10px; align-items: baseline; font-size: .9rem; }
+    .outlier-list span:nth-child(2) { font-weight: 700; }
+    .dev { min-width: 48px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .dev.good { color: #7ddc6f; }
+    .dev.bad { color: #ff6b5b; }
+
+    /* ----- Mode tabs ----- */
+    .mode-tabs { margin-bottom: 12px; }
+
+    /* ----- Leveling Race ----- */
+    .race-standings .race-rank { text-align: center; font-size: 1.1rem; min-width: 36px; }
+    .race-reached { color: #7ddc6f; font-weight: 700; }
+    .race-dnf { color: #ff6b5b; }
+    .talent-col { font-size: .72rem; color: #9a8a64; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .timeline-table td { min-width: 80px; font-size: .8rem; }
+</style>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
+    private static readonly CharacterClass[] AllClasses = Enum.GetValues<CharacterClass>();
+
+    // ─── Einstellungen ───
+    private int _levelFrom = 1;
+    private int _levelTo = 6;
+    private double _minutesPerRun = 60;
+    private int _outlierPercent = 25;
+    private double OutlierThreshold => _outlierPercent / 100.0;
+    private readonly HashSet<CharacterClass> _selectedClasses = new(AllClasses);
+
+    // ─── Modus ───
+    private string _mode = "bench";
+
+    // ─── Laufzustand ───
+    private readonly List<SimulationResult> _results = new();
+    private readonly object _resultsLock = new();
+    private readonly List<LevelingResult> _levelingResults = new();
+    private readonly object _levelingResultsLock = new();
+    private readonly HashSet<CharacterClass> _lrExpanded = new();
+    private CancellationTokenSource? _cts;
+    private bool _running;
+    private int _totalRuns;
+    private TimeSpan _elapsed;
+    private DateTime _startedAt;
+    private string? _error;
+
+    // ─── AI-Export ───
+    private string _aiSummary = "";
+    private bool _copied;
+
+    // ─── Ansicht ───
+    private string _metricKey = "dps";
+    private int _detailLevelFilter;
+    private string _sortKey = "dps";
+    private bool _sortDesc = true;
+    private readonly HashSet<(CharacterClass, int)> _expanded = new();
+
+    private bool CanStart => _selectedClasses.Count > 0 && _levelFrom >= 1 && _levelTo <= 60 && _levelFrom <= _levelTo;
+    private double ProgressPercent => _totalRuns > 0 ? 100.0 * (_mode == "race" ? _levelingResults.Count : _results.Count) / _totalRuns : 0;
+
+    // ─── Metriken ───
+    private sealed record Metric(string Label, Func<SimulationResult, double> Value, Func<double, string> Format, bool HigherIsBetter);
+
+    private static string F(double v, string fmt) => double.IsNaN(v) ? "–" : double.IsInfinity(v) ? "∞" : v.ToString(fmt, Inv);
+
+    private static string FormatMinutes(double minutes)
+    {
+        if (double.IsNaN(minutes)) return "–";
+        var t = TimeSpan.FromMinutes(minutes);
+        return t.TotalHours >= 1 ? $"{(int)t.TotalHours}h {t.Minutes:00}m" : $"{t.Minutes}m {t.Seconds:00}s";
+    }
+
+    private static readonly Dictionary<string, Metric> Metrics = new()
+    {
+        ["dps"]     = new("DPS",          r => r.Dps,            v => F(v, "0.00"), true),
+        ["autodps"] = new("Auto DPS",     r => r.AutoDps,        v => F(v, "0.00"), true),
+        ["abildps"] = new("Ability DPS",  r => r.AbilityDps,     v => F(v, "0.00"), true),
+        ["hps"]     = new("HPS",          r => r.Hps,            v => F(v, "0.00"), true),
+        ["dtps"]    = new("DTPS",         r => r.Dtps,           v => F(v, "0.00"), false),
+        ["kpm"]     = new("Kills/min",    r => r.KillsPerMin,    v => F(v, "0.00"), true),
+        ["ttk"]     = new("Ø TTK",        r => r.AvgTtk,         v => double.IsNaN(v) ? "–" : $"{v.ToString("0.0", Inv)}s", false),
+        ["dph"]     = new("Deaths/h",     r => r.DeathsPerHour,  v => F(v, "0.0"), false),
+        ["xph"]     = new("XP/h",         r => r.XpPerHour,      v => F(v, "N0"), true),
+        ["gph"]     = new("Money/h",      r => r.CopperPerHour,  v => Money.Format((long)v), true),
+        ["ttl"]     = new("Time to level", r => r.MinutesToLevel, FormatMinutes, false),
+    };
+
+    private sealed record DetailColumn(string Key, string Label, Func<SimulationResult, IComparable> SortValue, Func<SimulationResult, string> Format);
+
+    private static readonly DetailColumn[] DetailColumns =
+    {
+        new("class",    "Class",       r => r.Class.ToString(), r => r.Class.ToString()),
+        new("level",    "Lv",          r => r.Level,            r => r.Level.ToString()),
+        new("dps",      "DPS",         r => r.Dps,              r => F(r.Dps, "0.00")),
+        new("autodps",  "Auto",        r => r.AutoDps,          r => F(r.AutoDps, "0.00")),
+        new("abildps",  "Ability",     r => r.AbilityDps,       r => F(r.AbilityDps, "0.00")),
+        new("dmg",      "Damage",      r => r.TotalDamage,      r => r.TotalDamage.ToString("N0", Inv)),
+        new("hps",      "HPS",         r => r.Hps,              r => F(r.Hps, "0.00")),
+        new("heal",     "Healing",     r => r.TotalHealing,     r => r.TotalHealing.ToString("N0", Inv)),
+        new("dtps",     "DTPS",        r => r.Dtps,             r => F(r.Dtps, "0.00")),
+        new("taken",    "Dmg taken",   r => r.DamageTaken,      r => r.DamageTaken.ToString("N0", Inv)),
+        new("kills",    "Kills",       r => r.Kills,            r => r.Kills.ToString("N0", Inv)),
+        new("kpm",      "Kills/min",   r => r.KillsPerMin,      r => F(r.KillsPerMin, "0.00")),
+        new("ttk",      "Ø TTK",       r => double.IsNaN(r.AvgTtk) ? double.MaxValue : r.AvgTtk, r => double.IsNaN(r.AvgTtk) ? "–" : $"{r.AvgTtk.ToString("0.0", Inv)}s"),
+        new("deaths",   "Deaths",      r => r.Deaths,           r => r.Deaths.ToString("N0", Inv)),
+        new("kd",       "Kills/Death", r => r.KillsPerDeath,    r => F(r.KillsPerDeath, "0.0")),
+        new("xph",      "XP/h",        r => r.XpPerHour,        r => F(r.XpPerHour, "N0")),
+        new("gph",      "Money/h",     r => r.CopperPerHour,    r => Money.Format((long)r.CopperPerHour)),
+        new("ttl",      "Time to lvl", r => double.IsNaN(r.MinutesToLevel) ? double.MaxValue : r.MinutesToLevel, r => FormatMinutes(r.MinutesToLevel)),
+        new("spawnerr", "Spawn err.",  r => r.SpawnErrors,      r => r.SpawnErrors.ToString("N0", Inv)),
+    };
+
+    // ─── Ablauf ───
+    private async Task StartAsync()
+    {
+        if (!CanStart) return;
+
+        _error = null;
+        lock (_resultsLock) _results.Clear();
+        lock (_levelingResultsLock) _levelingResults.Clear();
+        _expanded.Clear();
+
+        var settings = new SimulationSettings(_levelFrom, _levelTo, _minutesPerRun,
+            AllClasses.Where(_selectedClasses.Contains).ToList());
+
+        _totalRuns = ClassSimulator.RunCount(settings);
+        _running = true;
+        _cts = new CancellationTokenSource();
+        _startedAt = DateTime.UtcNow;
+
+        try
+        {
+            await ClassSimulator.RunAllAsync(settings, result =>
+            {
+                lock (_resultsLock) _results.Add(result);
+                _ = InvokeAsync(StateHasChanged);
+            }, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _error = "Simulation cancelled.";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Simulation failed: {ex.Message}";
+        }
+        finally
+        {
+            _elapsed = DateTime.UtcNow - _startedAt;
+            _running = false;
+            _cts?.Dispose();
+            _cts = null;
+            _aiSummary = BuildAiSummary(Snapshot());
+        }
+    }
+
+    private async Task StartLevelingAsync()
+    {
+        if (!CanStart) return;
+
+        _error = null;
+        lock (_resultsLock) _results.Clear();
+        lock (_levelingResultsLock) _levelingResults.Clear();
+        _lrExpanded.Clear();
+
+        var settings = new SimulationSettings(_levelFrom, _levelTo, _minutesPerRun,
+            AllClasses.Where(_selectedClasses.Contains).ToList());
+
+        _totalRuns = ClassSimulator.LevelingRunCount(settings);
+        _running = true;
+        _cts = new CancellationTokenSource();
+        _startedAt = DateTime.UtcNow;
+
+        try
+        {
+            await ClassSimulator.RunAllLevelingAsync(settings, result =>
+            {
+                lock (_levelingResultsLock) _levelingResults.Add(result);
+                _ = InvokeAsync(StateHasChanged);
+            }, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _error = "Simulation cancelled.";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Simulation failed: {ex.Message}";
+        }
+        finally
+        {
+            _elapsed = DateTime.UtcNow - _startedAt;
+            _running = false;
+            _cts?.Dispose();
+            _cts = null;
+        }
+    }
+
+    private async Task RunSimulationAsync() =>
+        await (_mode == "race" ? StartLevelingAsync() : StartAsync());
+
+    private void Cancel() => _cts?.Cancel();
+
+    private List<SimulationResult> Snapshot()
+    {
+        lock (_resultsLock) return _results.ToList();
+    }
+
+    private void SelectAllClasses() => _selectedClasses.UnionWith(AllClasses);
+
+    private void ToggleClass(CharacterClass cls, bool on)
+    {
+        if (on) _selectedClasses.Add(cls);
+        else    _selectedClasses.Remove(cls);
+    }
+
+    private void ToggleExpanded(SimulationResult r)
+    {
+        if (!_expanded.Remove((r.Class, r.Level)))
+            _expanded.Add((r.Class, r.Level));
+    }
+
+    private void SortBy(string key)
+    {
+        if (_sortKey == key) _sortDesc = !_sortDesc;
+        else { _sortKey = key; _sortDesc = key is not ("class" or "level"); }
+    }
+
+    private IEnumerable<SimulationResult> SortedDetails(List<SimulationResult> results)
+    {
+        var col = DetailColumns.First(c => c.Key == _sortKey);
+        var filtered = _detailLevelFilter > 0 ? results.Where(r => r.Level == _detailLevelFilter) : results;
+        return _sortDesc ? filtered.OrderByDescending(col.SortValue) : filtered.OrderBy(col.SortValue);
+    }
+
+    // ─── Auswertung ───
+    private static double MedianFor(List<SimulationResult> results, Metric metric, int level)
+    {
+        var values = results.Where(r => r.Level == level)
+            .Select(metric.Value)
+            .Where(v => !double.IsNaN(v) && !double.IsInfinity(v))
+            .OrderBy(v => v)
+            .ToList();
+
+        if (values.Count == 0) return double.NaN;
+        int mid = values.Count / 2;
+        return values.Count % 2 == 1 ? values[mid] : (values[mid - 1] + values[mid]) / 2.0;
+    }
+
+    /// <summary>Abweichung vom Median, positiv = besser (berücksichtigt "niedriger ist besser").</summary>
+    private static double Deviation(Metric metric, double value, double median)
+    {
+        if (double.IsNaN(value) || double.IsNaN(median) || double.IsInfinity(value)) return double.NaN;
+        if (median == 0) return value == 0 ? 0 : double.NaN;
+        double dev = (value - median) / median;
+        return metric.HigherIsBetter ? dev : -dev;
+    }
+
+    private static string CellStyle(double dev)
+    {
+        if (double.IsNaN(dev)) return "";
+        double a = Math.Min(1.0, Math.Abs(dev) / 0.6) * 0.55;
+        string rgb = dev >= 0 ? "60, 170, 60" : "200, 50, 40";
+        return $"background: rgba({rgb}, {a.ToString("0.###", Inv)});";
+    }
+
+    private sealed record Outlier(CharacterClass Class, string Metric, string Levels, double Deviation, bool Better);
+
+    /// <summary>Fasst Ausreißer pro Klasse + Metrik über zusammenhängende Level zusammen.</summary>
+    private IEnumerable<Outlier> FindOutliers(List<SimulationResult> results)
+    {
+        var keys   = new[] { "dps", "kpm", "dph" };
+        var levels = results.Select(r => r.Level).Distinct().OrderBy(l => l).ToList();
+
+        foreach (var key in keys)
+        {
+            var metric = Metrics[key];
+            foreach (var cls in results.Select(r => r.Class).Distinct())
+            {
+                var hits = new List<(int Level, double Dev)>();
+                foreach (var lv in levels)
+                {
+                    var r = results.FirstOrDefault(x => x.Class == cls && x.Level == lv);
+                    if (r is null) continue;
+                    double dev = Deviation(metric, metric.Value(r), MedianFor(results, metric, lv));
+                    if (!double.IsNaN(dev) && Math.Abs(dev) >= OutlierThreshold)
+                        hits.Add((lv, dev));
+                }
+
+                // Nach Richtung gruppieren, damit "zu stark" und "zu schwach" getrennt bleiben
+                foreach (var group in hits.GroupBy(h => h.Dev > 0))
+                {
+                    var lvs = group.Select(h => h.Level).ToList();
+                    yield return new Outlier(cls, metric.Label, FormatLevelList(lvs), group.Average(h => h.Dev), group.Key);
+                }
+            }
+        }
+    }
+
+    private static string FormatLevelList(List<int> levels)
+    {
+        var parts = new List<string>();
+        for (int i = 0; i < levels.Count; i++)
+        {
+            int start = levels[i];
+            while (i + 1 < levels.Count && levels[i + 1] == levels[i] + 1) i++;
+            parts.Add(start == levels[i] ? $"{start}" : $"{start}–{levels[i]}");
+        }
+        return string.Join(", ", parts);
+    }
+
+    private static string ClassCss(CharacterClass cls) => cls.ToString().ToLowerInvariant();
+
+    // ─── AI-Export ───
+    private async Task CopyAiSummaryAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _aiSummary);
+            _copied = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            _copied = false;
+            StateHasChanged();
+        }
+        catch
+        {
+            // Clipboard-Zugriff verweigert – Text bleibt im Textarea sichtbar
+        }
+    }
+
+    private string BuildAiSummary(List<SimulationResult> results)
+    {
+        if (results.Count == 0) return "";
+        var sb      = new System.Text.StringBuilder();
+        var levels  = results.Select(r => r.Level).Distinct().OrderBy(l => l).ToList();
+        var classes = results.Select(r => r.Class).Distinct().OrderBy(c => c.ToString()).ToList();
+
+        sb.AppendLine("## Simulation Results");
+        sb.AppendLine($"Classes: {string.Join(", ", classes)}");
+        sb.AppendLine($"Levels: {levels.First()}–{levels.Last()}  |  Game time/run: {_minutesPerRun} min  |  Outlier threshold: ±{_outlierPercent}%");
+        sb.AppendLine();
+
+        // ── Kennzahlen-Tabelle ──
+        sb.AppendLine("### Key Metrics");
+        sb.AppendLine("Class        | Lv | DPS   | Auto% | Abil% | Kills/m | Deaths/h | K/D   | XP/h     | Money/h  | ToNextLv");
+        sb.AppendLine("-------------|----+-------+-------+-------+---------+----------+-------+----------+----------+---------");
+        foreach (var r in results.OrderBy(r => r.Class.ToString()).ThenBy(r => r.Level))
+        {
+            double autoShare = r.Dps > 0 ? r.AutoDps / r.Dps : 0;
+            double abilShare = r.Dps > 0 ? r.AbilityDps / r.Dps : 0;
+            string kd        = double.IsInfinity(r.KillsPerDeath) ? "∞" : r.KillsPerDeath.ToString("0.0", Inv);
+            string ttl       = double.IsNaN(r.MinutesToLevel) ? "–" : FormatMinutes(r.MinutesToLevel);
+            sb.AppendLine(string.Format(Inv,
+                "{0,-13}| {1,2} | {2,5:0.00} | {3,4:0%} | {4,4:0%} | {5,7:0.00} | {6,8:0.0} | {7,5} | {8,8:N0} | {9,-8} | {10}",
+                r.Class, r.Level, r.Dps, autoShare, abilShare,
+                r.KillsPerMin, r.DeathsPerHour, kd,
+                (long)r.XpPerHour, Money.Format((long)r.CopperPerHour), ttl));
+        }
+        sb.AppendLine();
+
+        // ── Outlier-Liste ──
+        sb.AppendLine($"### Outliers (≥{_outlierPercent}% from level median — DPS / Kills/min / Deaths/h)");
+        var outliers = FindOutliers(results).ToList();
+        if (outliers.Count == 0)
+            sb.AppendLine("None.");
+        else
+            foreach (var o in outliers)
+                sb.AppendLine($"  {o.Deviation.ToString("+0%;-0%", Inv)}  {o.Class}  {o.Metric}  Lv {o.Levels}");
+        sb.AppendLine();
+
+        // ── Ability-Breakdown ──
+        sb.AppendLine("### Ability Breakdown (share of total damage / healing per class per level)");
+        foreach (var cls in classes)
+        {
+            foreach (var r in results.Where(x => x.Class == cls).OrderBy(x => x.Level))
+            {
+                sb.Append($"  {r.Class} Lv {r.Level}:");
+                foreach (var b in r.Breakdown.OrderByDescending(b => b.Total))
+                {
+                    long kindTotal = b.Kind == CombatActionKind.Heal ? r.TotalHealing : r.TotalDamage;
+                    if (kindTotal == 0) continue;
+                    double share = (double)b.Total / kindTotal;
+                    string tag   = b.Kind == CombatActionKind.Heal ? "heal" : "dmg";
+                    sb.Append($"  [{b.Name} {share.ToString("0%", Inv)} {tag}]");
+                }
+                sb.AppendLine();
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private List<LevelingResult> LevelingSnapshot()
+    {
+        lock (_levelingResultsLock) return _levelingResults.ToList();
+    }
+
+    private void ToggleLrExpanded(CharacterClass cls)
+    {
+        if (!_lrExpanded.Remove(cls)) _lrExpanded.Add(cls);
+    }
+
+    /// <summary>Meilenstein-Level für die Timeline-Tabelle (max. ~12 Spalten).</summary>
+    private static IReadOnlyList<int> GetMilestoneLevels(int from, int to)
+    {
+        int range = to - from;
+        int step  = range <= 10 ? 1 : range <= 25 ? 2 : range <= 50 ? 5 : 10;
+        var list  = new List<int>();
+        for (int l = from + step; l < to; l += step)
+            list.Add(l);
+        list.Add(to);
+        return list;
+    }
+
+    /// <summary>Abweichung vom Median der Leveling-Zeiten; negativ = schneller = besser (grün).</summary>
+    private static double LevelTimingDeviation(List<LevelingResult> results, int level, double seconds)
+    {
+        var values = results
+            .Select(r => r.LevelTimings.FirstOrDefault(t => t.Level == level)?.SimSecondsToReach)
+            .Where(v => v.HasValue)
+            .Select(v => v!.Value)
+            .OrderBy(v => v)
+            .ToList();
+
+        if (values.Count == 0) return double.NaN;
+        int mid = values.Count / 2;
+        double median = values.Count % 2 == 1 ? values[mid] : (values[mid - 1] + values[mid]) / 2.0;
+        if (median == 0) return 0;
+        return -(seconds - median) / median;
+    }
+
+    private static string FormatGameTime(double seconds)
+    {
+        if (double.IsNaN(seconds) || double.IsInfinity(seconds)) return "–";
+        var t = TimeSpan.FromSeconds(seconds);
+        if (t.TotalDays >= 1)
+            return $"{(int)t.TotalDays}d {t.Hours:00}h";
+        if (t.TotalHours >= 1)
+            return $"{(int)t.TotalHours}h {t.Minutes:00}m";
+        return $"{t.Minutes}m {t.Seconds:00}s";
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+    }
+}

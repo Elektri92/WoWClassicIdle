@@ -1,0 +1,1011 @@
+@page "/inventory"
+@rendermode InteractiveServer
+@using Models
+@implements IDisposable
+@inject IdleGameEngine _engine
+
+<PageTitle>Inventory</PageTitle>
+
+<div class="wow-page inventory-page">
+    <h2>Inventory</h2>
+    <p class="wow-hint">Your equipment and character stats.</p>
+
+    <div class="inventory-layout">
+    <div class="wow-card char-pane">
+        <!-- ═══ HEADER ═══ -->
+        <div class="pane-header">
+            <div class="portrait-area">
+                <img class="race-portrait"
+                     src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                     alt="" onerror="this.style.display='none'" />
+                <img class="class-badge"
+                     src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
+                     alt="" onerror="this.style.display='none'" />
+            </div>
+            <div class="pane-title">
+                <div class="pane-name">@(string.IsNullOrWhiteSpace(_engine.Player.Name) ? "Character" : _engine.Player.Name)</div>
+                <div class="pane-subtitle">
+                    Level @_engine.Player.Stats.Level @_engine.Player.Race
+                    <span class="class-color class-@(_engine.Player.ActiveClass.ToString().ToLowerInvariant())">@_engine.Player.ActiveClass</span>
+                </div>
+                <div class="pane-faction">@_engine.Player.Faction</div>
+            </div>
+        </div>
+
+        <!-- ═══ PAPERDOLL ═══ -->
+        <div class="paperdoll">
+            <div class="slot-column">
+                @foreach (var slot in LeftSlots)
+                {
+                    var gear = EquippedIn(slot);
+                    <ArmorTooltip Armor="gear" Class="tt-contents">
+                        <div class="equip-slot @SlotCss(gear)"
+                             title="@SlotHint(slot, gear)"
+                             style="--quality: @SlotQuality(gear)"
+                             @ondragover:preventDefault="@CanDropArmor(slot)"
+                             @ondrop="() => DropOnArmorSlot(slot.Armor)"
+                             @oncontextmenu="() => UnequipArmorSlot(slot.Armor)"
+                             @oncontextmenu:preventDefault="@(gear is not null)">
+                            <img src="@SlotImage(slot, gear)" alt="@slot.Name" onerror="this.style.display='none'" />
+                        </div>
+                    </ArmorTooltip>
+                }
+            </div>
+
+            <div class="model-area">
+                <img class="model-portrait"
+                     src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                     alt="" onerror="this.style.display='none'" />
+            </div>
+
+            <div class="slot-column">
+                @foreach (var slot in RightSlots)
+                {
+                    var gear = EquippedIn(slot);
+                    <ArmorTooltip Armor="gear" Class="tt-contents">
+                        <div class="equip-slot @SlotCss(gear)"
+                             title="@SlotHint(slot, gear)"
+                             style="--quality: @SlotQuality(gear)"
+                             @ondragover:preventDefault="@CanDropArmor(slot)"
+                             @ondrop="() => DropOnArmorSlot(slot.Armor)"
+                             @oncontextmenu="() => UnequipArmorSlot(slot.Armor)"
+                             @oncontextmenu:preventDefault="@(gear is not null)">
+                            <img src="@SlotImage(slot, gear)" alt="@slot.Name" onerror="this.style.display='none'" />
+                        </div>
+                    </ArmorTooltip>
+                }
+            </div>
+        </div>
+
+        <div class="weapon-row">
+            @if (_engine.Player.EquippedWeapon is { } equipped)
+            {
+                <WeaponTooltip Weapon="equipped">
+                    <div class="equip-slot equipped-weapon"
+                         @oncontextmenu="UnequipWeapon" @oncontextmenu:preventDefault
+                         @ondragover:preventDefault @ondrop="DropOnWeaponSlot">
+                        <img src="@equipped.IconUrl" alt="@equipped.Name" onerror="this.style.display='none'" />
+                    </div>
+                </WeaponTooltip>
+            }
+            else
+            {
+                <div class="equip-slot" title="@WeaponSlot.Name (drag weapon here)"
+                     @ondragover:preventDefault @ondrop="DropOnWeaponSlot">
+                    <img src="@SlotIconUrl(WeaponSlot.Icon)" alt="@WeaponSlot.Name" onerror="this.style.display='none'" />
+                </div>
+            }
+        </div>
+
+        <!-- ═══ STATS ═══ -->
+        <div class="stats-area">
+            <div class="wow-inset stat-box">
+                <StatTooltip StatName="Strength" Description="@StrengthTooltip(_engine.Player.ActiveClass)" IsUseless="@IsStrengthUseless(_engine.Player.ActiveClass)">
+                    <div class="wow-stat-row"><span>Strength:</span><span>@Primary.Strength</span></div>
+                </StatTooltip>
+                <StatTooltip StatName="Agility" Description="@AgilityTooltip(_engine.Player.ActiveClass)" IsUseless="@IsAgilityUseless(_engine.Player.ActiveClass)">
+                    <div class="wow-stat-row"><span>Agility:</span><span>@Primary.Agility</span></div>
+                </StatTooltip>
+                <StatTooltip StatName="Stamina" Description="@StaminaTooltip()">
+                    <div class="wow-stat-row"><span>Stamina:</span><span>@Primary.Stamina</span></div>
+                </StatTooltip>
+                <StatTooltip StatName="Intellect" Description="@IntellectTooltip(_engine.Player.ActiveClass)" IsUseless="@(!StatScaling.UsesMana(_engine.Player.ActiveClass))">
+                    <div class="wow-stat-row"><span>Intellect:</span><span>@Primary.Intelligence</span></div>
+                </StatTooltip>
+                <StatTooltip StatName="Spirit" Description="@SpiritTooltip(_engine.Player.ActiveClass)" IsUseless="@(!StatScaling.UsesMana(_engine.Player.ActiveClass))">
+                    <div class="wow-stat-row"><span>Spirit:</span><span>@Primary.Spirit</span></div>
+                </StatTooltip>
+            </div>
+            <div class="wow-inset stat-box">
+                <div class="wow-stat-row"><span>Health:</span><span>@_engine.Player.Stats.MaxHp</span></div>
+                <div class="wow-stat-row"><span>@ResourceName:</span><span>@_engine.Player.Stats.MaxMana</span></div>
+                @if (StatScaling.UsesMana(_engine.Player.ActiveClass))
+                {
+                    <div class="wow-stat-row"><span>Mana / 5s:</span><span>@_engine.Player.Stats.ManaRegenPer5</span></div>
+                }
+                <div class="wow-stat-row"><span>Weapon Dmg:</span><span>@_engine.Player.Stats.WeaponMinDamage–@_engine.Player.Stats.WeaponMaxDamage</span></div>
+                <div class="wow-stat-row"><span>Attack Power:</span><span>@_engine.Player.Stats.AttackPower</span></div>
+                <div class="wow-stat-row"><span>Armor:</span><span>@_engine.Player.Stats.Defense</span></div>
+                <div class="wow-stat-row"><span>Speed:</span><span>@_engine.Player.Stats.Speed.ToString("0.0#")</span></div>
+                <div class="wow-stat-row" title="Critical hits double damage, healing and shields">
+                    <span>Crit Chance:</span><span>@FormatPercent(_engine.Player.Stats.CritChance)</span>
+                </div>
+                <div class="wow-stat-row" title="Speeds up auto-attacks and ability cooldowns">
+                    <span>Attack Speed:</span><span>@FormatBonusPercent(_engine.Player.Stats.AttackSpeedBonus)</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bags-column">
+    <!-- Bag bar: Bag 4 … Bag 1, Backpack (right to left, like the original) -->
+    <div class="bag-bar">
+        @for (int i = Models.Inventory.BagSlotCount - 1; i >= 0; i--)
+        {
+            var bagIndex = i;
+            var bag = _engine.Player.Inventory.Bags[bagIndex];
+            if (bag is null)
+            {
+                <div class="bar-slot empty" title="Bag Slot @(bagIndex + 1) (empty)">
+                    <img src="@EmptyBagSlotIconUrl" alt="" onerror="this.style.display='none'" />
+                </div>
+            }
+            else
+            {
+                <button class="bar-slot @(OpenContainers.Contains(bagIndex) ? "open" : "")"
+                        title="@bag.Name (@bag.FreeSlots/@bag.SlotCount free)"
+                        @onclick="() => ToggleContainer(bagIndex)">
+                    <img src="@bag.IconUrl" alt="@bag.Name" onerror="this.style.display='none'" />
+                </button>
+            }
+        }
+        @{ var backpack = _engine.Player.Inventory.Backpack; }
+        <button class="bar-slot backpack @(OpenContainers.Contains(BackpackIndex) ? "open" : "")"
+                title="Backpack (@_engine.Player.Inventory.FreeSlots/@_engine.Player.Inventory.TotalSlots free)"
+                @onclick="() => ToggleContainer(BackpackIndex)">
+            <img src="@backpack.IconUrl" alt="Backpack" onerror="this.style.display='none'" />
+        </button>
+    </div>
+
+    <!-- ═══ BAGS ═══ -->
+    <div class="bags-area">
+        @foreach (var index in OpenContainers.Order())
+        {
+            var bag = ContainerAt(index);
+            if (bag is null) continue;
+            var containerIndex = index;
+
+            <div class="bag-frame">
+                <div class="bag-frame-header">
+                    <img class="bag-portrait" src="@bag.IconUrl" alt="" onerror="this.style.display='none'" />
+                    <span class="bag-title">@bag.Name</span>
+                    <button class="bag-close" title="Close" @onclick="() => ToggleContainer(containerIndex)">×</button>
+                </div>
+
+                <div class="bag-grid">
+                    @for (int pad = 0; pad < (4 - bag.SlotCount % 4) % 4; pad++)
+                    {
+                        <div class="bag-slot-pad"></div>
+                    }
+                    @for (int s = 0; s < bag.Slots.Count; s++)
+                    {
+                        var si    = s;
+                        var stack = bag.Slots[s];
+                        if (stack is null)
+                        {
+                            <div class="bag-slot empty"></div>
+                        }
+                        else
+                        {
+                            var weaponItem = stack.Item as WeaponItem;
+                            var armorItem  = stack.Item as ArmorItem;
+                            bool classLocked = weaponItem?.RequiredClass is { } req && req != _engine.Player.ActiveClass;
+                            if (classLocked)
+                            {
+                                <div class="bag-slot empty"></div>
+                            }
+                            else
+                            {
+                            var slotCss = weaponItem is not null ? "bag-slot weapon-item"
+                                        : armorItem  is not null ? "bag-slot armor-item"
+                                        :                         "bag-slot sellable-item";
+                            if (armorItem is not null)
+                            {
+                            <ArmorTooltip Armor="armorItem" Class="tt-contents">
+                                <div class="@slotCss"
+                                     style="--quality: @ItemQualityColors.Hex(stack.Item.Quality)"
+                                     draggable="true"
+                                     @ondragstart="() => StartDrag(containerIndex, si)"
+                                     @ondragend="ClearDrag"
+                                     @oncontextmenu="() => TryEquipItem(containerIndex, si)"
+                                     @oncontextmenu:preventDefault>
+                                    <img src="@stack.Item.IconUrl" alt="@stack.Item.Name" onerror="this.style.display='none'" />
+                                    @if (stack.Count > 1)
+                                    {
+                                        <span class="stack-count">@stack.Count</span>
+                                    }
+                                </div>
+                            </ArmorTooltip>
+                            }
+                            else
+                            {
+                            <WeaponTooltip Weapon="weaponItem" Class="tt-contents">
+                                <div class="@slotCss"
+                                     title="@(weaponItem is not null ? null : stack.Item.Name)"
+                                     style="--quality: @ItemQualityColors.Hex(stack.Item.Quality)"
+                                     draggable="true"
+                                     @ondragstart="() => StartDrag(containerIndex, si)"
+                                     @ondragend="ClearDrag"
+                                     @oncontextmenu="() => TryEquipItem(containerIndex, si)"
+                                     @oncontextmenu:preventDefault>
+                                    <img src="@stack.Item.IconUrl" alt="@stack.Item.Name" onerror="this.style.display='none'" />
+                                    @if (stack.Count > 1)
+                                    {
+                                        <span class="stack-count">@stack.Count</span>
+                                    }
+                                </div>
+                            </WeaponTooltip>
+                            }
+                            } // end !classLocked
+                        }
+                    }
+                </div>
+
+                @if (index == BackpackIndex)
+                {
+                    var (gold, silver, copper) = Money.Split(_engine.Player.Copper);
+                    <div class="bag-money">
+                        <span class="money-frame" title="@Money.Format(_engine.Player.Copper)">
+                            @if (gold > 0)
+                            {
+                                <span class="coin">@gold<img src="@Money.GoldIconUrl" alt="Gold" /></span>
+                            }
+                            @if (gold > 0 || silver > 0)
+                            {
+                                <span class="coin">@silver<img src="@Money.SilverIconUrl" alt="Silver" /></span>
+                            }
+                            <span class="coin">@copper<img src="@Money.CopperIconUrl" alt="Copper" /></span>
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <!-- ═══ GOBLIN HÄNDLER ═══ -->
+    <div class="merchant-frame">
+        <div class="merchant-header">
+            <div class="merchant-portrait-area">
+                <img class="merchant-portrait"
+                     src="https://wow.zamimg.com/images/wow/icons/large/race_goblin_male.jpg"
+                     alt="Goblin Merchant" onerror="this.style.display='none'" />
+                <img class="merchant-class-badge"
+                     src="https://wow.zamimg.com/images/wow/icons/large/inv_misc_head_goblin_01.jpg"
+                     alt="" onerror="this.style.display='none'" />
+            </div>
+            <div class="merchant-title">
+                <div class="merchant-name">Gibzig</div>
+                <div class="merchant-subtitle">Goblin Merchant</div>
+                <div class="merchant-greeting">"A deal's a deal, mon!"</div>
+            </div>
+        </div>
+        <div class="merchant-sell-zone @(_dragSource.HasValue ? "drag-active" : "")"
+             @ondragover:preventDefault @ondrop="DropOnMerchant">
+            <img src="@Money.GoldIconUrl" alt="" class="sell-coin-icon" />
+            <span class="sell-zone-label">Drag item here to sell</span>
+        </div>
+        @if (_lastSellMessage is not null)
+        {
+            <div class="merchant-sold-msg">@_lastSellMessage</div>
+        }
+    </div>
+    </div>
+    </div>
+</div>
+
+<style>
+    .inventory-page { max-width: 820px; }
+
+    /* ----- Layout: character left, bags right ----- */
+    .inventory-layout {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 2rem;
+    }
+
+    .char-pane {
+        width: 360px;
+        flex-shrink: 0;
+        font-size: .9rem;
+    }
+
+    .bags-column {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    /* ----- Header ----- */
+    .pane-header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .portrait-area {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+    }
+
+    .race-portrait {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        object-fit: cover;
+        background: #222;
+    }
+
+    .class-badge {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        background: #0e0b07;
+        object-fit: contain;
+    }
+
+    .pane-title {
+        flex: 1;
+        text-align: center;
+    }
+
+    .pane-name {
+        font-family: 'Cinzel', serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .pane-subtitle {
+        font-size: .85rem;
+        color: #fff;
+    }
+
+    .pane-faction {
+        font-size: .8rem;
+        color: #9a8a64;
+    }
+
+    /* ----- Paperdoll ----- */
+    .paperdoll {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .slot-column {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .model-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(ellipse at center, #3a3022 0%, #120e08 75%);
+        border: 1px solid #3d321c;
+        border-radius: 4px;
+    }
+
+    .model-portrait {
+        width: 96px;
+        height: 96px;
+        border-radius: 8px;
+        opacity: .85;
+        object-fit: cover;
+        box-shadow: 0 0 24px rgba(0,0,0,.8);
+    }
+
+    .equip-slot {
+        width: 34px;
+        height: 34px;
+        background: #0c0a06;
+        border: 2px solid #4a3d22;
+        border-radius: 4px;
+        box-shadow: inset 0 0 6px #000;
+        overflow: hidden;
+    }
+
+    .equip-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: .45;
+        filter: grayscale(.6);
+    }
+
+    .equip-slot:hover {
+        border-color: #c5a55a;
+    }
+
+    /* ── Ausgerüstete Rüstung im Paperdoll-Slot ── */
+    .equip-slot.equipped-item {
+        border-color: var(--quality, #c5a55a);
+        cursor: context-menu;
+    }
+
+    .equip-slot.equipped-item img {
+        opacity: 1;
+        filter: none;
+    }
+
+    .equip-slot.equipped-item:hover {
+        border-color: #ffd100;
+        box-shadow: 0 0 6px rgba(255,209,0,.4);
+    }
+
+    .weapon-row {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    /* ----- Stats ----- */
+    .stats-area {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .stat-box {
+        flex: 1;
+        padding: 4px 8px;
+    }
+
+    /* ----- Money (classic backpack money frame) ----- */
+    .money-frame {
+        display: flex;
+        gap: 8px;
+        padding: 1px 8px;
+        background: #0c0a06;
+        border: 1px solid #4a3d22;
+        border-radius: 3px;
+        box-shadow: inset 0 0 4px #000;
+    }
+
+    .coin {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        color: #fff;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .coin img {
+        width: 13px;
+        height: 13px;
+    }
+
+    /* ----- Bags (classic container frames) ----- */
+    .bags-area {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .bag-frame {
+        padding: 6px 8px 8px;
+        background: linear-gradient(180deg, #2b2418 0%, #15110a 100%);
+        border: 2px solid #8a7444;
+        border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.6), inset 0 0 0 1px #3d321c;
+    }
+
+    .bag-frame-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+
+    .bag-portrait {
+        width: 32px;
+        height: 32px;
+        margin: -14px 0 0 -14px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        background: #0e0b07;
+        object-fit: cover;
+        box-shadow: 0 2px 6px #000;
+    }
+
+    .bag-title {
+        flex: 1;
+        font-size: .85rem;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .bag-close {
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        line-height: 14px;
+        font-size: 14px;
+        color: #ffd100;
+        background: #5a1a10;
+        border: 1px solid #c5a55a;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    .bag-close:hover { background: #8a2a18; }
+
+    .bag-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 37px);
+        gap: 3px;
+    }
+
+    .bag-slot, .bag-slot-pad {
+        width: 37px;
+        height: 37px;
+    }
+
+    .bag-slot {
+        position: relative;
+        background: #0c0a06;
+        border: 1px solid var(--quality, #3a3020);
+        border-radius: 3px;
+        box-shadow: inset 0 0 6px #000;
+        overflow: hidden;
+    }
+
+    .bag-slot.empty {
+        background: radial-gradient(ellipse at center, #1c1810 0%, #070604 80%);
+        border-color: #3a3020;
+    }
+
+    .bag-slot:hover { border-color: #ffd100; }
+
+    .bag-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .stack-count {
+        position: absolute;
+        right: 2px;
+        bottom: 0;
+        font-size: .75rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    }
+
+    .bag-money {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 6px;
+        font-size: .85rem;
+    }
+
+    /* ----- Bag bar ----- */
+    .bag-bar {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+    }
+
+    .bar-slot {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: #0c0a06;
+        border: 2px solid #4a3d22;
+        border-radius: 4px;
+        box-shadow: inset 0 0 6px #000;
+        overflow: hidden;
+    }
+
+    .bar-slot.backpack {
+        width: 40px;
+        height: 40px;
+    }
+
+    button.bar-slot { cursor: pointer; }
+    button.bar-slot:hover, .bar-slot.open { border-color: #ffd100; }
+
+    .bar-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .bar-slot.empty img {
+        opacity: .45;
+        filter: grayscale(.6);
+    }
+
+    /* ── Equipped weapon slot ── */
+    .equip-slot.equipped-weapon {
+        border-color: #c5a55a;
+        cursor: context-menu;
+    }
+
+    .equip-slot.equipped-weapon img {
+        opacity: 1;
+        filter: none;
+    }
+
+    .equip-slot.equipped-weapon:hover {
+        border-color: #ffd100;
+        box-shadow: 0 0 6px rgba(255,209,0,.4);
+    }
+
+    /* ── Weapon item in bag (drag hint) ── */
+    .bag-slot.weapon-item {
+        cursor: grab;
+    }
+
+    .bag-slot.weapon-item:hover {
+        border-color: #c5a55a;
+    }
+
+    /* ── Rüstungsteil im Beutel (drag hint) ── */
+    .bag-slot.armor-item {
+        cursor: grab;
+    }
+
+    .bag-slot.armor-item:hover {
+        border-color: #c5a55a;
+    }
+
+    /* ── Alle verkaufbaren Items ── */
+    .bag-slot.sellable-item {
+        cursor: grab;
+    }
+
+    /* ── Goblin-Händler ── */
+    .merchant-frame {
+        margin-top: 12px;
+        padding: 8px 10px 10px;
+        background: linear-gradient(180deg, #2b2418 0%, #15110a 100%);
+        border: 2px solid #8a7444;
+        border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.6), inset 0 0 0 1px #3d321c;
+        width: 170px;
+    }
+
+    .merchant-header {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .merchant-portrait-area {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+    }
+
+    .merchant-portrait {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        object-fit: cover;
+        background: #222;
+    }
+
+    .merchant-class-badge {
+        position: absolute;
+        bottom: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #c5a55a;
+        background: #0e0b07;
+        object-fit: cover;
+        box-shadow: 0 1px 4px #000;
+    }
+
+    .merchant-title {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .merchant-name {
+        font-family: 'Cinzel', serif;
+        font-size: .95rem;
+        font-weight: 700;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .merchant-subtitle {
+        font-size: .75rem;
+        color: #9a8a64;
+    }
+
+    .merchant-greeting {
+        font-size: .72rem;
+        color: #7a9a6a;
+        font-style: italic;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .merchant-sell-zone {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 6px;
+        background: radial-gradient(ellipse at center, #1c1810 0%, #070604 80%);
+        border: 2px dashed #5a4a28;
+        border-radius: 4px;
+        color: #7a6a44;
+        font-size: .8rem;
+        cursor: default;
+        transition: border-color .15s, background .15s;
+        min-height: 42px;
+    }
+
+    .merchant-sell-zone.drag-active {
+        border-color: #ffd100;
+        background: radial-gradient(ellipse at center, #2a2010 0%, #0e0b06 80%);
+        color: #ffd100;
+        box-shadow: inset 0 0 8px rgba(255,209,0,.15);
+    }
+
+    .merchant-sell-zone:hover {
+        border-color: #8a7444;
+    }
+
+    .sell-coin-icon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .sell-zone-label {
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .merchant-sold-msg {
+        margin-top: 6px;
+        padding: 3px 6px;
+        background: #0c0a06;
+        border: 1px solid #4a3d22;
+        border-radius: 3px;
+        font-size: .78rem;
+        color: #ffd100;
+        text-align: center;
+        text-shadow: 0 1px 2px #000;
+    }
+</style>
+
+@code {
+    private record EquipSlot(string Name, string Icon, ArmorSlot? Armor = null);
+
+    private static readonly EquipSlot[] LeftSlots =
+    {
+        new("Head", "head"), new("Neck", "neck"), new("Shoulder", "shoulder"),
+        new(ArmorSlots.Label(ArmorSlot.Cape), "chest", ArmorSlot.Cape),
+        new(ArmorSlots.Label(ArmorSlot.Chest), "chest", ArmorSlot.Chest),
+        new("Shirt", "shirt"), new("Tabard", "tabard"),
+        new(ArmorSlots.Label(ArmorSlot.Wrists), "wrists", ArmorSlot.Wrists),
+    };
+
+    private static readonly EquipSlot[] RightSlots =
+    {
+        new(ArmorSlots.Label(ArmorSlot.Hands), "hands", ArmorSlot.Hands),
+        new(ArmorSlots.Label(ArmorSlot.Belt), "waist", ArmorSlot.Belt),
+        new(ArmorSlots.Label(ArmorSlot.Legs), "legs", ArmorSlot.Legs),
+        new(ArmorSlots.Label(ArmorSlot.Feet), "feet", ArmorSlot.Feet),
+        new("Finger", "finger"), new("Finger", "finger"), new("Trinket", "trinket"), new("Trinket", "trinket"),
+    };
+
+    private static readonly EquipSlot WeaponSlot = new("Weapon", "mainhand");
+
+    private PrimaryStats Primary => _engine.Player.Stats.Primary;
+
+    private string ResourceName => _engine.Player.ActiveClass switch
+    {
+        CharacterClass.Warrior => "Rage",
+        CharacterClass.Rogue   => "Energy",
+        _                      => "Mana",
+    };
+
+    /// <summary>Anteil als Prozentwert, z. B. 0.05 → "5.0%".</summary>
+    private static string FormatPercent(double fraction) =>
+        (fraction * 100).ToString("0.0") + "%";
+
+    /// <summary>Wie <see cref="FormatPercent"/>, aber mit Vorzeichen für Bonuswerte ("+0.0%").</summary>
+    private static string FormatBonusPercent(double fraction) =>
+        (fraction >= 0 ? "+" : "") + FormatPercent(fraction);
+
+    private static string StaminaTooltip() =>
+        $"+{StatScaling.HpPerStamina} maximum Health per point.";
+
+    private static string StrengthTooltip(CharacterClass cls) => cls switch
+    {
+        CharacterClass.Warrior or CharacterClass.Paladin or CharacterClass.Shaman or CharacterClass.Druid
+            => "+2 Attack Power per point.",
+        CharacterClass.Rogue or CharacterClass.Hunter
+            => "+1 Attack Power per point.",
+        _ // Mage, Priest, Warlock
+            => "+1 Attack Power per point. Casters rarely benefit from Attack Power.",
+    };
+
+    private static bool IsStrengthUseless(CharacterClass cls) => cls is
+        CharacterClass.Mage or CharacterClass.Priest or CharacterClass.Warlock;
+
+    private static string AgilityTooltip(CharacterClass cls) => cls switch
+    {
+        CharacterClass.Rogue or CharacterClass.Hunter
+            => "+1 Attack Power per point.",
+        _
+            => "No benefit for this class.",
+    };
+
+    private static bool IsAgilityUseless(CharacterClass cls) =>
+        cls is not (CharacterClass.Rogue or CharacterClass.Hunter);
+
+    private static string IntellectTooltip(CharacterClass cls) =>
+        StatScaling.UsesMana(cls)
+            ? $"+{StatScaling.ManaPerIntelligence} maximum Mana per point."
+            : "No benefit for this class (does not use Mana).";
+
+    private static string SpiritTooltip(CharacterClass cls) =>
+        StatScaling.UsesMana(cls)
+            ? $"+{StatScaling.ManaRegenPerSpiritStep} Mana per 5s for every {StatScaling.SpiritPerManaRegen} points of Spirit."
+            : "No benefit for this class (does not use Mana).";
+
+    private static string SlotIconUrl(string icon) =>
+        $"https://wow.zamimg.com/images/wow/icons/large/inventoryslot_{icon}.jpg";
+
+    private static readonly string EmptyBagSlotIconUrl = SlotIconUrl("bag");
+
+    // ─── Paperdoll-Slots ───
+
+    /// <summary>Das in einem Paperdoll-Slot getragene Rüstungsteil (null wenn Slot leer oder nicht ausrüstbar).</summary>
+    private ArmorItem? EquippedIn(EquipSlot slot) =>
+        slot.Armor is { } armor && _engine.Player.EquippedArmor.TryGetValue(armor, out var item)
+            ? item
+            : null;
+
+    private static string SlotImage(EquipSlot slot, ArmorItem? gear) =>
+        gear?.IconUrl ?? SlotIconUrl(slot.Icon);
+
+    private static string SlotCss(ArmorItem? gear) =>
+        gear is not null ? "equipped-item" : "";
+
+    private static string SlotHint(EquipSlot slot, ArmorItem? gear) =>
+        gear is not null
+            ? $"{gear.Name} ({slot.Name}) – right-click to unequip"
+            : slot.Armor is null ? slot.Name : $"{slot.Name} (drag item here)";
+
+    private static string SlotQuality(ArmorItem? gear) =>
+        gear is not null ? ItemQualityColors.Hex(gear.Quality) : "#4a3d22";
+
+    /// <summary>Nur Slots mit Rüstungsplatz nehmen gezogene Items an.</summary>
+    private static bool CanDropArmor(EquipSlot slot) => slot.Armor is not null;
+
+    // -1 = Backpack, 0..3 = equipped bag slots
+    private const int BackpackIndex = -1;
+    private readonly HashSet<int> OpenContainers = new() { BackpackIndex };
+    private (int bagIndex, int slotIndex)? _dragSource;
+    private string? _lastSellMessage;
+
+    private Bag? ContainerAt(int index) =>
+        index == BackpackIndex ? _engine.Player.Inventory.Backpack : _engine.Player.Inventory.Bags[index];
+
+    private void StartDrag(int bagIndex, int slotIndex) =>
+        _dragSource = (bagIndex, slotIndex);
+
+    private void ClearDrag() =>
+        _dragSource = null;
+
+    private void DropOnMerchant()
+    {
+        if (_dragSource is not { } src) return;
+        _dragSource = null;
+        var bag = ContainerAt(src.bagIndex);
+        var stack = bag?.Take(src.slotIndex);
+        if (stack is null) return;
+        long earned = stack.Item.SellPrice * stack.Count;
+        _engine.Player.Copper += earned;
+        _lastSellMessage = $"Sold: {stack.Item.Name} for {Money.Format(Math.Max(1, earned))}";
+    }
+
+    private void DropOnWeaponSlot()
+    {
+        if (_dragSource is not { } src) return;
+        _dragSource = null;
+        var bag = ContainerAt(src.bagIndex);
+        if (bag?.Slots[src.slotIndex]?.Item is WeaponItem weapon)
+            _engine.Player.EquipWeapon(weapon, bag, src.slotIndex);
+    }
+
+    /// <summary>Legt ein auf einen Paperdoll-Slot gezogenes Rüstungsteil an.</summary>
+    private void DropOnArmorSlot(ArmorSlot? armorSlot)
+    {
+        if (armorSlot is null || _dragSource is not { } src) return;
+        _dragSource = null;
+        var bag = ContainerAt(src.bagIndex);
+        if (bag?.Slots[src.slotIndex]?.Item is ArmorItem armor && armor.Slot == armorSlot)
+            _engine.Player.EquipArmor(armor, bag, src.slotIndex);
+    }
+
+    private void TryEquipItem(int bagIndex, int slotIndex)
+    {
+        var bag = ContainerAt(bagIndex);
+        if (bag is null) return;
+        switch (bag.Slots[slotIndex]?.Item)
+        {
+            case WeaponItem weapon:
+                _engine.Player.EquipWeapon(weapon, bag, slotIndex);
+                break;
+            case ArmorItem armor:
+                _engine.Player.EquipArmor(armor, bag, slotIndex);
+                break;
+        }
+    }
+
+    private void UnequipWeapon() =>
+        _engine.Player.UnequipWeapon();
+
+    /// <summary>Rechtsklick auf einen Paperdoll-Slot: getragenes Rüstungsteil zurück ins Inventar.</summary>
+    private void UnequipArmorSlot(ArmorSlot? armorSlot)
+    {
+        if (armorSlot is null) return;
+        _engine.Player.UnequipArmor(armorSlot.Value);
+    }
+
+    private void ToggleContainer(int index)
+    {
+        if (!OpenContainers.Remove(index))
+            OpenContainers.Add(index);
+    }
+
+    protected override void OnInitialized()
+    {
+        _engine.TickUpdated += OnTick;
+    }
+
+    private void OnTick() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        _engine.TickUpdated -= OnTick;
+    }
+}

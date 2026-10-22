@@ -1,0 +1,203 @@
+/* ===== WoW Classic Theme – Layout & NavMenu ===== */
+
+/* ----- Global page background / links ----- */
+html, body, .page {
+    background: #0e0b08 !important;
+    color: #c9b88c !important;
+}
+
+a, .btn-link {
+    color: #c5a55a !important;
+}
+
+a:hover, .btn-link:hover {
+    color: #ffec9b !important;
+}
+
+main, .content, article.content {
+    background: #110e08 !important;
+    color: #d4c9a8 !important;
+}
+
+article.content {
+    min-height: calc(100vh - 60px);
+}
+
+main .top-row {
+    background: linear-gradient(180deg, #1e1810 0%, #14110c 100%) !important;
+    border-bottom: 2px solid #5a4a28 !important;
+    color: #c9b88c;
+    font-family: "Cinzel", "Palatino Linotype", serif;
+    letter-spacing: .5px;
+}
+
+.btn-primary {
+    background-color: #5a4a28 !important;
+    border-color: #c5a55a !important;
+}
+
+.btn-primary:hover {
+    background-color: #6b5a2e !important;
+}
+
+/* ----- Sidebar frame ----- */
+.sidebar {
+    background:
+        radial-gradient(ellipse at top, rgba(90, 74, 40, .25) 0%, transparent 60%),
+        linear-gradient(180deg, #1a1410 0%, #0c0a07 100%) !important;
+    border-right: 3px solid #5a4a28;
+    box-shadow: inset -1px 0 0 #8a7444, inset 0 0 30px rgba(0, 0, 0, .8), 2px 0 12px rgba(0, 0, 0, .6);
+    font-family: "Cinzel", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+
+/* Logo area */
+.sidebar .top-row.navbar {
+    background: transparent !important;
+    border-bottom: none;
+    padding: 14px 8px 18px;
+    position: relative;
+}
+
+/* Gold ornament line under the logo */
+.sidebar .top-row.navbar::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 4px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #8a7444 20%, #ffd100 50%, #8a7444 80%, transparent 100%);
+    box-shadow: 0 0 6px rgba(255, 209, 0, .35);
+}
+
+.sidebar .navbar-brand {
+    transition: filter .3s ease;
+}
+
+.sidebar .navbar-brand:hover {
+    filter: drop-shadow(0 0 8px #c5a55a);
+}
+
+.wow-logo {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .7));
+}
+
+.navbar-toggler {
+    border-color: #8a7444 !important;
+    background-color: #2b2418 !important;
+}
+
+/* ----- Menu ----- */
+.sidebar .nav-scrollable {
+    background: transparent;
+    padding: 6px 0 12px;
+}
+
+.sidebar .nav-item {
+    padding: 0 12px !important;
+    margin: 0 0 6px;
+}
+
+.sidebar .nav-item:first-of-type {
+    padding-top: 8px !important;
+}
+
+/* Classic red UI button with gold rim */
+.sidebar .nav-item .nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 2.6rem;
+    line-height: 1;
+    width: 100%;
+    padding: 0 14px !important;
+    font-family: "Cinzel", "Palatino Linotype", serif;
+    font-size: .88rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: #ffd100 !important;
+    text-shadow: 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, .8);
+    background: linear-gradient(180deg, #8e1a14 0%, #5e0d0a 45%, #3e0606 55%, #2a0404 100%);
+    border: 2px solid #8a7444;
+    border-top-color: #c5a55a;
+    border-bottom-color: #4a3d22;
+    border-radius: 5px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 190, 120, .35),
+        inset 0 -2px 3px rgba(0, 0, 0, .55),
+        0 2px 4px rgba(0, 0, 0, .7);
+    transition: filter .15s ease, box-shadow .15s ease, color .15s ease;
+}
+
+/* Glossy upper half */
+.sidebar .nav-item .nav-link::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 50% 1px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, rgba(255, 220, 160, .18) 0%, rgba(255, 220, 160, 0) 100%);
+    pointer-events: none;
+}
+
+.sidebar .nav-item .nav-link:hover {
+    color: #fff !important;
+    filter: brightness(1.2);
+    border-color: #c5a55a;
+    border-top-color: #ffec9b;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 210, 140, .5),
+        inset 0 -2px 3px rgba(0, 0, 0, .55),
+        0 0 10px rgba(255, 209, 0, .35),
+        0 2px 4px rgba(0, 0, 0, .7);
+}
+
+/* Pressed look */
+.sidebar .nav-item .nav-link:active {
+    filter: brightness(.9);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8);
+}
+
+/* Current page: lit, pressed-in button */
+.sidebar .nav-item .nav-link.active {
+    color: #fff !important;
+    background: linear-gradient(180deg, #4a0808 0%, #6e120d 50%, #8e1a14 100%);
+    border-color: #ffd100;
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, .75),
+        0 0 12px rgba(255, 209, 0, .45),
+        0 2px 4px rgba(0, 0, 0, .7);
+}
+
+.sidebar .nav-item .nav-link.active::before {
+    background: none;
+}
+
+/* Gold marker on the active button */
+.sidebar .nav-item .nav-link.active::after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    transform: translateY(-50%) rotate(45deg);
+    background: #ffd100;
+    box-shadow: 0 0 6px #ffd100;
+}
+
+/* Item icons (framed like action bar slots) */
+.sidebar .nav-link .nav-icon {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    margin: 0 10px 0 -6px;
+    flex-shrink: 0;
+    border: 1px solid #c5a55a;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000, 0 1px 3px rgba(0, 0, 0, .8);
+}
+
+.sidebar .nav-link.active .nav-icon {
+    border-color: #ffd100;
+    box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255, 209, 0, .6);
+}

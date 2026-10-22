@@ -1,0 +1,55 @@
+@using Models
+
+@* Umhüllt beliebigen Inhalt und zeigt beim Hovern einen Fähigkeits-Tooltip im WoW-Stil.
+   Positionierung per js/tooltip.js (position: fixed), damit overflow-Container ihn nicht abschneiden. *@
+@if (Ability is null)
+{
+    @ChildContent
+}
+else
+{
+    var cost = AbilityText.CostText(Ability);
+    var note = AbilityText.AutoCastNote(Ability);
+    bool levelTooLow = PlayerLevel is { } lvl && lvl < Ability.LevelRequired;
+
+    <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
+        @ChildContent
+        <span class="wow-tooltip" role="tooltip">
+            <span class="tt-line">
+                <span class="tt-name">@Ability.Name</span>
+                @if (Ability.Rank > 0)
+                {
+                    <span class="tt-rank">Rank @Ability.Rank</span>
+                }
+            </span>
+            <span class="tt-line">
+                <span>@cost</span>
+                <span>@AbilityText.TimingText(Ability)</span>
+            </span>
+            <span class="tt-line @(levelTooLow ? "tt-req-missing" : "")">Requires Level @Ability.LevelRequired</span>
+            <span class="tt-desc">@AbilityText.Description(Ability)</span>
+            @if (note != "")
+            {
+                <span class="tt-note">@note</span>
+            }
+            @if (BuffRemaining is { } remaining)
+            {
+                <span class="tt-remaining">@Math.Ceiling(remaining).ToString("0") sec remaining</span>
+            }
+        </span>
+    </span>
+}
+
+@code {
+    [Parameter] public Ability? Ability { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Spielerlevel – ist es zu niedrig, wird „Requires Level“ rot angezeigt.</summary>
+    [Parameter] public int? PlayerLevel { get; set; }
+
+    /// <summary>Restlaufzeit, falls der Tooltip zu einem aktiven Buff gehört.</summary>
+    [Parameter] public double? BuffRemaining { get; set; }
+
+    /// <summary>Zusätzliche CSS-Klasse für den Wrapper (z. B. „tt-block“ für Zeilen).</summary>
+    [Parameter] public string? Class { get; set; }
+}

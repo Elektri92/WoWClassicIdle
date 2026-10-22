@@ -1,0 +1,64 @@
+.tt-host {
+    display: inline-flex;
+}
+
+.wow-tooltip {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    width: max-content;
+    max-width: 260px;
+    padding: 7px 10px;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(8, 10, 22, .94);
+    border: 2px solid #8b8fa3;
+    border-radius: 5px;
+    box-shadow: 0 0 0 1px #000, 0 4px 14px rgba(0, 0, 0, .7);
+    font-family: 'Friz Quadrata', 'Segoe UI', Arial, sans-serif;
+    font-size: .8rem;
+    line-height: 1.35;
+    color: #fff;
+    text-align: left;
+    white-space: normal;
+    pointer-events: none;
+}
+
+.wow-tooltip.visible {
+    display: flex;
+}
+
+.tt-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.tt-name {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.tt-rank {
+    color: #9d9d9d;
+    white-space: nowrap;
+}
+
+.tt-req-missing {
+    color: #ff2020;
+}
+
+.tt-desc {
+    margin-top: 2px;
+    color: #c5c5c5;
+}
+
+.tt-effect {
+    margin-top: 3px;
+    color: #ffd100;
+}
+
+.tt-next {
+    color: #9d9d9d;
+}

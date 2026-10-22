@@ -1,0 +1,37 @@
+@using Models
+
+@* Wraps content and shows a WoW-style weapon tooltip on hover.
+   Positioning via js/tooltip.js (position: fixed). *@
+@if (Weapon is null)
+{
+    @ChildContent
+}
+else
+{
+    double dps = (Weapon.MinDamage + Weapon.MaxDamage) / 2.0 / Weapon.Speed;
+    string nameColor = ItemQualityColors.Hex(Weapon.Quality);
+
+    <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
+        @ChildContent
+        <span class="wow-tooltip" role="tooltip">
+            <span class="tt-name" style="color: @nameColor">@Weapon.Name</span>
+            <span class="tt-subtype">@Weapon.Type</span>
+            <span class="tt-line">
+                <span>@Weapon.MinDamage – @Weapon.MaxDamage Damage</span>
+                <span>Speed @Weapon.Speed.ToString("0.00")</span>
+            </span>
+            <span class="tt-dps">(@dps.ToString("0.00") damage per second)</span>
+            <span class="tt-quality">@Weapon.Quality</span>
+            @if (Weapon.RequiredClass is { } cls)
+            {
+                <span class="tt-req-class">Classes: @cls</span>
+            }
+        </span>
+    </span>
+}
+
+@code {
+    [Parameter] public WeaponItem? Weapon { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

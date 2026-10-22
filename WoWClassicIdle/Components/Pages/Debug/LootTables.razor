@@ -1,0 +1,261 @@
+@page "/debug/loot-tables"
+@rendermode InteractiveServer
+@using Models
+
+<PageTitle>Loot Tables (Debug)</PageTitle>
+
+@inject IdleGameEngine _engine
+
+<div class="wow-page wide loot-debug-page">
+    <h2>Loot Tables <span class="wow-badge">DEBUG</span></h2>
+    <p class="wow-hint">
+        All rare-enemy loot pools. Click <b>Give</b> to force-equip the item on the active character.
+        Items are grouped by level tier and armor slot.
+    </p>
+
+    @if (!_engine.HasActiveCharacter)
+    {
+        <div class="wow-card">
+            <p class="wow-muted" style="padding: 1rem;">No active character — create one on the Character page first.</p>
+        </div>
+    }
+    else
+    {
+        <!-- ═══ TABS ═══ -->
+        <div class="wow-tabs">
+            @foreach (var tier in _tiers)
+            {
+                <button class="wow-tab @(_activeTier == tier.Key ? "active" : "")"
+                        @onclick="() => _activeTier = tier.Key">
+                    @tier.Label
+                </button>
+            }
+        </div>
+
+        <div class="tier-info wow-hint">
+            Rare enemies at <b>Level @CurrentTier.LevelMin–@CurrentTier.LevelMax</b> drop one of these @CurrentTier.Items.Count items.
+        </div>
+
+        <!-- ═══ SLOT GROUPS ═══ -->
+        @foreach (var slotGroup in CurrentTier.Items.GroupBy(i => i.Slot).OrderBy(g => (int)g.Key))
+        {
+            var slot = slotGroup.Key;
+            <div class="wow-card slot-card">
+                <div class="slot-card-header">
+                    <span class="slot-label">@SlotLabel(slot)</span>
+                    <span class="slot-count">@slotGroup.Count() items</span>
+                </div>
+                <div class="item-grid">
+                    @foreach (var item in slotGroup)
+                    {
+                        bool equipped = _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var cur) && cur == item;
+                        bool justGiven = _justGiven == item.Id;
+                        <div class="item-row @(equipped ? "item-equipped" : "") @(justGiven ? "item-just-given" : "")">
+                            <img class="item-icon"
+                                 src="@item.IconUrl"
+                                 alt=""
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23222%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
+                            <div class="item-info">
+                                <span class="item-name" style="color: @ItemQualityColors.Hex(item.Quality);">@item.Name</span>
+                                <span class="item-stats">@StatLine(item.Bonuses)</span>
+                            </div>
+                            <div class="item-actions">
+                                @if (equipped)
+                                {
+                                    <span class="equipped-label">Equipped</span>
+                                }
+                                <button class="wow-btn small give-btn"
+                                        @onclick="() => GiveItem(item)"
+                                        title="Force-equip on active character">
+                                    @(justGiven ? "✓ Given!" : "Give")
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .loot-debug-page .wow-tabs {
+        margin-bottom: 6px;
+    }
+
+    .tier-info {
+        margin-bottom: 12px;
+    }
+
+    .slot-card {
+        margin-bottom: 12px;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .slot-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 14px;
+        background: linear-gradient(90deg, #2b2010 0%, #1a150d 100%);
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .slot-label {
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        font-size: .9rem;
+        color: #ffd100;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .slot-count {
+        font-size: .75rem;
+        color: #9a8a64;
+    }
+
+    .item-grid {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .item-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 14px;
+        border-bottom: 1px solid #2a2010;
+        transition: background .15s;
+    }
+
+    .item-row:last-child {
+        border-bottom: none;
+    }
+
+    .item-row:hover {
+        background: rgba(197, 165, 90, .07);
+    }
+
+    .item-equipped {
+        background: rgba(30, 255, 0, .06);
+    }
+
+    .item-equipped:hover {
+        background: rgba(30, 255, 0, .1);
+    }
+
+    .item-just-given {
+        animation: itemGivenFlash .6s ease-out;
+    }
+
+    @@keyframes itemGivenFlash {
+        0%   { background: rgba(30, 255, 0, .35); }
+        100% { background: transparent; }
+    }
+
+    .item-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        border: 1px solid #5a4a28;
+        flex-shrink: 0;
+        object-fit: cover;
+    }
+
+    .item-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .item-name {
+        font-size: .88rem;
+        font-weight: 700;
+        color: #1eff00;
+        text-shadow: 0 1px 2px #000;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .item-stats {
+        font-size: .76rem;
+        color: #ffd100;
+    }
+
+    .item-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .equipped-label {
+        font-size: .72rem;
+        font-weight: 700;
+        color: #1eff00;
+        text-shadow: 0 0 5px rgba(30,255,0,.5);
+    }
+
+    .give-btn {
+        min-width: 64px;
+    }
+</style>
+
+@code {
+    private record TierInfo(string Key, string Label, int LevelMin, int LevelMax, IReadOnlyList<ArmorItem> Items);
+
+    private static readonly TierInfo[] _tiers =
+    [
+        new("t1", "Tier 1  (Lv. 1–5)",  1,  5,  RareLootRegistry.GetLootTable(1)),
+        new("t2", "Tier 2  (Lv. 6–10)", 6,  10, RareLootRegistry.GetLootTable(6)),
+        new("t3", "Tier 3  (Lv. 11–15)",11, 15, RareLootRegistry.GetLootTable(11)),
+    ];
+
+    private string _activeTier = "t1";
+    private TierInfo CurrentTier => _tiers.First(t => t.Key == _activeTier);
+    private int _justGiven = -1;
+    private System.Timers.Timer? _resetTimer;
+
+    private void GiveItem(ArmorItem item)
+    {
+        _engine.DebugGiveArmor(item);
+        _justGiven = item.Id;
+
+        _resetTimer?.Stop();
+        _resetTimer?.Dispose();
+        _resetTimer = new System.Timers.Timer(800) { AutoReset = false };
+        _resetTimer.Elapsed += (_, _) =>
+        {
+            _justGiven = -1;
+            _ = InvokeAsync(StateHasChanged);
+        };
+        _resetTimer.Start();
+    }
+
+    private static string SlotLabel(ArmorSlot slot) => slot switch
+    {
+        ArmorSlot.Hands  => "Hands",
+        ArmorSlot.Legs   => "Legs",
+        ArmorSlot.Chest  => "Chest",
+        ArmorSlot.Belt   => "Waist",
+        ArmorSlot.Feet   => "Feet",
+        ArmorSlot.Wrists => "Wrist",
+        ArmorSlot.Cape   => "Back",
+        _                => slot.ToString(),
+    };
+
+    private static string StatLine(PrimaryStats b)
+    {
+        var parts = new List<string>();
+        if (b.Strength     > 0) parts.Add($"+{b.Strength} Str");
+        if (b.Agility      > 0) parts.Add($"+{b.Agility} Agi");
+        if (b.Stamina      > 0) parts.Add($"+{b.Stamina} Sta");
+        if (b.Intelligence > 0) parts.Add($"+{b.Intelligence} Int");
+        if (b.Spirit       > 0) parts.Add($"+{b.Spirit} Spi");
+        return string.Join("  ", parts);
+    }
+}

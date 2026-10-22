@@ -1,0 +1,441 @@
+@page "/character"
+@using Models
+@rendermode InteractiveServer
+@inject IdleGameEngine Engine
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>Character Selection</PageTitle>
+
+<div class="wow-page narrow character-selection">
+    <h2>Character Selection</h2>
+
+    @* ── Existing characters ── *@
+    @if (Engine.CharacterRoster.Count > 0)
+    {
+        <div class="char-section-label">Your Characters</div>
+
+        @foreach (var slot in Engine.CharacterRoster)
+        {
+            bool isActive = Engine.HasActiveCharacter && slot.Id == Engine.CharacterRoster
+                .FirstOrDefault(s => s.Faction == Engine.Faction && s.Race == Engine.Race
+                                     && s.Class == Engine.PlayerClass && s.Gender == Engine.Gender)?.Id;
+
+            <div class="existing-char-card @(slot.Faction == Faction.Alliance ? "alliance-card" : "horde-card") @(isActive ? "active-card" : "")"
+                 @onclick="() => SelectCharacter(slot)">
+                <div class="char-card-portraits">
+                    <img class="char-portrait"
+                         src="@IconUrls.RaceIconUrl(slot.Race, slot.Gender)"
+                         alt="@slot.Race"
+                         onerror="this.remove()" />
+                    <img class="char-portrait class-portrait"
+                         src="@IconUrls.ClassIconUrl(slot.Class)"
+                         alt="@slot.Class"
+                         onerror="this.remove()" />
+                </div>
+                <div class="char-card-info">
+                    <div class="char-card-name">
+                        <span class="char-race">@slot.Race</span>
+                        <span class="char-class class-@slot.Class.ToString().ToLowerInvariant()">@slot.Class</span>
+                    </div>
+                    <div class="char-card-sub">
+                        @slot.Gender &nbsp;·&nbsp;
+                        <span class="@(slot.Faction == Faction.Alliance ? "alliance-color" : "horde-color")">@slot.Faction</span>
+                        &nbsp;·&nbsp; Lv. @slot.Player.Level
+                    </div>
+                </div>
+                <div class="char-card-actions">
+                    <button class="wow-btn char-edit-btn"
+                            title="Edit Character"
+                            @onclick:stopPropagation="true"
+                            @onclick="() => EditCharacter(slot)">✎</button>
+                    <div class="char-card-arrow">▶</div>
+                </div>
+            </div>
+        }
+
+        <div class="new-char-toggle-row">
+            <button class="wow-btn new-char-toggle" @onclick="ToggleCreation">
+                @(showCreation ? "▲ Hide" : "＋ Create New Character")
+            </button>
+        </div>
+    }
+
+    @* ── Creation form ── *@
+    @if (showCreation)
+    {
+        <div class="wow-card">
+            <h4>Gender</h4>
+            <div class="wow-button-group centered">
+                <button class="wow-btn @(selectedGender == Gender.Male ? "active" : "")"
+                        @onclick="() => SetGender(Gender.Male)">
+                    <span>Male</span>
+                </button>
+                <button class="wow-btn @(selectedGender == Gender.Female ? "active" : "")"
+                        @onclick="() => SetGender(Gender.Female)">
+                    <span>Female</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="wow-card">
+            <h4>Race</h4>
+            <div class="race-row">
+                <div class="race-column">
+                    <h3 class="race-column-title alliance-title">Alliance</h3>
+                    <div class="race-buttons alliance">
+                        @foreach (var race in AllianceRaces)
+                        {
+                            <button class="wow-btn wow-btn-icon @(selectedRace == race ? "active" : "")"
+                                    @onclick="() => SetRace(race)">
+                                <img src="@IconUrls.RaceIconUrl(race, selectedGender)" alt="" onerror="this.remove()" />
+                                <span>@race</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="race-column">
+                    <h3 class="race-column-title horde-title">Horde</h3>
+                    <div class="race-buttons horde">
+                        @foreach (var race in HordeRaces)
+                        {
+                            <button class="wow-btn wow-btn-icon @(selectedRace == race ? "active" : "")"
+                                    @onclick="() => SetRace(race)">
+                                <img src="@IconUrls.RaceIconUrl(race, selectedGender)" alt="" onerror="this.remove()" />
+                                <span>@race</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wow-card">
+            <h4>Class</h4>
+            <div class="wow-button-group centered">
+                @foreach (CharacterClass cls in Enum.GetValues(typeof(CharacterClass)))
+                {
+                    bool available = RaceClassInfo.GetAvailableClasses(selectedRace).Contains(cls);
+                    <button class="wow-btn wow-btn-icon @(selectedClass == cls && available ? "active" : "") @(available ? "" : "disabled")"
+                            disabled="@(!available)"
+                            @onclick="() => SetClass(cls)">
+                        <img src="@IconUrls.ClassIconUrl(cls)" alt="" onerror="this.remove()" />
+                        <span class="class-@cls.ToString().ToLowerInvariant()">@cls</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMsg))
+        {
+            <div class="wow-alert error">@errorMsg</div>
+        }
+
+        <div class="creation-confirm-row">
+            <button class="wow-btn active confirm-btn" @onclick="ConfirmAndPlay">
+                ▶ Play as @selectedRace @selectedClass
+            </button>
+        </div>
+    }
+</div>
+
+<style>
+    .char-section-label {
+        font-family: 'Cinzel', serif;
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: #c5a55a;
+        margin: 8px 0 6px 2px;
+    }
+
+    .existing-char-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform .12s, box-shadow .12s, border-color .12s;
+        margin-bottom: 8px;
+        background: linear-gradient(160deg, #1a1510 0%, #0e0b07 100%);
+        border: 2px solid #c5a55a44;
+    }
+
+    .existing-char-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(0,0,0,.6);
+    }
+
+    .existing-char-card.alliance-card {
+        border-color: #2e5a9a;
+        box-shadow: 0 2px 12px rgba(46,90,154,.2);
+    }
+    .existing-char-card.alliance-card:hover,
+    .existing-char-card.alliance-card.active-card {
+        border-color: #4a90d9;
+        box-shadow: 0 6px 24px rgba(74,144,217,.35);
+    }
+
+    .existing-char-card.horde-card {
+        border-color: #9a2e2e;
+        box-shadow: 0 2px 12px rgba(154,46,46,.2);
+    }
+    .existing-char-card.horde-card:hover,
+    .existing-char-card.horde-card.active-card {
+        border-color: #d04a4a;
+        box-shadow: 0 6px 24px rgba(208,74,74,.35);
+    }
+
+    .char-card-portraits {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .char-portrait {
+        width: 48px;
+        height: 48px;
+        border-radius: 6px;
+        border: 1px solid #c5a55a55;
+        object-fit: cover;
+    }
+
+    .char-card-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .char-card-name {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        font-family: 'Cinzel', serif;
+        font-size: 1.05rem;
+    }
+
+    .char-race {
+        color: #e8d5a0;
+        font-weight: 700;
+    }
+
+    .char-card-sub {
+        font-size: .8rem;
+        color: #888;
+    }
+
+    .char-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .char-card-arrow {
+        font-size: 1.1rem;
+        color: #c5a55a;
+        opacity: .7;
+        flex-shrink: 0;
+    }
+
+    .char-edit-btn {
+        font-size: .95rem;
+        padding: 4px 9px;
+        opacity: .7;
+        transition: opacity .12s;
+    }
+
+    .char-edit-btn:hover {
+        opacity: 1;
+    }
+
+    .new-char-toggle-row {
+        display: flex;
+        justify-content: center;
+        margin: 14px 0 6px;
+    }
+
+    .new-char-toggle {
+        font-size: .85rem;
+        padding: 7px 20px;
+    }
+
+    .creation-confirm-row {
+        display: flex;
+        justify-content: center;
+        margin-top: 12px;
+    }
+
+    .confirm-btn {
+        font-family: 'Cinzel', serif;
+        font-size: 1rem;
+        padding: 10px 28px;
+    }
+
+    .character-selection .wow-button-group.centered {
+        display: flex;
+        justify-content: center;
+    }
+
+    .race-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .race-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .character-selection .race-column-title {
+        font-size: .95rem;
+        font-weight: 700;
+        margin: 0;
+        padding: 4px 16px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .character-selection .race-column-title.alliance-title {
+        color: #6ab0ff;
+        background: linear-gradient(180deg, #14284a 0%, #0b1628 100%);
+        border: 1px solid #c5a55a;
+    }
+
+    .character-selection .race-column-title.horde-title {
+        color: #ff6a6a;
+        background: linear-gradient(180deg, #4a1414 0%, #280b0b 100%);
+        border: 1px solid #c5a55a;
+    }
+
+    .race-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px;
+        border-radius: 6px;
+        background: #0e0b07;
+        box-shadow: inset 0 0 8px #000;
+    }
+
+    .race-buttons .wow-btn-icon {
+        flex-direction: row;
+        justify-content: flex-start;
+        min-width: 160px;
+        margin: 0;
+    }
+
+    .race-buttons.alliance { border: 1px solid #2e5a9a; }
+    .race-buttons.horde    { border: 1px solid #9a2e2e; }
+
+    .race-buttons.alliance .wow-btn-icon.active {
+        border-color: #4a90d9;
+        box-shadow: 0 0 8px rgba(74, 144, 217, .6);
+        background: linear-gradient(180deg, #1a3050 0%, #0e1a2e 100%);
+    }
+
+    .race-buttons.horde .wow-btn-icon.active {
+        border-color: #d04a4a;
+        box-shadow: 0 0 8px rgba(208, 74, 74, .6);
+        background: linear-gradient(180deg, #501a1a 0%, #2e0e0e 100%);
+    }
+</style>
+
+@code {
+    private Race selectedRace = Race.Human;
+    private CharacterClass selectedClass = CharacterClass.Warrior;
+    private Gender selectedGender = Gender.Male;
+    private string? errorMsg;
+    private bool showCreation;
+
+    protected override void OnInitialized()
+    {
+        Engine.TickUpdated += OnEngineTick;
+        showCreation = Engine.CharacterRoster.Count == 0;
+    }
+
+    public void Dispose()
+    {
+        Engine.TickUpdated -= OnEngineTick;
+    }
+
+    private void OnEngineTick() => InvokeAsync(StateHasChanged);
+
+    private void SelectCharacter(CharacterSlot slot)
+    {
+        if (Engine.IsGameRunning)
+            Engine.Stop();
+        Engine.SelectCharacter(slot.Id);
+        Nav.NavigateTo("/idle");
+    }
+
+    private void EditCharacter(CharacterSlot slot)
+    {
+        selectedRace = slot.Race;
+        selectedClass = slot.Class;
+        selectedGender = slot.Gender;
+        errorMsg = null;
+        showCreation = true;
+    }
+
+    private void ToggleCreation()
+    {
+        showCreation = !showCreation;
+        errorMsg = null;
+    }
+
+    private Race[] AllianceRaces => new[]
+    {
+        Race.Human, Race.Dwarf, Race.NightElf, Race.Gnome
+    };
+
+    private Race[] HordeRaces => new[]
+    {
+        Race.Orc, Race.Undead, Race.Tauren, Race.Troll
+    };
+
+    private Faction GetFactionForRace(Race race) =>
+        RaceClassInfo.RaceToFaction.TryGetValue(race, out var f) ? f : Faction.Alliance;
+
+    private void SetRace(Race value)
+    {
+        selectedRace = value;
+        var classes = RaceClassInfo.GetAvailableClasses(value);
+        if (!classes.Contains(selectedClass))
+            selectedClass = classes.First();
+        errorMsg = null;
+    }
+
+    private void SetClass(CharacterClass value)
+    {
+        selectedClass = value;
+        errorMsg = null;
+    }
+
+    private void SetGender(Gender value) => selectedGender = value;
+
+    private void ConfirmAndPlay()
+    {
+        try
+        {
+            var faction = GetFactionForRace(selectedRace);
+            if (Engine.IsGameRunning)
+                Engine.Stop();
+            Engine.CreateCharacter(faction, selectedRace, selectedClass, selectedGender);
+            Nav.NavigateTo("/idle");
+        }
+        catch (ArgumentException ex)
+        {
+            errorMsg = ex.Message;
+        }
+    }
+}

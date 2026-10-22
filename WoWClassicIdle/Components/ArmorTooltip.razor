@@ -1,0 +1,35 @@
+@using Models
+
+@* Umschließt den Inhalt und zeigt beim Überfahren einen WoW-Tooltip für ein Rüstungsteil.
+   Positionierung über js/tooltip.js (position: fixed). *@
+@if (Armor is null)
+{
+    @ChildContent
+}
+else
+{
+    string nameColor = ItemQualityColors.Hex(Armor.Quality);
+
+    <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
+        @ChildContent
+        <span class="wow-tooltip" role="tooltip">
+            <span class="tt-name" style="color: @nameColor">@Armor.Name</span>
+            <span class="tt-subtype">@ArmorSlots.Label(Armor.Slot)</span>
+            @foreach (var line in Armor.Bonuses.DescribeBonuses())
+            {
+                <span class="tt-stat">@line</span>
+            }
+            <span class="tt-quality">@Armor.Quality</span>
+            @if (Armor.RequiredLevel > 1)
+            {
+                <span class="tt-req-level">Requires level @Armor.RequiredLevel</span>
+            }
+        </span>
+    </span>
+}
+
+@code {
+    [Parameter] public ArmorItem? Armor { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+}
