@@ -38,7 +38,7 @@
                 @foreach (var slot in LeftSlots)
                 {
                     var gear = EquippedIn(slot);
-                    <ArmorTooltip Armor="gear" Class="tt-contents">
+                    <ArmorTooltip Armor="gear" Class="tt-contents" Hint="@(gear is not null ? UnequipHint : null)">
                         <div class="equip-slot @SlotCss(gear)"
                              title="@SlotHint(slot, gear)"
                              style="--quality: @SlotQuality(gear)"
@@ -62,7 +62,7 @@
                 @foreach (var slot in RightSlots)
                 {
                     var gear = EquippedIn(slot);
-                    <ArmorTooltip Armor="gear" Class="tt-contents">
+                    <ArmorTooltip Armor="gear" Class="tt-contents" Hint="@(gear is not null ? UnequipHint : null)">
                         <div class="equip-slot @SlotCss(gear)"
                              title="@SlotHint(slot, gear)"
                              style="--quality: @SlotQuality(gear)"
@@ -80,7 +80,7 @@
         <div class="weapon-row">
             @if (_engine.Player.EquippedWeapon is { } equipped)
             {
-                <WeaponTooltip Weapon="equipped">
+                <WeaponTooltip Weapon="equipped" Hint="@UnequipHint">
                     <div class="equip-slot equipped-weapon"
                          @oncontextmenu="UnequipWeapon" @oncontextmenu:preventDefault
                          @ondragover:preventDefault @ondrop="DropOnWeaponSlot">
@@ -201,6 +201,7 @@
                             var weaponItem = stack.Item as WeaponItem;
                             var armorItem  = stack.Item as ArmorItem;
                             bool classLocked = weaponItem?.RequiredClass is { } req && req != _engine.Player.ActiveClass;
+                            bool levelLocked = !_engine.Player.MeetsItemRequirements(stack.Item);
                             if (classLocked)
                             {
                                 <div class="bag-slot empty"></div>
@@ -210,9 +211,14 @@
                             var slotCss = weaponItem is not null ? "bag-slot weapon-item"
                                         : armorItem  is not null ? "bag-slot armor-item"
                                         :                         "bag-slot sellable-item";
+                            if (levelLocked)
+                            {
+                                slotCss += " level-locked";
+                            }
+                            string? bagHint = levelLocked ? null : EquipHint;
                             if (armorItem is not null)
                             {
-                            <ArmorTooltip Armor="armorItem" Class="tt-contents">
+                            <ArmorTooltip Armor="armorItem" Class="tt-contents" Hint="@bagHint" RequirementsMet="@(!levelLocked)">
                                 <div class="@slotCss"
                                      style="--quality: @ItemQualityColors.Hex(stack.Item.Quality)"
                                      draggable="true"
@@ -230,7 +236,7 @@
                             }
                             else
                             {
-                            <WeaponTooltip Weapon="weaponItem" Class="tt-contents">
+                            <WeaponTooltip Weapon="weaponItem" Class="tt-contents" Hint="@bagHint" RequirementsMet="@(!levelLocked)">
                                 <div class="@slotCss"
                                      title="@(weaponItem is not null ? null : stack.Item.Name)"
                                      style="--quality: @ItemQualityColors.Hex(stack.Item.Quality)"
@@ -681,6 +687,18 @@
         border-color: #c5a55a;
     }
 
+    /* ── Levelvoraussetzung nicht erfüllt – Icon abgedunkelt ── */
+    .bag-slot.level-locked,
+    .bag-slot.level-locked:hover {
+        cursor: not-allowed;
+        border-color: #6b1f1f;
+    }
+
+    .bag-slot.level-locked img {
+        opacity: .4;
+        filter: grayscale(.7);
+    }
+
     /* ── Alle verkaufbaren Items ── */
     .bag-slot.sellable-item {
         cursor: grab;
@@ -836,6 +854,10 @@
 
     private static readonly EquipSlot WeaponSlot = new("Weapon", "mainhand");
 
+    // Bedienhinweise im WoW-Tooltip (statt schwebendem Systemtooltip)
+    private const string UnequipHint = "Right-click to unequip";
+    private const string EquipHint   = "Right-click or drag to equip";
+
     private PrimaryStats Primary => _engine.Player.Stats.Primary;
 
     private string ResourceName => _engine.Player.ActiveClass switch
@@ -909,9 +931,9 @@
     private static string SlotCss(ArmorItem? gear) =>
         gear is not null ? "equipped-item" : "";
 
-    private static string SlotHint(EquipSlot slot, ArmorItem? gear) =>
+    private static string? SlotHint(EquipSlot slot, ArmorItem? gear) =>
         gear is not null
-            ? $"{gear.Name} ({slot.Name}) – right-click to unequip"
+            ? null // ausgerüstete Teile haben einen WoW-Tooltip – kein schwebender Systemtooltip
             : slot.Armor is null ? slot.Name : $"{slot.Name} (drag item here)";
 
     private static string SlotQuality(ArmorItem? gear) =>

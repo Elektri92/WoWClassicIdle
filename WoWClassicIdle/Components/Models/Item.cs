@@ -104,8 +104,27 @@ namespace Models
         WeaponType Type,
         ItemQuality Quality = ItemQuality.Common,
         long SellPrice = 0,
+        int RequiredLevel = 1,
         CharacterClass? RequiredClass = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
+
+    /// <summary>Anforderungen eines Items (Level/Klasse), die beim Anlegen geprüft werden.</summary>
+    public static class ItemRequirements
+    {
+        /// <summary>Gefordertes Level des Items (1 wenn das Item kein Level verlangt).</summary>
+        public static int LevelOf(Item item) => item switch
+        {
+            ArmorItem  a    => a.RequiredLevel,
+            WeaponItem w    => w.RequiredLevel,
+            _               => 1,
+        };
+
+        public static bool MatchesLevel(Item item, int level) => LevelOf(item) <= level;
+
+        /// <summary>Nur klassenspezifische Waffen sind an andere Klassen gebunden.</summary>
+        public static bool MatchesClass(Item item, CharacterClass cls) =>
+            item is not WeaponItem weapon || weapon.RequiredClass is null || weapon.RequiredClass == cls;
+    }
 
     /// <summary>Ein Stapel eines Items in einem Taschenslot.</summary>
     public class ItemStack

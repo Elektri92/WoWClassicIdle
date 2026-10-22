@@ -139,17 +139,27 @@ namespace Models
         }
 
         /// <summary>
+        /// Prüft, ob der aktive Charakter die Level- und Klassen-Voraussetzungen eines Items erfüllt.
+        /// </summary>
+        public bool MeetsItemRequirements(Item item) =>
+            ItemRequirements.MatchesLevel(item, Level) && ItemRequirements.MatchesClass(item, ActiveClass);
+
+        /// <summary>
         /// Equips a weapon from the given bag slot.
         /// The old weapon (if any) is returned to the inventory.
+        /// Gibt false zurück wenn die Level-/Klassen-Voraussetzungen nicht erfüllt sind – das Item bleibt im Beutel.
         /// </summary>
-        public void EquipWeapon(WeaponItem weapon, Bag sourceBag, int sourceSlot)
+        public bool EquipWeapon(WeaponItem weapon, Bag sourceBag, int sourceSlot)
         {
+            if (!MeetsItemRequirements(weapon)) return false;
+
             sourceBag.Take(sourceSlot);
             if (EquippedWeapon is not null)
                 Inventory.TryAdd(EquippedWeapon);
             EquippedWeapon = weapon;
             _equippedByClass[ActiveClass] = weapon;
             RecalculateStats();
+            return true;
         }
 
         /// <summary>
@@ -169,10 +179,17 @@ namespace Models
         /// <summary>
         /// Legt ein Rüstungsteil an wenn es eine Verbesserung ist (oder der Slot leer war).
         /// Nur für Auto-Equip (Debug-Simulator) – im normalen Spiel wird selbst angelegt.
+        /// Items deren Levelvoraussetzung nicht erfüllt ist werden nicht angelegt.
         /// Gibt true zurück wenn angelegt wurde; das verdrängte Teil kommt in <paramref name="displaced"/>.
         /// </summary>
         public bool EquipArmorIfUpgrade(ArmorItem item, out ArmorItem? displaced)
         {
+            if (!MeetsItemRequirements(item))
+            {
+                displaced = null;
+                return false;
+            }
+
             EquippedArmor.TryGetValue(item.Slot, out var current);
             if (current is not null && SumPrimary(item.Bonuses) <= SumPrimary(current.Bonuses))
             {
@@ -188,14 +205,18 @@ namespace Models
         /// <summary>
         /// Rüstet ein Rüstungsteil aus dem gegebenen Taschen-Slot aus.
         /// Das bisher getragene Teil (falls vorhanden) wandert zurück ins Inventar.
+        /// Gibt false zurück wenn das erforderliche Level nicht erreicht ist – das Item bleibt im Beutel.
         /// </summary>
-        public void EquipArmor(ArmorItem item, Bag sourceBag, int sourceSlot)
+        public bool EquipArmor(ArmorItem item, Bag sourceBag, int sourceSlot)
         {
+            if (!MeetsItemRequirements(item)) return false;
+
             sourceBag.Take(sourceSlot);
             if (EquippedArmor.TryGetValue(item.Slot, out var current))
                 Inventory.TryAdd(current);
             EquippedArmor[item.Slot] = item;
             RecalculateStats();
+            return true;
         }
 
         /// <summary>

@@ -22,9 +22,17 @@ else
             </span>
             <span class="tt-dps">(@dps.ToString("0.00") damage per second)</span>
             <span class="tt-quality">@Weapon.Quality</span>
+            @if (Weapon.RequiredLevel > 1)
+            {
+                <span class="tt-req-level @(RequirementsMet ? "" : "tt-req-blocked")">Requires level @Weapon.RequiredLevel</span>
+            }
             @if (Weapon.RequiredClass is { } cls)
             {
                 <span class="tt-req-class">Classes: @cls</span>
+            }
+            @if (!string.IsNullOrEmpty(Hint))
+            {
+                <span class="tt-hint">@Hint</span>
             }
         </span>
     </span>
@@ -34,4 +42,8 @@ else
     [Parameter] public WeaponItem? Weapon { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Hint { get; set; }
+
+    /// <summary>Erfüllt der Charakter die Levelvoraussetzung (färbt die Zeile rot wenn nicht).</summary>
+    [Parameter] public bool RequirementsMet { get; set; } = true;
 }

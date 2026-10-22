@@ -62,3 +62,16 @@
     color: #ff8000;
     font-size: .75rem;
 }
+
+/* Anforderung nicht erfüllt – wie in WoW rot */
+.tt-req-level.tt-req-blocked {
+    color: #ff4040;
+}
+
+/* Bedienhinweis (Rechtsklick/Ziehen) am Ende des Tooltips */
+.tt-hint {
+    margin-top: 4px;
+    color: #7a6a44;
+    font-size: .72rem;
+    font-style: italic;
+}

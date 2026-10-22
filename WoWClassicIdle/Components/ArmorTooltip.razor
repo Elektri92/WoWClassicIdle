@@ -22,7 +22,11 @@ else
             <span class="tt-quality">@Armor.Quality</span>
             @if (Armor.RequiredLevel > 1)
             {
-                <span class="tt-req-level">Requires level @Armor.RequiredLevel</span>
+                <span class="tt-req-level @(RequirementsMet ? "" : "tt-req-blocked")">Requires level @Armor.RequiredLevel</span>
+            }
+            @if (!string.IsNullOrEmpty(Hint))
+            {
+                <span class="tt-hint">@Hint</span>
             }
         </span>
     </span>
@@ -32,4 +36,8 @@ else
     [Parameter] public ArmorItem? Armor { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Hint { get; set; }
+
+    /// <summary>Erfüllt der Charakter die Levelvoraussetzung (färbt die Zeile rot wenn nicht).</summary>
+    [Parameter] public bool RequirementsMet { get; set; } = true;
 }
