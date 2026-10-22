@@ -46,6 +46,8 @@ public class IdleGameEngine
     public Player Player { get; private set; } = null!;
 
     public Enemy? CurrentEnemy { get; set; }
+    // Rare-Gegner, gegen den der Spieler gestorben ist – nach Respawn erneut bekämpfen
+    private Enemy? _pendingRareEnemy;
     public int TotalKills { get; private set; }
     public int TotalDeaths { get; private set; }
     public string? LastLog { get; private set; }
@@ -313,7 +315,17 @@ public class IdleGameEngine
 
             if (CurrentEnemy is not { IsAlive: true })
             {
-                CurrentEnemy = _spawner.Spawn(Player.Stats.Level, _stopwatch.Elapsed.TotalSeconds);
+                if (_pendingRareEnemy != null)
+                {
+                    // Spieler ist gegen diesen Rare gestorben – erneut bekämpfen
+                    _pendingRareEnemy.ResetHp();
+                    CurrentEnemy    = _pendingRareEnemy;
+                    _pendingRareEnemy = null;
+                }
+                else
+                {
+                    CurrentEnemy = _spawner.Spawn(Player.Stats.Level, _stopwatch.Elapsed.TotalSeconds);
+                }
                 LastLog = $"{CurrentEnemy.Name} appeared!";
                 _playerAttackAcc = 0;
                 _enemyAttackAcc  = 0;
@@ -497,6 +509,9 @@ public class IdleGameEngine
                 TotalDeaths++;
                 Player.Buffs.Reset();   // wie in WoW: Tod entfernt alle Buffs
                 Player.CurrentHp = Player.Stats.MaxHp;
+                // Rare-Gegner merken, damit er nach Respawn erneut erscheint
+                if (CurrentEnemy is { IsRare: true })
+                    _pendingRareEnemy = CurrentEnemy;
                 CurrentEnemy = null;
                 RespawnDuration  = 10 + Player.Level;
                 RespawnRemaining = RespawnDuration;
