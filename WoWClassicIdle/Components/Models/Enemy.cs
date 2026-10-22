@@ -27,4 +27,11 @@ public class Enemy
         CurrentHp = Math.Max(0, CurrentHp - amount);
         DamageTaken?.Invoke(amount);
     }
+
+    // Setzt HP zurück (z. B. wenn Spieler stirbt und Rare erneut bekämpft wird)
+    public void ResetHp()
+    {
+        CurrentHp = Stats.MaxHp;
+        Debuffs.Reset();
+    }
 }
