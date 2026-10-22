@@ -1,0 +1,10 @@
+/publish/
+
+# Build-Ergebnisse
+[Bb]in/
+[Oo]bj/
+
+# Rider / Visual Studio
+.vs/
+*.user
+*.suo
