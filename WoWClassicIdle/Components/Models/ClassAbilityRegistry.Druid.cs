@@ -65,5 +65,44 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Regrowth_r1",
+            Name = "Regrowth",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_resistnature.jpg",
+            Cooldown = 12,
+            ManaCost = 40,
+            Heal = 12,                          // direkter Sofort-Heal
+            BuffDuration = 12,                  // HoT über 12 s
+            HotTotalHeal = 20,                  // 6 Ticks à ~3 = 20 HP gesamt
+            HotTickInterval = 2,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Insect_Swarm_r1",
+            Name = "Insect Swarm",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_insectswarm.jpg",
+            Cooldown = 20,
+            ManaCost = 10,
+            DebuffDuration = 15,                // Naturdot + Tempo-Debuff
+            DebuffDotDamage = 6,                // 5 Ticks à 6 = 30 DMG gesamt
+            DebuffDotTickInterval = 3,
+            DebuffAttackSpeedReduction = 0.10,  // −10 % Angriffstempo
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Starfire_r1",
+            Name = "Starfire",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_arcane_starfire.jpg",
+            Cooldown = 2.5,                     // langsamer, mächtiger Arkan-Bolt
+            ManaCost = 30,
+            Damage = 28,
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }
