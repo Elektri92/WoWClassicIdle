@@ -49,6 +49,77 @@ public static partial class ClassAbilityRegistry
             .Select(a => a.Id)
             .ToList();
 
+    /// <summary>
+    /// Spec-bewusster Standard-Loadout: Abilities mit passendem <see cref="Ability.SpecHint"/> werden
+    /// innerhalb einer ExclusiveGroup bevorzugt; sonst identisch mit <see cref="GetDefaultLoadoutIds(CharacterClass,int)"/>.
+    /// </summary>
+    public static List<string> GetDefaultLoadoutIds(CharacterClass cls, int level, int specIndex) =>
+        GetAbilitiesFor(cls)
+            .Where(a => a.LevelRequired <= level)
+            .Where(a => !a.TalentUnlockOnly)
+            .GroupBy(a => a.Name)
+            .Select(g => g.OrderByDescending(a => a.Rank).First())
+            .GroupBy(a => string.IsNullOrEmpty(a.ExclusiveGroup) ? a.Id : a.ExclusiveGroup)
+            .Select(g =>
+            {
+                // Bevorzuge Ability die zum Spec passt; sonst höchstes LevelRequired
+                var match = g.FirstOrDefault(a => a.SpecHint == specIndex);
+                return match ?? g.OrderByDescending(a => a.LevelRequired).First();
+            })
+            .OrderByDescending(a => a.LevelRequired)
+            .Take(MaxSlotsPerClass)
+            .Select(a => a.Id)
+            .ToList();
+
+    /// <summary>
+    /// Spec-bewusster Loadout mit explizit freigeschalteten Talent-Abilities.
+    /// Talent-Abilities werden immer bevorzugt eingebaut; wenn dadurch reguläre Slots fehlen,
+    /// werden Abilities die am wenigsten zum Spec passen zuerst entfernt
+    /// (Spec-Fremdlinge vor neutralen, niedrigstes LevelRequired zuerst).
+    /// </summary>
+    public static List<string> GetDefaultLoadoutIds(
+        CharacterClass cls, int level, int specIndex,
+        IReadOnlySet<string> unlockedTalentAbilityIds)
+    {
+        // Talent-freigeschaltete Abilities die der Spieler bereits besitzt
+        var talentAbilities = GetAbilitiesFor(cls)
+            .Where(a => a.TalentUnlockOnly && unlockedTalentAbilityIds.Contains(a.Id))
+            .ToList();
+
+        // Reguläre Abilities (gleiche Spec-Logik wie GetDefaultLoadoutIds(cls, level, specIndex))
+        var regularAbilities = GetAbilitiesFor(cls)
+            .Where(a => a.LevelRequired <= level)
+            .Where(a => !a.TalentUnlockOnly)
+            .GroupBy(a => a.Name)
+            .Select(g => g.OrderByDescending(a => a.Rank).First())
+            .GroupBy(a => string.IsNullOrEmpty(a.ExclusiveGroup) ? a.Id : a.ExclusiveGroup)
+            .Select(g =>
+            {
+                var match = g.FirstOrDefault(a => a.SpecHint == specIndex);
+                return match ?? g.OrderByDescending(a => a.LevelRequired).First();
+            })
+            // Spec-passende Abilities haben Vorrang; danach höchstes LevelRequired
+            .OrderBy(a => a.SpecHint >= 0 && a.SpecHint != specIndex ? 0 : 1) // Fremdlinge zuerst raus → hohe Priorität = niedrige sort-Position
+            .ThenByDescending(a => a.LevelRequired)
+            .ToList();
+
+        // Sortierung: Spec-Fremdlinge sollen rausfliegen → von hinten nehmen wir reguläre
+        // d.h. wir nehmen von der sortierten Liste die letzten (spec-passendsten / höchst-leveligsten)
+        int regularSlots = Math.Max(0, MaxSlotsPerClass - talentAbilities.Count);
+
+        // Nehme die "besten" regulären: spec-passend und hoher Level → am Ende der sortierten Liste
+        var keptRegular = regularAbilities
+            .OrderByDescending(a => a.SpecHint == specIndex || a.SpecHint < 0 ? 1 : 0)
+            .ThenByDescending(a => a.LevelRequired)
+            .Take(regularSlots)
+            .ToList();
+
+        return talentAbilities
+            .Concat(keptRegular)
+            .Select(a => a.Id)
+            .ToList();
+    }
+
     public static Ability? FindById(string id)
     {
         foreach (var list in Abilities.Values)

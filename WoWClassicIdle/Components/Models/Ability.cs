@@ -109,12 +109,24 @@ public sealed record Ability
 
     /// <summary>Kann nur über ein Talent freigeschaltet werden, erscheint nicht im Standard-Loadout.</summary>
     public bool TalentUnlockOnly { get; init; }
+
+    /// <summary>
+    /// Bevorzugter Talent-Baum (0/1/2) für die Simulation. −1 = keine Präferenz.
+    /// Wird verwendet, wenn mehrere Abilities in derselben ExclusiveGroup konkurrieren (z. B. Fireball vs. Frostbolt).
+    /// </summary>
+    public int SpecHint { get; init; } = -1;
     /// <summary>+% Rage-Generierung durch Auto-Attacks während der Buff aktiv ist.</summary>
     public double BuffRageGenBonus { get; init; }
     /// <summary>+% Crit-Chance während der Buff aktiv ist.</summary>
     public double BuffCritChanceBonus { get; init; }
     /// <summary>-% erlittener Schaden während der Buff aktiv ist.</summary>
     public double BuffDamageTakenReduction { get; init; }
+
+    /// <summary>Wird nur gewirkt wenn aktuelles Mana unter diesem Anteil von MaxMana liegt (0 = keine Bedingung).</summary>
+    public double CastWhenManaBelowPct { get; init; }
+
+    /// <summary>Buff absorbiert diesen Anteil der maximalen HP als Schild (0.30 = 30 %).</summary>
+    public double BuffShieldPct { get; init; }
 
     /// <summary>Debuff betäubt den Gegner: keine Angriffe für <see cref="DebuffDuration"/> Sekunden.</summary>
     public bool DebuffIsStun { get; init; }

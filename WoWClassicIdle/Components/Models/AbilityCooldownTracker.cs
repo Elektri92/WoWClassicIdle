@@ -4,6 +4,8 @@ namespace Models;
 public class AbilityCooldownTracker
 {
     private readonly Dictionary<string, double> _remaining = new();
+    private readonly List<string> _expiredCooldowns = new();
+    private readonly List<(string Id, double Value)> _cooldownUpdates = new();
 
     public bool IsReady(string abilityId) =>
         !_remaining.ContainsKey(abilityId) || _remaining[abilityId] <= 0;
@@ -13,12 +15,20 @@ public class AbilityCooldownTracker
 
     public void Tick(double dt)
     {
-        foreach (var key in _remaining.Keys.ToList())
+        _expiredCooldowns.Clear();
+        _cooldownUpdates.Clear();
+
+        foreach (var kvp in _remaining)
         {
-            _remaining[key] -= dt;
-            if (_remaining[key] <= 0)
-                _remaining.Remove(key);
+            double newVal = kvp.Value - dt;
+            if (newVal <= 0)
+                _expiredCooldowns.Add(kvp.Key);
+            else
+                _cooldownUpdates.Add((kvp.Key, newVal));
         }
+
+        foreach (var k in _expiredCooldowns)        _remaining.Remove(k);
+        foreach (var (k, v) in _cooldownUpdates)    _remaining[k] = v;
     }
 
     public void Reset() => _remaining.Clear();

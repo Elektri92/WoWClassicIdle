@@ -201,8 +201,8 @@ public partial class IdleGameEngine
                 Player.TriggerAbilityUsed(nextSwingAbility.Name, nextSwingAbility.Damage);
 
                 // Passive Procs (z. B. Deadly Poison) – auch bei On-Next-Swing
-                foreach (var passive in Player.EquippedAbilities)
-                    if (passive.IsPassive && passive.ProcChance > 0 && CurrentEnemy.IsAlive && _rng.NextDouble() < passive.ProcChance)
+                foreach (var passive in Player.PassiveAbilities)
+                    if (CurrentEnemy.IsAlive && _rng.NextDouble() < passive.ProcChance)
                         CurrentEnemy.Debuffs.ApplyStack(passive);
 
                 continue;
@@ -229,8 +229,8 @@ public partial class IdleGameEngine
             }
 
             // Passive Procs (z. B. Deadly Poison)
-            foreach (var passive in Player.EquippedAbilities)
-                if (passive.IsPassive && passive.ProcChance > 0 && CurrentEnemy.IsAlive && _rng.NextDouble() < passive.ProcChance)
+            foreach (var passive in Player.PassiveAbilities)
+                if (CurrentEnemy.IsAlive && _rng.NextDouble() < passive.ProcChance)
                     CurrentEnemy.Debuffs.ApplyStack(passive);
         }
 
@@ -259,8 +259,10 @@ public partial class IdleGameEngine
                 CurrentEnemy.Stats.Attack, Player.Stats.Defense, _rng);
             double dmgReduction = Math.Min(0.99, Player.Stats.DamageTakenReduction + Player.Buffs.DamageTakenReduction);
             int reducedDmg = Math.Max(1, (int)Math.Round(enemyDmg * (1.0 - dmgReduction)));
-            int taken = Player.TakeDamage(reducedDmg);
+            var (taken, absorbs) = Player.TakeDamage(reducedDmg);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, taken));
+            foreach (var (src, amt) in absorbs)
+                Meter.RecordAbility(src, CombatActionKind.Heal, amt);
             totalEnemyDmg += reducedDmg;
 
             // RageOnHit: Warrior generiert bei Schaden-Einnahme extra Rage
@@ -304,12 +306,12 @@ public partial class IdleGameEngine
         // ── Abilities (Cooldown-basiert) ──
         Player.Cooldowns.Tick(dt * attackSpeed);
 
-        // Heilungen zuerst, dann Buffs/Debuffs (hohe Prio), dann Schaden
-        foreach (var ability in Player.EquippedAbilities.OrderBy(a => a.IsHealing ? 0 : (a.IsBuff || a.IsDebuff) ? 1 : 2))
+        // Heilungen zuerst, dann Buffs/Debuffs (hohe Prio), dann Schaden (Reihenfolge ist gecacht)
+        foreach (var ability in Player.SortedEquippedAbilities)
         {
-            if (ability.ReplacesAutoAttack) continue;
-            if (ability.IsPassive) continue;
             if (!IsReadyToCast(ability)) continue;
+            if (ability.CastWhenManaBelowPct > 0
+                && Player.CurrentMana >= Player.Stats.MaxMana * ability.CastWhenManaBelowPct) continue;
             if (ability.IsHealing && !PlayerNeedsHeal) continue;
             if (!ability.IsHealing && ability.ManaCost > 0 && IsSavingManaForHeal()) continue;
             if (!Player.ConsumeMana(Player.GetEffectiveManaCost(ability))) continue;
@@ -319,7 +321,7 @@ public partial class IdleGameEngine
             {
                 if (Player.CurrentMana >= Player.Stats.MaxMana / 2 || PlayerNeedsHeal || Player.CurrentHp <= ability.LifeTapHpCost)
                     continue;
-                Player.TakeDamage(ability.LifeTapHpCost);
+                Player.TakeDamage(ability.LifeTapHpCost); // Absorb-Rückgabe ignoriert (kein Schild-Meter für Life Tap)
                 Player.RegenMana(ability.LifeTapManaGain);
                 CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, ability.LifeTapHpCost));
                 LastLog = $"✦ {ability.Name} → -{ability.LifeTapHpCost} HP, +{ability.LifeTapManaGain} Mana";
@@ -378,6 +380,24 @@ public partial class IdleGameEngine
                         DebuffDotTickInterval = 5.0,
                     };
                     CurrentEnemy.Debuffs.Apply(periodicFire);
+                }
+
+                // Ignite: Feuerzauber-Crit löst DoT aus (15 % des Schadens über 3 Ticks)
+                if (abilityCrit
+                    && (ability.Id.StartsWith("Fireball") || ability.Id.StartsWith("Fire_Blast"))
+                    && Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.GrantIgnite) > 0
+                    && CurrentEnemy.IsAlive)
+                {
+                    int ignitePerTick = (int)Math.Max(1, Math.Round(abilityDmg * 0.15 / 3.0));
+                    var igniteDebuff = new Ability
+                    {
+                        Id                    = "talent_ignite",
+                        Name                  = "Ignite",
+                        DebuffDuration        = 3,
+                        DebuffDotDamage       = ignitePerTick,
+                        DebuffDotTickInterval = 1.0,
+                    };
+                    CurrentEnemy.Debuffs.ApplyIgnite(igniteDebuff);
                 }
             }
             else if (ability.IsDebuff)  // reiner Debuff (Hunter's Mark, Curse of Agony)

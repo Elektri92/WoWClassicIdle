@@ -17,6 +17,8 @@ public class DebuffTracker
 
     private readonly Dictionary<string, ActiveDebuff> _active = new();
     private readonly object _lock = new();
+    private readonly List<string> _expiredDebuffs = new();
+    private readonly List<(string Key, ActiveDebuff Value)> _debuffUpdates = new();
 
     public bool IsActive(string abilityId)
     {
@@ -29,6 +31,18 @@ public class DebuffTracker
         lock (_lock) _active[ability.Id] = new ActiveDebuff(ability, ability.DebuffDuration);
     }
 
+    /// <summary>Wendet Ignite an – überschreibt nur wenn der neue Schaden-per-Tick größer ist als der aktuelle.</summary>
+    public void ApplyIgnite(Ability ability)
+    {
+        lock (_lock)
+        {
+            if (_active.TryGetValue(ability.Id, out var existing)
+                && existing.Source.DebuffDotDamage >= ability.DebuffDotDamage)
+                return;
+            _active[ability.Id] = new ActiveDebuff(ability, ability.DebuffDuration);
+        }
+    }
+
     /// <summary>Advances all debuffs by <paramref name="dt"/> seconds and returns any pending DoT ticks.</summary>
     public IReadOnlyList<DebuffDotTick> Tick(double dt)
     {
@@ -36,9 +50,12 @@ public class DebuffTracker
 
         lock (_lock)
         {
-            foreach (var key in _active.Keys.ToList())
+            _expiredDebuffs.Clear();
+            _debuffUpdates.Clear();
+
+            foreach (var kvp in _active)
             {
-                var debuff = _active[key];
+                var debuff = kvp.Value;
                 double remaining = debuff.Remaining - dt;
                 double tickAcc = debuff.TickAcc + dt;
                 int ticksDone = debuff.TicksDone;
@@ -52,10 +69,13 @@ public class DebuffTracker
                 }
 
                 if (remaining <= Epsilon)
-                    _active.Remove(key);
+                    _expiredDebuffs.Add(kvp.Key);
                 else
-                    _active[key] = debuff with { Remaining = remaining, TickAcc = tickAcc, TicksDone = ticksDone };
+                    _debuffUpdates.Add((kvp.Key, debuff with { Remaining = remaining, TickAcc = tickAcc, TicksDone = ticksDone }));
             }
+
+            foreach (var k in _expiredDebuffs)      _active.Remove(k);
+            foreach (var (k, v) in _debuffUpdates)  _active[k] = v;
         }
 
         return ticks ?? (IReadOnlyList<DebuffDotTick>)Array.Empty<DebuffDotTick>();

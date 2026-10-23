@@ -57,6 +57,9 @@ public sealed record SimulationSettings(
 /// <summary>Zeitpunkt, zu dem ein Level während eines Leveling-Laufs erreicht wurde.</summary>
 public sealed record LevelTiming(int Level, double SimSecondsToReach);
 
+/// <summary>Loadout-Phase: welche Abilities von LevelFrom bis LevelTo ausgerüstet waren.</summary>
+public sealed record LoadoutSnapshot(int LevelFrom, int LevelTo, IReadOnlyList<string> AbilityIds);
+
 /// <summary>Ergebnis eines vollständigen Leveling-Laufs von LevelFrom bis LevelTo für eine Klasse.</summary>
 public sealed record LevelingResult(
     CharacterClass Class,
@@ -75,6 +78,7 @@ public sealed record LevelingResult(
     long TotalCopperGained,
     IReadOnlyList<LevelTiming> LevelTimings,
     IReadOnlyList<MeterRow> FinalBreakdown,
+    IReadOnlyList<LoadoutSnapshot> LoadoutHistory,
     string TalentSummary,
     WeaponItem? FinalWeapon,
     IReadOnlyDictionary<ArmorSlot, ArmorItem> FinalArmor,
@@ -269,10 +273,11 @@ public static class ClassSimulator
         progress.SetLevel(levelFrom);
         player.SetActiveClass(cls);
 
-        var loadout = new ClassLoadout { Class = cls };
-        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, levelFrom);
-        player.ApplyLoadout(loadout);
         AutoInvestTalentsForSpec(player, cls, specIndex);
+        var loadout = new ClassLoadout { Class = cls };
+        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(
+            cls, levelFrom, specIndex, GetUnlockedTalentAbilityIds(player, cls));
+        player.ApplyLoadout(loadout);
         SimStarterGear.Equip(player, cls, specIndex, levelFrom);
 
         engine.Meter.Reset();
@@ -291,7 +296,11 @@ public static class ClassSimulator
         int  maxSteps    = (int)Math.Round(maxMinutes * 60.0 / engine.StepSeconds);
         int  lastLevel   = levelFrom;
         double simSeconds = 0;
-        var levelTimings  = new List<LevelTiming>();
+        var levelTimings   = new List<LevelTiming>();
+        var loadoutHistory = new List<LoadoutSnapshot>();
+        // Aktuellen Loadout für Tracking merken
+        var currentLoadoutIds = player.GetCurrentLoadout().EquippedAbilityIds.ToList();
+        int loadoutSinceLevel = levelFrom;
 
         for (int i = 0; i < maxSteps; i++)
         {
@@ -316,15 +325,29 @@ public static class ClassSimulator
 
                 lastLevel = currentLevel;
 
-                // Loadout und Talente für das neue Level aktualisieren
-                var newLoadout = new ClassLoadout { Class = cls };
-                newLoadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, currentLevel);
-                player.ApplyLoadout(newLoadout);
+                // Talente zuerst investieren, dann Loadout aktualisieren damit Talent-Abilities bevorzugt werden
                 AutoInvestTalentsForSpec(player, cls, specIndex);
+                var newAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(
+                    cls, currentLevel, specIndex, GetUnlockedTalentAbilityIds(player, cls));
+
+                // Loadout-Wechsel erkennen: Snapshot für den abgeschlossenen Bereich ablegen
+                if (!newAbilityIds.SequenceEqual(currentLoadoutIds))
+                {
+                    loadoutHistory.Add(new LoadoutSnapshot(loadoutSinceLevel, currentLevel - 1, currentLoadoutIds));
+                    currentLoadoutIds = newAbilityIds;
+                    loadoutSinceLevel = currentLevel;
+                }
+
+                var newLoadout = new ClassLoadout { Class = cls };
+                newLoadout.EquippedAbilityIds = newAbilityIds;
+                player.ApplyLoadout(newLoadout);
 
                 if (currentLevel >= levelTo) break;
             }
         }
+
+        // Letzten (oder einzigen) Loadout-Abschnitt abschließen
+        loadoutHistory.Add(new LoadoutSnapshot(loadoutSinceLevel, progress.Level, currentLoadoutIds));
 
         // Gesamt-XP: abgeschlossene Level + aktuelles Zwischen-XP
         long xpGainedTotal = 0;
@@ -350,6 +373,7 @@ public static class ClassSimulator
             TotalCopperGained: player.Copper - copperStart,
             LevelTimings: levelTimings,
             FinalBreakdown: meter.Rows,
+            LoadoutHistory: loadoutHistory,
             TalentSummary: BuildTalentSummary(player, cls),
             FinalWeapon: player.EquippedWeapon,
             FinalArmor: new Dictionary<ArmorSlot, ArmorItem>(player.EquippedArmor),
@@ -358,11 +382,30 @@ public static class ClassSimulator
     }
 
     /// <summary>Investiert alle Punkte greedy in einen einzigen Talent-Baum (für Spec-Simulationen).</summary>
+    /// <summary>Sammelt die Ability-IDs aller durch Talente freigeschalteten Fähigkeiten die der Spieler bereits besitzt.</summary>
+    private static IReadOnlySet<string> GetUnlockedTalentAbilityIds(Player player, CharacterClass cls)
+    {
+        var result = new HashSet<string>();
+        foreach (var talent in TalentRegistry.GetTalents(cls))
+        {
+            if (!string.IsNullOrEmpty(talent.GrantsAbilityId)
+                && player.TalentState.GetRanks(talent.Id) > 0)
+            {
+                result.Add(talent.GrantsAbilityId);
+            }
+        }
+        return result;
+    }
+
     private static void AutoInvestTalentsForSpec(Player player, CharacterClass cls, int specIndex)
     {
+        // Talente die eine Ability freischalten (GrantsAbilityId) werden bevorzugt investiert,
+        // sobald ihre Reihe freigeschaltet ist — sonst würden Row=0-Talente mit vielen Rängen
+        // die Ability-Grants für viele Level blockieren.
         var talents = TalentRegistry.GetTalents(cls)
             .Where(t => t.TreeIndex == specIndex)
-            .OrderBy(t => t.Row)
+            .OrderBy(t => string.IsNullOrEmpty(t.GrantsAbilityId) ? 1 : 0)
+            .ThenBy(t => t.Row)
             .ThenBy(t => t.Column)
             .ToList();
 

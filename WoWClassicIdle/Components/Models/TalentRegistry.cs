@@ -56,8 +56,8 @@ public static partial class TalentRegistry
             Description   = "Increases the effect of Arcane Intellect by 5% per rank.",
             Class         = CharacterClass.Mage,
             TreeIndex     = 0,
-            Row           = 0,
-            Column        = 0,
+            Row           = 1,
+            Column        = 1,
             MaxRanks      = 5,
             EffectType    = TalentEffectType.ArcaneIntellectBonus,
             EffectPerRank = 0.05,
@@ -178,6 +178,99 @@ public static partial class TalentRegistry
             EffectType    = TalentEffectType.FrostboltCrit,
             EffectPerRank = 0.01,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_frost_frozencore.jpg",
+        },
+
+        // ── Arcane-Baum (0), Reihe 1 ──────────────────────────────────────────
+        new TalentDefinition
+        {
+            Id              = "mage_arcane_evocation",
+            Name            = "Evocation",
+            Description     = "Teaches you the Evocation ability, restoring 80% of your mana over 8 seconds.",
+            Class           = CharacterClass.Mage,
+            TreeIndex       = 0,
+            Row             = 1,
+            Column          = 0,
+            MaxRanks        = 1,
+            EffectType      = TalentEffectType.GrantEvocation,
+            EffectPerRank   = 1.0,
+            GrantsAbilityId = "Evocation_r1",
+            IconUrl         = "https://wow.zamimg.com/images/wow/icons/medium/spell_nature_purge.jpg",
+        },
+        new TalentDefinition
+        {
+            Id            = "mage_arcane_improved_am",
+            Name          = "Improved Arcane Missiles",
+            Description   = "Increases the damage of Arcane Missiles by 1% per rank.",
+            Class         = CharacterClass.Mage,
+            TreeIndex     = 0,
+            Row           = 0,
+            Column        = 0,
+            MaxRanks      = 3,
+            EffectType    = TalentEffectType.ArcaneMissilesDamage,
+            EffectPerRank = 0.01,
+            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_magic_managain.jpg",
+        },
+
+        // ── Fire-Baum (1), Reihe 1 ─────────────────────────────────────────────
+        new TalentDefinition
+        {
+            Id              = "mage_fire_ignite",
+            Name            = "Ignite",
+            Description     = "Your fire spell crits apply Ignite, dealing 15% of the crit damage as a DoT over 3 seconds.",
+            Class           = CharacterClass.Mage,
+            TreeIndex       = 1,
+            Row             = 1,
+            Column          = 0,
+            MaxRanks        = 1,
+            EffectType      = TalentEffectType.GrantIgnite,
+            EffectPerRank   = 1.0,
+            GrantsAbilityId = "Ignite_r1",
+            IconUrl         = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_incinerate.jpg",
+        },
+        new TalentDefinition
+        {
+            Id            = "mage_fire_efficient_fb",
+            Name          = "Efficient Fire Blast",
+            Description   = "Reduces the mana cost of Fire Blast by 1 per rank.",
+            Class         = CharacterClass.Mage,
+            TreeIndex     = 1,
+            Row           = 1,
+            Column        = 1,
+            MaxRanks      = 3,
+            EffectType    = TalentEffectType.FireBlastManaCost,
+            EffectPerRank = 1.0,
+            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_fireblast.jpg",
+        },
+
+        // ── Frost-Baum (2), Reihe 1 ────────────────────────────────────────────
+        new TalentDefinition
+        {
+            Id              = "mage_frost_ice_barrier",
+            Name            = "Ice Barrier",
+            Description     = "Teaches you the Ice Barrier ability, which absorbs 30% of your max HP as a shield for 60 seconds.",
+            Class           = CharacterClass.Mage,
+            TreeIndex       = 2,
+            Row             = 1,
+            Column          = 0,
+            MaxRanks        = 1,
+            EffectType      = TalentEffectType.GrantIceBarrier,
+            EffectPerRank   = 1.0,
+            GrantsAbilityId = "Ice_Barrier_r1",
+            IconUrl         = "https://wow.zamimg.com/images/wow/icons/medium/spell_ice_lament.jpg",
+        },
+        new TalentDefinition
+        {
+            Id            = "mage_frost_frostbolt_crusher",
+            Name          = "Frostbolt Crusher",
+            Description   = "Increases the damage of Frostbolt by 5% per rank.",
+            Class         = CharacterClass.Mage,
+            TreeIndex     = 2,
+            Row           = 1,
+            Column        = 1,
+            MaxRanks      = 3,
+            EffectType    = TalentEffectType.FrostboltDamage,
+            EffectPerRank = 0.05,
+            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_frost_frostbolt02.jpg",
         },
     ];
 }

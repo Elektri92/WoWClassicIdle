@@ -32,7 +32,7 @@ public static partial class ClassAbilityRegistry
             Name = "Renew",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_renew.jpg",
             Cooldown = 60,
-            ManaCost = 30,
+            ManaCost = 15,      // −50 % Manakosten
             BuffDuration = 20,      // HoT über 20 s
             HotTotalHeal = 40,      // 40 Heilung gesamt
             HotTickInterval = 4,    // 5 Ticks à 8
@@ -84,7 +84,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_unholyfrenzy.jpg",
             Cooldown = 8,
             ManaCost = 25,
-            Damage = 22,
+            Damage = 26,        // +20 % Buff
             LevelRequired = 18,
             Rank = 1,
         },

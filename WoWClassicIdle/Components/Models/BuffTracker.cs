@@ -5,7 +5,7 @@ namespace Models;
 /// Ein laufender Buff: die auslösende Fähigkeit und die Restlaufzeit in Sekunden.
 /// <see cref="TickAcc"/>/<see cref="TicksDone"/> zählen die HoT-Ticks mit.
 /// </summary>
-public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0);
+public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0, int ShieldRemaining = 0);
 
 /// <summary>Ein fälliger HoT- oder MoT-Tick. <see cref="IsMana"/> = true → Mana-Regenerierung statt HP-Heilung.</summary>
 public readonly record struct HotTick(Ability Source, int Amount, bool IsMana = false);
@@ -21,6 +21,11 @@ public class BuffTracker
 
     private readonly Dictionary<string, ActiveBuff> _active = new();
     private readonly object _lock = new();
+    // Vorab alloziierte Hilfslisten für Tick() – vermeiden Keys.ToList()-Allokation pro Step
+    private readonly List<string> _expiredBuffs = new();
+    private readonly List<(string Key, ActiveBuff Value)> _buffUpdates = new();
+    // Vorab alloziiert für AbsorbDamage – kein Heap-Alloc pro Treffer
+    private readonly List<(Ability Source, int Absorbed)> _absorbLog = new();
 
     public bool IsActive(string abilityId)
     {
@@ -36,13 +41,42 @@ public class BuffTracker
         int hotPctAmount = 0;
         if (ability.HotHealPct > 0 && ability.HotTickCount > 0 && maxHp > 0)
             hotPctAmount = (int)Math.Round(ability.HotHealPct * maxHp / ability.HotTickCount);
+        int shieldAmount = ability.BuffShieldPct > 0 && maxHp > 0
+            ? (int)Math.Round(ability.BuffShieldPct * maxHp)
+            : 0;
         lock (_lock)
         {
             // Alten Rang desselben Spells entfernen, damit zwei Ränge nicht gleichzeitig aktiv sind
             var oldKey = _active.Keys.FirstOrDefault(k => k != ability.Id && _active[k].Source.Name == ability.Name);
             if (oldKey is not null) _active.Remove(oldKey);
-            _active[ability.Id] = new ActiveBuff(ability, ability.BuffDuration, MotAmountPerTick: motAmount, HotAmountPerTick: hotPctAmount);
+            _active[ability.Id] = new ActiveBuff(ability, ability.BuffDuration,
+                MotAmountPerTick: motAmount, HotAmountPerTick: hotPctAmount, ShieldRemaining: shieldAmount);
         }
+    }
+
+    /// <summary>
+    /// Absorbiert so viel Schaden wie möglich aus aktiven Schildern.
+    /// Gibt pro Schild-Quelle die absorbierte Menge zurück; Liste ist nur bis zum nächsten Aufruf gültig.
+    /// </summary>
+    public IReadOnlyList<(Ability Source, int Absorbed)> AbsorbDamage(int damage)
+    {
+        _absorbLog.Clear();
+        if (damage <= 0) return _absorbLog;
+        lock (_lock)
+        {
+            int remaining = damage;
+            foreach (var key in _active.Keys.ToList())
+            {
+                if (remaining <= 0) break;
+                var buff = _active[key];
+                if (buff.ShieldRemaining <= 0) continue;
+                int take = Math.Min(remaining, buff.ShieldRemaining);
+                remaining -= take;
+                _active[key] = buff with { ShieldRemaining = buff.ShieldRemaining - take };
+                _absorbLog.Add((buff.Source, take));
+            }
+        }
+        return _absorbLog;
     }
 
     /// <summary>Lässt alle Buffs um <paramref name="dt"/> ablaufen und liefert die dabei fälligen HoT-Ticks.</summary>
@@ -52,9 +86,13 @@ public class BuffTracker
 
         lock (_lock)
         {
-            foreach (var key in _active.Keys.ToList())
+            _expiredBuffs.Clear();
+            _buffUpdates.Clear();
+
+            // Erst lesen (ohne Dictionary-Mutation), dann Änderungen anwenden
+            foreach (var kvp in _active)
             {
-                var buff = _active[key];
+                var buff = kvp.Value;
                 double remaining = buff.Remaining - dt;
                 double tickAcc = buff.TickAcc + dt;
                 int ticksDone = buff.TicksDone;
@@ -77,10 +115,13 @@ public class BuffTracker
                 }
 
                 if (remaining <= Epsilon)
-                    _active.Remove(key);
+                    _expiredBuffs.Add(kvp.Key);
                 else
-                    _active[key] = buff with { Remaining = remaining, TickAcc = tickAcc, TicksDone = ticksDone };
+                    _buffUpdates.Add((kvp.Key, buff with { Remaining = remaining, TickAcc = tickAcc, TicksDone = ticksDone }));
             }
+
+            foreach (var k in _expiredBuffs)       _active.Remove(k);
+            foreach (var (k, v) in _buffUpdates)   _active[k] = v;
         }
 
         return ticks ?? (IReadOnlyList<HotTick>)Array.Empty<HotTick>();

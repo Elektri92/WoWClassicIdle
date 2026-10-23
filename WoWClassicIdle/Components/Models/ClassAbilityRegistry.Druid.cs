@@ -46,7 +46,7 @@ public static partial class ClassAbilityRegistry
             Name = "Rejuvenation",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_rejuvenation.jpg",
             Cooldown = 10,
-            ManaCost = 35,
+            ManaCost = 18,              // 50 % reduziert (war 35)
             BuffDuration = 10,          // HoT über 10 s
             HotTotalHeal = 20,          // 5 Ticks à 4 HP = 20 HP
             HotTickInterval = 2,
@@ -71,7 +71,7 @@ public static partial class ClassAbilityRegistry
             Name = "Regrowth",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_resistnature.jpg",
             Cooldown = 12,
-            ManaCost = 40,
+            ManaCost = 20,              // 50 % reduziert (war 40)
             Heal = 12,                          // direkter Sofort-Heal
             BuffDuration = 12,                  // HoT über 12 s
             HotTotalHeal = 20,                  // 6 Ticks à ~3 = 20 HP gesamt

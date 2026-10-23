@@ -65,6 +65,14 @@ public enum TalentEffectType
 
     // ─── Druid ───
     WrathManaCost,               // -x Manakosten Wrath (flat)
+
+    // ─── Mage (Reihe 2) ───
+    GrantEvocation,             // Schaltet Evocation frei
+    ArcaneMissilesDamage,       // +x% Arcane Missiles Schaden
+    GrantIgnite,                // Schaltet Ignite frei
+    FireBlastManaCost,          // -x Manakosten Fire Blast (Flat)
+    GrantIceBarrier,            // Schaltet Ice Barrier frei
+    FrostboltDamage,            // +x% Frostbolt Schaden
 }
 
 public class TalentDefinition
@@ -175,6 +183,18 @@ public class TalentDefinition
             $"-{(EffectPerRank * ranks):0.##}s Earthbind Totem cooldown",
         TalentEffectType.WrathManaCost =>
             $"-{(EffectPerRank * ranks):0.##} Wrath mana cost",
+        TalentEffectType.GrantEvocation =>
+            "Grants ability: Evocation (restores 80% mana over 8s)",
+        TalentEffectType.ArcaneMissilesDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Arcane Missiles damage",
+        TalentEffectType.GrantIgnite =>
+            "Grants ability: Ignite (fire crits apply 15% damage as DoT over 3s)",
+        TalentEffectType.FireBlastManaCost =>
+            $"-{(EffectPerRank * ranks):0.##} Fire Blast mana cost",
+        TalentEffectType.GrantIceBarrier =>
+            "Grants ability: Ice Barrier (absorbs 30% max HP as a shield)",
+        TalentEffectType.FrostboltDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Frostbolt damage",
         _ => ""
     };
 }

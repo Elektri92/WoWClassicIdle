@@ -42,12 +42,26 @@ namespace Models
             {
                 double speedBonus    = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FrostboltAttackSpeedDebuff);
                 int    costReduction = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FrostboltManaCost);
-                if (speedBonus > 0 || costReduction > 0)
+                double dmgBonus      = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FrostboltDamage);
+                if (speedBonus > 0 || costReduction > 0 || dmgBonus > 0)
                     return ability with
                     {
-                        ManaCost = Math.Max(0, ability.ManaCost - costReduction),
+                        Damage     = dmgBonus > 0 ? (int)Math.Round(ability.Damage * (1.0 + dmgBonus)) : ability.Damage,
+                        ManaCost   = Math.Max(0, ability.ManaCost - costReduction),
                         DebuffAttackSpeedReduction = ability.DebuffAttackSpeedReduction + speedBonus,
                     };
+            }
+            if (ability.Id.StartsWith("Arcane_Missiles"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.ArcaneMissilesDamage);
+                if (bonus > 0)
+                    return ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)) };
+            }
+            if (ability.Id.StartsWith("Fire_Blast"))
+            {
+                int red = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FireBlastManaCost);
+                if (red > 0)
+                    return ability with { ManaCost = Math.Max(0, ability.ManaCost - red) };
             }
             if (ability.Id.StartsWith("Heroic_Strike"))
             {
@@ -200,6 +214,11 @@ namespace Models
             {
                 int reduction = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FrostboltManaCost);
                 return Math.Max(0, ability.ManaCost - reduction);
+            }
+            if (ability.Id.StartsWith("Fire_Blast"))
+            {
+                int red = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FireBlastManaCost);
+                return Math.Max(0, ability.ManaCost - red);
             }
             if (ability.Id.StartsWith("Heroic_Strike"))
             {

@@ -48,7 +48,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 20,
             ManaCost = 15,
             DebuffDuration = 10,        // DoT über 10 s
-            DebuffDotDamage = 10,       // 2 Ticks à 10 = 20 DMG
+            DebuffDotDamage = 11,       // 2 Ticks à 11 = 22 DMG (+10 %, war 10)
             DebuffDotTickInterval = 5,
             LevelRequired = 4,
             Rank = 1,
@@ -59,8 +59,8 @@ public static partial class ClassAbilityRegistry
             Name = "Arcane Shot",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_impalingbolt.jpg",
             Cooldown = 6,
-            ManaCost = 10,
-            Damage = 10,
+            ManaCost = 0,       // kostenlos (−100 % Mana)
+            Damage = 11,                // +10 % (war 10)
             LevelRequired = 7,
             Rank = 1,
         },
@@ -71,7 +71,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_upgrademoonglaive.jpg",
             Cooldown = 10,
             ManaCost = 15,
-            Damage = 22,
+            Damage = 24,                // +10 % (war 22)
             LevelRequired = 14,
             Rank = 1,
         },
