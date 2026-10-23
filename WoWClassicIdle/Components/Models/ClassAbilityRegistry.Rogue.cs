@@ -68,5 +68,41 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Backstab_r1",
+            Name = "Backstab",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_backstab.jpg",
+            Cooldown = 6,
+            ManaCost = 40,                      // 40 Energy
+            Damage = 25,
+            AddsWeaponDamage = true,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Expose_Armor_r1",
+            Name = "Expose Armor",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_riposte.jpg",
+            Cooldown = 20,
+            ManaCost = 25,                      // 25 Energy
+            DebuffDuration = 15,
+            DebuffDamageTakenBonus = 0.10,      // +10 % erlittener Schaden des Ziels
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Evasion_r1",
+            Name = "Evasion",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowward.jpg",
+            Cooldown = 60,
+            ManaCost = 0,
+            BuffDuration = 8,
+            BuffDamageTakenReduction = 0.20,    // −20 % erlittener Schaden
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }

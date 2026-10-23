@@ -62,5 +62,43 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Consecration_r1",
+            Name = "Consecration",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_innerfire.jpg",
+            Cooldown = 20,
+            ManaCost = 20,
+            DebuffDuration = 12,                // Heiliges Feuer über 12 s
+            DebuffDotDamage = 10,               // 4 Ticks à 10 = 40 DMG gesamt
+            DebuffDotTickInterval = 3,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Seal_of_Righteousness_r1",
+            Name = "Seal of Righteousness",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_thunderbolt.jpg",
+            Cooldown = 0,
+            ManaCost = 15,
+            BuffDuration = 30,
+            BuffWeaponDamageBonus = 0.06,       // +6 % Waffenschaden
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Hammer_of_Justice_r1",
+            Name = "Hammer of Justice",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_sealofmight.jpg",
+            Cooldown = 40,
+            ManaCost = 20,
+            Damage = 15,
+            DebuffDuration = 4,                 // Betäubung 4 s
+            DebuffIsStun = true,
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }

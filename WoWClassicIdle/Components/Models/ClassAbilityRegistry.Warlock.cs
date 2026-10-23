@@ -79,5 +79,44 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Corruption_r1",
+            Name = "Corruption",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_abominationexplosion.jpg",
+            Cooldown = 0,
+            ManaCost = 0,
+            DebuffDuration = 20,                // Schatten-DoT über 20 s
+            DebuffDotDamage = 6,                // 5 Ticks à 6 = 30 DMG gesamt
+            DebuffDotTickInterval = 4,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Curse_of_Weakness_r1",
+            Name = "Curse of Weakness",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_curseofmannoroth.jpg",
+            Cooldown = 30,
+            ManaCost = 10,
+            DebuffDuration = 20,
+            DebuffAttackSpeedReduction = 0.15,  // −15 % Angriffstempo
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Immolate_r1",
+            Name = "Immolate",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_immolation.jpg",
+            Cooldown = 15,
+            ManaCost = 20,
+            Damage = 12,                        // Sofortschaden
+            DebuffDuration = 12,                // Feuer-DoT über 12 s
+            DebuffDotDamage = 10,               // 4 Ticks à 10 = 40 DMG gesamt
+            DebuffDotTickInterval = 3,
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }

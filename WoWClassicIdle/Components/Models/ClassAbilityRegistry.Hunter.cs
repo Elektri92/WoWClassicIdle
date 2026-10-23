@@ -64,5 +64,39 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Multi_Shot_r1",
+            Name = "Multi-Shot",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_upgrademoonglaive.jpg",
+            Cooldown = 10,
+            ManaCost = 15,
+            Damage = 22,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Disengage_r1",
+            Name = "Disengage",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_sprint.jpg",
+            Cooldown = 30,
+            ManaCost = 0,
+            BuffDuration = 6,
+            BuffDamageTakenReduction = 0.15,    // −15 % erlittener Schaden
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Aimed_Shot_r1",
+            Name = "Aimed Shot",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_hunter_aimedshot.jpg",
+            Cooldown = 12,
+            ManaCost = 20,
+            Damage = 38,
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }

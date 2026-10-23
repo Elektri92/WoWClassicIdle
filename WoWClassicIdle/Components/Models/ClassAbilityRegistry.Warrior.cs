@@ -70,6 +70,43 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Rend_r1",
+            Name = "Rend",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_gouge.jpg",
+            Cooldown = 30,
+            ManaCost = 10,                      // 10 Rage
+            DebuffDuration = 12,                // Blutungs-DoT über 12 s
+            DebuffDotDamage = 18,               // 4 Ticks à 18 = 72 DMG gesamt
+            DebuffDotTickInterval = 3,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Overpower_r1",
+            Name = "Overpower",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
+            Cooldown = 6,
+            ManaCost = 15,                      // 15 Rage
+            Damage = 30,
+            AddsWeaponDamage = true,
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Intimidating_Shout_r1",
+            Name = "Intimidating Shout",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_golemstormbolt.jpg",
+            Cooldown = 60,
+            ManaCost = 10,                      // 10 Rage
+            DebuffDuration = 5,                 // Betäubung 5 s
+            DebuffIsStun = true,
+            LevelRequired = 24,
+            Rank = 1,
+        },
+        new Ability
+        {
             Id = "Battle_Stance",
             Name = "Battle Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_offensivestance.jpg",

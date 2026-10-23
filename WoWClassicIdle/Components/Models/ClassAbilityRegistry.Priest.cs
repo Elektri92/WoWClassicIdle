@@ -65,5 +65,39 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Power_Word_Fortitude_r1",
+            Name = "Power Word: Fortitude",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_wordfortitude.jpg",
+            Cooldown = 0,
+            ManaCost = 0,
+            BuffDuration = 60,
+            BuffDamageTakenReduction = 0.15,    // −15 % erlittener Schaden
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Mind_Blast_r1",
+            Name = "Mind Blast",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_unholyfrenzy.jpg",
+            Cooldown = 8,
+            ManaCost = 25,
+            Damage = 22,
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Flash_Heal_r1",
+            Name = "Flash Heal",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_flashheal.jpg",
+            Cooldown = 12,
+            ManaCost = 30,
+            Heal = 45,                          // direkter Sofort-Heal
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }

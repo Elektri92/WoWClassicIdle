@@ -62,5 +62,42 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 7,
             Rank = 1,
         },
+        new Ability
+        {
+            Id = "Flame_Shock_r1",
+            Name = "Flame Shock",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_flameshock.jpg",
+            Cooldown = 20,
+            ManaCost = 20,
+            Damage = 10,                        // Sofortschaden
+            DebuffDuration = 15,                // Feuer-DoT über 15 s
+            DebuffDotDamage = 8,                // 5 Ticks à 8 = 40 DMG gesamt
+            DebuffDotTickInterval = 3,
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Healing_Wave_r1",
+            Name = "Healing Wave",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_magicimmunity.jpg",
+            Cooldown = 12,
+            ManaCost = 30,
+            Heal = 30,
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Windfury_Weapon_r1",
+            Name = "Windfury Weapon",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_windfury.jpg",
+            Cooldown = 0,
+            ManaCost = 10,
+            BuffDuration = 60,
+            BuffAttackSpeedBonus = 0.12,        // +12 % Angriffsgeschwindigkeit
+            LevelRequired = 24,
+            Rank = 1,
+        },
     };
 }

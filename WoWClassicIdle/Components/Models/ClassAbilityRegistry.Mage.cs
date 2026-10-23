@@ -110,6 +110,42 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Fire_Blast_r1",
+            Name = "Fire Blast",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_fireblast.jpg",
+            Cooldown = 8,
+            ManaCost = 18,
+            Damage = 22,                        // Sofortschaden ohne Cast-Zeit
+            LevelRequired = 14,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Arcane_Missiles_r1",
+            Name = "Arcane Missiles",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_magic_managain.jpg",
+            Cooldown = 20,
+            ManaCost = 25,
+            DebuffDuration = 5,                 // 5 Projektile über 5 s
+            DebuffDotDamage = 5,                // 5 Ticks à 5 = 25 DMG gesamt
+            DebuffDotTickInterval = 1,
+            LevelRequired = 18,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Frost_Nova_r1",
+            Name = "Frost Nova",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_frostnova.jpg",
+            Cooldown = 30,
+            ManaCost = 15,
+            DebuffDuration = 4,                 // Einstun für 4 s
+            DebuffIsStun = true,
+            LevelRequired = 24,
+            Rank = 1,
+        },
+        new Ability
+        {
             Id = "Conjure_Food_r2",
             Name = "Conjure Food",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_food_30.jpg",
