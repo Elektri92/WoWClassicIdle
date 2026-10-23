@@ -74,7 +74,10 @@
                         <AbilityTooltip @key="buff.Source.Id" Ability="buff.Source" BuffRemaining="buff.Remaining">
                             <span class="buff-icon">
                                 <img src="@buff.Source.IconUrl" alt="@buff.Source.Name" onerror="this.style.visibility='hidden'" />
-                                <span class="buff-time @(buff.Remaining <= 5 ? "expiring" : "")">@FormatBuffTime(buff.Remaining)</span>
+                                @if (buff.Source.BuffDuration < 9999)
+                                {
+                                    <span class="buff-time @(buff.Remaining <= 5 ? "expiring" : "")">@FormatBuffTime(buff.Remaining)</span>
+                                }
                             </span>
                         </AbilityTooltip>
                     }
@@ -133,7 +136,7 @@
                 }
             </div>
             <div class="frame-header">
-                <div class="portrait-area">
+                <div class="portrait-area @(_engine.CurrentEnemy?.IsRare == true ? "rare-portrait-area" : "")">
                     @if (_engine.IsAtSpiritHealer)
                     {
                         <img class="race-portrait enemy-portrait spirit-healer-portrait"
@@ -154,6 +157,36 @@
                              src="images/enemy_placeholder.png"
                              alt=""
                              onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23333%22 width=%2264%22 height=%2264%22 rx=%228%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22>👹</text></svg>'" />
+                    }
+                    @if (!_engine.IsAtSpiritHealer && _engine.CurrentEnemy?.IsRare == true)
+                    {
+                        <!-- Silberner Drachen-Ring (WoW-Classic-Stil für Rare-Gegner) -->
+                        <svg class="rare-dragon-ring" xmlns="http://www.w3.org/2000/svg" viewBox="-12 -16 88 96" aria-hidden="true">
+                            <!-- Dreifacher Silberring -->
+                            <circle cx="32" cy="32" r="37" fill="none" stroke="#7a8e9e" stroke-width="2.5"/>
+                            <circle cx="32" cy="32" r="34" fill="none" stroke="#c4d4e0" stroke-width="2"/>
+                            <circle cx="32" cy="32" r="30" fill="none" stroke="#4e6070" stroke-width="1"/>
+                            <!-- Glanzstreifen oben am Ring -->
+                            <path d="M 5 8 A 30 30 0 0 1 59 8" fill="none" stroke="#e4eff8" stroke-width="1.5" opacity="0.55"/>
+                            <!-- Linker Flügel -->
+                            <path d="M -8 44 C -16 28 -11 6 3 14 C -3 22 -2 34 1 42 Z" fill="#8a9eae" stroke="#b8ccd8" stroke-width="1"/>
+                            <path d="M -7 40 C -12 28 -8 14 3 16" fill="none" stroke="#d4e4ee" stroke-width="0.9" opacity="0.7"/>
+                            <path d="M -5 34 C -8 24 -4 14 3 16" fill="none" stroke="#d4e4ee" stroke-width="0.7" opacity="0.45"/>
+                            <!-- Rechter Flügel -->
+                            <path d="M 72 44 C 80 28 75 6 61 14 C 67 22 66 34 63 42 Z" fill="#8a9eae" stroke="#b8ccd8" stroke-width="1"/>
+                            <path d="M 71 40 C 76 28 72 14 61 16" fill="none" stroke="#d4e4ee" stroke-width="0.9" opacity="0.7"/>
+                            <path d="M 69 34 C 72 24 68 14 61 16" fill="none" stroke="#d4e4ee" stroke-width="0.7" opacity="0.45"/>
+                            <!-- Drachenkopf / Krone oben -->
+                            <path d="M 24 2 L 27 -5 L 32 -3 L 37 -5 L 40 2 L 36 4 L 28 4 Z" fill="#8a9eae" stroke="#b8ccd8" stroke-width="0.9"/>
+                            <!-- Linkes Horn -->
+                            <path d="M 26 -4 L 22 -14 L 29 -6 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
+                            <!-- Rechtes Horn -->
+                            <path d="M 38 -4 L 42 -14 L 35 -6 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
+                            <!-- Untere Klauen -->
+                            <path d="M 22 67 L 16 75 L 26 71 L 24 68 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
+                            <path d="M 30 68 L 29 76 L 35 76 L 34 68 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
+                            <path d="M 42 67 L 48 75 L 38 71 L 40 68 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
+                        </svg>
                     }
                 </div>
             <div class="frame-info">
@@ -468,13 +501,13 @@
     }
 
     .rare-frame {
-        border-color: #c8a000 !important;
-        box-shadow: 0 0 18px rgba(200,160,0,.55), inset 0 0 0 1px #e8c840 !important;
+        border-color: #7aaabb !important;
+        box-shadow: 0 0 22px rgba(120,180,210,.6), inset 0 0 0 1px #b8d0e0 !important;
     }
 
     .rare-name {
-        color: #e8c840 !important;
-        text-shadow: 0 0 8px rgba(232, 200, 64, 0.6) !important;
+        color: #c8dce8 !important;
+        text-shadow: 0 0 8px rgba(160,210,235,0.7) !important;
     }
 
     .rare-badge {
@@ -482,12 +515,30 @@
         font-size: 0.6rem;
         font-weight: 700;
         letter-spacing: 0.08em;
-        color: #c8a000;
-        background: rgba(200,160,0,.15);
-        border: 1px solid #c8a000;
+        color: #a8c4d4;
+        background: rgba(120,180,210,.15);
+        border: 1px solid #7aaabb;
         border-radius: 3px;
         padding: 1px 4px;
-        text-shadow: 0 0 4px rgba(200,160,0,.5);
+        text-shadow: 0 0 4px rgba(120,180,210,.55);
+    }
+
+    /* Silberner Portraitrand für Rare-Gegner */
+    .rare-portrait-area .enemy-portrait {
+        border-color: #7aaabb;
+        box-shadow: 0 0 12px rgba(100,160,190,0.7);
+    }
+
+    /* SVG Drachen-Ring: absolut über dem Portrait positioniert */
+    .rare-dragon-ring {
+        position: absolute;
+        left: -12px;
+        top: -16px;
+        width: 88px;
+        height: 96px;
+        pointer-events: none;
+        z-index: 3;
+        filter: drop-shadow(0 0 4px rgba(140,190,220,.55));
     }
 
     /* ── Floating Combat Text (WoW style) ── */
@@ -1207,318 +1258,3 @@
     }
 </style>
 
-        @code {
-            private bool _running;
-            private double _speedMultiplier = 1.0;
-            private HashSet<string> _multiRankNames = new();
-            private double _gameElapsedSeconds = 0.0;
-            private int _debugTargetLevel = 1;
-            private DateTime _lastRealTick = DateTime.UtcNow;
-            private System.Timers.Timer? _uiTimer;
-            private DotNetObjectReference<IdleFighter>? _selfRef;
-            private IJSObjectReference? _visibilityHandle;
-
-            private record CombatFloat(int Id, CombatTextKind Kind, bool OnPlayer, int Amount, int XOffset, int YOffset, DateTime Created, bool IsCrit = false);
-            private record AbilityNotification(int Id, Ability Ability, DateTime Created);
-
-            private static readonly TimeSpan NotificationLifetime = TimeSpan.FromSeconds(8);
-            private readonly List<AbilityNotification> _abilityNotifications = new();
-            private int _nextNotifId;
-
-            private const string SpiritHealerIconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_resurrection.jpg";
-            private const int MaxFloatsPerFrame = 12; // bei hoher Spielgeschwindigkeit nicht das Frame zuschütten
-            private static readonly TimeSpan FloatLifetime = TimeSpan.FromSeconds(1.7);
-            private readonly List<CombatFloat> _playerFloats = new();
-            private readonly List<CombatFloat> _enemyFloats = new();
-            private int _nextFloatId;
-            private static readonly Random _rng = new();
-            private Character? _subscribedPlayer;
-            private CharacterClass _lastSeenClass = default;
-
-            protected override void OnInitialized()
-            {
-                _engine.TickUpdated += OnTick;
-                _engine.CombatTextRaised += OnCombatText;
-                _engine.AbilityUnlocked += OnAbilityUnlocked;
-                ApplySavedLoadout();
-                _running = _engine.IsGameRunning;
-                StartUiTimer();
-            }
-
-            // Fight only runs while this page is open and the browser tab is visible.
-            // Started here (not in OnInitialized) so prerendering doesn't kick off the engine.
-            protected override async Task OnAfterRenderAsync(bool firstRender)
-            {
-                if (!firstRender) return;
-                _selfRef = DotNetObjectReference.Create(this);
-                try
-                {
-                    _visibilityHandle = await _js.InvokeAsync<IJSObjectReference>("pageVisibility.register", _selfRef);
-                    SetEngineRunning(await _js.InvokeAsync<bool>("pageVisibility.isVisible"));
-                }
-                catch (JSDisconnectedException)
-                {
-                }
-            }
-
-            [JSInvokable]
-            public void OnVisibilityChanged(bool visible)
-            {
-                SetEngineRunning(visible);
-                StateHasChanged();
-            }
-
-            private void SetEngineRunning(bool run)
-            {
-                if (run && !_engine.IsGameRunning)
-                {
-                    _engine.Start();
-                    _lastRealTick = DateTime.UtcNow;
-                }
-                else if (!run && _engine.IsGameRunning)
-                {
-                    _engine.Stop();
-                }
-
-                _running = _engine.IsGameRunning;
-            }
-
-            private void DetectClassChange()
-            {
-                var current = _engine.Player.ActiveClass;
-                if (current != _lastSeenClass)
-                {
-                    _lastSeenClass = current;
-                    _engine.Player.SetClass(current); // erzwingt frisches Loadout auf Character-Basis
-                    ApplySavedLoadout();
-                }
-            }
-
-            private void ApplySavedLoadout()
-            {
-                var cls = _engine.Player.ActiveClass;
-                var loadout = _loadoutService.GetLoadout(cls, _engine.Player.Level);
-                _engine.Player.ApplyLoadout(loadout);
-                _multiRankNames = ClassAbilityRegistry.GetAbilitiesFor(cls)
-                    .GroupBy(a => a.Name)
-                    .Where(g => g.Count() > 1)
-                    .Select(g => g.Key)
-                    .ToHashSet();
-            }
-
-            private void StartUiTimer()
-            {
-                _uiTimer = new System.Timers.Timer(100);
-                _uiTimer.Elapsed += (_, _) =>
-                {
-                    var now = DateTime.UtcNow;
-                    var delta = (now - _lastRealTick).TotalSeconds;
-                    _lastRealTick = now;
-                    if (_running)
-                        _gameElapsedSeconds += delta * _speedMultiplier;
-                    CleanupOldFloats();
-                    _ = InvokeAsync(StateHasChanged);
-                };
-                _uiTimer.AutoReset = true;
-                _uiTimer.Start();
-            }
-
-            private void OnTick()
-            {
-                DetectPlayerChange();
-                DetectClassChange();
-                _ = InvokeAsync(StateHasChanged);
-            }
-
-            private void DetectPlayerChange()
-            {
-                if (_engine.Player != _subscribedPlayer)
-                {
-                    _subscribedPlayer = _engine.Player;
-                    ApplySavedLoadout();
-                }
-            }
-
-            private void OnAbilityUnlocked(Ability ability)
-            {
-                lock (_abilityNotifications)
-                    _abilityNotifications.Add(new AbilityNotification(
-                        Interlocked.Increment(ref _nextNotifId), ability, DateTime.UtcNow));
-
-                _ = InvokeAsync(() =>
-                {
-                    ApplySavedLoadout();
-                    StateHasChanged();
-                });
-            }
-
-            private void EquipAndDismiss(AbilityNotification n)
-            {
-                var cls = _engine.Player.ActiveClass;
-                var loadout = _loadoutService.GetLoadout(cls, _engine.Player.Level);
-                if (!loadout.IsEquipped(n.Ability.Id))
-                {
-                    var pool = ClassAbilityRegistry.GetAbilitiesFor(cls);
-                    // Gleicher Spell-Name (anderer Rank): vorhandenen Rank in-place ersetzen
-                    var sameSpell = pool.FirstOrDefault(a => a.Name == n.Ability.Name
-                                                          && a.Id != n.Ability.Id
-                                                          && loadout.IsEquipped(a.Id));
-                    if (sameSpell != null)
-                    {
-                        int idx = loadout.EquippedAbilityIds.IndexOf(sameSpell.Id);
-                        loadout.SetSlot(idx, n.Ability.Id);
-                    }
-                    else if (!string.IsNullOrEmpty(n.Ability.ExclusiveGroup))
-                    {
-                        // Exklusiv-Gruppe: vorhandene Ability derselben Gruppe in-place ersetzen
-                        var conflict = pool.FirstOrDefault(a => a.ExclusiveGroup == n.Ability.ExclusiveGroup
-                                                              && loadout.IsEquipped(a.Id));
-                        if (conflict != null)
-                        {
-                            int idx = loadout.EquippedAbilityIds.IndexOf(conflict.Id);
-                            loadout.SetSlot(idx, n.Ability.Id);
-                        }
-                        else if (loadout.Count < ClassAbilityRegistry.MaxSlotsPerClass)
-                        {
-                            loadout.EquippedAbilityIds.Add(n.Ability.Id);
-                        }
-                    }
-                    else if (loadout.Count < ClassAbilityRegistry.MaxSlotsPerClass)
-                    {
-                        loadout.EquippedAbilityIds.Add(n.Ability.Id);
-                    }
-                    _loadoutService.SaveLoadout(loadout);
-                    _engine.Player.ApplyLoadout(loadout);
-                }
-                lock (_abilityNotifications)
-                    _abilityNotifications.RemoveAll(x => x.Id == n.Id);
-            }
-
-            private void DismissNotification(int id)
-            {
-                lock (_abilityNotifications)
-                    _abilityNotifications.RemoveAll(n => n.Id == id);
-            }
-
-            private AbilityNotification[] SnapshotNotifications()
-            {
-                lock (_abilityNotifications) return _abilityNotifications.ToArray();
-            }
-
-            private void OnCombatText(CombatText ct)
-            {
-                bool onPlayer = ct.Target == CombatTextTarget.Player;
-                var list = onPlayer ? _playerFloats : _enemyFloats;
-                lock (list)
-                {
-                    list.Add(new CombatFloat(
-                        Interlocked.Increment(ref _nextFloatId), ct.Kind, onPlayer, ct.Amount,
-                        _rng.Next(-45, 46), _rng.Next(0, 22), DateTime.UtcNow, ct.IsCrit));
-                    if (list.Count > MaxFloatsPerFrame)
-                        list.RemoveRange(0, list.Count - MaxFloatsPerFrame);
-                }
-            }
-
-            private void CleanupOldFloats()
-            {
-                var cutoff = DateTime.UtcNow - FloatLifetime;
-                lock (_playerFloats)
-                    _playerFloats.RemoveAll(f => f.Created < cutoff);
-                lock (_enemyFloats)
-                    _enemyFloats.RemoveAll(f => f.Created < cutoff);
-
-                var notifCutoff = DateTime.UtcNow - NotificationLifetime;
-                lock (_abilityNotifications)
-                    _abilityNotifications.RemoveAll(n => n.Created < notifCutoff);
-            }
-
-            private static CombatFloat[] SnapshotFloats(List<CombatFloat> list)
-            {
-                lock (list) return list.ToArray();
-            }
-
-            private static string FloatCssClass(CombatFloat f)
-            {
-                var baseClass = f.Kind switch
-                {
-                    CombatTextKind.Heal => "ct-heal",
-                    _ when f.OnPlayer => "ct-taken",
-                    CombatTextKind.Ability => "ct-ability",
-                    _ => "ct-auto",
-                };
-                return f.IsCrit ? $"{baseClass} ct-crit" : baseClass;
-            }
-
-            private static string FloatText(CombatFloat f)
-            {
-                var text = f.Kind switch
-                {
-                    CombatTextKind.Heal => $"+{f.Amount}",
-                    _ when f.OnPlayer => $"-{f.Amount}",
-                    _ => f.Amount.ToString(),
-                };
-                return f.IsCrit ? $"{text}!" : text;
-            }
-
-            private void SetSpeed(double s)
-            {
-                _speedMultiplier = s;
-                _engine.SetSpeed(s);
-                _lastRealTick = DateTime.UtcNow;
-            }
-
-            private void SetDebugLevel()
-            {
-                _engine.SetPlayerLevel(_debugTargetLevel);
-                ApplySavedLoadout();
-            }
-
-            private static string FormatElapsed(double totalSeconds)
-            {
-                var ts = TimeSpan.FromSeconds(totalSeconds);
-                return $"{(int)ts.TotalHours:00}:{ts.Minutes:00}:{ts.Seconds:00}";
-            }
-
-            private void ResetMeter() => _engine.Meter.Reset();
-
-            private static string FormatNumber(long value) => value switch
-            {
-                >= 1_000_000 => $"{value / 1_000_000.0:0.##}M",
-                >= 10_000 => $"{value / 1_000.0:0.#}k",
-                _ => value.ToString()
-            };
-
-            private static string FormatBuffTime(double seconds) =>
-                seconds >= 60 ? $"{(int)seconds / 60}m" : $"{Math.Ceiling(seconds):0}s";
-
-            private static int CalcPct(int current, int max) =>
-                max <= 0 ? 0 : Math.Clamp(current * 100 / max, 0, 100);
-
-            public async ValueTask DisposeAsync()
-            {
-                _engine.TickUpdated -= OnTick;
-                _uiTimer?.Stop();
-                _uiTimer?.Dispose();
-                _engine.CombatTextRaised -= OnCombatText;
-                _engine.AbilityUnlocked -= OnAbilityUnlocked;
-
-                // Leaving the page stops the fight. Prerendered instances never started it.
-                if (_selfRef != null)
-                    _engine.Stop();
-
-                if (_visibilityHandle != null)
-                {
-                    try
-                    {
-                        await _visibilityHandle.InvokeVoidAsync("dispose");
-                        await _visibilityHandle.DisposeAsync();
-                    }
-                    catch (JSDisconnectedException)
-                    {
-                    }
-                }
-
-                _selfRef?.Dispose();
-            }
-
-        }

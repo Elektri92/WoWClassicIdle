@@ -86,6 +86,11 @@ public class BuffTracker
         return ticks ?? (IReadOnlyList<HotTick>)Array.Empty<HotTick>();
     }
 
+    public void Remove(string abilityId)
+    {
+        lock (_lock) _active.Remove(abilityId);
+    }
+
     public void Reset()
     {
         lock (_lock) _active.Clear();
@@ -152,6 +157,36 @@ public class BuffTracker
                 .Where(b => b.Source.BuffRetaliationDamage > 0)
                 .Select(b => b.Source)
                 .ToList();
+    }
+
+    /// <summary>Rage-Gen-Bonus aus aktiven Buffs (z. B. Battle Stance).</summary>
+    public double RageGenBonus
+    {
+        get
+        {
+            lock (_lock)
+                return _active.Values.Sum(b => b.Source.BuffRageGenBonus);
+        }
+    }
+
+    /// <summary>Crit-Chance-Bonus aus aktiven Buffs (z. B. Berserker Stance).</summary>
+    public double CritChanceBonus
+    {
+        get
+        {
+            lock (_lock)
+                return _active.Values.Sum(b => b.Source.BuffCritChanceBonus);
+        }
+    }
+
+    /// <summary>Schadensreduktions-Bonus aus aktiven Buffs (z. B. Defensive Stance).</summary>
+    public double DamageTakenReduction
+    {
+        get
+        {
+            lock (_lock)
+                return _active.Values.Sum(b => b.Source.BuffDamageTakenReduction);
+        }
     }
 
     /// <summary>Kopie der aktiven Buffs für die Anzeige.</summary>

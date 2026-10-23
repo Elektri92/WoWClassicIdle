@@ -3,13 +3,17 @@ namespace Models;
 
 public class SaveData
 {
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = 3;
     public int? ActiveSlotId { get; set; }
     public int NextSlotId { get; set; }
     public int TotalKills { get; set; }
     public int TotalDeaths { get; set; }
     public List<SlotSaveData> Roster { get; set; } = new();
     public List<AchievementSaveData> Achievements { get; set; } = new();
+    // Gemeinsames klassenübergreifendes Inventar – Rucksack (ab Version 2)
+    public List<ItemStackSaveData> SharedInventoryItems { get; set; } = new();
+    // Taschenplätze 0-3 (ab Version 3)
+    public List<BagItemSaveData> SharedBagItems { get; set; } = new();
 }
 
 public class SlotSaveData
@@ -48,10 +52,18 @@ public class ItemStackSaveData
     public int ItemId { get; set; }
     public int Count { get; set; }
     public int Slot { get; set; }
+    // 0 = Standardwert aus Registry verwenden; >0 überschreibt RequiredLevel (z. B. für Drops)
+    public int RequiredLevel { get; set; }
 }
 
 public class AchievementSaveData
 {
     public string Id { get; set; } = "";
     public DateTime EarnedAt { get; set; }
+}
+
+/// <summary>Ein Item-Stack in einem der 4 Taschenplätze (BagIndex 0–3).</summary>
+public class BagItemSaveData : ItemStackSaveData
+{
+    public int BagIndex { get; set; }
 }

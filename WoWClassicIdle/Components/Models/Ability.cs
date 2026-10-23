@@ -107,6 +107,15 @@ public sealed record Ability
     /// <summary>Vergeltungsschaden wenn der Spieler während dieses Buffs getroffen wird (z. B. Thorns, Lightning Shield).</summary>
     public int BuffRetaliationDamage { get; init; }
 
+    /// <summary>Kann nur über ein Talent freigeschaltet werden, erscheint nicht im Standard-Loadout.</summary>
+    public bool TalentUnlockOnly { get; init; }
+    /// <summary>+% Rage-Generierung durch Auto-Attacks während der Buff aktiv ist.</summary>
+    public double BuffRageGenBonus { get; init; }
+    /// <summary>+% Crit-Chance während der Buff aktiv ist.</summary>
+    public double BuffCritChanceBonus { get; init; }
+    /// <summary>-% erlittener Schaden während der Buff aktiv ist.</summary>
+    public double BuffDamageTakenReduction { get; init; }
+
     /// <summary>Debuff betäubt den Gegner: keine Angriffe für <see cref="DebuffDuration"/> Sekunden.</summary>
     public bool DebuffIsStun { get; init; }
 

@@ -111,6 +111,42 @@ public class SaveGameService : ISaveGameService, IDisposable
         foreach (var slot in _engine.CharacterRoster)
             save.Roster.Add(BuildSlotSaveData(slot));
 
+        // Gemeinsames Inventar einmal speichern – Rucksack
+        var backpack = _engine.SharedInventory.Backpack;
+        for (int i = 0; i < backpack.SlotCount; i++)
+        {
+            var stack = backpack[i];
+            if (stack is null) continue;
+            save.SharedInventoryItems.Add(new ItemStackSaveData
+            {
+                ItemId        = stack.Item.Id,
+                Count         = stack.Count,
+                Slot          = i,
+                RequiredLevel = ItemRequirements.LevelOf(stack.Item),
+            });
+        }
+
+        // Taschenplätze 0-3
+        var bags = _engine.SharedInventory.Bags;
+        for (int b = 0; b < bags.Count; b++)
+        {
+            var bag = bags[b];
+            if (bag is null) continue;
+            for (int i = 0; i < bag.SlotCount; i++)
+            {
+                var stack = bag[i];
+                if (stack is null) continue;
+                save.SharedBagItems.Add(new BagItemSaveData
+                {
+                    BagIndex      = b,
+                    ItemId        = stack.Item.Id,
+                    Count         = stack.Count,
+                    Slot          = i,
+                    RequiredLevel = ItemRequirements.LevelOf(stack.Item),
+                });
+            }
+        }
+
         foreach (var earned in _achievements.EarnedAchievements)
             save.Achievements.Add(new AchievementSaveData { Id = earned.AchievementId, EarnedAt = earned.EarnedAt });
 
@@ -148,14 +184,6 @@ public class SaveGameService : ISaveGameService, IDisposable
                 ? p.GetCurrentLoadout()
                 : _loadout.GetLoadout(cls, p.ClassProgress[cls].Level);
             data.LoadoutAbilityIdsByClass[cls.ToString()] = loadout.EquippedAbilityIds.ToList();
-        }
-
-        // Rucksack
-        for (int i = 0; i < p.Inventory.Backpack.SlotCount; i++)
-        {
-            var stack = p.Inventory.Backpack[i];
-            if (stack is not null)
-                data.BackpackItems.Add(new ItemStackSaveData { ItemId = stack.Item.Id, Count = stack.Count, Slot = i });
         }
 
         // Talente

@@ -32,7 +32,7 @@
             <input type="number" min="1" max="60" @bind="_levelTo" disabled="@_running" />
         </div>
         <div class="setting">
-            <label>@(_mode == "race" ? "Max game time per class" : "Game time per run")</label>
+            <label>@(_mode == "race" ? "Max game time per class (per spec)" : "Game time per run")</label>
             <select @bind="_minutesPerRun" disabled="@_running">
                 <option value="10">10 min</option>
                 <option value="30">30 min</option>
@@ -91,12 +91,16 @@
     @if (_running || _results.Count > 0 || _levelingResults.Count > 0)
     {
         int _progressCount = _mode == "race" ? _levelingResults.Count : _results.Count;
-        string _progressUnit = _mode == "race" ? "classes" : "runs";
+        string _progressUnit = _mode == "race" ? "specs" : "runs";
         var _wallTime = _running ? DateTime.UtcNow - _startedAt : _elapsed;
         <div class="wow-progress sim-progress">
             <div class="bar" style="width:@(ProgressPercent.ToString("0.#", Inv))%"></div>
             <span>@_progressCount / @_totalRuns @_progressUnit @(_running ? $"… {_wallTime.TotalSeconds:0.0}s" : $"· {_wallTime.TotalSeconds:0.0}s")</span>
         </div>
+        @if (_running && !string.IsNullOrEmpty(_currentRunLabel))
+        {
+            <div class="current-run-label">▶ @_currentRunLabel</div>
+        }
     }
 
     @if (_results.Count > 0)
@@ -329,6 +333,75 @@
                 </table>
             </div>
         </div>
+
+        <!-- ═══ GEAR SUMMARY (BENCH) ═══ -->
+        var gearRows = results
+            .GroupBy(r => r.Class)
+            .Select(g => g.OrderByDescending(r => r.Level).First())
+            .OrderBy(r => r.Class.ToString())
+            .ToList();
+        var allSlots = Enum.GetValues<ArmorSlot>();
+        <div class="wow-card">
+            <h4>Gear Summary <span class="wow-muted">(highest simulated level per class)</span></h4>
+            <p class="wow-hint">Items auto-equipped during the run via the upgrade system. — = nothing dropped.</p>
+            <div class="table-wrap">
+                <table class="sim-table gear-table">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Lv</th>
+                            <th>Weapon</th>
+                            @foreach (var slot in allSlots)
+                            {
+                                <th>@ArmorSlots.Label(slot)</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in gearRows)
+                        {
+                            <tr>
+                                <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                <td>@r.Level</td>
+                                <td class="gear-cell">
+                                    @if (r.EquippedWeapon is not null)
+                                    {
+                                        <WeaponTooltip Weapon="r.EquippedWeapon">
+                                            <span class="gear-name quality-@r.EquippedWeapon.Quality.ToString().ToLowerInvariant()">
+                                                @if (!string.IsNullOrEmpty(r.EquippedWeapon.Icon))
+                                                {
+                                                    <img src="@r.EquippedWeapon.Icon" alt="" class="gear-icon" onerror="this.style.display='none'" />
+                                                }
+                                                @r.EquippedWeapon.Name
+                                            </span>
+                                        </WeaponTooltip>
+                                    }
+                                    else { <span class="wow-muted">—</span> }
+                                </td>
+                                @foreach (var slot in allSlots)
+                                {
+                                    <td class="gear-cell">
+                                        @if (r.EquippedArmor.TryGetValue(slot, out var armor))
+                                        {
+                                            <ArmorTooltip Armor="armor">
+                                                <span class="gear-name quality-@armor.Quality.ToString().ToLowerInvariant()">
+                                                    @if (!string.IsNullOrEmpty(armor.Icon))
+                                                    {
+                                                        <img src="@armor.Icon" alt="" class="gear-icon" onerror="this.style.display='none'" />
+                                                    }
+                                                    @armor.Name
+                                                </span>
+                                            </ArmorTooltip>
+                                        }
+                                        else { <span class="wow-muted">—</span> }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     }
 
     <!-- ═══ LEVELING RACE ERGEBNISSE ═══ -->
@@ -347,19 +420,19 @@
         <!-- Standings -->
         <div class="wow-card">
             <h4>Race Standings: Level @(lrList[0].LevelFrom) → @(lrList[0].LevelTo)</h4>
-            <p class="wow-hint">Sorted by simulated game time to reach the target level. DNF = did not finish within the cap.</p>
+            <p class="wow-hint">Sorted by simulated game time to reach the target level. Each class runs once per spec. DNF = did not finish within the cap.</p>
             <div class="table-wrap">
                 <table class="sim-table race-standings">
                     <thead>
                         <tr>
                             <th>Rank</th>
                             <th>Class</th>
+                            <th>Spec</th>
                             <th>Result</th>
                             <th>Time (simulated)</th>
                             <th>Kills</th>
                             <th>Deaths</th>
                             <th>Money/h</th>
-                            <th>Talents</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -371,6 +444,7 @@
                             <tr>
                                 <td class="race-rank">@medal</td>
                                 <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                <td class="spec-name">@r.SpecName</td>
                                 <td class="@(r.ReachedTarget ? "race-reached" : "race-dnf")">
                                     @(r.ReachedTarget ? $"✓ Level {r.LevelTo}" : $"DNF (reached Lv {r.FinalLevel})")
                                 </td>
@@ -378,7 +452,6 @@
                                 <td>@r.TotalKills.ToString("N0", Inv)</td>
                                 <td>@r.TotalDeaths.ToString("N0", Inv)</td>
                                 <td>@Money.Format((long)r.CopperPerHour)</td>
-                                <td class="talent-col">@r.TalentSummary</td>
                             </tr>
                         }
                     </tbody>
@@ -397,6 +470,7 @@
                         <thead>
                             <tr>
                                 <th>Class</th>
+                                <th>Spec</th>
                                 @foreach (var lv in milestones)
                                 {
                                     <th>Lv @lv</th>
@@ -408,6 +482,7 @@
                             {
                                 <tr>
                                     <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                    <td class="spec-name">@r.SpecName</td>
                                     @foreach (var lv in milestones)
                                     {
                                         var timing = r.LevelTimings.FirstOrDefault(t => t.Level == lv);
@@ -440,6 +515,7 @@
                     <thead>
                         <tr>
                             <th>Class</th>
+                            <th>Spec</th>
                             <th>Final Lv</th>
                             <th>DPS (overall)</th>
                             <th>Kills</th>
@@ -450,9 +526,10 @@
                     <tbody>
                         @foreach (var r in rankOrder)
                         {
-                            bool open = _lrExpanded.Contains(r.Class);
-                            <tr class="detail-row @(open ? "open" : "")" @onclick="() => ToggleLrExpanded(r.Class)">
+                            bool open = _lrExpanded.Contains((r.Class, r.SpecIndex));
+                            <tr class="detail-row @(open ? "open" : "")" @onclick="() => ToggleLrExpanded(r)">
                                 <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                <td class="spec-name">@r.SpecName</td>
                                 <td>@r.FinalLevel</td>
                                 <td>@F(r.Dps, "0.00")</td>
                                 <td>@r.TotalKills.ToString("N0", Inv)</td>
@@ -462,7 +539,7 @@
                             @if (open)
                             {
                                 <tr class="breakdown-row">
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <div class="breakdown">
                                             <table class="sim-table inner">
                                                 <thead>
@@ -509,7 +586,73 @@
                 </table>
             </div>
         </div>
+
+        <!-- ═══ GEAR SUMMARY (RACE) ═══ -->
+        var raceSlots = Enum.GetValues<ArmorSlot>();
+        <div class="wow-card">
+            <h4>Gear Summary <span class="wow-muted">(end of leveling run)</span></h4>
+            <p class="wow-hint">Items auto-equipped during the leveling run via the upgrade system. — = nothing dropped.</p>
+            <div class="table-wrap">
+                <table class="sim-table gear-table">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Final Lv</th>
+                            <th>Weapon</th>
+                            @foreach (var slot in raceSlots)
+                            {
+                                <th>@ArmorSlots.Label(slot)</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in rankOrder)
+                        {
+                            <tr>
+                                <td class="class-@ClassCss(r.Class) cls-name">@r.Class</td>
+                                <td>@r.FinalLevel</td>
+                                <td class="gear-cell">
+                                    @if (r.FinalWeapon is not null)
+                                    {
+                                        <WeaponTooltip Weapon="r.FinalWeapon">
+                                            <span class="gear-name quality-@r.FinalWeapon.Quality.ToString().ToLowerInvariant()">
+                                                @if (!string.IsNullOrEmpty(r.FinalWeapon.Icon))
+                                                {
+                                                    <img src="@r.FinalWeapon.Icon" alt="" class="gear-icon" onerror="this.style.display='none'" />
+                                                }
+                                                @r.FinalWeapon.Name
+                                            </span>
+                                        </WeaponTooltip>
+                                    }
+                                    else { <span class="wow-muted">—</span> }
+                                </td>
+                                @foreach (var slot in raceSlots)
+                                {
+                                    <td class="gear-cell">
+                                        @if (r.FinalArmor.TryGetValue(slot, out var armor))
+                                        {
+                                            <ArmorTooltip Armor="armor">
+                                                <span class="gear-name quality-@armor.Quality.ToString().ToLowerInvariant()">
+                                                    @if (!string.IsNullOrEmpty(armor.Icon))
+                                                    {
+                                                        <img src="@armor.Icon" alt="" class="gear-icon" onerror="this.style.display='none'" />
+                                                    }
+                                                    @armor.Name
+                                                </span>
+                                            </ArmorTooltip>
+                                        }
+                                        else { <span class="wow-muted">—</span> }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     }
+
+}
 </div>
 
 <style>
@@ -576,6 +719,22 @@
     .race-dnf { color: #ff6b5b; }
     .talent-col { font-size: .72rem; color: #9a8a64; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .timeline-table td { min-width: 80px; font-size: .8rem; }
+
+    /* ----- Spec ----- */
+    .spec-name { color: #c5a55a; font-weight: 600; text-align: left !important; }
+    .current-run-label { font-size: .82rem; color: #c5a55a; margin-top: 4px; padding-left: 2px; }
+
+    /* ----- Gear Summary ----- */
+    .gear-table td { min-width: 90px; }
+    .gear-cell { text-align: left !important; }
+    .gear-name { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; cursor: default; }
+    .gear-icon { width: 16px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+    .quality-poor      { color: #9d9d9d; }
+    .quality-common    { color: #ffffff; }
+    .quality-uncommon  { color: #1eff00; }
+    .quality-rare      { color: #0070dd; }
+    .quality-epic      { color: #a335ee; }
+    .quality-legendary { color: #ff8000; }
 </style>
 
 @code {
@@ -598,7 +757,8 @@
     private readonly object _resultsLock = new();
     private readonly List<LevelingResult> _levelingResults = new();
     private readonly object _levelingResultsLock = new();
-    private readonly HashSet<CharacterClass> _lrExpanded = new();
+    private readonly HashSet<(CharacterClass, int)> _lrExpanded = new();
+    private string _currentRunLabel = "";
     private CancellationTokenSource? _cts;
     private bool _running;
     private int _totalRuns;
@@ -689,6 +849,7 @@
         _running = true;
         _cts = new CancellationTokenSource();
         _startedAt = DateTime.UtcNow;
+        StateHasChanged();
 
         try
         {
@@ -713,6 +874,7 @@
             _cts?.Dispose();
             _cts = null;
             _aiSummary = BuildAiSummary(Snapshot());
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -724,6 +886,7 @@
         lock (_resultsLock) _results.Clear();
         lock (_levelingResultsLock) _levelingResults.Clear();
         _lrExpanded.Clear();
+        _currentRunLabel = "";
 
         var settings = new SimulationSettings(_levelFrom, _levelTo, _minutesPerRun,
             AllClasses.Where(_selectedClasses.Contains).ToList());
@@ -732,14 +895,22 @@
         _running = true;
         _cts = new CancellationTokenSource();
         _startedAt = DateTime.UtcNow;
+        StateHasChanged();
 
         try
         {
-            await ClassSimulator.RunAllLevelingAsync(settings, result =>
-            {
-                lock (_levelingResultsLock) _levelingResults.Add(result);
-                _ = InvokeAsync(StateHasChanged);
-            }, _cts.Token);
+            await ClassSimulator.RunAllLevelingAsync(settings,
+                onResult: result =>
+                {
+                    lock (_levelingResultsLock) _levelingResults.Add(result);
+                    _ = InvokeAsync(StateHasChanged);
+                },
+                onStart: label =>
+                {
+                    _currentRunLabel = label;
+                    _ = InvokeAsync(StateHasChanged);
+                },
+                ct: _cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -753,13 +924,16 @@
         {
             _elapsed = DateTime.UtcNow - _startedAt;
             _running = false;
+            _currentRunLabel = "";
             _cts?.Dispose();
             _cts = null;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private async Task RunSimulationAsync() =>
         await (_mode == "race" ? StartLevelingAsync() : StartAsync());
+
 
     private void Cancel() => _cts?.Cancel();
 
@@ -958,9 +1132,10 @@
         lock (_levelingResultsLock) return _levelingResults.ToList();
     }
 
-    private void ToggleLrExpanded(CharacterClass cls)
+    private void ToggleLrExpanded(LevelingResult r)
     {
-        if (!_lrExpanded.Remove(cls)) _lrExpanded.Add(cls);
+        var key = (r.Class, r.SpecIndex);
+        if (!_lrExpanded.Remove(key)) _lrExpanded.Add(key);
     }
 
     /// <summary>Meilenstein-Level für die Timeline-Tabelle (max. ~12 Spalten).</summary>

@@ -26,6 +26,13 @@ else
             {
                 <span class="tt-req-level @(RequirementsMet ? "" : "tt-req-blocked")">Requires level @Weapon.RequiredLevel</span>
             }
+            @if (Weapon.Bonuses is { } bonuses)
+            {
+                @foreach (var line in bonuses.DescribeBonuses())
+                {
+                    <span class="tt-stat">@line</span>
+                }
+            }
             @if (Weapon.RequiredClass is { } cls)
             {
                 <span class="tt-req-class">Classes: @cls</span>

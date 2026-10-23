@@ -1,7 +1,7 @@
 // Models/TalentRegistry.cs
 namespace Models;
 
-public static class TalentRegistry
+public static partial class TalentRegistry
 {
     private static readonly Dictionary<CharacterClass, List<TalentDefinition>> _talents;
 
@@ -34,33 +34,17 @@ public static class TalentRegistry
 
     private static List<TalentDefinition> BuildTalents(CharacterClass cls) => cls switch
     {
-        CharacterClass.Mage => BuildMageTalents(),
-        _ => BuildPlaceholderTalents(cls),
+        CharacterClass.Mage     => BuildMageTalents(),
+        CharacterClass.Warrior  => BuildWarriorTalents(),
+        CharacterClass.Priest   => BuildPriestTalents(),
+        CharacterClass.Rogue    => BuildRogueTalents(),
+        CharacterClass.Paladin  => BuildPaladinTalents(),
+        CharacterClass.Hunter   => BuildHunterTalents(),
+        CharacterClass.Warlock  => BuildWarlockTalents(),
+        CharacterClass.Shaman   => BuildShamanTalents(),
+        CharacterClass.Druid    => BuildDruidTalents(),
+        _ => [],
     };
-
-    // Platzhalter für alle Klassen außer Mage: +1% Crit pro Rang, max 5 Punkte, je ein Talent pro Baum
-    private static List<TalentDefinition> BuildPlaceholderTalents(CharacterClass cls)
-    {
-        var list = new List<TalentDefinition>();
-        for (int ti = 0; ti < 3; ti++)
-        {
-            list.Add(new TalentDefinition
-            {
-                Id            = $"{cls}_{ti}_crit",
-                Name          = "Improved Critical Strike",
-                Description   = "Increases your critical strike chance by 1% per rank.",
-                Class         = cls,
-                TreeIndex     = ti,
-                Row           = 0,
-                Column        = 1,
-                MaxRanks      = 5,
-                EffectType    = TalentEffectType.CritChance,
-                EffectPerRank = 0.01,
-                IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/ability_rogue_slicedice.jpg",
-            });
-        }
-        return list;
-    }
 
     private static List<TalentDefinition> BuildMageTalents() =>
     [

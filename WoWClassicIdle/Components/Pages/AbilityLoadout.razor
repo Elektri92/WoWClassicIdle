@@ -235,8 +235,23 @@
 
     private CharacterClass SelectedClass => Engine.PlayerClass;
 
-    private IReadOnlyList<Ability> UnlockedAbilities => CurrentPool.Where(a => a.LevelRequired <= Engine.Player.Level).ToList();
-    private IReadOnlyList<Ability> LockedAbilities   => CurrentPool.Where(a => a.LevelRequired >  Engine.Player.Level).ToList();
+    // Abilities, die per Talent freigeschaltet wurden
+    private HashSet<string> TalentGrantedAbilityIds =>
+        TalentRegistry.GetTalents(Engine.PlayerClass)
+            .Where(t => !string.IsNullOrEmpty(t.GrantsAbilityId)
+                     && Engine.Player.TalentState.GetRanks(t.Id) > 0)
+            .Select(t => t.GrantsAbilityId!)
+            .ToHashSet();
+
+    private IReadOnlyList<Ability> UnlockedAbilities => CurrentPool
+        .Where(a => a.LevelRequired <= Engine.Player.Level
+                 && (!a.TalentUnlockOnly || TalentGrantedAbilityIds.Contains(a.Id)))
+        .ToList();
+
+    // "Coming Up": nur level-gesperrte, keine talent-exklusiven Abilities
+    private IReadOnlyList<Ability> LockedAbilities => CurrentPool
+        .Where(a => a.LevelRequired > Engine.Player.Level && !a.TalentUnlockOnly)
+        .ToList();
 
     protected override void OnInitialized()
     {
@@ -282,6 +297,14 @@
         if (ability.LevelRequired > Engine.Player.Level)
         {
             _statusMessage = $"Level {ability.LevelRequired} required (current: {Engine.Player.Level}).";
+            _statusPositive = false;
+            StateHasChanged();
+            return;
+        }
+
+        if (ability.TalentUnlockOnly && !TalentGrantedAbilityIds.Contains(ability.Id))
+        {
+            _statusMessage = $"{ability.Name} requires a talent to unlock.";
             _statusPositive = false;
             StateHasChanged();
             return;

@@ -48,8 +48,8 @@ public class EnemySpawner
         // 4) Stats skalieren: linear mit Level + leichte Zeit-Bonus
         var scale = 1; // + (elapsedSeconds / 60.0) * 0.05; // +5 % / Minute
 
-        // 5 % Chance auf Rare – nur wenn sowohl Spieler als auch Gegner mind. Level 3
-        bool isRare = playerLevel >= 3 && enemyLevel >= 3 && _rng.NextDouble() < 0.05;
+        // 10 % Chance auf Rare – nur wenn sowohl Spieler als auch Gegner mind. Level 3
+        bool isRare = playerLevel >= 3 && enemyLevel >= 3 && _rng.NextDouble() < 0.10;
 
         int baseHp      = template.GetMaxHp(enemyLevel);
         int baseAttack  = template.BaseAttack;

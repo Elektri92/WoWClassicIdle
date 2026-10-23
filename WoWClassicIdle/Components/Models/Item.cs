@@ -63,6 +63,10 @@ namespace Models
         Feet,
         Wrists,
         Cape,
+        Ring,
+        Head,
+        Neck,
+        Trinket,
     }
 
     /// <summary>Anzeigename eines Rüstungsslots (WoW-Classic-Slotnamen fürs UI).</summary>
@@ -70,14 +74,18 @@ namespace Models
     {
         public static string Label(ArmorSlot slot) => slot switch
         {
-            ArmorSlot.Hands  => "Hands",
-            ArmorSlot.Legs   => "Legs",
-            ArmorSlot.Chest  => "Chest",
-            ArmorSlot.Belt   => "Waist",
-            ArmorSlot.Feet   => "Feet",
-            ArmorSlot.Wrists => "Wrist",
-            ArmorSlot.Cape   => "Back",
-            _                => slot.ToString(),
+            ArmorSlot.Hands   => "Hands",
+            ArmorSlot.Legs    => "Legs",
+            ArmorSlot.Chest   => "Chest",
+            ArmorSlot.Belt    => "Waist",
+            ArmorSlot.Feet    => "Feet",
+            ArmorSlot.Wrists  => "Wrist",
+            ArmorSlot.Cape    => "Back",
+            ArmorSlot.Ring    => "Finger",
+            ArmorSlot.Head    => "Head",
+            ArmorSlot.Neck    => "Neck",
+            ArmorSlot.Trinket => "Trinket",
+            _                 => slot.ToString(),
         };
     }
 
@@ -105,7 +113,8 @@ namespace Models
         ItemQuality Quality = ItemQuality.Common,
         long SellPrice = 0,
         int RequiredLevel = 1,
-        CharacterClass? RequiredClass = null)
+        CharacterClass? RequiredClass = null,
+        PrimaryStats? Bonuses = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
     /// <summary>Anforderungen eines Items (Level/Klasse), die beim Anlegen geprüft werden.</summary>

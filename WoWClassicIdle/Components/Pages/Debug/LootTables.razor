@@ -34,9 +34,13 @@
 
         <div class="tier-info wow-hint">
             Rare enemies at <b>Level @CurrentTier.LevelMin–@CurrentTier.LevelMax</b> drop one of these @CurrentTier.Items.Count items.
+            @if (CurrentTier.LevelMin >= 11)
+            {
+                <span style="color:#0070dd"> · Blue items have a 15 % drop chance.</span>
+            }
         </div>
 
-        <!-- ═══ SLOT GROUPS ═══ -->
+        <!-- ═══ SLOT GROUPS (Armor) ═══ -->
         @foreach (var slotGroup in CurrentTier.Items.GroupBy(i => i.Slot).OrderBy(g => (int)g.Key))
         {
             var slot = slotGroup.Key;
@@ -66,6 +70,49 @@
                                 }
                                 <button class="wow-btn small give-btn"
                                         @onclick="() => GiveItem(item)"
+                                        title="Force-equip on active character">
+                                    @(justGiven ? "✓ Given!" : "Give")
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- ═══ WEAPONS ═══ -->
+        @if (CurrentTier.WeaponItems.Count > 0)
+        {
+            <div class="wow-card slot-card">
+                <div class="slot-card-header">
+                    <span class="slot-label">Weapon</span>
+                    <span class="slot-count">@CurrentTier.WeaponItems.Count items · 25% (green) / 10% (blue)</span>
+                </div>
+                <div class="item-grid">
+                    @foreach (var weapon in CurrentTier.WeaponItems.OrderBy(w => w.RequiredClass?.ToString()).ThenBy(w => (int)w.Quality))
+                    {
+                        bool equipped = _engine.Player.EquippedWeapon == weapon;
+                        bool justGiven = _justGivenWeapon == weapon.Id;
+                        <div class="item-row @(equipped ? "item-equipped" : "") @(justGiven ? "item-just-given" : "")">
+                            <img class="item-icon"
+                                 src="@weapon.IconUrl"
+                                 alt=""
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23222%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
+                            <div class="item-info">
+                                <span class="item-name" style="color: @ItemQualityColors.Hex(weapon.Quality);">@weapon.Name</span>
+                                <span class="item-stats">
+                                    @weapon.MinDamage–@weapon.MaxDamage dmg · @weapon.Speed.ToString("F1")s
+                                    @if (weapon.RequiredClass is not null) { <span class="weapon-class">· @weapon.RequiredClass</span> }
+                                    @if (weapon.Bonuses is not null) { <span> · @StatLine(weapon.Bonuses)</span> }
+                                </span>
+                            </div>
+                            <div class="item-actions">
+                                @if (equipped)
+                                {
+                                    <span class="equipped-label">Equipped</span>
+                                }
+                                <button class="wow-btn small give-btn"
+                                        @onclick="() => GiveWeapon(weapon)"
                                         title="Force-equip on active character">
                                     @(justGiven ? "✓ Given!" : "Give")
                                 </button>
@@ -203,21 +250,43 @@
     .give-btn {
         min-width: 64px;
     }
+
+    .weapon-class {
+        color: #9a8a64;
+    }
 </style>
 
 @code {
-    private record TierInfo(string Key, string Label, int LevelMin, int LevelMax, IReadOnlyList<ArmorItem> Items);
+    private record TierInfo(string Key, string Label, int LevelMin, int LevelMax,
+        IReadOnlyList<ArmorItem> Items, IReadOnlyList<WeaponItem> WeaponItems);
+
+    private static IReadOnlyList<ArmorItem> CombineArmor(IReadOnlyList<ArmorItem> green, IReadOnlyList<ArmorItem> blue)
+    {
+        var list = new List<ArmorItem>(green);
+        list.AddRange(blue);
+        return list;
+    }
 
     private static readonly TierInfo[] _tiers =
     [
-        new("t1", "Tier 1  (Lv. 1–5)",  1,  5,  RareLootRegistry.GetLootTable(1)),
-        new("t2", "Tier 2  (Lv. 6–10)", 6,  10, RareLootRegistry.GetLootTable(6)),
-        new("t3", "Tier 3  (Lv. 11–15)",11, 15, RareLootRegistry.GetLootTable(11)),
+        new("t1",  "T1  (Lv. 1–5)",   1,  5,  RareLootRegistry.GetLootTable(1),  WeaponRegistry.GetWeaponsAtLevel(5)),
+        new("t2",  "T2  (Lv. 6–10)",  6,  10, RareLootRegistry.GetLootTable(6),  WeaponRegistry.GetWeaponsAtLevel(10)),
+        new("t3",  "T3  (Lv. 11–15)", 11, 15, CombineArmor(RareLootRegistry.GetLootTable(11), RareLootRegistry.GetBlueLootTable(11)), WeaponRegistry.GetWeaponsAtLevel(15)),
+        new("t4",  "T4  (Lv. 16–20)", 16, 20, CombineArmor(RareLootRegistry.GetLootTable(16), RareLootRegistry.GetBlueLootTable(16)), WeaponRegistry.GetWeaponsAtLevel(20)),
+        new("t5",  "T5  (Lv. 21–25)", 21, 25, CombineArmor(RareLootRegistry.GetLootTable(21), RareLootRegistry.GetBlueLootTable(21)), WeaponRegistry.GetWeaponsAtLevel(25)),
+        new("t6",  "T6  (Lv. 26–30)", 26, 30, CombineArmor(RareLootRegistry.GetLootTable(26), RareLootRegistry.GetBlueLootTable(26)), WeaponRegistry.GetWeaponsAtLevel(30)),
+        new("t7",  "T7  (Lv. 31–35)", 31, 35, CombineArmor(RareLootRegistry.GetLootTable(31), RareLootRegistry.GetBlueLootTable(31)), WeaponRegistry.GetWeaponsAtLevel(35)),
+        new("t8",  "T8  (Lv. 36–40)", 36, 40, CombineArmor(RareLootRegistry.GetLootTable(36), RareLootRegistry.GetBlueLootTable(36)), WeaponRegistry.GetWeaponsAtLevel(40)),
+        new("t9",  "T9  (Lv. 41–45)", 41, 45, CombineArmor(RareLootRegistry.GetLootTable(41), RareLootRegistry.GetBlueLootTable(41)), WeaponRegistry.GetWeaponsAtLevel(45)),
+        new("t10", "T10 (Lv. 46–50)", 46, 50, CombineArmor(RareLootRegistry.GetLootTable(46), RareLootRegistry.GetBlueLootTable(46)), WeaponRegistry.GetWeaponsAtLevel(50)),
+        new("t11", "T11 (Lv. 51–55)", 51, 55, CombineArmor(RareLootRegistry.GetLootTable(51), RareLootRegistry.GetBlueLootTable(51)), WeaponRegistry.GetWeaponsAtLevel(55)),
+        new("t12", "T12 (Lv. 56+)",   56, 60, CombineArmor(RareLootRegistry.GetLootTable(56), RareLootRegistry.GetBlueLootTable(56)), WeaponRegistry.GetWeaponsAtLevel(60)),
     ];
 
     private string _activeTier = "t1";
     private TierInfo CurrentTier => _tiers.First(t => t.Key == _activeTier);
     private int _justGiven = -1;
+    private int _justGivenWeapon = -1;
     private System.Timers.Timer? _resetTimer;
 
     private void GiveItem(ArmorItem item)
@@ -236,17 +305,23 @@
         _resetTimer.Start();
     }
 
-    private static string SlotLabel(ArmorSlot slot) => slot switch
+    private void GiveWeapon(WeaponItem weapon)
     {
-        ArmorSlot.Hands  => "Hands",
-        ArmorSlot.Legs   => "Legs",
-        ArmorSlot.Chest  => "Chest",
-        ArmorSlot.Belt   => "Waist",
-        ArmorSlot.Feet   => "Feet",
-        ArmorSlot.Wrists => "Wrist",
-        ArmorSlot.Cape   => "Back",
-        _                => slot.ToString(),
-    };
+        _engine.DebugGiveWeapon(weapon);
+        _justGivenWeapon = weapon.Id;
+
+        _resetTimer?.Stop();
+        _resetTimer?.Dispose();
+        _resetTimer = new System.Timers.Timer(800) { AutoReset = false };
+        _resetTimer.Elapsed += (_, _) =>
+        {
+            _justGivenWeapon = -1;
+            _ = InvokeAsync(StateHasChanged);
+        };
+        _resetTimer.Start();
+    }
+
+    private static string SlotLabel(ArmorSlot slot) => ArmorSlots.Label(slot);
 
     private static string StatLine(PrimaryStats b)
     {

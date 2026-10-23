@@ -46,4 +46,10 @@ public record Stats
 
     /// <summary>Multiplikator aus <see cref="AttackSpeedBonus"/> (1.0 = keine Erhöhung).</summary>
     public double AttackSpeedMultiplier => 1.0 + AttackSpeedBonus;
+
+    /// <summary>Prozentualer Schadensreduktions-Bonus aus Talenten (0.05 = 5% weniger Schaden). Klemmt auf [0, 1).</summary>
+    public double DamageTakenReduction { get; init; }
+
+    /// <summary>Multiplikator auf alle Heilungen (1.0 = keine Änderung).</summary>
+    public double HealingMultiplier { get; init; } = 1.0;
 }

@@ -19,7 +19,9 @@ public sealed record SimulationResult(
     long XpGained,
     long CopperGained,
     Stats Stats,
-    IReadOnlyList<MeterRow> Breakdown)
+    IReadOnlyList<MeterRow> Breakdown,
+    WeaponItem? EquippedWeapon,
+    IReadOnlyDictionary<ArmorSlot, ArmorItem> EquippedArmor)
 {
     private double Hours => SimSeconds / 3600.0;
 
@@ -73,7 +75,11 @@ public sealed record LevelingResult(
     long TotalCopperGained,
     IReadOnlyList<LevelTiming> LevelTimings,
     IReadOnlyList<MeterRow> FinalBreakdown,
-    string TalentSummary)
+    string TalentSummary,
+    WeaponItem? FinalWeapon,
+    IReadOnlyDictionary<ArmorSlot, ArmorItem> FinalArmor,
+    int SpecIndex,
+    string SpecName)
 {
     public bool ReachedTarget => FinalLevel >= LevelTo;
 
@@ -105,8 +111,8 @@ public static class ClassSimulator
     public static int RunCount(SimulationSettings s) =>
         s.Classes.Count * Math.Max(0, s.LevelTo - s.LevelFrom + 1);
 
-    /// <summary>Anzahl der Leveling-Läufe (je ein Lauf pro Klasse).</summary>
-    public static int LevelingRunCount(SimulationSettings s) => s.Classes.Count;
+    /// <summary>Anzahl der Leveling-Läufe (3 Specs je Klasse).</summary>
+    public static int LevelingRunCount(SimulationSettings s) => s.Classes.Count * 3;
 
     public static async Task<IReadOnlyList<SimulationResult>> RunAllAsync(
         SimulationSettings settings,
@@ -135,6 +141,7 @@ public static class ClassSimulator
     public static async Task<IReadOnlyList<LevelingResult>> RunAllLevelingAsync(
         SimulationSettings settings,
         Action<LevelingResult>? onResult = null,
+        Action<string>? onStart = null,
         CancellationToken ct = default)
     {
         var results = new List<LevelingResult>();
@@ -143,10 +150,15 @@ public static class ClassSimulator
         {
             foreach (var cls in settings.Classes)
             {
-                ct.ThrowIfCancellationRequested();
-                var result = RunLeveling(cls, settings.LevelFrom, settings.LevelTo, settings.MinutesPerRun, ct);
-                results.Add(result);
-                onResult?.Invoke(result);
+                var treeNames = TalentRegistry.GetTreeNames(cls);
+                for (int specIdx = 0; specIdx < 3; specIdx++)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    onStart?.Invoke($"{cls} · {treeNames[specIdx]}");
+                    var result = RunLeveling(cls, settings.LevelFrom, settings.LevelTo, settings.MinutesPerRun, specIdx, ct);
+                    results.Add(result);
+                    onResult?.Invoke(result);
+                }
             }
         }, ct);
 
@@ -174,12 +186,15 @@ public static class ClassSimulator
         loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, level);
         player.ApplyLoadout(loadout);
         AutoInvestTalents(player, cls);
+        SimStarterGear.Equip(player, cls, specIndex: 0, level);
 
         engine.Meter.Reset();
         engine.CurrentEnemy = null;
 
         // Auto-Equip: Seltene Items werden automatisch angelegt wenn sie ein Upgrade sind
         engine.AutoEquipDrops = true;
+        // Kein Rare-Requeue im Headless-Modus – verhindert Endlos-Sterbeschleifen
+        engine.EnableRareRequeue = false;
 
         long damageTaken = 0;
         player.DamageTaken += amount => damageTaken += amount;
@@ -228,7 +243,9 @@ public static class ClassSimulator
             XpGained: xpGained,
             CopperGained: player.Copper - copperStart,
             Stats: player.Stats,
-            Breakdown: meter.Rows);
+            Breakdown: meter.Rows,
+            EquippedWeapon: player.EquippedWeapon,
+            EquippedArmor: new Dictionary<ArmorSlot, ArmorItem>(player.EquippedArmor));
     }
 
     /// <summary>
@@ -236,8 +253,11 @@ public static class ClassSimulator
     /// Loadout und Talente werden nach jedem Level-Up automatisch aktualisiert.
     /// Stoppt sobald <paramref name="levelTo"/> erreicht wird oder <paramref name="maxMinutes"/> verstrichen sind.
     /// </summary>
-    public static LevelingResult RunLeveling(CharacterClass cls, int levelFrom, int levelTo, double maxMinutes, CancellationToken ct = default)
+    public static LevelingResult RunLeveling(CharacterClass cls, int levelFrom, int levelTo, double maxMinutes, int specIndex, CancellationToken ct = default)
     {
+        var treeNames = TalentRegistry.GetTreeNames(cls);
+        var specName  = treeNames[specIndex];
+
         var race    = RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key;
         var faction = RaceClassInfo.RaceToFaction[race];
 
@@ -252,13 +272,16 @@ public static class ClassSimulator
         var loadout = new ClassLoadout { Class = cls };
         loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, levelFrom);
         player.ApplyLoadout(loadout);
-        AutoInvestTalents(player, cls);
+        AutoInvestTalentsForSpec(player, cls, specIndex);
+        SimStarterGear.Equip(player, cls, specIndex, levelFrom);
 
         engine.Meter.Reset();
         engine.CurrentEnemy = null;
 
         // Auto-Equip: Seltene Items werden automatisch angelegt wenn sie ein Upgrade sind
         engine.AutoEquipDrops = true;
+        // Kein Rare-Requeue im Headless-Modus – verhindert Endlos-Sterbeschleifen
+        engine.EnableRareRequeue = false;
 
         long damageTaken = 0;
         player.DamageTaken += amount => damageTaken += amount;
@@ -297,7 +320,7 @@ public static class ClassSimulator
                 var newLoadout = new ClassLoadout { Class = cls };
                 newLoadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, currentLevel);
                 player.ApplyLoadout(newLoadout);
-                AutoInvestTalents(player, cls);
+                AutoInvestTalentsForSpec(player, cls, specIndex);
 
                 if (currentLevel >= levelTo) break;
             }
@@ -327,7 +350,29 @@ public static class ClassSimulator
             TotalCopperGained: player.Copper - copperStart,
             LevelTimings: levelTimings,
             FinalBreakdown: meter.Rows,
-            TalentSummary: BuildTalentSummary(player, cls));
+            TalentSummary: BuildTalentSummary(player, cls),
+            FinalWeapon: player.EquippedWeapon,
+            FinalArmor: new Dictionary<ArmorSlot, ArmorItem>(player.EquippedArmor),
+            SpecIndex: specIndex,
+            SpecName: specName);
+    }
+
+    /// <summary>Investiert alle Punkte greedy in einen einzigen Talent-Baum (für Spec-Simulationen).</summary>
+    private static void AutoInvestTalentsForSpec(Player player, CharacterClass cls, int specIndex)
+    {
+        var talents = TalentRegistry.GetTalents(cls)
+            .Where(t => t.TreeIndex == specIndex)
+            .OrderBy(t => t.Row)
+            .ThenBy(t => t.Column)
+            .ToList();
+
+        int available;
+        while ((available = player.GetAvailableTalentPoints(cls)) > 0)
+        {
+            var next = talents.FirstOrDefault(t => player.TalentState.CanInvest(t, available));
+            if (next is null) break;
+            player.InvestTalent(next);
+        }
     }
 
     /// <summary>Investiert alle verfügbaren Talent-Punkte greedy (Baum 0 → 1 → 2, frühe Reihen zuerst).</summary>

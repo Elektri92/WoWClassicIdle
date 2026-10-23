@@ -8,7 +8,7 @@
     <div class="item-toast-container">
         @foreach (var t in SnapshotToasts())
         {
-            <div @key="t.Id" class="item-toast" @onclick="() => Dismiss(t.Id)">
+            <div @key="t.Id" class="item-toast" style="border-color: @ItemQualityColors.Hex(t.Item.Quality); box-shadow: 0 0 0 1px @ItemQualityColors.Hex(t.Item.Quality), 0 0 20px @(t.Item.Quality == ItemQuality.Rare ? "rgba(0,112,221,0.3)" : "rgba(30,255,0,0.3)"), 0 6px 24px rgba(0,0,0,0.8);" @onclick="() => Dismiss(t.Id)">
                 <div class="item-toast-header">Item Found!</div>
                 <div class="item-toast-body">
                     <div class="item-toast-icon-wrap" style="border-color: @ItemQualityColors.Hex(t.Item.Quality);">
@@ -19,10 +19,24 @@
                     </div>
                     <div class="item-toast-text">
                         <span class="item-toast-name" style="color: @ItemQualityColors.Hex(t.Item.Quality);">@t.Item.Name</span>
-                        <span class="item-toast-slot">@ArmorSlots.Label(t.Item.Slot)</span>
-                        @foreach (var line in t.Item.Bonuses.DescribeBonuses())
+                        @if (t.Item is ArmorItem armor)
                         {
-                            <span class="item-toast-stat">@line</span>
+                            <span class="item-toast-slot">@ArmorSlots.Label(armor.Slot)</span>
+                            @foreach (var line in armor.Bonuses.DescribeBonuses())
+                            {
+                                <span class="item-toast-stat">@line</span>
+                            }
+                        }
+                        else if (t.Item is WeaponItem weapon)
+                        {
+                            <span class="item-toast-slot">Weapon</span>
+                            @if (weapon.Bonuses is { } wb)
+                            {
+                                @foreach (var line in wb.DescribeBonuses())
+                                {
+                                    <span class="item-toast-stat">@line</span>
+                                }
+                            }
                         }
                         @if (t.Equipped)
                         {
@@ -164,7 +178,7 @@
 </style>
 
 @code {
-    private record ToastEntry(int Id, ArmorItem Item, bool Equipped, DateTime Created);
+    private record ToastEntry(int Id, Item Item, bool Equipped, DateTime Created);
 
     private readonly List<ToastEntry> _toasts = new();
     private int _nextId;
@@ -179,12 +193,10 @@
         _cleanupTimer.Start();
     }
 
-    private void OnItemDropped(ArmorItem item)
+    private void OnItemDropped(Item item)
     {
-        // Drops landen standardmäßig nur im Inventar; "Equipped!" gibt es nur,
-        // wenn das Item direkt angelegt wurde (Debug-Seiten).
-        bool equipped = _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var current)
-                        && current == item;
+        bool equipped = item is ArmorItem a
+            && _engine.Player.EquippedArmor.TryGetValue(a.Slot, out var cur) && cur == a;
 
         lock (_toasts)
             _toasts.Add(new ToastEntry(Interlocked.Increment(ref _nextId), item, equipped, DateTime.UtcNow));
