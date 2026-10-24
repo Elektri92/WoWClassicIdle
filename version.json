@@ -1,6 +1,6 @@
 {
-  "version": "0.0.4",
-  "windows_url": "https://github.com/Elektri92/WoWClassicIdle/releases/download/v0.0.4/WoWClassicIdle-win-x64.exe",
-  "linux_url": "https://github.com/Elektri92/WoWClassicIdle/releases/download/v0.0.4/WoWClassicIdle-linux-x64",
+  "version": "0.0.5",
+  "windows_url": "https://github.com/Elektri92/WoWClassicIdle/releases/download/v0.0.5/WoWClassicIdle-win-x64.exe",
+  "linux_url": "https://github.com/Elektri92/WoWClassicIdle/releases/download/v0.0.5/WoWClassicIdle-linux-x64",
   "mac_url": null
 }
