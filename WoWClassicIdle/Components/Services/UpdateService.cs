@@ -79,13 +79,31 @@ public static class UpdateService
             using var response = await http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
+            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            var downloaded = 0L;
+            var lastReport = 0L;
+
             await using (var srcStream  = await response.Content.ReadAsStreamAsync())
             await using (var destStream = File.Create(stagedBinary))
             {
-                await srcStream.CopyToAsync(destStream);
+                var buffer = new byte[81920];
+                int read;
+                while ((read = await srcStream.ReadAsync(buffer)) > 0)
+                {
+                    await destStream.WriteAsync(buffer.AsMemory(0, read));
+                    downloaded += read;
+                    // Alle 5 MB Fortschritt melden
+                    if (downloaded - lastReport >= 5 * 1024 * 1024)
+                    {
+                        lastReport = downloaded;
+                        var mb = downloaded / 1024.0 / 1024.0;
+                        var info = totalBytes > 0 ? $"{mb:F1} MB / {totalBytes / 1024.0 / 1024.0:F1} MB" : $"{mb:F1} MB";
+                        Console.WriteLine($"[Update] Downloading... {info}");
+                    }
+                }
             }
 
-            Console.WriteLine("[Update] Download complete. Launching restart...");
+            Console.WriteLine($"[Update] Download complete ({downloaded / 1024.0 / 1024.0:F1} MB). Launching restart...");
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 LaunchWindowsRestart(stagedBinary, appPath);
@@ -145,11 +163,16 @@ public static class UpdateService
              """);
 
         // Skript ausführbar machen und im Hintergrund starten
-        System.Diagnostics.Process.Start("chmod", $"+x \"{sh}\"")?.WaitForExit();
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName  = "chmod",
+            ArgumentList = { "+x", sh },
+            UseShellExecute = false
+        })?.WaitForExit();
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
             FileName        = "bash",
-            Arguments       = sh,
+            ArgumentList    = { sh },
             UseShellExecute = false
         });
     }

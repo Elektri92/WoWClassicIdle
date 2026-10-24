@@ -17,21 +17,38 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      # Linux-Publish – erhöht die Versionsnummer in version.json
-      - name: Publish Linux
-        run: dotnet publish WoWClassicIdle -p:PublishProfile=Linux-x64
-
-      # Neue Version aus version.json lesen
-      - name: Read new version
+      # Patch-Version in version.json erhöhen und neue Version für alle Schritte bereitstellen
+      - name: Bump version
         id: version
-        run: echo "value=$(jq -r .version version.json)" >> $GITHUB_OUTPUT
+        run: |
+          NEW=$(python3 - <<'EOF'
+          import json
+          with open('version.json') as f:
+              v = json.load(f)
+          maj, min_, pat = v['version'].split('.')
+          pat = str(int(pat) + 1)
+          new_ver = f'{maj}.{min_}.{pat}'
+          base = f'https://github.com/Elektri92/WoWClassicIdle/releases/download/v{new_ver}'
+          v['version']     = new_ver
+          v['windows_url'] = f'{base}/WoWClassicIdle-win-x64.exe'
+          v['linux_url']   = f'{base}/WoWClassicIdle-linux-x64'
+          v['mac_url']     = f'{base}/WoWClassicIdle-osx-x64'
+          with open('version.json', 'w') as f:
+              json.dump(v, f, indent=2)
+          print(new_ver)
+          EOF
+          )
+          echo "value=$NEW" >> $GITHUB_OUTPUT
 
-      # Windows- und macOS-Publish ohne erneuten Bump, Version explizit übergeben
+      # Alle Publishes erhalten die Version explizit, damit AssemblyVersion korrekt eingebettet wird
+      - name: Publish Linux
+        run: dotnet publish WoWClassicIdle -p:PublishProfile=Linux-x64 -p:Version=${{ steps.version.outputs.value }}
+
       - name: Publish Windows
-        run: dotnet publish WoWClassicIdle -p:PublishProfile=Win-x64 -p:SkipVersionBump=true -p:Version=${{ steps.version.outputs.value }}
+        run: dotnet publish WoWClassicIdle -p:PublishProfile=Win-x64 -p:Version=${{ steps.version.outputs.value }}
 
       - name: Publish macOS
-        run: dotnet publish WoWClassicIdle -p:PublishProfile=MacOS-x64 -p:SkipVersionBump=true -p:Version=${{ steps.version.outputs.value }}
+        run: dotnet publish WoWClassicIdle -p:PublishProfile=MacOS-x64 -p:Version=${{ steps.version.outputs.value }}
 
       # Release-Assets vorbereiten
       # Linux: tar.gz (Erstinstall: Binary + wwwroot) + Binary allein (Auto-Update)
