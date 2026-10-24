@@ -47,7 +47,7 @@
 
             var baseUrl = string.Format("https://github.com/Elektri92/WoWClassicIdle/releases/download/v{0}", NewVersion);
             var newJson = string.Format(
-                "{{\n  \"version\": \"{0}\",\n  \"windows_url\": \"{1}/WoWClassicIdle-win-x64.exe\",\n  \"linux_url\": \"{1}/WoWClassicIdle-linux-x64\",\n  \"mac_url\": null\n}}",
+                "{{\n  \"version\": \"{0}\",\n  \"windows_url\": \"{1}/WoWClassicIdle-win-x64.exe\",\n  \"linux_url\": \"{1}/WoWClassicIdle-linux-x64\",\n  \"mac_url\": \"{1}/WoWClassicIdle-osx-x64\"\n}}",
                 NewVersion, baseUrl);
             System.IO.File.WriteAllText(VersionJsonPath, newJson);
             Log.LogMessage(MessageImportance.High, string.Format("[Version] {0} -> {1}", match.Groups[1].Value, NewVersion));
