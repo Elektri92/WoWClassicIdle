@@ -33,9 +33,13 @@ jobs:
       - name: Publish macOS
         run: dotnet publish WoWClassicIdle -p:PublishProfile=MacOS-x64 -p:SkipVersionBump=true -p:Version=${{ steps.version.outputs.value }}
 
-      # Release-Assets mit den erwarteten Namen bereitstellen
+      # Release-Assets vorbereiten
+      # Linux: tar.gz (Erstinstall: Binary + wwwroot) + Binary allein (Auto-Update)
+      # Windows/macOS: Einzelne Executable
       - name: Prepare release assets
         run: |
+          chmod +x publish/linux/WoWClassicIdle
+          tar -czf publish/linux/WoWClassicIdle-linux-x64.tar.gz -C publish/linux .
           cp publish/linux/WoWClassicIdle      publish/linux/WoWClassicIdle-linux-x64
           cp publish/win/WoWClassicIdle.exe    publish/win/WoWClassicIdle-win-x64.exe
           cp publish/mac/WoWClassicIdle        publish/mac/WoWClassicIdle-osx-x64
@@ -56,6 +60,7 @@ jobs:
           tag_name: v${{ steps.version.outputs.value }}
           name: v${{ steps.version.outputs.value }}
           files: |
+            publish/linux/WoWClassicIdle-linux-x64.tar.gz
             publish/linux/WoWClassicIdle-linux-x64
             publish/win/WoWClassicIdle-win-x64.exe
             publish/mac/WoWClassicIdle-osx-x64
