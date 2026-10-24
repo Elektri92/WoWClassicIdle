@@ -40,7 +40,23 @@ public class UpdateService
     {
         if (_hasStarted) return;
         _hasStarted = true;
+        CleanupStagingDir();
         _ = Task.Run(CheckAndApplyAsync);
+    }
+
+    // Löscht übrig gebliebene Staging-Dateien vom letzten Update
+    private static void CleanupStagingDir()
+    {
+        try
+        {
+            var stagingDir = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath!)!, "_update");
+            if (Directory.Exists(stagingDir))
+            {
+                Directory.Delete(stagingDir, recursive: true);
+                Console.WriteLine("[Update] Cleaned up staging directory.");
+            }
+        }
+        catch { }
     }
 
     private async Task CheckAndApplyAsync()
@@ -147,11 +163,13 @@ public class UpdateService
     private static void LaunchWindowsRestart(string stagedBinary, string appPath)
     {
         var bat = Path.Combine(Path.GetTempPath(), $"wowcidle_update_{Guid.NewGuid():N}.bat");
+        var stagingDir = Path.GetDirectoryName(stagedBinary)!;
         File.WriteAllText(bat,
             $"""
              @echo off
              timeout /t 3 /nobreak > nul
              move /y "{stagedBinary}" "{appPath}"
+             rmdir /s /q "{stagingDir}"
              start "" "{appPath}"
              del "%~f0"
              """);
@@ -167,12 +185,14 @@ public class UpdateService
     private static void LaunchUnixRestart(string stagedBinary, string appBin, string appDir)
     {
         var sh = Path.Combine(Path.GetTempPath(), $"wowcidle_update_{Guid.NewGuid():N}.sh");
+        var stagingDir = Path.GetDirectoryName(stagedBinary)!;
         File.WriteAllText(sh,
             $"""
              #!/bin/bash
              sleep 2
              cp -f "{stagedBinary}" "{appBin}"
              chmod +x "{appBin}"
+             rm -rf "{stagingDir}"
              "{appBin}" &
              rm -f "$0"
              """);
