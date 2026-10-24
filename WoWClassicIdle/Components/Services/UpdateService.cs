@@ -27,7 +27,8 @@ public static class UpdateService
     {
         try
         {
-            Console.WriteLine("[Update] Checking for updates...");
+            var localVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);
+            Console.WriteLine($"[Update] Checking for updates... (local: v{localVersion.Major}.{localVersion.Minor}.{localVersion.Build}, url: {ManifestUrl})");
 
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
 
@@ -45,8 +46,6 @@ public static class UpdateService
                 Console.WriteLine($"[Update] Cannot parse remote version '{manifest.Version}' – skipping.");
                 return false;
             }
-
-            var localVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);
 
             if (remoteVersion <= localVersion)
             {
