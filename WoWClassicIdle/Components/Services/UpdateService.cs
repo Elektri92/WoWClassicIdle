@@ -11,7 +11,7 @@ namespace Services;
 public static class UpdateService
 {
     // Raw-URL zur version.json im GitHub-Repo (main-Branch)
-    private const string ManifestUrl = "https://raw.githubusercontent.com/Elektri92/WoWClassicIdle/main/version.json";
+    private const string ManifestUrl = "https://raw.githubusercontent.com/Elektri92/WoWClassicIdle/master/version.json";
 
     // Struktur der version.json auf dem Server
     private sealed record VersionManifest(
