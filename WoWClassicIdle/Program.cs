@@ -39,7 +39,15 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 
 app.UseAntiforgery();
 
-app.UseStaticFiles();
+// In Production: statische Dateien aus eingebetteten Ressourcen servieren (Single-File-Deploy, kein wwwroot-Ordner nötig)
+if (app.Environment.IsDevelopment())
+    app.UseStaticFiles();
+else
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.EmbeddedFileProvider(
+            typeof(Program).Assembly, "WoWClassicIdle.wwwroot")
+    });
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
@@ -103,7 +111,23 @@ else
     // Der Aufruf kehrt bei einem Update nicht zurück (Environment.Exit). Bei Fehlern wird nur geloggt.
     await UpdateService.CheckAndApplyAsync();
 
-    var iconPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "wow_idle_game_logo.png");
+    // In Production: Icon aus eingebetteter Ressource in Temp-Datei extrahieren
+    string iconPath;
+    if (app.Environment.IsDevelopment())
+    {
+        iconPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "wow_idle_game_logo.png");
+    }
+    else
+    {
+        iconPath = Path.Combine(Path.GetTempPath(), "wowclassicidle_icon.png");
+        using var iconStream = typeof(Program).Assembly
+            .GetManifestResourceStream("WoWClassicIdle.wwwroot.images.wow_idle_game_logo.png");
+        if (iconStream is not null)
+        {
+            using var iconFile = File.Create(iconPath);
+            iconStream.CopyTo(iconFile);
+        }
+    }
 
     var window = new PhotinoWindow()
         .SetTitle("WoW Classic Idle")

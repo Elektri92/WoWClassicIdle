@@ -11,6 +11,11 @@
         <AssemblyVersion>0.0.1.0</AssemblyVersion>
     </PropertyGroup>
 
+    <!-- wwwroot in Release-Builds in die Assembly einbetten → Binary ist self-contained (kein wwwroot-Ordner nötig) -->
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+      <EmbeddedResource Include="wwwroot\**\*" />
+    </ItemGroup>
+
     <!-- Debug-Tools (Klassen-Simulation) nur im Debug-Build ausliefern -->
     <ItemGroup Condition="'$(Configuration)' != 'Debug'">
       <Compile Remove="Components\Debug\**" />
