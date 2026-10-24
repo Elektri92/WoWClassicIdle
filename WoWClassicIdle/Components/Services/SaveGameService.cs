@@ -104,8 +104,12 @@ public class SaveGameService : ISaveGameService, IDisposable
         {
             ActiveSlotId = _engine.ActiveSlotId,
             NextSlotId   = _engine.NextSlotId,
-            TotalKills   = _engine.TotalKills,
-            TotalDeaths  = _engine.TotalDeaths,
+            TotalKills           = _engine.TotalKills,
+            TotalDeaths          = _engine.TotalDeaths,
+            TotalRareKills       = _engine.TotalRareKills,
+            TotalItemsSold       = _engine.TotalItemsSold,
+            TotalUncommonLooted  = _engine.TotalUncommonLooted,
+            TotalRareItemsLooted = _engine.TotalRareItemsLooted,
         };
 
         foreach (var slot in _engine.CharacterRoster)

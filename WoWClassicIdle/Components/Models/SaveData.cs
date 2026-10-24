@@ -8,6 +8,10 @@ public class SaveData
     public int NextSlotId { get; set; }
     public int TotalKills { get; set; }
     public int TotalDeaths { get; set; }
+    public int TotalRareKills { get; set; }
+    public int TotalItemsSold { get; set; }
+    public int TotalUncommonLooted { get; set; }
+    public int TotalRareItemsLooted { get; set; }
     public List<SlotSaveData> Roster { get; set; } = new();
     public List<AchievementSaveData> Achievements { get; set; } = new();
     // Gemeinsames klassenübergreifendes Inventar – Rucksack (ab Version 2)

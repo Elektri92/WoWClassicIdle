@@ -230,6 +230,16 @@ public class BuffTracker
         }
     }
 
+    /// <summary>Summe aller noch absorbierbaren Schild-Punkte (z. B. Ice Barrier).</summary>
+    public int TotalShield
+    {
+        get
+        {
+            lock (_lock)
+                return _active.Values.Sum(b => b.ShieldRemaining);
+        }
+    }
+
     /// <summary>Kopie der aktiven Buffs für die Anzeige.</summary>
     public IReadOnlyList<ActiveBuff> Snapshot()
     {

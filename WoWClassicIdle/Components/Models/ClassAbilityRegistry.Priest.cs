@@ -9,9 +9,10 @@ public static partial class ClassAbilityRegistry
             Id = "Smite_r1",
             Name = "Smite",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holysmite.jpg",
-            Cooldown = 1.5,
-            ManaCost = 18,      // -10% from 20
-            Damage = 13,        // -3 (was 16)
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
+            ManaCost = 18,
+            Damage = 13,
             LevelRequired = 1,
             Rank = 1,
         },
@@ -20,9 +21,10 @@ public static partial class ClassAbilityRegistry
             Id = "Smite_r2",
             Name = "Smite",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holysmite.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 18,
-            Damage = 14,        // +10 % gegenüber Rank 1
+            Damage = 14,
             LevelRequired = 10,
             Rank = 2,
         },
@@ -58,6 +60,7 @@ public static partial class ClassAbilityRegistry
             Name = "Drain Mana",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_siphonmana.jpg",
             Cooldown = 30,
+            CastTime = 1.0,
             ManaCost = 0,
             BuffDuration = 20,              // MoT über 20 s
             MotManaRestorePct = 0.08,       // 8 % maximales Mana
@@ -83,8 +86,9 @@ public static partial class ClassAbilityRegistry
             Name = "Mind Blast",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_unholyfrenzy.jpg",
             Cooldown = 8,
+            CastTime = 1.5,     // 1,5 s Cast-Zeit
             ManaCost = 25,
-            Damage = 26,        // +20 % Buff
+            Damage = 26,
             LevelRequired = 18,
             Rank = 1,
         },
@@ -94,8 +98,9 @@ public static partial class ClassAbilityRegistry
             Name = "Flash Heal",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_flashheal.jpg",
             Cooldown = 12,
+            CastTime = 2.0,     // 2,0 s Cast-Zeit
             ManaCost = 30,
-            Heal = 45,                          // direkter Sofort-Heal
+            Heal = 45,
             LevelRequired = 24,
             Rank = 1,
         },

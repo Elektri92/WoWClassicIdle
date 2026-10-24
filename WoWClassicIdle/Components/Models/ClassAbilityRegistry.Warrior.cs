@@ -38,6 +38,7 @@ public static partial class ClassAbilityRegistry
             Name = "Battle Shout",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_battleshout.jpg",
             Cooldown = 0,
+            CastTime = 1.0,
             ManaCost = 10,          // 10 Rage
             BuffDuration = 30,      // 30 s
             BuffDamageBonus = 0.05, // +5 % verursachter Schaden

@@ -9,7 +9,8 @@ public static partial class ClassAbilityRegistry
             Id = "Wrath_r1",
             Name = "Wrath",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_abolishmagic.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 20,
             Damage = 14,
             LevelRequired = 1,
@@ -20,9 +21,10 @@ public static partial class ClassAbilityRegistry
             Id = "Wrath_r2",
             Name = "Wrath",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_abolishmagic.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 20,
-            Damage = 15,        // +10 % gegenüber Rank 1 (15.4 → 15)
+            Damage = 15,
             LevelRequired = 10,
             Rank = 2,
         },
@@ -33,9 +35,9 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_starfall.jpg",
             Cooldown = 20,
             ManaCost = 5,
-            Damage = 5,
+            Damage = 6,             // +20 % Buff
             DebuffDuration = 20,
-            DebuffDotDamage = 5,
+            DebuffDotDamage = 6,    // +20 % Buff
             DebuffDotTickInterval = 5,
             LevelRequired = 3,
             Rank = 1,
@@ -46,7 +48,7 @@ public static partial class ClassAbilityRegistry
             Name = "Rejuvenation",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_rejuvenation.jpg",
             Cooldown = 10,
-            ManaCost = 18,              // 50 % reduziert (war 35)
+            ManaCost = 9,               // nochmals −50 % (war 18)
             BuffDuration = 10,          // HoT über 10 s
             HotTotalHeal = 20,          // 5 Ticks à 4 HP = 20 HP
             HotTickInterval = 2,
@@ -71,7 +73,8 @@ public static partial class ClassAbilityRegistry
             Name = "Regrowth",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_resistnature.jpg",
             Cooldown = 12,
-            ManaCost = 20,              // 50 % reduziert (war 40)
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
+            ManaCost = 20,
             Heal = 12,                          // direkter Sofort-Heal
             BuffDuration = 12,                  // HoT über 12 s
             HotTotalHeal = 20,                  // 6 Ticks à ~3 = 20 HP gesamt
@@ -98,7 +101,8 @@ public static partial class ClassAbilityRegistry
             Id = "Starfire_r1",
             Name = "Starfire",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_arcane_starfire.jpg",
-            Cooldown = 2.5,                     // langsamer, mächtiger Arkan-Bolt
+            Cooldown = 0,
+            CastTime = 3.0,     // 3,0 s Cast-Zeit
             ManaCost = 30,
             Damage = 28,
             LevelRequired = 24,

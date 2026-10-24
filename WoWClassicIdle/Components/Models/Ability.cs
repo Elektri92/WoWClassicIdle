@@ -13,8 +13,12 @@ public sealed record Ability
     public int ManaCost { get; init; }
     public int Damage { get; init; }       // > 0 → macht Schaden
     public int Heal { get; init; }         
-    public int Rank { get; init; }        
-    public int LevelRequired { get; init; }        
+    public int Rank { get; init; }
+    public int LevelRequired { get; init; }
+
+    /// <summary>Zauberzeit in Sekunden. &gt; 0 → Effekt erst nach Abschluss des Casts, löst keinen GCD aus.</summary>
+    public double CastTime { get; init; }
+    public bool HasCastTime => CastTime > 0;
 
     /// <summary>Nahkampf-Schlag: Schaden = Waffenschlag (inkl. AP) + <see cref="Damage"/>. Sonst fixer Zauberschaden.</summary>
     public bool AddsWeaponDamage { get; init; }
@@ -147,6 +151,20 @@ public sealed record Ability
 
     /// <summary>Direktheilung oder HoT – wird erst unter <see cref="HealThreshold"/> gewirkt.</summary>
     public bool IsHealing => IsHeal || IsHot;
+
+    public bool IsShield => IsBuff && BuffShieldPct > 0;
+
+    /// <summary>Reiner Spieler-Buff (keine Heilung, kein Schild) – höchste Cast-Priorität.</summary>
+    public bool IsPlayerBuff => IsBuff && !IsHealing && !IsShield;
+
+    /// <summary>
+    /// Cast-Priorität: 0 = Spieler-Buffs (+ Utility ohne Schaden wie Life Tap, Stuns, Marks),
+    /// 1 = Heilung/Schild, 2 = Schaden (innerhalb der Gruppe nach geschätztem DPS).
+    /// </summary>
+    public int CastPriorityGroup =>
+        IsPlayerBuff || IsLifeTap || (IsDebuff && !IsDamage && !IsDebuffDot) ? 0
+        : IsHealing || IsShield ? 1
+        : 2;
 
     /// <summary>HP-Anteil, ab dem (und darunter) Heilzauber automatisch gewirkt werden.</summary>
     public const double HealThreshold = 0.5;

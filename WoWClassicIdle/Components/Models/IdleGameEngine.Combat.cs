@@ -33,7 +33,8 @@ public partial class IdleGameEngine
         Player.Level >= ability.LevelRequired
         && Player.Cooldowns.IsReady(ability.Id)
         && !(ability.IsBuff && Player.Buffs.IsActive(ability.Id))
-        && !(ability.IsDebuff && CurrentEnemy is { } e && e.Debuffs.IsActive(ability.Id))
+        // Aktiver Debuff blockiert nur reine Debuffs – Schadenszauber mit Debuff (z. B. Frostbolt) werden weiter gewirkt und frischen ihn auf
+        && !(ability.IsDebuff && !ability.IsDamage && CurrentEnemy is { } e && e.Debuffs.IsActive(ability.Id))
         && !(ability.RequiresEnemyBelowHpPct > 0
              && (CurrentEnemy is null || CurrentEnemy.CurrentHp > CurrentEnemy.Stats.MaxHp * ability.RequiresEnemyBelowHpPct));
 
@@ -174,12 +175,33 @@ public partial class IdleGameEngine
 
         _playerAttackAcc += dt;
         _enemyAttackAcc  += dt;
+        SwingInterval = playerInterval;
+
+        // ── Abilities (Cooldown-basiert, mit Cast-Zeit und Global Cooldown) ──
+        Player.Cooldowns.Tick(dt * attackSpeed);
+        int abilityDmg = UpdateAbilities(dt, attackSpeed);
+        if (abilityDmg > 0)
+        {
+            totalPlayerDmg += abilityDmg;
+            playerAttacked = true;
+        }
+
+        // ── Kill-Check nach Abilities (Spells werden vor der Auto-Attack ausgewertet) ──
+        if (!CurrentEnemy.IsAlive)
+        {
+            HandleEnemyDeath();
+            return;
+        }
 
         // ── Spielerangriffe ──
         var nextSwingAbility = Player.EquippedAbilities
             .FirstOrDefault(a => a.ReplacesAutoAttack && Player.Level >= a.LevelRequired);
 
-        while (_playerAttackAcc >= playerInterval && CurrentEnemy.IsAlive)
+        // Spell mit Manakosten wird gerade gewirkt → Swing wartet (Timer bleibt voll geladen)
+        if (IsSwingHeld)
+            _playerAttackAcc = Math.Min(_playerAttackAcc, playerInterval);
+
+        while (!IsSwingHeld && _playerAttackAcc >= playerInterval && CurrentEnemy.IsAlive)
         {
             _playerAttackAcc -= playerInterval;
             playerAttacked = true;
@@ -199,6 +221,7 @@ public partial class IdleGameEngine
                 totalPlayerDmg += swingDmg;
                 LastLog = $"⚔ {nextSwingAbility.Name} → {swingDmg} DMG!";
                 Player.TriggerAbilityUsed(nextSwingAbility.Name, nextSwingAbility.Damage);
+                AbilityTriggered?.Invoke(nextSwingAbility);
 
                 // Passive Procs (z. B. Deadly Poison) – auch bei On-Next-Swing
                 foreach (var passive in Player.PassiveAbilities)
@@ -298,135 +321,12 @@ public partial class IdleGameEngine
             RespawnDuration  = 10 + Player.Level;
             RespawnRemaining = RespawnDuration;
             LastLog = "Defeated! Resurrecting at the Spirit Healer…";
+            ResetCastState();
             _playerAttackAcc = 0;
             _enemyAttackAcc  = 0;
             return;
         }
 
-        // ── Abilities (Cooldown-basiert) ──
-        Player.Cooldowns.Tick(dt * attackSpeed);
-
-        // Heilungen zuerst, dann Buffs/Debuffs (hohe Prio), dann Schaden (Reihenfolge ist gecacht)
-        foreach (var ability in Player.SortedEquippedAbilities)
-        {
-            if (!IsReadyToCast(ability)) continue;
-            if (ability.CastWhenManaBelowPct > 0
-                && Player.CurrentMana >= Player.Stats.MaxMana * ability.CastWhenManaBelowPct) continue;
-            if (ability.IsHealing && !PlayerNeedsHeal) continue;
-            if (!ability.IsHealing && ability.ManaCost > 0 && IsSavingManaForHeal()) continue;
-            if (!Player.ConsumeMana(Player.GetEffectiveManaCost(ability))) continue;
-
-            // Life Tap: HP in Mana umwandeln – nur bei niedrigem Mana und ausreichend HP
-            if (ability.IsLifeTap)
-            {
-                if (Player.CurrentMana >= Player.Stats.MaxMana / 2 || PlayerNeedsHeal || Player.CurrentHp <= ability.LifeTapHpCost)
-                    continue;
-                Player.TakeDamage(ability.LifeTapHpCost); // Absorb-Rückgabe ignoriert (kein Schild-Meter für Life Tap)
-                Player.RegenMana(ability.LifeTapManaGain);
-                CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, ability.LifeTapHpCost));
-                LastLog = $"✦ {ability.Name} → -{ability.LifeTapHpCost} HP, +{ability.LifeTapManaGain} Mana";
-                Player.Cooldowns.StartCooldown(ability.Id, ability.Cooldown);
-                Player.TriggerAbilityUsed(ability.Name, 0);
-                continue;
-            }
-
-            if (ability.IsBuff)
-            {
-                Player.Buffs.Apply(Player.GetEffectiveAbility(ability), Player.Stats.MaxMana, Player.Stats.MaxHp);
-                LastLog = $"✦ {ability.Name} active ({ability.BuffDuration:0}s)";
-            }
-            else if (ability.IsDamage)
-            {
-                double abilityMult = Player.Buffs.DamageMultiplier
-                    * (ability.AddsWeaponDamage ? Player.Buffs.WeaponDamageMultiplier : 1.0)
-                    * enemyDmgTakenMult;
-                var (abilityDmg, abilityCrit) = RollPlayerCrit(
-                    CombatEngine.CalculateAbilityDamage(ability, Player.Stats, _rng, abilityMult),
-                    Player.GetAbilityCritBonus(ability));
-                CurrentEnemy.TakeDamage(abilityDmg);
-                Meter.RecordAbility(ability, CombatActionKind.Damage, abilityDmg);
-                CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, abilityDmg, abilityCrit));
-                totalPlayerDmg += abilityDmg;
-                playerAttacked = true;
-                LastLog = $"⚔ {ability.Name} → {abilityDmg} DMG!";
-
-                if (ability.IsDebuff)   // e.g. Moonfire: direkter Treffer + DoT
-                    CurrentEnemy.Debuffs.Apply(Player.GetEffectiveAbility(ability));
-
-                // SmiteHeal: Smite heilt den Priester
-                if (ability.Id.StartsWith("Smite"))
-                {
-                    double smiteHealBonus = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.SmiteHeal);
-                    if (smiteHealBonus > 0)
-                    {
-                        int sh = (int)Math.Round(smiteHealBonus * Player.Stats.HealingMultiplier);
-                        var (smHealed, _) = RollPlayerCrit(sh);
-                        int hpSmBefore = Player.CurrentHp;
-                        Player.RegenHp(smHealed);
-                        CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, Player.CurrentHp - hpSmBefore, false));
-                    }
-                }
-
-                // Periodic Fire: Fireball-DoT durch Talent
-                double dotDmg = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FireballDot);
-                if (dotDmg > 0 && ability.Id.StartsWith("Fireball"))
-                {
-                    var periodicFire = new Ability
-                    {
-                        Id                   = "talent_periodic_fire",
-                        Name                 = "Periodic Fire",
-                        DebuffDuration       = 5,
-                        DebuffDotDamage      = (int)Math.Max(1, dotDmg),
-                        DebuffDotTickInterval = 5.0,
-                    };
-                    CurrentEnemy.Debuffs.Apply(periodicFire);
-                }
-
-                // Ignite: Feuerzauber-Crit löst DoT aus (15 % des Schadens über 3 Ticks)
-                if (abilityCrit
-                    && (ability.Id.StartsWith("Fireball") || ability.Id.StartsWith("Fire_Blast"))
-                    && Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.GrantIgnite) > 0
-                    && CurrentEnemy.IsAlive)
-                {
-                    int ignitePerTick = (int)Math.Max(1, Math.Round(abilityDmg * 0.15 / 3.0));
-                    var igniteDebuff = new Ability
-                    {
-                        Id                    = "talent_ignite",
-                        Name                  = "Ignite",
-                        DebuffDuration        = 3,
-                        DebuffDotDamage       = ignitePerTick,
-                        DebuffDotTickInterval = 1.0,
-                    };
-                    CurrentEnemy.Debuffs.ApplyIgnite(igniteDebuff);
-                }
-            }
-            else if (ability.IsDebuff)  // reiner Debuff (Hunter's Mark, Curse of Agony)
-            {
-                CurrentEnemy.Debuffs.Apply(Player.GetEffectiveAbility(ability));
-                LastLog = $"✦ {ability.Name} on {CurrentEnemy.Name} ({ability.DebuffDuration:0}s)";
-            }
-            else
-            {
-                int scaledHeal = (int)Math.Round(ability.Heal * Player.Stats.HealingMultiplier);
-                var (healAmount, healCrit) = RollPlayerCrit(scaledHeal);
-                int hpBefore = Player.CurrentHp;
-                Player.RegenHp(healAmount);
-                int healed = Player.CurrentHp - hpBefore;
-                Meter.RecordAbility(ability, CombatActionKind.Heal, healed);
-                CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, healAmount, healCrit));
-                LastLog = $"✚ {ability.Name} → +{healed} HP";
-            }
-
-            Player.Cooldowns.StartCooldown(ability.Id, ability.Cooldown);
-            Player.TriggerAbilityUsed(ability.Name, ability.IsDamage ? ability.Damage : ability.Heal);
-        }
-
-        // ── Kill-Check nach Abilities ──
-        if (!CurrentEnemy.IsAlive)
-        {
-            HandleEnemyDeath();
-            return;
-        }
 
         // ── Log ──
         if (LastLog is null || !(LastLog.StartsWith("Defeated") || LastLog.Contains("defeated")))
@@ -456,6 +356,7 @@ public partial class IdleGameEngine
         if (!hasDuplicate) return false;
 
         Player.Copper += Math.Max(1, item.SellPrice);
+        TotalItemsSold++;
         LastLog = $"Auto-sold duplicate: {item.Name} for {Money.Format(Math.Max(1, item.SellPrice))}";
         return true;
     }
@@ -464,6 +365,12 @@ public partial class IdleGameEngine
     {
         if (!TryAutoSellIfDuplicate(item))
         {
+            // Loot-Qualität verfolgen (nur im Normalbetrieb, nicht im Debug-Simulator)
+            if (!AutoEquipDrops)
+            {
+                if (item.Quality == ItemQuality.Uncommon) TotalUncommonLooted++;
+                else if (item.Quality == ItemQuality.Rare) TotalRareItemsLooted++;
+            }
             Player.Inventory.TryAdd(item);
             ItemDropped?.Invoke(item);
         }
@@ -575,7 +482,9 @@ public partial class IdleGameEngine
             LastLog = $"💀 {deadEnemy.Name} defeated (+{xpReward} XP)";
 
         TotalKills++;
+        if (deadEnemy.IsRare) TotalRareKills++;
         CurrentEnemy = null;
+        CancelCast();   // Ziel tot → laufender Cast verfällt
         _playerAttackAcc = 0;
         _enemyAttackAcc  = 0;
     }

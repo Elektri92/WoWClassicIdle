@@ -23,6 +23,10 @@ public static class AbilityText
     {
         if (ability.IsPassive)          return "Passive";
         if (ability.ReplacesAutoAttack) return "Next melee";
+        if (ability.HasCastTime)
+            return ability.Cooldown > 0
+                ? $"{Num(ability.CastTime)} sec cast · {Num(ability.Cooldown)} sec cooldown"
+                : $"{Num(ability.CastTime)} sec cast";
         if (ability.Cooldown > 0)       return $"{Num(ability.Cooldown)} sec cooldown";
         return "Instant";
     }
@@ -128,7 +132,11 @@ public static class AbilityText
 
     private static string BuffDescription(Ability ability)
     {
-        string suffix = $" for {Num(ability.BuffDuration)} sec. Recast automatically when it expires.";
+        // "Recast automatically" nur sinnvoll wenn Buff nicht vor dem Cooldown abläuft
+        bool autoRecast = ability.Cooldown == 0 || ability.Cooldown <= ability.BuffDuration;
+        string suffix = autoRecast
+            ? $" for {Num(ability.BuffDuration)} sec. Recast automatically when it expires."
+            : $" for {Num(ability.BuffDuration)} sec.";
 
         if (ability.BuffDamageBonus > 0)
             return $"Increases all damage you deal by {Num(ability.BuffDamageBonus * 100)}%{suffix}";
@@ -146,6 +154,9 @@ public static class AbilityText
                 text += $" and Spirit by {ability.BuffSpiritBonus}";
             return text + ", granting additional mana and mana regeneration" + suffix;
         }
+
+        if (ability.BuffDamageTakenReduction > 0)
+            return $"Reduces all damage taken by {Num(ability.BuffDamageTakenReduction * 100)}%{suffix}";
 
         if (ability.BuffGrantsImmunity)
             return $"Makes you immune to all attacks and spells{suffix}";
@@ -200,6 +211,8 @@ public static class AbilityText
                     t += $", +{ability.BuffSpiritBonus} Spirit";
                 return t + $" for {Num(ability.BuffDuration)}s";
             }
+            if (ability.BuffDamageTakenReduction > 0)
+                return $"-{Num(ability.BuffDamageTakenReduction * 100)}% DMG taken for {Num(ability.BuffDuration)}s";
             if (ability.BuffGrantsImmunity)
                 return $"Immune for {Num(ability.BuffDuration)}s";
             if (ability.BuffRetaliationDamage > 0)

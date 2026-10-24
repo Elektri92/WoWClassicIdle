@@ -5,7 +5,9 @@ public enum AchievementCategory
     General,
     Classes,
     Kills,
-    Deaths
+    Deaths,
+    Loot,
+    Inventory
 }
 
 public class AchievementDefinition

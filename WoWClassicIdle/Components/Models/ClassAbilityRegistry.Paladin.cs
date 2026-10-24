@@ -11,7 +11,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_righteousfury.jpg",
             Cooldown = 8,
             ManaCost = 20,
-            Damage = 19,        // +1 (was 18)
+            Damage = 22,        // +3 Buff
             LevelRequired = 1,
             Rank = 1,
         },
@@ -22,7 +22,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_righteousfury.jpg",
             Cooldown = 8,
             ManaCost = 20,
-            Damage = 21,        // +10 % gegenüber Rank 1 (20.9 → 21)
+            Damage = 24,        // +3 Buff
             LevelRequired = 10,
             Rank = 2,
         },
@@ -31,9 +31,10 @@ public static partial class ClassAbilityRegistry
             Id = "Holy_Light_r1",
             Name = "Holy Light",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holybolt.jpg",
-            Cooldown = 10,
-            ManaCost = 35,
-            Heal = 19,          // -5% from 20
+            Cooldown = 0,       // kein Cooldown – Tempo kommt aus Cast-Zeit
+            CastTime = 3.0,     // 3,0 s Cast-Zeit
+            ManaCost = 18,              // −50 % (war 35)
+            Heal = 19,
             LevelRequired = 3,
             Rank = 1,
         },
@@ -44,7 +45,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_excorcism_02.jpg",
             Cooldown = 10,
             ManaCost = 15,
-            Damage = 16,                // Waffenschaden + 16
+            Damage = 20,                // Waffenschaden + 20 (+4 Buff)
             AddsWeaponDamage = true,
             ReplacesAutoAttack = true,
             LevelRequired = 4,

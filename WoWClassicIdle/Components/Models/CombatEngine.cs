@@ -31,6 +31,21 @@ public static class CombatEngine
         return Math.Max(1, (int)Math.Round(dmg * damageMultiplier));
     }
 
+    /// <summary>
+    /// Erwarteter Gesamtschaden eines Casts (Direktschaden mit Durchschnitts-Waffenschlag + kompletter DoT),
+    /// ohne Crit und Buffs – dient nur der Priorisierung.
+    /// </summary>
+    public static double EstimateAbilityDamage(Ability ability, Stats stats)
+    {
+        double dmg = ability.Damage;
+        if (ability.AddsWeaponDamage)
+        {
+            double avgSwing = (stats.WeaponMinDamage + stats.WeaponMaxDamage) / 2.0 + stats.AttackPower / 14.0 * stats.Speed;
+            dmg = (dmg + avgSwing) * stats.MeleeDamageMultiplier;
+        }
+        return dmg + ability.DebuffDotDamage * ability.DebuffDotTickCount;
+    }
+
     private static double RollWeaponSwing(Stats stats, Random rng)
     {
         int weaponDmg = rng.Next(stats.WeaponMinDamage, stats.WeaponMaxDamage + 1);

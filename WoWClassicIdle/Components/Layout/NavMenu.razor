@@ -5,12 +5,11 @@
 @implements IDisposable
 
 <div class="nav-wrapper">
-<div class="top-row ps-3 navbar navbar-dark">
-        <div class="container-fluid" style="text-align: center;">
-            <a class="navbar-brand" href="" style="display: inline-block;">
-                <img src="images/wow_idle_game_logo.png" alt="WoW Classic Idle" class="wow-logo" style="max-width:150px; height:auto;" />
-            </a>
-        </div>
+    <div class="top-row navbar navbar-dark">
+        <a class="navbar-brand" href="">
+            <img src="images/wow_idle_game_logo.png" alt="WoW Classic Idle" class="wow-logo" />
+            <span class="alpha-badge">ALPHA</span>
+        </a>
     </div>
 
         <input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
@@ -65,27 +64,30 @@
                     </div>
                 }
 
-                @if (BuildInfo.IsDebug)
-                {
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="debug/simulation">
-                            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_gear_01.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Simulation
-                        </NavLink>
-                    </div>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="debug/abilities">
-                            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_book_09.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Abilities
-                        </NavLink>
-                    </div>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="debug/loot-tables">
-                            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_chest_cloth_05.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Loot Tables
-                        </NavLink>
-                    </div>
-                }
-
             </nav>
         </div>
+
+    @if (BuildInfo.IsDebug)
+    {
+        <div class="nav-debug-area">
+            <span class="nav-debug-label">DEBUG</span>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="debug/simulation">
+                    <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_gear_01.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Simulation
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="debug/abilities">
+                    <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_book_09.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Abilities
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="debug/loot-tables">
+                    <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_chest_cloth_05.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Loot Tables
+                </NavLink>
+            </div>
+        </div>
+    }
 
     <div class="nav-save-area">
         <div class="nav-item px-3">

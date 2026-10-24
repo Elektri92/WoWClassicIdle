@@ -9,9 +9,10 @@ public static partial class ClassAbilityRegistry
             Id = "Fireball_r1",
             Name = "Fireball",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_flamebolt.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit statt Cooldown
             ManaCost = 18,
-            Damage = 14,        // -20% nerf (was 18)
+            Damage = 14,
             LevelRequired = 1,
             Rank = 1,
             ExclusiveGroup = "mage_bolt",
@@ -22,9 +23,10 @@ public static partial class ClassAbilityRegistry
             Id = "Fireball_r2",
             Name = "Fireball",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_flamebolt.jpg",
-            Cooldown = 1.5,
-            ManaCost = 18,
-            Damage = 15,        // +10 % gegenüber Rank 1
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit statt Cooldown
+            ManaCost = 20,
+            Damage = 16,        // +2 gegenüber Rank 1
             LevelRequired = 10,
             Rank = 2,
             ExclusiveGroup = "mage_bolt",
@@ -35,9 +37,10 @@ public static partial class ClassAbilityRegistry
             Id = "Frostbolt_r1",
             Name = "Frostbolt",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_frostbolt02.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit statt Cooldown
             ManaCost = 18,
-            Damage = 14,        // +15 % Buff
+            Damage = 13,        // 1 weniger als Fireball – Utility durch Slow gleicht aus
             DebuffDuration = 5,
             DebuffAttackSpeedReduction = 0.05,  // −5 % Angriffstempo
             LevelRequired = 1,
@@ -50,9 +53,10 @@ public static partial class ClassAbilityRegistry
             Id = "Frostbolt_r2",
             Name = "Frostbolt",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_frostbolt02.jpg",
-            Cooldown = 1.5,
-            ManaCost = 18,
-            Damage = 18,        // +3 erhöht
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit statt Cooldown
+            ManaCost = 20,
+            Damage = 15,        // +2 gegenüber Rank 1, Slow bleibt
             DebuffDuration = 5,
             DebuffAttackSpeedReduction = 0.05,
             LevelRequired = 10,
@@ -79,6 +83,7 @@ public static partial class ClassAbilityRegistry
             Name = "Conjure Water",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_drink_10.jpg",
             Cooldown = 60,
+            CastTime = 1.0,
             ManaCost = 0,
             BuffDuration = 20,              // regeneriert über 20 s
             MotManaRestorePct = 0.14,       // 12 % maximales Mana
@@ -92,6 +97,7 @@ public static partial class ClassAbilityRegistry
             Name = "Conjure Water",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_drink_10.jpg",
             Cooldown = 50,                  // 10 s weniger CD gegenüber Rank 1
+            CastTime = 1.0,
             ManaCost = 0,
             BuffDuration = 20,
             MotManaRestorePct = 0.14,
@@ -105,6 +111,7 @@ public static partial class ClassAbilityRegistry
             Name = "Conjure Food",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_food_30.jpg",
             Cooldown = 40,
+            CastTime = 1.0,
             ManaCost = 10,
             BuffDuration = 20,              // HoT über 20 s
             HotHealPct = 0.30,              // 30 % max. HP gesamt
@@ -128,15 +135,28 @@ public static partial class ClassAbilityRegistry
             Id = "Arcane_Missiles_r1",
             Name = "Arcane Missiles",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_magic_managain.jpg",
-            Cooldown = 5.0,
-            ManaCost = 25,
-            DebuffDuration = 3.0,               // Kanal 3 s; IsDebuff blockiert Neucast bis Ablauf
-            DebuffDotDamage = 6,                // 5 Ticks à 6 = 30 DMG (10 DPS, vergleichbar mit bolt-Gruppe)
-            DebuffDotTickInterval = 0.6,        // 5 Treffer über 3 s
-            LevelRequired = 10,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit; kein Cooldown
+            ManaCost = 20,
+            Damage = 15,        // Etwas mehr als Fireball/Frostbolt, kein Utility-Effekt
+            LevelRequired = 1,
             Rank = 1,
             ExclusiveGroup = "mage_bolt",
-            SpecHint = 0,                       // Arcane-Baum
+            SpecHint = 0,       // Arcane-Baum
+        },
+        new Ability
+        {
+            Id = "Arcane_Missiles_r2",
+            Name = "Arcane Missiles",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_magic_managain.jpg",
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit; kein Cooldown
+            ManaCost = 22,
+            Damage = 19,        // +4 gegenüber Rank 1; höchster Schaden der Bolt-Gruppe ohne Slow
+            LevelRequired = 10,
+            Rank = 2,
+            ExclusiveGroup = "mage_bolt",
+            SpecHint = 0,       // Arcane-Baum
         },
         new Ability
         {
@@ -156,6 +176,7 @@ public static partial class ClassAbilityRegistry
             Name = "Conjure Food",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_food_30.jpg",
             Cooldown = 30,                  // 10 s weniger CD gegenüber Rank 1
+            CastTime = 1.0,
             ManaCost = 10,
             BuffDuration = 20,
             HotHealPct = 0.30,

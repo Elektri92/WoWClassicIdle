@@ -31,6 +31,7 @@ public partial class IdleGameEngine
             _enemyAttackAcc  = 0;
             _rogueManaAcc    = 0;
             _manaRegenAcc    = 0;
+            ResetCastState();
 
             LastLog = $"Character changed: {race} {characterClass} ({faction})";
         }
@@ -105,6 +106,7 @@ public partial class IdleGameEngine
             _enemyAttackAcc  = 0;
             _rogueManaAcc    = 0;
             _manaRegenAcc    = 0;
+            ResetCastState();
             CurrentEnemy = _spawner.Spawn(Player.Stats.Level, 0);
         }
         TickUpdated?.Invoke();

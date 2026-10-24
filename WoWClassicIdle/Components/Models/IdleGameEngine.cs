@@ -54,7 +54,14 @@ public partial class IdleGameEngine
     public bool EnableRareRequeue { get; set; } = true;
     public int TotalKills { get; private set; }
     public int TotalDeaths { get; private set; }
+    public int TotalRareKills { get; private set; }
+    public int TotalItemsSold { get; private set; }
+    public int TotalUncommonLooted { get; private set; }
+    public int TotalRareItemsLooted { get; private set; }
     public string? LastLog { get; private set; }
+
+    /// <summary>Erhöht den Zähler für manuell verkaufte Items (z.B. per Drag-and-Drop an den Händler).</summary>
+    public void TrackItemSold(int count = 1) => TotalItemsSold += count;
 
     /// <summary>Verbleibende Sekunden beim Geistheiler, bevor der nächste Gegner spawnt.</summary>
     public double RespawnRemaining { get; private set; }
@@ -77,6 +84,9 @@ public partial class IdleGameEngine
 
     /// <summary>Wird für jeden Treffer/jede Heilung ausgelöst (Timer-Thread!).</summary>
     public event Action<CombatText>? CombatTextRaised;
+
+    /// <summary>Wird ausgelöst, sobald der Effekt einer aktiv gewirkten Fähigkeit eintritt (Timer-Thread!).</summary>
+    public event Action<Ability>? AbilityTriggered;
 
     /// <summary>Fires once per ability that becomes available on level-up (Timer-Thread!).</summary>
     public event Action<Ability>? AbilityUnlocked;

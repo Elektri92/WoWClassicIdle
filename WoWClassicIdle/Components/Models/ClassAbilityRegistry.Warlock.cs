@@ -9,9 +9,10 @@ public static partial class ClassAbilityRegistry
             Id = "Shdow_bolt_r1",
             Name = "Shadow Bolt",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowbolt.jpg",
-            Cooldown = 1.7,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 25,
-            Damage = 15,
+            Damage = 13,        // −1 Nerf
             LevelRequired = 1,
             Rank = 1,
         },
@@ -20,9 +21,10 @@ public static partial class ClassAbilityRegistry
             Id = "Shadow_Bolt_r2",
             Name = "Shadow Bolt",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowbolt.jpg",
-            Cooldown = 1.7,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 25,
-            Damage = 17,        // +10 % gegenüber Rank 1 (16.5 → 17)
+            Damage = 15,        // −1 Nerf
             LevelRequired = 10,
             Rank = 2,
         },
@@ -34,7 +36,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 10,
             DebuffDuration = 15,
-            DebuffDotDamage = 8,        // verdoppelt (war 4)
+            DebuffDotDamage = 5,        // −25 % gesamt Nerf (war 8, dann 6)
             DebuffDotTickInterval = 3,
             LevelRequired = 3,
             Rank = 1,
@@ -44,9 +46,10 @@ public static partial class ClassAbilityRegistry
             Id = "Drain_Life_r1",
             Name = "Drain Life",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_lifedrain02.jpg",
-            Cooldown = 60,
+            Cooldown = 30,              // CD 60 → 30 s
+            CastTime = 2.0,             // 2,0 s Cast-Zeit
             ManaCost = 0,
-            DebuffDuration = 12,        // DoT über 12 s
+            DebuffDuration = 12,        // Kanal 12 s
             DebuffDotDamage = 5,        // 4 Ticks à 5 = 20 DMG
             DebuffDotTickInterval = 3,
             DebuffDotLifesteal = 1.0,   // 100 % des Schadens heilt den Spieler
@@ -58,7 +61,8 @@ public static partial class ClassAbilityRegistry
             Id = "Drain_Life_r2",
             Name = "Drain Life",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_lifedrain02.jpg",
-            Cooldown = 60,
+            Cooldown = 30,              // CD 60 → 30 s
+            CastTime = 2.0,             // 2,0 s Cast-Zeit
             ManaCost = 0,
             DebuffDuration = 12,
             DebuffDotDamage = 10,       // doppelter Schaden gegenüber Rank 1
@@ -110,6 +114,7 @@ public static partial class ClassAbilityRegistry
             Name = "Immolate",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_immolation.jpg",
             Cooldown = 15,
+            CastTime = 2.0,
             ManaCost = 20,
             Damage = 12,                        // Sofortschaden
             DebuffDuration = 12,                // Feuer-DoT über 12 s

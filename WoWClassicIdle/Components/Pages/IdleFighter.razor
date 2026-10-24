@@ -18,6 +18,14 @@
     <!--  PLAYER FRAME  (links)                     -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="unit-frame player-frame">
+        <!-- Zuletzt ausgelöste Spells: Icon fliegt links neben dem Charakter von unten nach oben -->
+        <div class="spell-scroll" aria-hidden="true">
+            @foreach (var s in SnapshotSpellFloats())
+            {
+                <img @key="s.Id" class="spell-scroll-icon" src="@s.Ability.IconUrl" alt=""
+                     onerror="this.style.visibility='hidden'" />
+            }
+        </div>
         <div class="combat-text-overlay">
             @foreach (var f in SnapshotFloats(_playerFloats))
             {
@@ -27,12 +35,22 @@
         </div>
         <div class="frame-header">
             <div class="portrait-area">
-                <img class="race-portrait"
-                     src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
-                     alt="" onerror="this.style.display='none'" />
-                <img class="class-badge"
-                     src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
-                     alt="" onerror="this.style.display='none'" />
+                @if (_engine.IsAtSpiritHealer)
+                {
+                    <!-- Totenkopf-Icon solange der Spieler tot ist -->
+                    <img class="death-skull"
+                         src="https://wow.zamimg.com/images/wow/icons/large/inv_misc_bone_skull_01.jpg"
+                         alt="Dead" title="You are dead" />
+                }
+                else
+                {
+                    <img class="race-portrait"
+                         src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                         alt="" onerror="this.style.display='none'" />
+                    <img class="class-badge"
+                         src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
+                         alt="" onerror="this.style.display='none'" />
+                }
             </div>
             <div class="frame-info">
                 <div class="name-line">
@@ -40,10 +58,26 @@
                     <span class="level">Lv. @_engine.Player.Stats.Level</span>
                 </div>
                 <div class="bar-row">
+                    @{
+                        int playerHpPct = CalcPct(_engine.Player.CurrentHp, _engine.Player.Stats.MaxHp);
+                        int shield      = _engine.Player.Buffs.TotalShield;
+                        int shieldPct   = shield > 0 ? Math.Max(1, CalcPct(shield, _engine.Player.Stats.MaxHp)) : 0;
+                        // Schild hängt hinter den HP; passt er nicht mehr rein, wird er rechtsbündig über die HP gelegt
+                        int shieldLeft  = Math.Min(playerHpPct, 100 - shieldPct);
+                    }
                     <div class="hp-bar">
-                        <div class="hp-fill"
-                             style="width: @(CalcPct(_engine.Player.CurrentHp, _engine.Player.Stats.MaxHp))%"></div>
-                        <span class="bar-text">@_engine.Player.CurrentHp / @_engine.Player.Stats.MaxHp</span>
+                        <div class="hp-fill" style="width: @(playerHpPct)%"></div>
+                        @if (shieldPct > 0)
+                        {
+                            <div class="shield-fill" style="left: @(shieldLeft)%; width: @(shieldPct)%"></div>
+                        }
+                        <span class="bar-text">
+                            @_engine.Player.CurrentHp / @_engine.Player.Stats.MaxHp
+                            @if (shield > 0)
+                            {
+                                <span class="shield-text">&nbsp;(+@shield)</span>
+                            }
+                        </span>
                     </div>
                 </div>
                 <div class="bar-row">
@@ -84,8 +118,47 @@
                 </div>
             }
 
+            <!-- ═══ CAST BAR / GLOBAL COOLDOWN ═══ -->
+            @{
+                var casting = _engine.CurrentCast;
+                double gcdRemaining = _engine.GcdRemaining;
+            }
+            <div class="cast-row">
+                <div class="cast-bar @(casting is null ? "idle" : "active")">
+                    @if (casting is not null)
+                    {
+                        <div class="cast-fill" style="width: @PctStyle(_engine.CastProgress)%"></div>
+                        <img class="cast-icon" src="@casting.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                        <span class="cast-name">@casting.Name</span>
+                        <span class="cast-time">@((_engine.CastDuration - _engine.CastElapsed).ToString("0.0"))s</span>
+                    }
+                    else
+                    {
+                        <span class="cast-name cast-idle-text">—</span>
+                    }
+                </div>
+                <div class="gcd-bar" title="Global Cooldown">
+                    <div class="gcd-fill" style="width: @PctStyle(gcdRemaining / IdleGameEngine.GlobalCooldown)%"></div>
+                </div>
+            </div>
+
             <!-- ═══ EQUIPPED ABILITIES ═══ -->
             <div class="ability-bar">
+                <!-- Auto-Attack: Swing-Timer füllt sich von unten, pausiert während eines Mana-Casts -->
+                @{ bool swingHeld = _engine.IsSwingHeld; }
+                <WeaponTooltip Weapon="_engine.Player.EquippedWeapon">
+                    <span class="ability-slot filled auto-attack-slot @(swingHeld ? "held" : "")"
+                          title="@(swingHeld ? "Auto Attack – waiting for spell" : "Auto Attack")">
+                        <img src="@(_engine.Player.EquippedWeapon?.IconUrl ?? AutoAttackFallbackIcon)" alt="Auto Attack"
+                             onerror="this.style.visibility='hidden'" />
+                        <span class="swing-fill" style="height: @PctStyle(_engine.SwingProgress)%"></span>
+                        @if (swingHeld)
+                        {
+                            <span class="swing-held-mark">❚❚</span>
+                        }
+                    </span>
+                </WeaponTooltip>
+                <span class="ability-bar-divider"></span>
                 @for (int i = 0; i < ClassAbilityRegistry.MaxSlotsPerClass; i++)
                 {
                     var equipped = i < _engine.Player.EquippedAbilities.Count
@@ -96,8 +169,11 @@
                     {
                         double remaining = _engine.Player.Cooldowns.GetRemaining(equipped.Id);
                         bool onCooldown = remaining > 0;
+                        bool isCasting  = casting?.Id == equipped.Id;
+                        // GCD betrifft nur aktiv gewirkte Fähigkeiten (keine Passiven / On-Next-Swing)
+                        bool onGcd = !onCooldown && gcdRemaining > 0 && !equipped.IsPassive && !equipped.ReplacesAutoAttack;
                         <AbilityTooltip Ability="_engine.Player.GetEffectiveAbility(equipped)" PlayerLevel="_engine.Player.Level">
-                            <span class="ability-slot filled @(onCooldown ? "on-cooldown" : "ready")">
+                            <span class="ability-slot filled @(onCooldown ? "on-cooldown" : "ready") @(isCasting ? "casting" : "")">
                                 <img src="@equipped.IconUrl" alt="@equipped.Name"
                                      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
                                 @if (onCooldown)
@@ -105,6 +181,11 @@
                                     <span class="cooldown-overlay">
                                         <span class="cooldown-text">@remaining.ToString("0.#")</span>
                                     </span>
+                                }
+                                else if (onGcd)
+                                {
+                                    <span class="gcd-overlay"
+                                          style="background: conic-gradient(rgba(0,0,0,.6) @PctStyle(gcdRemaining / IdleGameEngine.GlobalCooldown)%, transparent 0);"></span>
                                 }
                             </span>
                         </AbilityTooltip>
@@ -382,6 +463,8 @@
 
     @if (BuildInfo.IsDebug)
     {
+        <!-- Platzhalter, damit das fixierte Debug-Panel keinen Inhalt verdeckt -->
+        <div class="debug-panel-spacer"></div>
         <div class="wow-card debug-panel">
             <h4 class="debug-title">Debug Info <span class="wow-badge">DEBUG</span></h4>
             <div class="debug-status-row">
@@ -479,6 +562,7 @@
         justify-content: center;
         gap: 12px;
         margin: 1rem 0;
+        padding-left: 54px;   /* Platz für den Spell-Scroll links neben dem Spieler */
     }
 
     .unit-frame {
@@ -659,6 +743,24 @@
         object-fit: contain;
     }
 
+    /* Totenkopf-Icon beim Tod des Spielers */
+    .death-skull {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 2px solid #888;
+        object-fit: cover;
+        background: #0e0b07;
+        box-shadow: 0 0 8px rgba(0,0,0,.8);
+        filter: grayscale(30%);
+        animation: skull-pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes skull-pulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.65; }
+    }
+
     .frame-info {
         flex: 1;
         min-width: 0;
@@ -729,6 +831,103 @@
 
     .hp-fill {
         background: linear-gradient(180deg, #3fbf3f 0%, #1e7a1e 100%);
+    }
+
+    /* Schild (Absorb) auf dem Spieler – blau, hinter bzw. über den HP */
+    .shield-fill {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(120, 200, 255, .85) 0%, rgba(40, 110, 220, .85) 100%);
+        box-shadow: inset 0 0 0 1px rgba(190, 230, 255, .6);
+        transition: left .4s ease, width .4s ease;
+    }
+
+    .shield-text {
+        color: #9fd8ff;
+    }
+
+    /* ── Cast bar / GCD ── */
+    .cast-row {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        margin-top: 8px;
+    }
+
+    .cast-bar {
+        position: relative;
+        height: 18px;
+        background: #0e0b07;
+        border: 1px solid #5a4a28;
+        border-radius: 3px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-right: 6px;
+        font-size: .72rem;
+    }
+
+    .cast-bar.idle {
+        opacity: .45;
+        justify-content: center;
+    }
+
+    .cast-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: linear-gradient(180deg, #ffd34a 0%, #c98a10 100%);
+        transition: width .1s linear;
+    }
+
+    .cast-icon {
+        position: relative;
+        width: 16px;
+        height: 16px;
+    }
+
+    .cast-name,
+    .cast-time {
+        position: relative;
+        color: #fff;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    .cast-name {
+        flex: 1;
+    }
+
+    .cast-idle-text {
+        flex: 0;
+        color: #9a8a64;
+    }
+
+    .cast-time {
+        font-variant-numeric: tabular-nums;
+    }
+
+    .gcd-bar {
+        height: 4px;
+        background: #0e0b07;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .gcd-fill {
+        height: 100%;
+        background: #c5a55a;
+    }
+
+    .gcd-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .ability-slot.filled.casting {
+        border-color: #ffd34a;
+        box-shadow: 0 0 10px rgba(255, 211, 74, .8);
     }
 
     .enemy-hp .hp-fill {
@@ -834,10 +1033,82 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-wrap: wrap;
         gap: 6px;
         margin-top: 10px;
         padding-top: 8px;
         border-top: 1px solid #5a4a28;
+    }
+
+    /* ── Auto-Attack-Slot ── */
+    .ability-bar-divider {
+        width: 1px;
+        align-self: stretch;
+        background: #5a4a28;
+        margin: 0 2px;
+    }
+
+    .swing-fill {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(0deg, rgba(255, 209, 0, .45) 0%, rgba(255, 209, 0, .15) 100%);
+        border-top: 1px solid rgba(255, 230, 120, .9);
+        pointer-events: none;
+        transition: height .1s linear;
+    }
+
+    .auto-attack-slot.held img {
+        opacity: .4;
+        filter: grayscale(.9);
+    }
+
+    .auto-attack-slot.held .swing-fill {
+        background: rgba(120, 120, 120, .35);
+        border-top-color: #888;
+    }
+
+    .swing-held-mark {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .7rem;
+        color: #ffd100;
+        text-shadow: 0 1px 3px #000;
+        pointer-events: none;
+    }
+
+    /* ── Spell-Scroll: zuletzt ausgelöster Spell fliegt links neben dem Charakter nach oben ── */
+    .spell-scroll {
+        position: absolute;
+        right: calc(100% + 10px);
+        top: 0;
+        bottom: 0;
+        width: 44px;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .spell-scroll-icon {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 44px;
+        height: 44px;
+        border: 2px solid #c5a55a;
+        border-radius: 6px;
+        box-shadow: 0 0 10px rgba(255, 209, 0, .5), 0 2px 6px #000;
+        animation: spellScrollUp 1.5s ease-out forwards;
+    }
+
+    @@keyframes spellScrollUp {
+        0%   { transform: translateY(0) scale(.7); opacity: 0; }
+        12%  { transform: translateY(-10%) scale(1.1); opacity: 1; }
+        25%  { transform: translateY(-25%) scale(1); opacity: 1; }
+        100% { transform: translateY(-260%); opacity: 0; }
     }
 
     .ability-slot {
@@ -1072,10 +1343,29 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Debug panel ── */
+    /* ── Debug panel (am unteren Bildschirmrand fixiert, rechts neben der Sidebar) ── */
     .debug-panel {
-        margin-bottom: 2rem;
+        position: fixed;
+        left: 250px;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        margin: 0;
+        max-height: 40vh;
+        overflow-y: auto;
+        border-radius: 0;
         font-size: .8rem;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, .6);
+    }
+
+    .debug-panel-spacer {
+        height: 160px;
+    }
+
+    @@media (max-width: 640.98px) {
+        .debug-panel {
+            left: 0;
+        }
     }
 
     .debug-status-row {
@@ -1241,6 +1531,7 @@
     @@media (max-width: 700px) {
         .battlefield {
             flex-direction: column;
+            padding-left: 0;
         }
         .vs-divider {
             transform: rotate(90deg);
@@ -1248,6 +1539,11 @@
         .unit-frame {
             max-width: 100%;
             width: 100%;
+        }
+        /* Kein Platz links neben dem Frame → Icons fliegen innerhalb des Frames */
+        .spell-scroll {
+            right: auto;
+            left: 6px;
         }
         .debug-columns {
             flex-direction: column;

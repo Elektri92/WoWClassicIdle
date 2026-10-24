@@ -9,9 +9,10 @@ public static partial class ClassAbilityRegistry
             Id = "Lightning_bolt_r1",
             Name = "Lightning Bolt",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_lightning.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 15,
-            Damage = 10,        // -1 (was 11)
+            Damage = 14,        // +4 Buff gesamt
             LevelRequired = 1,
             Rank = 1,
         },
@@ -20,9 +21,10 @@ public static partial class ClassAbilityRegistry
             Id = "Lightning_Bolt_r2",
             Name = "Lightning Bolt",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_lightning.jpg",
-            Cooldown = 1.5,
+            Cooldown = 0,
+            CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 15,
-            Damage = 11,        // +10 % gegenüber Rank 1
+            Damage = 15,        // +4 Buff gesamt
             LevelRequired = 10,
             Rank = 2,
         },
@@ -58,7 +60,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 10,
             BuffDuration = 30,              // Buff läuft 30 s
-            BuffRetaliationDamage = 4,      // 4 DMG wenn der Spieler getroffen wird
+            BuffRetaliationDamage = 5,      // 5 DMG wenn der Spieler getroffen wird
             LevelRequired = 7,
             Rank = 1,
         },
@@ -81,7 +83,8 @@ public static partial class ClassAbilityRegistry
             Id = "Healing_Wave_r1",
             Name = "Healing Wave",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_magicimmunity.jpg",
-            Cooldown = 12,
+            Cooldown = 0,       // kein Cooldown – Tempo kommt aus Cast-Zeit
+            CastTime = 3.0,     // 3,0 s Cast-Zeit
             ManaCost = 30,
             Heal = 30,
             LevelRequired = 18,

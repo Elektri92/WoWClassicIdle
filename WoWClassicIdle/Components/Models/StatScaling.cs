@@ -60,9 +60,11 @@ namespace Models
         /// </summary>
         public static double AutoAttackDamageMultiplier(CharacterClass cls) => cls switch
         {
-            CharacterClass.Druid   => 0.5,   // −50 % Weißschaden (Balancing)
-            CharacterClass.Hunter  => 0.95,  // −5 % Weißschaden (Balancing)
-            _                      => 1.0,
+            CharacterClass.Druid    => 0.50,  // −50 % Weißschaden (Balancing)
+            CharacterClass.Hunter   => 0.70,  // −30 % Weißschaden (Balancing)
+            CharacterClass.Warrior  => 0.95,  // −5 % Weißschaden (Balancing)
+            CharacterClass.Rogue    => 0.85,  // −15 % Weißschaden (Balancing)
+            _                       => 1.0,
         };
 
         /// <summary>

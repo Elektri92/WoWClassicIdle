@@ -15,8 +15,12 @@ public partial class IdleGameEngine
             _sharedInventory = new Inventory();
 
             _roster.Clear();
-            TotalKills      = save.TotalKills;
-            TotalDeaths     = save.TotalDeaths;
+            TotalKills           = save.TotalKills;
+            TotalDeaths          = save.TotalDeaths;
+            TotalRareKills       = save.TotalRareKills;
+            TotalItemsSold       = save.TotalItemsSold;
+            TotalUncommonLooted  = save.TotalUncommonLooted;
+            TotalRareItemsLooted = save.TotalRareItemsLooted;
             SpeedMultiplier = 1.0;
             _nextSlotId     = save.NextSlotId;
 

@@ -7,9 +7,9 @@ namespace Models;
 /// </summary>
 public static class WeaponRegistry
 {
-    public static readonly WeaponItem WarriorStarter = new(5001, "Worn Shortsword",   "inv_sword_04",      1, 3, 1.9, WeaponType.Sword, SellPrice: 1, RequiredClass: CharacterClass.Warrior);
+    public static readonly WeaponItem WarriorStarter = new(5001, "Worn Shortsword",   "inv_sword_04",      1, 3, 2.3, WeaponType.Sword, SellPrice: 1, RequiredClass: CharacterClass.Warrior);
     public static readonly WeaponItem PaladinStarter = new(5002, "Battleworn Hammer", "inv_hammer_05",     2, 4, 2.9, WeaponType.Mace,  SellPrice: 1, RequiredClass: CharacterClass.Paladin);
-    public static readonly WeaponItem HunterStarter  = new(5003, "Worn Shortbow",     "inv_weapon_bow_07", 1, 3, 2.0, WeaponType.Bow,   SellPrice: 1, RequiredClass: CharacterClass.Hunter);
+    public static readonly WeaponItem HunterStarter  = new(5003, "Worn Shortbow",     "inv_weapon_bow_07", 1, 3, 3.0, WeaponType.Bow,   SellPrice: 1, RequiredClass: CharacterClass.Hunter);
     public static readonly WeaponItem RogueStarter   = new(5004, "Short Sword",       "inv_sword_04",      1, 3, 1.6, WeaponType.Sword, SellPrice: 1, RequiredClass: CharacterClass.Rogue);
     public static readonly WeaponItem PriestStarter  = new(5005, "Worn Wand",         "inv_wand_05",       1, 3, 1.9, WeaponType.Wand,  SellPrice: 1, RequiredClass: CharacterClass.Priest);
     public static readonly WeaponItem MageStarter    = new(5006, "Arcane Wand",       "inv_wand_05",       2, 4, 2.9, WeaponType.Wand,  SellPrice: 1, RequiredClass: CharacterClass.Mage);

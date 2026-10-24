@@ -52,7 +52,7 @@ public static partial class ClassAbilityRegistry
             DebuffDuration = 15,        // Debuff-Laufzeit pro Stack-Anwendung
             DebuffDotDamage = 1,        // 1 DMG / 3 s pro Stack
             DebuffDotTickInterval = 3,
-            DebuffMaxStacks = 5,        // bis zu 5 Stacks
+            DebuffMaxStacks = 6,        // bis zu 6 Stacks (+20 % max. Schaden)
             LevelRequired = 5,
             Rank = 1,
         },

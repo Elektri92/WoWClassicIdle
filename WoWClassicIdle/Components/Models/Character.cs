@@ -23,7 +23,7 @@ public abstract class Character
     /// <summary>Nur die ausgerüsteten Abilities der aktuellen Klasse (gecacht).</summary>
     public IReadOnlyList<Ability> EquippedAbilities => _cachedEquipped ??= BuildEquippedCache();
 
-    /// <summary>Aktive Cast-Abilities, vorsortiert: Heilung → Buff/Debuff → Schaden.</summary>
+    /// <summary>Aktive Cast-Abilities, vorsortiert nach <see cref="Ability.CastPriorityGroup"/>: Buff → Heilung/Schild → Schaden.</summary>
     internal Ability[] SortedEquippedAbilities =>
         _cachedSortedActive ??= BuildSortedActiveCache();
 
@@ -46,7 +46,7 @@ public abstract class Character
     private Ability[] BuildSortedActiveCache() =>
         (_cachedEquipped ??= BuildEquippedCache())
             .Where(a => !a.ReplacesAutoAttack && !a.IsPassive)
-            .OrderBy(a => a.IsHealing ? 0 : (a.IsBuff || a.IsDebuff) ? 1 : 2)
+            .OrderBy(a => a.CastPriorityGroup)
             .ToArray();
 
     private Ability[] BuildPassivesCache() =>

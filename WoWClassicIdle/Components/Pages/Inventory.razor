@@ -1007,6 +1007,7 @@
         if (stack is null) return;
         long earned = stack.Item.SellPrice * stack.Count;
         _engine.Player.Copper += earned;
+        _engine.TrackItemSold(stack.Count);
         _lastSellMessage = $"Sold: {stack.Item.Name} for {Money.Format(Math.Max(1, earned))}";
     }
 

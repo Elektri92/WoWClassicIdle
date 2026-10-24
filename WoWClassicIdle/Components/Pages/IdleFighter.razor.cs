@@ -40,6 +40,7 @@ public partial class IdleFighter
         _engine.TickUpdated += OnTick;
         _engine.CombatTextRaised += OnCombatText;
         _engine.AbilityUnlocked += OnAbilityUnlocked;
+        _engine.AbilityTriggered += OnAbilityTriggered;
         ApplySavedLoadout();
         _running = _engine.IsGameRunning;
         StartUiTimer();
@@ -117,6 +118,7 @@ public partial class IdleFighter
             if (_running)
                 _gameElapsedSeconds += delta * _speedMultiplier;
             CleanupOldFloats();
+            CleanupOldSpellFloats();
             _ = InvokeAsync(StateHasChanged);
         };
         _uiTimer.AutoReset = true;
@@ -294,6 +296,10 @@ public partial class IdleFighter
     private static int CalcPct(int current, int max) =>
         max <= 0 ? 0 : Math.Clamp(current * 100 / max, 0, 100);
 
+    /// <summary>Anteil (0..1) als kulturunabhängiger Prozentwert für Inline-Styles.</summary>
+    private static string PctStyle(double fraction) =>
+        (Math.Clamp(fraction, 0, 1) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
     public async ValueTask DisposeAsync()
     {
         _engine.TickUpdated -= OnTick;
@@ -301,6 +307,7 @@ public partial class IdleFighter
         _uiTimer?.Dispose();
         _engine.CombatTextRaised -= OnCombatText;
         _engine.AbilityUnlocked -= OnAbilityUnlocked;
+        _engine.AbilityTriggered -= OnAbilityTriggered;
 
         // Leaving the page stops the fight. Prerendered instances never started it.
         if (_selfRef != null)

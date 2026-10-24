@@ -6,6 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
         <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+        <!-- App-Version – wird vom UpdateService mit der Remote-Version verglichen -->
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
     </PropertyGroup>
 
     <!-- Debug-Tools (Klassen-Simulation) nur im Debug-Build ausliefern -->
