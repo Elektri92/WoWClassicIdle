@@ -3,12 +3,21 @@ using WoWClassicIdle.Components;
 using Photino.NET;
 
 // Muss vor jeder WebKit-Initialisierung gesetzt werden
-if (OperatingSystem.IsLinux())
+// Auf Linux müssen GDK/WebKit-Env-Vars gesetzt sein BEVOR GTK durch die nativen Bibliotheken
+// initialisiert wird. Da der Single-File-Bootstrapper native Libs vor managed Code lädt,
+// starten wir den Prozess bei Bedarf mit den korrekten Vars neu.
+if (OperatingSystem.IsLinux() && Environment.GetEnvironmentVariable("GDK_BACKEND") != "x11")
 {
-    // GTK3/WebKit2GTK über XWayland laufen lassen – natives Wayland ist instabil (Error 71)
-    Environment.SetEnvironmentVariable("GDK_BACKEND", "x11");
-    // Verhindert DMA-BUF-Rendering in WebKit2GTK (leerer WebView unter Wayland)
-    Environment.SetEnvironmentVariable("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    var psi = new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!)
+    {
+        UseShellExecute = false
+    };
+    foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+        psi.Environment[(string)entry.Key] = entry.Value as string ?? "";
+    psi.Environment["GDK_BACKEND"]                 = "x11";
+    psi.Environment["WEBKIT_DISABLE_DMABUF_RENDERER"] = "1";
+    System.Diagnostics.Process.Start(psi);
+    return;
 }
 
 var builder = WebApplication.CreateBuilder(args);
