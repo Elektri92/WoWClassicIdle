@@ -1,0 +1,61 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      # Linux-Publish – erhöht die Versionsnummer in version.json
+      - name: Publish Linux
+        run: dotnet publish WoWClassicIdle -p:PublishProfile=Linux-x64
+
+      # Neue Version aus version.json lesen
+      - name: Read new version
+        id: version
+        run: echo "value=$(jq -r .version version.json)" >> $GITHUB_OUTPUT
+
+      # Windows- und macOS-Publish ohne erneuten Bump, Version explizit übergeben
+      - name: Publish Windows
+        run: dotnet publish WoWClassicIdle -p:PublishProfile=Win-x64 -p:SkipVersionBump=true -p:Version=${{ steps.version.outputs.value }}
+
+      - name: Publish macOS
+        run: dotnet publish WoWClassicIdle -p:PublishProfile=MacOS-x64 -p:SkipVersionBump=true -p:Version=${{ steps.version.outputs.value }}
+
+      # Release-Assets mit den erwarteten Namen bereitstellen
+      - name: Prepare release assets
+        run: |
+          cp publish/linux/WoWClassicIdle.bin  publish/linux/WoWClassicIdle-linux-x64
+          cp publish/win/WoWClassicIdle.exe    publish/win/WoWClassicIdle-win-x64.exe
+          cp publish/mac/WoWClassicIdle        publish/mac/WoWClassicIdle-osx-x64
+
+      # version.json zurück in main committen ([skip ci] verhindert Endlosschleife)
+      - name: Commit version.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git commit -m "chore: bump version to v${{ steps.version.outputs.value }} [skip ci]"
+          git push
+
+      # GitHub Release anlegen und Binaries hochladen
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.value }}
+          name: v${{ steps.version.outputs.value }}
+          files: |
+            publish/linux/WoWClassicIdle-linux-x64
+            publish/win/WoWClassicIdle-win-x64.exe
+            publish/mac/WoWClassicIdle-osx-x64

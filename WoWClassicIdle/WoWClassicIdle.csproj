@@ -6,9 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
         <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
-        <!-- App-Version – wird vom UpdateService mit der Remote-Version verglichen -->
-        <Version>1.0.0</Version>
-        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <!-- App-Version – Fallback für Debug-Builds. Publish überschreibt via BumpVersionOnPublish. -->
+        <Version>0.0.1</Version>
+        <AssemblyVersion>0.0.1.0</AssemblyVersion>
     </PropertyGroup>
 
     <!-- Debug-Tools (Klassen-Simulation) nur im Debug-Build ausliefern -->
@@ -26,6 +26,46 @@
     <ItemGroup>
       <PackageReference Include="Photino.NET" Version="4.0.16" />
     </ItemGroup>
+
+    <!-- Patch-Version bei jedem Publish automatisch erhöhen und version.json aktualisieren -->
+    <UsingTask TaskName="BumpPatchVersion" TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+      <ParameterGroup>
+        <VersionJsonPath ParameterType="System.String" Required="true"/>
+        <NewVersion ParameterType="System.String" Output="true"/>
+      </ParameterGroup>
+      <Task>
+        <Code Type="Fragment" Language="cs">
+          <![CDATA[
+            var json  = System.IO.File.ReadAllText(VersionJsonPath);
+            var match = System.Text.RegularExpressions.Regex.Match(json, @"""version""\s*:\s*""([^""]+)""");
+            if (!match.Success) { Log.LogError("version.json: version-Feld nicht gefunden"); return false; }
+
+            var parts    = match.Groups[1].Value.Split('.');
+            var newPatch = int.Parse(parts[2]) + 1;
+            NewVersion   = string.Format("{0}.{1}.{2}", parts[0], parts[1], newPatch);
+
+            var baseUrl = string.Format("https://github.com/Elektri92/WoWClassicIdle/releases/download/v{0}", NewVersion);
+            var newJson = string.Format(
+                "{{\n  \"version\": \"{0}\",\n  \"windows_url\": \"{1}/WoWClassicIdle-win-x64.exe\",\n  \"linux_url\": \"{1}/WoWClassicIdle-linux-x64\",\n  \"mac_url\": null\n}}",
+                NewVersion, baseUrl);
+            System.IO.File.WriteAllText(VersionJsonPath, newJson);
+            Log.LogMessage(MessageImportance.High, string.Format("[Version] {0} -> {1}", match.Groups[1].Value, NewVersion));
+          ]]>
+        </Code>
+      </Task>
+    </UsingTask>
+
+    <Target Name="BumpVersionOnPublish" BeforeTargets="Publish" Condition="'$(SkipVersionBump)' != 'true'">
+      <BumpPatchVersion VersionJsonPath="$(MSBuildProjectDirectory)\..\version.json">
+        <Output TaskParameter="NewVersion" PropertyName="Version"/>
+      </BumpPatchVersion>
+      <PropertyGroup>
+        <AssemblyVersion>$(Version).0</AssemblyVersion>
+        <FileVersion>$(Version).0</FileVersion>
+        <InformationalVersion>$(Version)</InformationalVersion>
+      </PropertyGroup>
+    </Target>
 
     <!-- Nach Linux-Publish: Binary umbenennen und Launcher-Skript (Properties/linux-launcher.sh) kopieren -->
     <Target Name="CreateLinuxWrapper" AfterTargets="Publish" Condition="$(RuntimeIdentifier.StartsWith('linux-'))">

@@ -1,7 +1,7 @@
 # WoWClassicIdle – Kontext für den Coding-Agenten
 
 WoW Classic–Idle-Game. .NET 10 Blazor Web App (Razor-Komponenten, Interactive Server Render Mode).
-Kein NuGet, kein Test-Projekt, kein CI.
+Kein NuGet, kein Test-Projekt. CI via GitHub Actions (`.github/workflows/release.yml`).
 
 ## Build / Run
 

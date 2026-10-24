@@ -208,7 +208,7 @@ public static partial class TalentRegistry
             MaxRanks      = 3,
             EffectType    = TalentEffectType.ArcaneMissilesDamage,
             EffectPerRank = 0.01,
-            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_magic_managain.jpg",
+            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_nature_starfall.jpg",
         },
 
         // ── Fire-Baum (1), Reihe 1 ─────────────────────────────────────────────
@@ -239,7 +239,7 @@ public static partial class TalentRegistry
             MaxRanks      = 3,
             EffectType    = TalentEffectType.FireBlastManaCost,
             EffectPerRank = 1.0,
-            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_fireblast.jpg",
+            IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_fireball.jpg",
         },
 
         // ── Frost-Baum (2), Reihe 1 ────────────────────────────────────────────

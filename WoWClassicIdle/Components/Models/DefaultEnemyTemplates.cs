@@ -126,7 +126,7 @@ public static class DefaultEnemyTemplates
         {
             Name         = "Goblin",
             Type         = "Humanoid",
-            ImageUrl     = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_head_goblin_01.jpg",
+            ImageUrl     = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bomb_07.jpg",
             MinLevel     = 14,
             MaxLevel     = 16,
             BaseMaxHp    = 287,
@@ -175,9 +175,26 @@ public static class DefaultEnemyTemplates
         },
         new EnemyTemplate
         {
+            Name         = "Slime",
+            Type         = "Ooze",
+            ImageUrl     = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_slime_01.jpg",
+            MinLevel     = 22,
+            MaxLevel     = 32,
+            BaseMaxHp    = 630,
+            MaxHpByLevel = [630, 674, 719, 766, 812, 860, 911, 963, 1015, 1069, 1125],  // Basis ×1.10: Ooze / Acidic Slime; WoW Classic: zähe Gallerte (Wailing Caverns, Stonetalon)
+            BaseAttack   = 15,
+            BaseDefense  = 2,                                                             // dickflüssig: leichte Schadensminderung
+            BaseSpeed    = 3.1,                                                           // langsam, klebrig
+            MinCopperReward = 14,
+            MaxCopperReward = 30,
+            BaseXpReward   = 15,
+            Weight       = 2
+        },
+        new EnemyTemplate
+        {
             Name         = "Troll",
             Type         = "Humanoid",
-            ImageUrl     = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_hexofweakness.jpg",
+            ImageUrl     = "https://wow.zamimg.com/images/wow/icons/large/race_troll_male.jpg",
             MinLevel     = 30,
             MaxLevel     = 36,
             BaseMaxHp    = 1066,
@@ -223,6 +240,23 @@ public static class DefaultEnemyTemplates
             MaxCopperReward = 56,
             BaseXpReward   = 15,
             Weight       = 2
+        },
+        new EnemyTemplate
+        {
+            Name         = "Pirate",
+            Type         = "Humanoid",
+            ImageUrl     = "https://wow.zamimg.com/images/wow/icons/large/inv_helmet_66.jpg",
+            MinLevel     = 42,
+            MaxLevel     = 52,
+            BaseMaxHp    = 1612,
+            MaxHpByLevel = [1612, 1677, 1744, 1812, 1884, 1956, 2028, 2100, 2171, 2247, 2324],  // WoW Classic: Southsea Freebooter / Bloodsail Buccaneer; Standardskalierung für Humanoids
+            BaseAttack   = 23,
+            BaseDefense  = 1,                                                                     // leichte Lederrüstung
+            BaseSpeed    = 2.3,                                                                   // flinke Säbelschläge
+            MinCopperReward = 35,
+            MaxCopperReward = 68,
+            BaseXpReward   = 15,
+            Weight       = 3
         },
         new EnemyTemplate
         {

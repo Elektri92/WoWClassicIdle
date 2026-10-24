@@ -79,7 +79,22 @@
             <div class="wow-card pool-column">
                 <h4>Abilities</h4>
 
-                @foreach (var ability in UnlockedAbilities)
+                <div class="pool-filters">
+                    <input class="pool-search" type="search" placeholder="Search…"
+                           @bind="_search" @bind:event="oninput" />
+                    <div class="pool-tabs">
+                        @foreach (var cat in Enum.GetValues<AbilityCategory>())
+                        {
+                            var c = cat;
+                            <button class="pool-tab @(_categoryFilter == c ? "active" : "")"
+                                    @onclick="() => _categoryFilter = c">
+                                @c
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @foreach (var ability in FilteredUnlocked)
                 {
                     var eff = Engine.Player.GetEffectiveAbility(ability);
                     var isEquipped = CurrentLoadout.IsEquipped(ability.Id);
@@ -118,37 +133,52 @@
                     </AbilityTooltip>
                 }
 
-                @if (LockedAbilities.Count > 0)
+                @if (FilteredUnlocked.Count == 0 && string.IsNullOrEmpty(_search) && _categoryFilter == AbilityCategory.All)
                 {
-                    <div class="pool-divider">Coming Up</div>
-                    @foreach (var ability in LockedAbilities)
+                    <div class="wow-alert warning" style="margin:8px 0 0;">No abilities available.</div>
+                }
+                else if (FilteredUnlocked.Count == 0)
+                {
+                    <div class="pool-empty">No abilities match this filter.</div>
+                }
+
+                @if (FilteredLocked.Count > 0)
+                {
+                    <div class="pool-divider coming-up-toggle" @onclick="() => _comingUpExpanded = !_comingUpExpanded">
+                        <span>Coming Up (@FilteredLocked.Count)</span>
+                        <span class="toggle-arrow">@(_comingUpExpanded ? "▲" : "▼")</span>
+                    </div>
+                    @if (_comingUpExpanded)
                     {
-                        var eff = Engine.Player.GetEffectiveAbility(ability);
-                        var summary = AbilityText.ShortSummary(eff);
-                        var summaryClass = AbilityText.ShortSummaryClass(eff);
-                        <AbilityTooltip Ability="eff" PlayerLevel="Engine.Player.Level" Class="tt-block">
-                            <div class="pool-item locked">
-                                <img src="@ability.IconUrl" alt="@ability.Name" width="40" height="40" />
-                                <div class="pool-info">
-                                    <strong>
-                                        @ability.Name
-                                        @if (_multiRankNames.Contains(ability.Name))
-                                        {
-                                            <span class="rank-badge">R@(ability.Rank)</span>
-                                        }
-                                    </strong>
-                                    <small>
-                                        @if (summary != "")
-                                        {
-                                            <span class="@summaryClass">@summary</span>
-                                            <span class="sep"> · </span>
-                                        }
-                                        <span>@AbilityText.TimingText(ability)</span>
-                                    </small>
+                        @foreach (var ability in FilteredLocked)
+                        {
+                            var eff = Engine.Player.GetEffectiveAbility(ability);
+                            var summary = AbilityText.ShortSummary(eff);
+                            var summaryClass = AbilityText.ShortSummaryClass(eff);
+                            <AbilityTooltip Ability="eff" PlayerLevel="Engine.Player.Level" Class="tt-block">
+                                <div class="pool-item locked">
+                                    <img src="@ability.IconUrl" alt="@ability.Name" width="40" height="40" />
+                                    <div class="pool-info">
+                                        <strong>
+                                            @ability.Name
+                                            @if (_multiRankNames.Contains(ability.Name))
+                                            {
+                                                <span class="rank-badge">R@(ability.Rank)</span>
+                                            }
+                                        </strong>
+                                        <small>
+                                            @if (summary != "")
+                                            {
+                                                <span class="@summaryClass">@summary</span>
+                                                <span class="sep"> · </span>
+                                            }
+                                            <span>@AbilityText.TimingText(ability)</span>
+                                        </small>
+                                    </div>
+                                    <span class="pool-action locked-badge">Lv. @ability.LevelRequired</span>
                                 </div>
-                                <span class="pool-action locked-badge">Lv. @ability.LevelRequired</span>
-                            </div>
-                        </AbilityTooltip>
+                            </AbilityTooltip>
+                        }
                     }
                 }
             </div>
@@ -215,11 +245,46 @@
     .req-level { color: #ffd100; font-weight: 600; }
     .sep { color: #5a4a28; }
 
+    .pool-filters {
+        display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;
+    }
+    .pool-search {
+        width: 100%; padding: 5px 10px; font-size: .85rem;
+        background: #0e0b07; border: 1px solid #4a3d22; border-radius: 4px;
+        color: #e0d0a0; outline: none; box-sizing: border-box;
+    }
+    .pool-search:focus { border-color: #c5a55a; }
+    .pool-search::placeholder { color: #5a4a28; }
+
+    .pool-tabs {
+        display: flex; flex-wrap: wrap; gap: 4px;
+    }
+    .pool-tab {
+        font-size: .7rem; padding: 2px 8px; cursor: pointer; user-select: none;
+        background: #0e0b07; border: 1px solid #4a3d22; border-radius: 3px;
+        color: #9a8a64; text-transform: uppercase; letter-spacing: .5px;
+        transition: background .12s, border-color .12s, color .12s;
+    }
+    .pool-tab:hover { background: #2b2418; border-color: #8a7444; color: #e0d0a0; }
+    .pool-tab.active { background: #2b2418; border-color: #c5a55a; color: #ffd100; font-weight: 700; }
+
+    .pool-empty {
+        padding: 12px 4px; text-align: center; color: #5a4a28;
+        font-style: italic; font-size: .85rem;
+    }
+
     .pool-divider {
         font-family: 'Cinzel', serif; font-size: .7rem; font-weight: 700;
         color: #5a4a28; text-transform: uppercase; letter-spacing: 1.5px;
         padding: 8px 2px 5px; margin-top: 4px; border-top: 1px solid #2a2010;
     }
+    .coming-up-toggle {
+        display: flex; justify-content: space-between; align-items: center;
+        cursor: pointer; user-select: none;
+        transition: color .12s;
+    }
+    .coming-up-toggle:hover { color: #9a8a64; }
+    .toggle-arrow { font-size: .65rem; }
 
     @@media (max-width: 700px) {
         .loadout-grid { grid-template-columns: 1fr; }
@@ -227,11 +292,16 @@
 </style>
 
 @code {
+    private enum AbilityCategory { All, Damage, Buff, Heal, Debuff, Passive }
+
     private ClassLoadout CurrentLoadout { get; set; } = new();
     private IReadOnlyList<Ability> CurrentPool { get; set; } = Array.Empty<Ability>();
     private HashSet<string> _multiRankNames = new();
     private string _statusMessage = "";
     private bool _statusPositive;
+    private string _search = "";
+    private AbilityCategory _categoryFilter = AbilityCategory.All;
+    private bool _comingUpExpanded = false;
 
     private CharacterClass SelectedClass => Engine.PlayerClass;
 
@@ -251,6 +321,27 @@
     // "Coming Up": nur level-gesperrte, keine talent-exklusiven Abilities
     private IReadOnlyList<Ability> LockedAbilities => CurrentPool
         .Where(a => a.LevelRequired > Engine.Player.Level && !a.TalentUnlockOnly)
+        .ToList();
+
+    private bool MatchesCategory(Ability a) => _categoryFilter switch {
+        AbilityCategory.Damage  => a.IsDamage || a.IsDebuffDot,
+        AbilityCategory.Buff    => a.IsPlayerBuff || a.IsShield,
+        AbilityCategory.Heal    => a.IsHealing,
+        AbilityCategory.Debuff  => a.IsDebuff && !a.IsDebuffDot && !a.IsDamage,
+        AbilityCategory.Passive => a.IsPassive,
+        _                       => true
+    };
+
+    private bool MatchesSearch(Ability a) =>
+        string.IsNullOrEmpty(_search) ||
+        a.Name.Contains(_search, StringComparison.OrdinalIgnoreCase);
+
+    private IReadOnlyList<Ability> FilteredUnlocked => UnlockedAbilities
+        .Where(a => MatchesCategory(a) && MatchesSearch(a))
+        .ToList();
+
+    private IReadOnlyList<Ability> FilteredLocked => LockedAbilities
+        .Where(a => MatchesCategory(a) && MatchesSearch(a))
         .ToList();
 
     protected override void OnInitialized()

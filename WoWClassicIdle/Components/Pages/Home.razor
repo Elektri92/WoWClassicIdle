@@ -5,37 +5,50 @@
 <div class="wow-page narrow home-page">
     <div class="text-center pt-4">
         <img src="images/wow_idle_game_logo.png" alt="WoW Classic Idle" class="wow-logo mb-3" style="max-width:250px; height:auto;" />
-
-        <p class="wow-subtitle mb-0">
-            A small browser game in the style of World of Warcraft.
+        <div class="mb-2">
+            <span class="home-alpha-badge">ALPHA</span>
+        </div>
+        <p class="wow-subtitle mb-1">
+            An idle RPG inspired by World of Warcraft: Classic.
+        </p>
+        <p class="home-tagline">
+            Pick a class, level up, loot gear – your hero fights while you watch.
         </p>
     </div>
 
     <div class="home-features">
         <div class="wow-card">
-            <h4>⚔️ Classes</h4>
+            <h4>⚔️ Classes &amp; Abilities</h4>
             <p class="mb-0">
-                Choose one of several classes and build your own combat character.
+                Choose from nine classic classes. Each unlocks unique abilities as you level up and lets you build a custom combat loadout.
             </p>
         </div>
         <div class="wow-card">
-            <h4>🛠️ Professions</h4>
+            <h4>🌿 Talents</h4>
             <p class="mb-0">
-                Train professions like Mining, Alchemy or Blacksmithing and craft your own items.
+                Spend talent points starting at level 10 to specialise your character and boost its combat performance.
             </p>
         </div>
         <div class="wow-card">
             <h4>🏆 Achievements</h4>
             <p class="mb-0">
-                Complete challenges to earn achievement points and track your progress across all categories.
+                Complete challenges across combat, exploration and collection categories to earn achievement points.
             </p>
         </div>
         <div class="wow-card">
-            <h4>🎒 Items</h4>
+            <h4>🎒 Loot &amp; Equipment</h4>
             <p class="mb-0">
-                Collect loot, equip weapons and armor and manage your character's inventory.
+                Collect drops from every enemy you defeat. Equip weapons and armor to strengthen your character's stats.
             </p>
         </div>
+    </div>
+
+    <div class="home-alpha-notice wow-card mt-4">
+        <strong>Early Access – Alpha</strong>
+        <p class="mb-0 mt-1">
+            This game is in active development. Content, balance and features will change frequently.
+            Professions and many planned systems are not yet available.
+        </p>
     </div>
 
     <p class="mt-4 text-center wow-footer">
@@ -52,4 +65,33 @@
     }
 
     .home-features p { color: #d4c9a8; }
+
+    .home-alpha-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #c8860a, #7a3d00);
+        color: #ffe8a0;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        padding: 3px 12px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .home-tagline {
+        color: #a89060;
+        font-size: 0.95rem;
+        margin-top: 0.25rem;
+    }
+
+    .home-alpha-notice {
+        border-left: 3px solid #c8860a;
+        color: #d4c9a8;
+        font-size: 0.9rem;
+    }
+
+    .home-alpha-notice strong {
+        color: #ffe8a0;
+    }
 </style>

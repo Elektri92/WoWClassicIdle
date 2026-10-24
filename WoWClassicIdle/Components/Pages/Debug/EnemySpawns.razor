@@ -1,0 +1,226 @@
+@page "/debug/enemy-spawns"
+@rendermode InteractiveServer
+
+<PageTitle>Enemy Spawns (Debug)</PageTitle>
+
+<div class="wow-page wide enemy-spawns-page">
+    <h2>Enemy Spawn Table <span class="wow-badge">DEBUG</span></h2>
+    <p class="wow-hint">
+        All enemy templates from <code>DefaultEnemyTemplates</code>, sorted by minimum level.
+        Each row shows the level range, HP per level, base attack/defense/speed, and spawn weight.
+    </p>
+
+    <table class="spawn-table">
+        <thead>
+            <tr>
+                <th class="col-icon"></th>
+                <th class="col-name">Name</th>
+                <th class="col-type">Type</th>
+                <th class="col-level">Level Range</th>
+                <th class="col-hp">HP (per level)</th>
+                <th class="col-atk">Atk</th>
+                <th class="col-def">Def</th>
+                <th class="col-spd">Speed</th>
+                <th class="col-copper">Copper</th>
+                <th class="col-weight">Weight</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in _sorted)
+            {
+                <tr>
+                    <td class="col-icon">
+                        <img class="enemy-icon"
+                             src="@t.ImageUrl"
+                             alt=""
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23222%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
+                    </td>
+                    <td class="col-name">@t.Name</td>
+                    <td class="col-type">
+                        <span class="type-badge type-@t.Type.ToLowerInvariant()">@t.Type</span>
+                    </td>
+                    <td class="col-level">
+                        <span class="level-range">@t.MinLevel – @t.MaxLevel</span>
+                    </td>
+                    <td class="col-hp">
+                        <div class="hp-list">
+                            @for (int i = 0; i < (t.MaxHpByLevel?.Count ?? 0); i++)
+                            {
+                                int lvl = t.MinLevel + i;
+                                <span class="hp-entry" title="Level @lvl">
+                                    <span class="hp-lv">@lvl</span>
+                                    <span class="hp-val">@t.MaxHpByLevel![i]</span>
+                                </span>
+                            }
+                        </div>
+                    </td>
+                    <td class="col-atk">@t.BaseAttack</td>
+                    <td class="col-def">@t.BaseDefense</td>
+                    <td class="col-spd">@t.BaseSpeed.ToString("F1")s</td>
+                    <td class="col-copper">@t.MinCopperReward–@t.MaxCopperReward</td>
+                    <td class="col-weight">
+                        <span class="weight-dot-row">
+                            @for (int w = 0; w < t.Weight; w++)
+                            {
+                                <span class="weight-dot"></span>
+                            }
+                        </span>
+                        <span class="weight-num">@t.Weight</span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <p class="wow-hint" style="margin-top:12px;">
+        Spawn selection: only templates whose <em>MinLevel–MaxLevel</em> covers
+        <em>playerLevel ± 2</em> are eligible. Within that pool the engine does a
+        weighted random pick, so higher weight = more frequent.
+        A 10 % chance upgrades any enemy to a <b style="color:#ff8000">★ Rare</b>
+        (2× HP, 1.5× Atk) once both player and enemy are ≥ level 3.
+    </p>
+</div>
+
+<style>
+    .enemy-spawns-page {
+        overflow-x: auto;
+    }
+
+    .spawn-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .83rem;
+        min-width: 700px;
+    }
+
+    .spawn-table thead tr {
+        background: linear-gradient(90deg, #2b2010 0%, #1a150d 100%);
+        border-bottom: 2px solid #5a4a28;
+    }
+
+    .spawn-table th {
+        padding: 7px 10px;
+        font-family: 'Cinzel', serif;
+        font-size: .78rem;
+        color: #ffd100;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .spawn-table tbody tr {
+        border-bottom: 1px solid #2a2010;
+        transition: background .12s;
+    }
+
+    .spawn-table tbody tr:hover {
+        background: rgba(197, 165, 90, .07);
+    }
+
+    .spawn-table td {
+        padding: 6px 10px;
+        vertical-align: middle;
+        color: #c8b97a;
+    }
+
+    /* Spaltenbreiten */
+    .col-icon   { width: 42px; }
+    .col-name   { min-width: 130px; font-weight: 700; color: #fff; }
+    .col-type   { min-width: 90px; }
+    .col-level  { min-width: 80px; text-align: center; }
+    .col-hp     { min-width: 260px; }
+    .col-atk, .col-def, .col-spd, .col-copper, .col-weight { text-align: center; }
+
+    .enemy-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        border: 1px solid #5a4a28;
+        object-fit: cover;
+        display: block;
+    }
+
+    .level-range {
+        font-family: monospace;
+        color: #ffd100;
+        font-weight: 700;
+    }
+
+    /* HP-Liste kompakt nebeneinander */
+    .hp-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .hp-entry {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.1;
+        min-width: 30px;
+    }
+
+    .hp-lv {
+        font-size: .65rem;
+        color: #9a8a64;
+    }
+
+    .hp-val {
+        font-size: .78rem;
+        color: #c8b97a;
+        font-family: monospace;
+    }
+
+    /* Type-Badge */
+    .type-badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        background: #2a2010;
+        color: #9a8a64;
+        border: 1px solid #5a4a28;
+    }
+
+    .type-humanoid  { color: #ffd100; border-color: #8a7430; }
+    .type-dragon    { color: #ff8000; border-color: #8a5010; }
+    .type-wolf,
+    .type-bear,
+    .type-boar,
+    .type-scorpid   { color: #1eff00; border-color: #1a6010; }
+    .type-murloc    { color: #0af; border-color: #0066aa; }
+
+    /* Weight-Dots */
+    .weight-dot-row {
+        display: inline-flex;
+        gap: 3px;
+        vertical-align: middle;
+    }
+
+    .weight-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ffd100;
+    }
+
+    .weight-num {
+        margin-left: 4px;
+        color: #9a8a64;
+        font-size: .75rem;
+        vertical-align: middle;
+    }
+</style>
+
+@code {
+    // Alle Templates nach MinLevel sortiert
+    private static readonly IReadOnlyList<EnemyTemplate> _sorted =
+        DefaultEnemyTemplates.Default
+            .OrderBy(t => t.MinLevel)
+            .ThenBy(t => t.Name)
+            .ToList();
+}

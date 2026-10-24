@@ -123,7 +123,7 @@ public static partial class ClassAbilityRegistry
         {
             Id = "Fire_Blast_r1",
             Name = "Fire Blast",
-            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_fireblast.jpg",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_fireball.jpg",
             Cooldown = 8,
             ManaCost = 18,
             Damage = 22,                        // Sofortschaden ohne Cast-Zeit
@@ -134,7 +134,7 @@ public static partial class ClassAbilityRegistry
         {
             Id = "Arcane_Missiles_r1",
             Name = "Arcane Missiles",
-            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_magic_managain.jpg",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_starfall.jpg",
             Cooldown = 0,
             CastTime = 2.5,     // 2,5 s Cast-Zeit; kein Cooldown
             ManaCost = 20,
@@ -148,7 +148,7 @@ public static partial class ClassAbilityRegistry
         {
             Id = "Arcane_Missiles_r2",
             Name = "Arcane Missiles",
-            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_magic_managain.jpg",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_starfall.jpg",
             Cooldown = 0,
             CastTime = 2.5,     // 2,5 s Cast-Zeit; kein Cooldown
             ManaCost = 22,

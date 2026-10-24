@@ -10,8 +10,8 @@ namespace Services;
 // ein Neustart-Skript übernimmt das Ersetzen und den Wiederstart.
 public static class UpdateService
 {
-    // URL zum Versions-Manifest (einmalig anpassen)
-    private const string ManifestUrl = "https://drive.proton.me/urls/PQ59H7TRA4#oQHY3XmHkHaK";
+    // Raw-URL zur version.json im GitHub-Repo (main-Branch)
+    private const string ManifestUrl = "https://raw.githubusercontent.com/Elektri92/WoWClassicIdle/main/version.json";
 
     // Struktur der version.json auf dem Server
     private sealed record VersionManifest(
