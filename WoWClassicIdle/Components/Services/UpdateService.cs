@@ -31,6 +31,7 @@ public static class UpdateService
             Console.WriteLine($"[Update] Checking for updates... (local: v{localVersion.Major}.{localVersion.Minor}.{localVersion.Build}, url: {ManifestUrl})");
 
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            http.DefaultRequestHeaders.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true, NoStore = true };
 
             var json     = await http.GetStringAsync(ManifestUrl);
             var manifest = JsonSerializer.Deserialize<VersionManifest>(json);
