@@ -69,7 +69,9 @@ public class UpdateService
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             http.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
 
-            var json     = await http.GetStringAsync(ManifestUrl);
+            // Timestamp-Parameter verhindert CDN-Caching auf raw.githubusercontent.com
+            var bust = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var json = await http.GetStringAsync($"{ManifestUrl}?_={bust}");
             var manifest = JsonSerializer.Deserialize<VersionManifest>(json);
 
             if (manifest is null)
