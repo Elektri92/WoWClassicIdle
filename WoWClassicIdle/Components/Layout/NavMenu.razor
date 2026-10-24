@@ -2,6 +2,7 @@
 @using Models
 @inject IdleGameEngine Engine
 @inject Services.ISaveGameService SaveGame
+@inject Services.UpdateService UpdateSvc
 @implements IDisposable
 
 <div class="nav-wrapper">
@@ -94,6 +95,10 @@
         </div>
     }
 
+    <div class="nav-version-area">
+        <span class="nav-version-text">v@Services.UpdateService.AppVersion</span>
+    </div>
+
     <div class="nav-save-area">
         <div class="nav-item px-3">
             <button class="nav-link w-100 text-start border-0 bg-transparent" @onclick="OnSave">
@@ -110,6 +115,18 @@
         </div>
     </div>
 </div>
+
+<style>
+    .nav-version-area {
+        padding: 4px 12px 2px;
+        text-align: center;
+    }
+    .nav-version-text {
+        font-size: 0.7rem;
+        color: #5a5040;
+        letter-spacing: 0.05em;
+    }
+</style>
 
 @code {
     private string? _saveMessage;

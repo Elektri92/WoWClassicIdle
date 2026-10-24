@@ -1,0 +1,127 @@
+@rendermode InteractiveServer
+@inject Services.UpdateService UpdateSvc
+@implements IDisposable
+@using Services
+
+@if (UpdateSvc.Status == UpdateStatus.Downloading || UpdateSvc.Status == UpdateStatus.Restarting)
+{
+    <div class="update-overlay">
+        <div class="update-panel">
+            <div class="update-icon">⚔️</div>
+            <h3 class="update-title">Update Available</h3>
+            <p class="update-version">v@Services.UpdateService.AppVersion → v@UpdateSvc.RemoteVersion</p>
+
+            @if (UpdateSvc.Status == UpdateStatus.Downloading)
+            {
+                <div class="update-progress-bg">
+                    <div class="update-progress-fill" style="width: @(ProgressPercent.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                </div>
+                <p class="update-status-text">
+                    Downloading...
+                    @if (UpdateSvc.TotalBytes > 0)
+                    {
+                        @($"{UpdateSvc.DownloadedBytes / 1024 / 1024} MB / {UpdateSvc.TotalBytes / 1024 / 1024} MB")
+                    }
+                    else
+                    {
+                        @($"{UpdateSvc.DownloadedBytes / 1024 / 1024} MB")
+                    }
+                </p>
+            }
+            else
+            {
+                <div class="update-progress-bg">
+                    <div class="update-progress-fill" style="width: 100%"></div>
+                </div>
+                <p class="update-status-text">Restarting...</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private double ProgressPercent => UpdateSvc.TotalBytes > 0
+        ? Math.Min(100.0, UpdateSvc.DownloadedBytes * 100.0 / UpdateSvc.TotalBytes)
+        : 0;
+
+    protected override void OnInitialized()
+    {
+        UpdateSvc.Changed += OnChanged;
+        UpdateSvc.StartCheckInBackground();
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => UpdateSvc.Changed -= OnChanged;
+}
+
+<style>
+    .update-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .update-panel {
+        background: linear-gradient(160deg, #1a1209 0%, #0d0a05 100%);
+        border: 2px solid #c8860a;
+        border-radius: 8px;
+        padding: 2rem 2.5rem;
+        min-width: 340px;
+        max-width: 440px;
+        text-align: center;
+        box-shadow: 0 0 40px rgba(200, 134, 10, 0.3);
+    }
+
+    .update-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .update-title {
+        color: #ffe8a0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        text-shadow: 0 1px 6px rgba(200,134,10,0.5);
+    }
+
+    .update-version {
+        color: #a89060;
+        font-size: 0.95rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .update-progress-bg {
+        background: #1e1710;
+        border: 1px solid #5a3e08;
+        border-radius: 4px;
+        height: 18px;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
+    }
+
+    .update-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7a3d00, #c8860a, #ffe8a0, #c8860a);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s linear infinite;
+        transition: width 0.3s ease;
+        border-radius: 3px;
+    }
+
+    @@keyframes shimmer {
+        0%   { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+    }
+
+    .update-status-text {
+        color: #d4c9a8;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+</style>

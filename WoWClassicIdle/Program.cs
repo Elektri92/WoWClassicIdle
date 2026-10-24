@@ -30,6 +30,7 @@ builder.Services.AddSingleton<IdleGameEngine>();
 builder.Services.AddSingleton<IAbilityLoadoutService, AbilityLoadoutService>();
 builder.Services.AddSingleton<IAchievementService, AchievementService>();
 builder.Services.AddSingleton<ISaveGameService, SaveGameService>();
+builder.Services.AddSingleton<Services.UpdateService>();
 
 var app = builder.Build();
 
@@ -109,10 +110,6 @@ else
 
     // Spielstand beim Start laden, falls vorhanden
     app.Services.GetRequiredService<ISaveGameService>().TryAutoLoad();
-
-    // Auf neue App-Version prüfen – bei verfügbarem Update wird die Binary ersetzt und die App neu gestartet.
-    // Der Aufruf kehrt bei einem Update nicht zurück (Environment.Exit). Bei Fehlern wird nur geloggt.
-    await UpdateService.CheckAndApplyAsync();
 
     var iconPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "wow_idle_game_logo.png");
 

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -5,33 +6,52 @@ using System.Text.Json.Serialization;
 
 namespace Services;
 
-// Prüft beim App-Start auf eine neue Version und ersetzt die Binary automatisch.
-// Kehrt bei erfolgreichem Update NICHT zurück – App beendet sich via Environment.Exit(0),
-// ein Neustart-Skript übernimmt das Ersetzen und den Wiederstart.
-public static class UpdateService
+public enum UpdateStatus { Idle, Checking, UpToDate, Downloading, Restarting, Error }
+
+// Singleton – prüft beim App-Start auf eine neue Version und ersetzt die Binary automatisch.
+// Fortschritt wird per Changed-Event an die UI gemeldet.
+public class UpdateService
 {
-    // Raw-URL zur version.json im GitHub-Repo (main-Branch)
     private const string ManifestUrl = "https://raw.githubusercontent.com/Elektri92/WoWClassicIdle/master/version.json";
 
-    // Struktur der version.json auf dem Server
-    private sealed record VersionManifest(
-        [property: JsonPropertyName("version")]     string  Version,
-        [property: JsonPropertyName("windows_url")] string? WindowsUrl,
-        [property: JsonPropertyName("linux_url")]   string? LinuxUrl,
-        [property: JsonPropertyName("mac_url")]     string? MacUrl
-    );
+    private bool _hasStarted;
 
-    // Prüft auf Update und wendet es an. Gibt false zurück wenn kein Update nötig oder ein Fehler aufgetreten ist.
-    // Fehler blockieren NIE den App-Start – sie werden nur auf die Konsole geschrieben.
-    public static async Task<bool> CheckAndApplyAsync()
+    public UpdateStatus Status      { get; private set; } = UpdateStatus.Idle;
+    public long   DownloadedBytes   { get; private set; }
+    public long   TotalBytes        { get; private set; }
+    public string? RemoteVersion    { get; private set; }
+    public string? ErrorMessage     { get; private set; }
+
+    // Gibt die eingebettete Assembly-Version zurück (z.B. "0.0.15")
+    public static string AppVersion
+    {
+        get
+        {
+            var v = Assembly.GetEntryAssembly()?.GetName().Version;
+            return v is null ? "dev" : $"{v.Major}.{v.Minor}.{v.Build}";
+        }
+    }
+
+    // Feuert bei jedem Zustandswechsel – UI-Komponenten abonnieren und rufen StateHasChanged auf
+    public event Action? Changed;
+
+    // Startet den Update-Check einmalig im Hintergrund
+    public void StartCheckInBackground()
+    {
+        if (_hasStarted) return;
+        _hasStarted = true;
+        _ = Task.Run(CheckAndApplyAsync);
+    }
+
+    private async Task CheckAndApplyAsync()
     {
         try
         {
-            var localVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);
-            Console.WriteLine($"[Update] Checking for updates... (local: v{localVersion.Major}.{localVersion.Minor}.{localVersion.Build}, url: {ManifestUrl})");
+            SetStatus(UpdateStatus.Checking);
+            Console.WriteLine($"[Update] Checking for updates... (local: v{AppVersion}, url: {ManifestUrl})");
 
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            http.DefaultRequestHeaders.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true, NoStore = true };
+            http.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
 
             var json     = await http.GetStringAsync(ManifestUrl);
             var manifest = JsonSerializer.Deserialize<VersionManifest>(json);
@@ -39,24 +59,29 @@ public static class UpdateService
             if (manifest is null)
             {
                 Console.WriteLine("[Update] Invalid manifest – skipping.");
-                return false;
+                SetStatus(UpdateStatus.UpToDate);
+                return;
             }
 
             if (!Version.TryParse(manifest.Version, out var remoteVersion))
             {
                 Console.WriteLine($"[Update] Cannot parse remote version '{manifest.Version}' – skipping.");
-                return false;
+                SetStatus(UpdateStatus.UpToDate);
+                return;
             }
+
+            var localVersion = Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);
 
             if (remoteVersion <= localVersion)
             {
                 Console.WriteLine($"[Update] Up to date (v{localVersion}).");
-                return false;
+                SetStatus(UpdateStatus.UpToDate);
+                return;
             }
 
+            RemoteVersion = manifest.Version;
             Console.WriteLine($"[Update] New version {remoteVersion} available (local: {localVersion}).");
 
-            // Plattformspezifische Download-URL wählen
             var downloadUrl = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? manifest.WindowsUrl
                             : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)     ? manifest.MacUrl
                             :                                                        manifest.LinuxUrl;
@@ -64,25 +89,25 @@ public static class UpdateService
             if (string.IsNullOrEmpty(downloadUrl))
             {
                 Console.WriteLine("[Update] No download URL for this platform – skipping.");
-                return false;
+                SetStatus(UpdateStatus.UpToDate);
+                return;
             }
 
-            // Staging-Verzeichnis im App-Ordner
             var appPath    = Environment.ProcessPath!;
             var appDir     = Path.GetDirectoryName(appPath)!;
             var stagingDir = Path.Combine(appDir, "_update");
             Directory.CreateDirectory(stagingDir);
-
             var stagedBinary = Path.Combine(stagingDir, Path.GetFileName(appPath));
 
             Console.WriteLine($"[Update] Downloading to {stagedBinary} ...");
+            SetStatus(UpdateStatus.Downloading);
 
             using var response = await http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
-            var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            var downloaded = 0L;
-            var lastReport = 0L;
+            TotalBytes      = response.Content.Headers.ContentLength ?? -1;
+            DownloadedBytes = 0;
+            Notify();
 
             await using (var srcStream  = await response.Content.ReadAsStreamAsync())
             await using (var destStream = File.Create(stagedBinary))
@@ -92,42 +117,36 @@ public static class UpdateService
                 while ((read = await srcStream.ReadAsync(buffer)) > 0)
                 {
                     await destStream.WriteAsync(buffer.AsMemory(0, read));
-                    downloaded += read;
-                    // Alle 5 MB Fortschritt melden
-                    if (downloaded - lastReport >= 5 * 1024 * 1024)
-                    {
-                        lastReport = downloaded;
-                        var mb = downloaded / 1024.0 / 1024.0;
-                        var info = totalBytes > 0 ? $"{mb:F1} MB / {totalBytes / 1024.0 / 1024.0:F1} MB" : $"{mb:F1} MB";
-                        Console.WriteLine($"[Update] Downloading... {info}");
-                    }
+                    DownloadedBytes += read;
+                    Notify();
                 }
             }
 
-            Console.WriteLine($"[Update] Download complete ({downloaded / 1024.0 / 1024.0:F1} MB). Launching restart...");
+            Console.WriteLine($"[Update] Download complete ({DownloadedBytes / 1024.0 / 1024.0:F1} MB). Launching restart...");
+            SetStatus(UpdateStatus.Restarting);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 LaunchWindowsRestart(stagedBinary, appPath);
             else
                 LaunchUnixRestart(stagedBinary, appPath, appDir);
 
-            // App beendet sich – Neustart-Skript übernimmt
+            await Task.Delay(1500);
             Environment.Exit(0);
-            return true; // Wird nie erreicht
         }
         catch (Exception ex)
         {
-            // Update-Fehler dürfen den Spielstart nicht blockieren
+            ErrorMessage = ex.Message;
             Console.Error.WriteLine($"[Update] Error: {ex.Message}");
-            return false;
+            SetStatus(UpdateStatus.Error);
         }
     }
 
-    // Erzeugt ein temporäres .bat-Skript, das nach kurzer Wartezeit die neue Binary überschreibt und neu startet.
+    private void SetStatus(UpdateStatus status) { Status = status; Notify(); }
+    private void Notify() => Changed?.Invoke();
+
     private static void LaunchWindowsRestart(string stagedBinary, string appPath)
     {
         var bat = Path.Combine(Path.GetTempPath(), $"wowcidle_update_{Guid.NewGuid():N}.bat");
-
         File.WriteAllText(bat,
             $"""
              @echo off
@@ -136,7 +155,6 @@ public static class UpdateService
              start "" "{appPath}"
              del "%~f0"
              """);
-
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
             FileName        = "cmd.exe",
@@ -146,28 +164,22 @@ public static class UpdateService
         });
     }
 
-    // Erzeugt ein temporäres Shell-Skript, das nach kurzer Wartezeit die neue Binary kopiert und neu startet.
     private static void LaunchUnixRestart(string stagedBinary, string appBin, string appDir)
     {
-        var launcher = appBin;
-
         var sh = Path.Combine(Path.GetTempPath(), $"wowcidle_update_{Guid.NewGuid():N}.sh");
-
         File.WriteAllText(sh,
             $"""
              #!/bin/bash
              sleep 2
              cp -f "{stagedBinary}" "{appBin}"
              chmod +x "{appBin}"
-             "{launcher}" &
+             "{appBin}" &
              rm -f "$0"
              """);
-
-        // Skript ausführbar machen und im Hintergrund starten
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
-            FileName  = "chmod",
-            ArgumentList = { "+x", sh },
+            FileName        = "chmod",
+            ArgumentList    = { "+x", sh },
             UseShellExecute = false
         })?.WaitForExit();
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -177,4 +189,11 @@ public static class UpdateService
             UseShellExecute = false
         });
     }
+
+    private sealed record VersionManifest(
+        [property: JsonPropertyName("version")]     string  Version,
+        [property: JsonPropertyName("windows_url")] string? WindowsUrl,
+        [property: JsonPropertyName("linux_url")]   string? LinuxUrl,
+        [property: JsonPropertyName("mac_url")]     string? MacUrl
+    );
 }
