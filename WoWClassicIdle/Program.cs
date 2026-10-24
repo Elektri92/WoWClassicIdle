@@ -5,6 +5,8 @@ using Photino.NET;
 // Muss vor jeder WebKit-Initialisierung gesetzt werden
 if (OperatingSystem.IsLinux())
 {
+    // GTK3/WebKit2GTK über XWayland laufen lassen – natives Wayland ist instabil (Error 71)
+    Environment.SetEnvironmentVariable("GDK_BACKEND", "x11");
     // Verhindert DMA-BUF-Rendering in WebKit2GTK (leerer WebView unter Wayland)
     Environment.SetEnvironmentVariable("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
 }
