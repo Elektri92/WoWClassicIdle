@@ -39,7 +39,8 @@ jobs:
       - name: Prepare release assets
         run: |
           chmod +x publish/linux/WoWClassicIdle
-          tar -czf publish/linux/WoWClassicIdle-linux-x64.tar.gz -C publish/linux .
+          tar -czf WoWClassicIdle-linux-x64.tar.gz -C publish/linux .
+          mv WoWClassicIdle-linux-x64.tar.gz publish/linux/WoWClassicIdle-linux-x64.tar.gz
           cp publish/linux/WoWClassicIdle      publish/linux/WoWClassicIdle-linux-x64
           cp publish/win/WoWClassicIdle.exe    publish/win/WoWClassicIdle-win-x64.exe
           cp publish/mac/WoWClassicIdle        publish/mac/WoWClassicIdle-osx-x64
