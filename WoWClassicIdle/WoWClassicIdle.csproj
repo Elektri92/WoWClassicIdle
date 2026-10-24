@@ -67,11 +67,5 @@
       </PropertyGroup>
     </Target>
 
-    <!-- Nach Linux-Publish: Binary umbenennen und Launcher-Skript (Properties/linux-launcher.sh) kopieren -->
-    <Target Name="CreateLinuxWrapper" AfterTargets="Publish" Condition="$(RuntimeIdentifier.StartsWith('linux-'))">
-      <Move SourceFiles="$(PublishDir)WoWClassicIdle" DestinationFiles="$(PublishDir)WoWClassicIdle.bin" />
-      <Copy SourceFiles="$(MSBuildProjectDirectory)/Properties/linux-launcher.sh" DestinationFiles="$(PublishDir)WoWClassicIdle" />
-      <Exec Command="chmod +x &quot;$(PublishDir)WoWClassicIdle&quot;" />
-    </Target>
 
 </Project>

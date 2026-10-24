@@ -129,14 +129,9 @@ public static class UpdateService
     }
 
     // Erzeugt ein temporäres Shell-Skript, das nach kurzer Wartezeit die neue Binary kopiert und neu startet.
-    // Funktioniert auf Linux (über den Launcher-Wrapper) und macOS (direkt).
     private static void LaunchUnixRestart(string stagedBinary, string appBin, string appDir)
     {
-        // Auf Linux gibt es ein Launcher-Skript (WoWClassicIdle) das WEBKIT-Env setzt und .bin startet.
-        // Auf macOS wird die Binary direkt ausgeführt.
-        var launcher = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            ? Path.Combine(appDir, "WoWClassicIdle")
-            : appBin;
+        var launcher = appBin;
 
         var sh = Path.Combine(Path.GetTempPath(), $"wowcidle_update_{Guid.NewGuid():N}.sh");
 
