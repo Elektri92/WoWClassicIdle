@@ -37,7 +37,9 @@ namespace Models
                     .Select(a => a.Id)
                     .ToHashSet();
 
-                GetCurrentLoadout().EquippedAbilityIds.RemoveAll(id => talentOnlyIds.Contains(id));
+                var loadout = GetCurrentLoadout();
+                loadout.EquippedAbilityIds.RemoveAll(id => talentOnlyIds.Contains(id));
+                ApplyLoadout(loadout); // Ability-Cache und Gestalt aktualisieren
 
                 foreach (var id in talentOnlyIds)
                     Buffs.Remove(id);

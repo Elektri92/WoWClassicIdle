@@ -26,7 +26,7 @@ internal static class SimStarterGear
     ];
 
     /// <summary>Equips the player with level-appropriate green starter gear for the given spec.</summary>
-    public static void Equip(Player player, CharacterClass cls, int specIndex, int level)
+    public static void Equip(Player player, CharacterClass cls, int specIndex, int level, DruidForm? form = null)
     {
         var weapon = WeaponRegistry.GetTierWeaponForLevel(cls, level);
         if (weapon is not null)
@@ -34,7 +34,10 @@ internal static class SimStarterGear
 
         int statVal       = StatValForLevel(level);
         int reqLevel      = Math.Max(1, level - 4);
-        var bonusFn       = BonusFn(cls, specIndex);
+        // Bär tankt wie ein Protection-Warrior → Str+Sta statt der Feral-Standardkombination
+        var bonusFn       = form == DruidForm.Bear
+            ? (Func<int, PrimaryStats>)(v => new PrimaryStats { Strength = v, Stamina = v })
+            : BonusFn(cls, specIndex);
         int fakeId        = -1;
 
         foreach (var (slot, name, icon) in Slots)
@@ -97,8 +100,9 @@ internal static class SimStarterGear
             // Warlock: alle Specs → Int+Spi
             (CharacterClass.Warlock, _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
 
-            // Shaman: Elemental(0) → Int+Spi; Enhancement(1) → Agi+Str; Restoration(2) → Int+Spi
-            (CharacterClass.Shaman, 1)  => v => new PrimaryStats { Agility  = v, Strength     = v },
+            // Shaman: Elemental(0) → Int+Spi; Enhancement(1) → Str+Sta; Restoration(2) → Int+Spi
+            // (Enhancement mit Agi+Str starb doppelt so oft – vor Windfury zaubert er wie ein Caster ohne Ausdauer)
+            (CharacterClass.Shaman, 1)  => v => new PrimaryStats { Strength = v, Stamina      = v },
             (CharacterClass.Shaman,  _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
 
             // Druid: Balance(0) → Int+Spi; Feral Combat(1) → Agi+Str; Restoration(2) → Int+Spi

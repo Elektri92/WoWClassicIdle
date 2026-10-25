@@ -43,6 +43,19 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Renew_r2",
+            Name = "Renew",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_renew.jpg",
+            Cooldown = 60,
+            ManaCost = 19,          // ×1,25 gegenüber Rank 1
+            BuffDuration = 20,
+            HotTotalHeal = 60,      // ×1,5 gegenüber Rank 1 (5 Ticks à 12)
+            HotTickInterval = 4,
+            LevelRequired = 13,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Shadow_Word_Pain_r1",
             Name = "Shadow Word: Pain",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowwordpain.jpg",
@@ -53,6 +66,19 @@ public static partial class ClassAbilityRegistry
             DebuffDotTickInterval = 5,
             LevelRequired = 5,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Shadow_Word_Pain_r2",
+            Name = "Shadow Word: Pain",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowwordpain.jpg",
+            Cooldown = 60,
+            ManaCost = 25,              // ×1,25 gegenüber Rank 1
+            DebuffDuration = 30,
+            DebuffDotDamage = 18,       // ×1,5 gegenüber Rank 1 (6 Ticks à 18 = 108 DMG)
+            DebuffDotTickInterval = 5,
+            LevelRequired = 15,
+            Rank = 2,
         },
         new Ability
         {
@@ -67,6 +93,20 @@ public static partial class ClassAbilityRegistry
             MotTickInterval = 5.0,          // 4 Ticks à 2 %
             LevelRequired = 7,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Drain_Mana_r2",
+            Name = "Drain Mana",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_siphonmana.jpg",
+            Cooldown = 30,
+            CastTime = 1.0,
+            ManaCost = 0,
+            BuffDuration = 20,
+            MotManaRestorePct = 0.10,       // ×1,3 gegenüber Rank 1
+            MotTickInterval = 5.0,
+            LevelRequired = 17,
+            Rank = 2,
         },
         new Ability
         {
@@ -102,6 +142,49 @@ public static partial class ClassAbilityRegistry
             ManaCost = 30,
             Heal = 45,
             LevelRequired = 24,
+            Rank = 1,
+        },
+
+        // ── Talent-Fähigkeiten (Reihe 2) ──
+        new Ability
+        {
+            Id = "Priest_Divine_Shield_r1",     // eigenes Präfix – "Divine_Shield" ist der Paladin-Zauber
+            Name = "Divine Shield",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_powerwordshield.jpg",
+            Cooldown = 30,
+            ManaCost = 20,
+            BuffDuration = 30,
+            BuffShieldPct = 0.25,               // absorbiert 25 % der max. HP
+            TalentUnlockOnly = true,
+            SpecHint = 0,
+            LevelRequired = 1,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Holy_Nova_r1",
+            Name = "Holy Nova",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holynova.jpg",
+            Cooldown = 10,
+            ManaCost = 25,
+            Damage = 12,                        // Schaden + Heilung gleichzeitig, kein HP-Gate
+            Heal = 12,
+            TalentUnlockOnly = true,
+            SpecHint = 1,
+            LevelRequired = 1,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Shadow_Form",
+            Name = "Shadowform",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowform.jpg",
+            Form = DruidForm.Shadow,
+            IsPassive = true,                   // kein Cast – wirkt solange ausgerüstet
+            ExclusiveGroup = "priest_form",
+            TalentUnlockOnly = true,
+            SpecHint = 2,
+            LevelRequired = 1,
             Rank = 1,
         },
     };

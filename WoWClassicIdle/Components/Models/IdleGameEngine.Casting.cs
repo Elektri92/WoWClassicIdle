@@ -91,7 +91,7 @@ public partial class IdleGameEngine
     {
         if (!Player.ConsumeMana(Player.GetEffectiveManaCost(ability)))
         {
-            LastLog = $"{ability.Name} failed – not enough {AbilityText.ResourceName(Player.ActiveClass)}";
+            LastLog = $"{ability.Name} failed – not enough {ShapeshiftForms.ResourceName(Player.Resource)}";
             return 0;
         }
         int dealt = ExecuteAbility(ability);
@@ -128,6 +128,8 @@ public partial class IdleGameEngine
     private bool CanStartAbility(Ability ability)
     {
         if (!IsReadyToCast(ability)) return false;
+        if (!Player.CanUseInCurrentForm(ability)) return false;
+        if (ability.IsPetSummon && Pet is not null) return false;   // Pet lebt bereits
         if (ability.CastWhenManaBelowPct > 0
             && Player.CurrentMana >= Player.Stats.MaxMana * ability.CastWhenManaBelowPct) return false;
         if (ability.IsHealing && !PlayerNeedsHeal) return false;

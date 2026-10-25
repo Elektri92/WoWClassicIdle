@@ -4,15 +4,16 @@ using Models;
 
 public class EnemySpawner
 {
-    private readonly Random _rng = new();
+    private readonly Random _rng;
     private readonly IReadOnlyList<EnemyTemplate> _templates;
 
     public EnemySpawner()
         : this(DefaultEnemyTemplates.Default) { }
 
-    public EnemySpawner(IReadOnlyList<EnemyTemplate> templates)
+    public EnemySpawner(IReadOnlyList<EnemyTemplate> templates, Random? rng = null)
     {
         _templates = templates;
+        _rng = rng ?? new Random();
     }
 
     public Enemy Spawn(int playerLevel, double elapsedSeconds)
@@ -52,7 +53,7 @@ public class EnemySpawner
         bool isRare = playerLevel >= 3 && enemyLevel >= 3 && _rng.NextDouble() < 0.10;
 
         int baseHp      = template.GetMaxHp(enemyLevel);
-        int baseAttack  = template.BaseAttack;
+        int baseAttack  = template.GetAttack(enemyLevel);
         int baseCopper  = RollCopper(template, enemyLevel);
 
         var stats = new Stats

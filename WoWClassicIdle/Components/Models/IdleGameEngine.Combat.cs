@@ -44,7 +44,7 @@ public partial class IdleGameEngine
     /// </summary>
     private bool IsSavingManaForHeal() =>
         PlayerNeedsHeal
-        && Player.EquippedAbilities.Any(a => a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < a.ManaCost);
+        && Player.EquippedAbilities.Any(a => a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < Player.GetEffectiveManaCost(a));
 
     /// <summary>Simulierte Spielzeit pro Schritt in Sekunden.</summary>
     public double StepSeconds => _baseDt;
@@ -125,8 +125,7 @@ public partial class IdleGameEngine
         foreach (var dot in CurrentEnemy.Debuffs.Tick(dt))
         {
             var (dotDmg, dotCrit) = RollPlayerCrit(dot.Amount);
-            CurrentEnemy.TakeDamage(dotDmg);
-            Meter.RecordAbility(dot.Source, CombatActionKind.Damage, dotDmg);
+            Meter.RecordAbility(dot.Source, CombatActionKind.Damage, CurrentEnemy.TakeDamage(dotDmg));
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, dotDmg, dotCrit));
             totalPlayerDmg += dotDmg;
             playerAttacked = true;
@@ -147,8 +146,9 @@ public partial class IdleGameEngine
             return;
         }
 
-        // ── Rogue: Energie-Regeneration alle 3 Sekunden ──
-        if (Player.ActiveClass == CharacterClass.Rogue)
+        // ── Energie (Rogue, Cat Form): Regeneration alle 3 Sekunden ──
+        var resource = Player.Resource;
+        if (resource == ResourceKind.Energy)
         {
             _rogueManaAcc += dt;
             while (_rogueManaAcc >= 3.0)
@@ -157,7 +157,7 @@ public partial class IdleGameEngine
                 Player.RegenMana(20);
             }
         }
-        else if (Player.ActiveClass != CharacterClass.Warrior)
+        else if (resource == ResourceKind.Mana)
         {
             _manaRegenAcc += dt;
             while (_manaRegenAcc >= 5.0)
@@ -167,8 +167,21 @@ public partial class IdleGameEngine
             }
         }
 
+        // ── Passive HP-Regeneration aus Spirit alle 5 Sekunden (alle Klassen) ──
+        _hpRegenAcc += dt;
+        while (_hpRegenAcc >= 5.0)
+        {
+            _hpRegenAcc -= 5.0;
+            int hpBefore = Player.CurrentHp;
+            Player.RegenHp(Player.Stats.HpRegenPer5);
+            int regenHealed = Player.CurrentHp - hpBefore;
+            // Nur tatsächlich geheilte HP zählen – bei vollem Leben kein Meter-Eintrag
+            if (regenHealed > 0)
+                Meter.RecordSpiritRegen(regenHealed);
+        }
+
         // Attack-Speed aus Charakter-Stat und Buffs – beschleunigt Auto-Attacks und Fähigkeiten-Cooldowns
-        double attackSpeed    = Player.Stats.AttackSpeedMultiplier * Player.Buffs.AttackSpeedMultiplier;
+        double attackSpeed    = Player.Stats.AttackSpeedMultiplier * Player.Buffs.AttackSpeedMultiplier * FlurryAttackSpeedMultiplier;
         double playerInterval = Math.Max(0.1, Player.Stats.Speed / attackSpeed);
         double enemyInterval  = Math.Max(0.1, CurrentEnemy.Stats.Speed / CurrentEnemy.Debuffs.AttackSpeedMultiplier);
         double enemyDmgTakenMult = CurrentEnemy.Debuffs.DamageTakenMultiplier;
@@ -177,9 +190,9 @@ public partial class IdleGameEngine
         _enemyAttackAcc  += dt;
         SwingInterval = playerInterval;
 
-        // ── Abilities (Cooldown-basiert, mit Cast-Zeit und Global Cooldown) ──
+        // ── Abilities (Cooldown-basiert, mit Cast-Zeit und Global Cooldown) + Pet-Angriffe ──
         Player.Cooldowns.Tick(dt * attackSpeed);
-        int abilityDmg = UpdateAbilities(dt, attackSpeed);
+        int abilityDmg = UpdateAbilities(dt, attackSpeed) + UpdatePet(dt, enemyDmgTakenMult);
         if (abilityDmg > 0)
         {
             totalPlayerDmg += abilityDmg;
@@ -194,8 +207,9 @@ public partial class IdleGameEngine
         }
 
         // ── Spielerangriffe ──
-        var nextSwingAbility = Player.EquippedAbilities
-            .FirstOrDefault(a => a.ReplacesAutoAttack && Player.Level >= a.LevelRequired);
+        var nextSwingRaw = Player.EquippedAbilities
+            .FirstOrDefault(a => a.ReplacesAutoAttack && Player.Level >= a.LevelRequired && Player.CanUseInCurrentForm(a));
+        var nextSwingAbility = nextSwingRaw is null ? null : Player.GetEffectiveAbility(nextSwingRaw);
 
         // Spell mit Manakosten wird gerade gewirkt → Swing wartet (Timer bleibt voll geladen)
         if (IsSwingHeld)
@@ -208,6 +222,7 @@ public partial class IdleGameEngine
 
             // On-next-swing (Heroic Strike): ersetzt den Schlag, erzeugt wie in Classic keine Rage
             if (nextSwingAbility is not null
+                && Player.Cooldowns.IsReady(nextSwingAbility.Id)   // Holy Strike: 10 s CD; Heroic Strike/Maul haben keinen
                 && !IsSavingManaForHeal()
                 && Player.CurrentMana >= nextSwingAbility.MinResourceToCast
                 && Player.ConsumeMana(nextSwingAbility.ManaCost))
@@ -215,13 +230,15 @@ public partial class IdleGameEngine
                 double swingMult = Player.Buffs.DamageMultiplier * Player.Buffs.WeaponDamageMultiplier * enemyDmgTakenMult;
                 var (swingDmg, swingCrit) = RollPlayerCrit(
                     CombatEngine.CalculateAbilityDamage(nextSwingAbility, Player.Stats, _rng, swingMult));
-                CurrentEnemy.TakeDamage(swingDmg);
-                Meter.RecordAbility(nextSwingAbility, CombatActionKind.Damage, swingDmg);
+                Meter.RecordAbility(nextSwingAbility, CombatActionKind.Damage, CurrentEnemy.TakeDamage(swingDmg));
                 CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, swingDmg, swingCrit));
                 totalPlayerDmg += swingDmg;
                 LastLog = $"⚔ {nextSwingAbility.Name} → {swingDmg} DMG!";
                 Player.TriggerAbilityUsed(nextSwingAbility.Name, nextSwingAbility.Damage);
                 AbilityTriggered?.Invoke(nextSwingAbility);
+                if (nextSwingAbility.Cooldown > 0)
+                    Player.Cooldowns.StartCooldown(nextSwingAbility.Id, nextSwingAbility.Cooldown);
+                UpdateFlurry(swingCrit);
 
                 // Passive Procs (z. B. Deadly Poison) – auch bei On-Next-Swing
                 foreach (var passive in Player.PassiveAbilities)
@@ -235,15 +252,16 @@ public partial class IdleGameEngine
             double autoAttackCritBonus = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.AutoAttackCrit);
             var (playerDmg, autoCrit) = RollPlayerCrit(
                 CombatEngine.CalculateAutoAttack(Player.Stats, _rng, autoMult), autoAttackCritBonus);
-            CurrentEnemy.TakeDamage(playerDmg);
-            Meter.RecordAutoAttack(playerDmg, Player.EquippedWeapon?.IconUrl);
+            Meter.RecordAutoAttack(CurrentEnemy.TakeDamage(playerDmg), Player.EquippedWeapon?.IconUrl);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.AutoAttack, playerDmg, autoCrit));
             totalPlayerDmg += playerDmg;
 
             ApplyCritHeal(autoCrit);
+            UpdateFlurry(autoCrit);
+            totalPlayerDmg += TryWindfuryAttacks(autoMult);
 
-            // Warrior: +8 Rage pro Auto-Attack (durch Talente und Stances erhöhbar)
-            if (Player.ActiveClass == CharacterClass.Warrior)
+            // Rage (Warrior, Bear Form): +8 Rage pro Auto-Attack (durch Talente und Stances erhöhbar)
+            if (resource == ResourceKind.Rage)
             {
                 double rageMult = 1.0
                     + Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.RageGenBonus)
@@ -264,7 +282,7 @@ public partial class IdleGameEngine
         }
 
         // ── Gegnerangriffe ──
-        while (_enemyAttackAcc >= enemyInterval && Player.IsAlive)
+        while (_enemyAttackAcc >= enemyInterval && Player.IsAlive && CurrentEnemy.IsAlive)
         {
             _enemyAttackAcc -= enemyInterval;
 
@@ -282,6 +300,7 @@ public partial class IdleGameEngine
                 CurrentEnemy.Stats.Attack, Player.Stats.Defense, _rng);
             double dmgReduction = Math.Min(0.99, Player.Stats.DamageTakenReduction + Player.Buffs.DamageTakenReduction);
             int reducedDmg = Math.Max(1, (int)Math.Round(enemyDmg * (1.0 - dmgReduction)));
+            reducedDmg = SplitDamageWithPet(reducedDmg);   // Pet fängt einen Teil des Treffers ab
             var (taken, absorbs) = Player.TakeDamage(reducedDmg);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, taken));
             foreach (var (src, amt) in absorbs)
@@ -289,7 +308,7 @@ public partial class IdleGameEngine
             totalEnemyDmg += reducedDmg;
 
             // RageOnHit: Warrior generiert bei Schaden-Einnahme extra Rage
-            if (Player.ActiveClass == CharacterClass.Warrior)
+            if (resource == ResourceKind.Rage)
             {
                 double rageOnHit = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.RageOnHit);
                 if (rageOnHit > 0)
@@ -301,18 +320,29 @@ public partial class IdleGameEngine
             {
                 if (!CurrentEnemy.IsAlive) break;
                 int retDmg = retAbility.BuffRetaliationDamage;
-                CurrentEnemy.TakeDamage(retDmg);
-                Meter.RecordAbility(retAbility, CombatActionKind.Damage, retDmg);
+                Meter.RecordAbility(retAbility, CombatActionKind.Damage, CurrentEnemy.TakeDamage(retDmg));
                 CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, retDmg, false));
                 totalPlayerDmg += retDmg;
                 playerAttacked = true;
             }
+
+            // Ladungs-Buffs (Holy Shield) verbrauchen pro erlittenem Treffer eine Ladung
+            Player.Buffs.ConsumeHitCharges();
+        }
+
+        // ── Kill-Check nach Vergeltungsschaden – sonst ginge der Kill (XP, Geld, Loot) verloren ──
+        // (Sterben beide im selben Schritt, gilt der Tod des Spielers)
+        if (!CurrentEnemy.IsAlive && Player.IsAlive)
+        {
+            HandleEnemyDeath();
+            return;
         }
 
         if (!Player.IsAlive)
         {
             TotalDeaths++;
             Player.Buffs.Reset();   // wie in WoW: Tod entfernt alle Buffs
+            DismissPet();
             Player.CurrentHp = Player.Stats.MaxHp;
             // Rare-Gegner merken, damit er nach Respawn erneut erscheint (nur wenn aktiviert)
             if (EnableRareRequeue && CurrentEnemy is { IsRare: true })

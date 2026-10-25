@@ -1,6 +1,7 @@
 @using Models
 
 @* Wraps content and shows a WoW-style weapon tooltip on hover.
+   Mit Compare werden daneben die ausgerüstete Waffe und ein Panel mit den Stat-Differenzen angezeigt.
    Positioning via js/tooltip.js (position: fixed). *@
 @if (Weapon is null)
 {
@@ -8,40 +9,37 @@
 }
 else
 {
-    double dps = (Weapon.MinDamage + Weapon.MaxDamage) / 2.0 / Weapon.Speed;
-    string nameColor = ItemQualityColors.Hex(Weapon.Quality);
-
     <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
         @ChildContent
-        <span class="wow-tooltip" role="tooltip">
-            <span class="tt-name" style="color: @nameColor">@Weapon.Name</span>
-            <span class="tt-subtype">@Weapon.Type</span>
-            <span class="tt-line">
-                <span>@Weapon.MinDamage – @Weapon.MaxDamage Damage</span>
-                <span>Speed @Weapon.Speed.ToString("0.00")</span>
+        @if (Compare is null)
+        {
+            <span class="wow-tooltip" role="tooltip">
+                @Body(Weapon, RequirementsMet, Hint)
             </span>
-            <span class="tt-dps">(@dps.ToString("0.00") damage per second)</span>
-            <span class="tt-quality">@Weapon.Quality</span>
-            @if (Weapon.RequiredLevel > 1)
-            {
-                <span class="tt-req-level @(RequirementsMet ? "" : "tt-req-blocked")">Requires level @Weapon.RequiredLevel</span>
-            }
-            @if (Weapon.Bonuses is { } bonuses)
-            {
-                @foreach (var line in bonuses.DescribeBonuses())
-                {
-                    <span class="tt-stat">@line</span>
-                }
-            }
-            @if (Weapon.RequiredClass is { } cls)
-            {
-                <span class="tt-req-class">Classes: @cls</span>
-            }
-            @if (!string.IsNullOrEmpty(Hint))
-            {
-                <span class="tt-hint">@Hint</span>
-            }
-        </span>
+        }
+        else
+        {
+            var deltas = ItemComparison.Compare(Weapon, Compare);
+            <span class="wow-tooltip tt-group" role="tooltip">
+                <span class="tt-panel">
+                    @Body(Weapon, RequirementsMet, Hint)
+                </span>
+                <span class="tt-panel">
+                    <span class="tt-equipped-label">Currently Equipped</span>
+                    @Body(Compare, true, null)
+                </span>
+                <span class="tt-panel">
+                    @if (deltas.Count == 0)
+                    {
+                        <span class="tt-delta">No changes</span>
+                    }
+                    @foreach (var delta in deltas)
+                    {
+                        <span class="tt-delta @(delta.IsGain ? "tt-delta-gain" : "tt-delta-loss")">@delta.Text</span>
+                    }
+                </span>
+            </span>
+        }
     </span>
 }
 
@@ -53,4 +51,38 @@ else
 
     /// <summary>Erfüllt der Charakter die Levelvoraussetzung (färbt die Zeile rot wenn nicht).</summary>
     [Parameter] public bool RequirementsMet { get; set; } = true;
+
+    /// <summary>Aktuell ausgerüstete Waffe – wird als Vergleich daneben angezeigt.</summary>
+    [Parameter] public WeaponItem? Compare { get; set; }
+
+    // Tooltip-Inhalt einer Waffe (für Haupt- und Vergleichs-Panel)
+    private static RenderFragment Body(WeaponItem weapon, bool requirementsMet, string? hint) => @<text>
+        <span class="tt-name" style="color: @ItemQualityColors.Hex(weapon.Quality)">@weapon.Name</span>
+        <span class="tt-subtype">@weapon.Type</span>
+        <span class="tt-line">
+            <span>@weapon.MinDamage – @weapon.MaxDamage Damage</span>
+            <span>Speed @weapon.Speed.ToString("0.00")</span>
+        </span>
+        <span class="tt-dps">(@ItemComparison.Dps(weapon).ToString("0.00") damage per second)</span>
+        <span class="tt-quality">@weapon.Quality</span>
+        @if (weapon.RequiredLevel > 1)
+        {
+            <span class="tt-req-level @(requirementsMet ? "" : "tt-req-blocked")">Requires level @weapon.RequiredLevel</span>
+        }
+        @if (weapon.Bonuses is { } bonuses)
+        {
+            @foreach (var line in bonuses.DescribeBonuses())
+            {
+                <span class="tt-stat">@line</span>
+            }
+        }
+        @if (weapon.RequiredClass is { } cls)
+        {
+            <span class="tt-req-class">Classes: @cls</span>
+        }
+        @if (!string.IsNullOrEmpty(hint))
+        {
+            <span class="tt-hint">@hint</span>
+        }
+    </text>;
 }

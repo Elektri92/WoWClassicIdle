@@ -11,8 +11,8 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowbolt.jpg",
             Cooldown = 0,
             CastTime = 2.5,     // 2,5 s Cast-Zeit
-            ManaCost = 25,
-            Damage = 13,        // −1 Nerf
+            ManaCost = 20,      // war 25 – Warlock Lv 1–2 zu oft OOM
+            Damage = 12,        // −2 Nerf
             LevelRequired = 1,
             Rank = 1,
         },
@@ -24,7 +24,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 25,
-            Damage = 15,        // −1 Nerf
+            Damage = 14,        // −2 Nerf
             LevelRequired = 10,
             Rank = 2,
         },
@@ -43,6 +43,19 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Curse_of_Agony_r2",
+            Name = "Curse of Agony",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_curseofsargeras.jpg",
+            Cooldown = 0,
+            ManaCost = 13,              // ×1,25 gegenüber Rank 1
+            DebuffDuration = 15,
+            DebuffDotDamage = 8,        // ×1,5 gegenüber Rank 1
+            DebuffDotTickInterval = 3,
+            LevelRequired = 13,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Drain_Life_r1",
             Name = "Drain Life",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_lifedrain02.jpg",
@@ -50,7 +63,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 2.0,             // 2,0 s Cast-Zeit
             ManaCost = 0,
             DebuffDuration = 12,        // Kanal 12 s
-            DebuffDotDamage = 5,        // 4 Ticks à 5 = 20 DMG
+            DebuffDotDamage = 7,        // 4 Ticks à 7 = 28 DMG (war 5 – Warlock starb zu oft)
             DebuffDotTickInterval = 3,
             DebuffDotLifesteal = 1.0,   // 100 % des Schadens heilt den Spieler
             LevelRequired = 5,
@@ -82,6 +95,18 @@ public static partial class ClassAbilityRegistry
             LifeTapManaGain = 15,        // gibt 15 Mana
             LevelRequired = 7,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Life_Tap_r2",
+            Name = "Life Tap",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_burningspirit.jpg",
+            Cooldown = 30,
+            ManaCost = 0,
+            LifeTapHpCost = 15,         // ×1,5 gegenüber Rank 1
+            LifeTapManaGain = 23,       // ×1,5 gegenüber Rank 1
+            LevelRequired = 17,
+            Rank = 2,
         },
         new Ability
         {
@@ -122,6 +147,48 @@ public static partial class ClassAbilityRegistry
             DebuffDotTickInterval = 3,
             LevelRequired = 24,
             Rank = 1,
+        },
+
+        // ── Talent-Fähigkeiten (Reihe 2) ──────────────────────────────────────
+        new Ability
+        {
+            Id                    = "Siphon_Life_r1",
+            Name                  = "Siphon Life",
+            IconUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_requiem.jpg",
+            Cooldown              = 0,
+            ManaCost              = 20,
+            DebuffDuration        = 15,
+            DebuffDotDamage       = 5,          // 5 Ticks à 5 = 25 DMG gesamt (war 6 – Affliction Lv 15 bei +16 %)
+            DebuffDotTickInterval = 3,
+            DebuffDotLifesteal    = 1.0,        // 100 % des Schadens heilt den Spieler
+            LevelRequired         = 1,
+            Rank                  = 1,
+            TalentUnlockOnly      = true,
+        },
+        new Ability
+        {
+            Id               = "Summon_Voidwalker_r1",
+            Name             = "Summon Voidwalker",
+            IconUrl          = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_summonvoidwalker.jpg",
+            CastTime         = 3.0,             // Beschwören bzw. Wiederbeleben
+            ManaCost         = 30,
+            SummonsPet       = PetKind.Voidwalker,
+            LevelRequired    = 1,
+            Rank             = 1,
+            TalentUnlockOnly = true,
+        },
+        new Ability
+        {
+            Id               = "Incinerate_r1",
+            Name             = "Incinerate",
+            IconUrl          = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_burnout.jpg",
+            Cooldown         = 10,
+            CastTime         = 2.5,
+            ManaCost         = 30,
+            Damage           = 24,              // deutlich mehr als Shadow Bolt, dafür Cooldown
+            LevelRequired    = 1,
+            Rank             = 1,
+            TalentUnlockOnly = true,
         },
     };
 }

@@ -45,7 +45,7 @@
                 else
                 {
                     <img class="race-portrait"
-                         src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                         src="@(_engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender))"
                          alt="" onerror="this.style.display='none'" />
                     <img class="class-badge"
                          src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
@@ -82,7 +82,7 @@
                 </div>
                 <div class="bar-row">
                     @{ int effectiveMaxMana = _engine.Player.Stats.MaxMana + _engine.Player.Buffs.BonusMaxMana; }
-                    <div class="mana-bar mana-bar-@(_engine.Player.ActiveClass.ToString().ToLowerInvariant())">
+                    <div class="mana-bar mana-bar-@(_engine.Player.Resource.ToString().ToLowerInvariant())">
                         <div class="mana-fill"
                              style="width: @(CalcPct(_engine.Player.CurrentMana, effectiveMaxMana))%"></div>
                         <span class="bar-text">@_engine.Player.CurrentMana / @effectiveMaxMana</span>
@@ -97,6 +97,18 @@
                 </div>
             </div>
         </div>
+
+            <!-- ═══ PET (Hunter-Pet / Warlock-Dämon) ═══ -->
+            @if (_engine.Pet is { } pet)
+            {
+                <div class="pet-row">
+                    <img class="pet-icon" src="@pet.Definition.IconUrl" alt="@pet.Definition.Name" onerror="this.style.visibility='hidden'" />
+                    <div class="hp-bar pet-hp">
+                        <div class="hp-fill" style="width: @(CalcPct(pet.CurrentHp, pet.MaxHp))%"></div>
+                        <span class="bar-text">@pet.Definition.Name · @pet.CurrentHp / @pet.MaxHp</span>
+                    </div>
+                </div>
+            }
 
             <!-- ═══ ACTIVE BUFFS ═══ -->
             @{ var buffs = _engine.Player.Buffs.Snapshot(); }
@@ -392,7 +404,7 @@
                         b.OpenElement(0, "div");
                         b.AddAttribute(1, "class", $"meter-row {(row.Kind == CombatActionKind.Heal ? "meter-heal" : "meter-dmg")}");
                         if (!isAutoAttack && rowAbility is null)
-                            b.AddAttribute(2, "title", $"{row.Name}: {row.Count} casts, max {row.Max}, avg {(row.Count > 0 ? row.Total / row.Count : 0)}");
+                            b.AddAttribute(2, "title", $"{row.Name}: {row.Count} {(row.Name == CombatMeter.SpiritRegenName ? "ticks" : "casts")}, max {row.Max}, avg {(row.Count > 0 ? row.Total / row.Count : 0)}");
                         b.OpenElement(3, "div");
                         b.AddAttribute(4, "class", "meter-fill");
                         b.AddAttribute(5, "style", $"width: {(row.Total * 100.0 / topTotal).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}%");
@@ -490,6 +502,16 @@
                 <input type="number" min="1" max="60" @bind="_debugTargetLevel" class="debug-level-input" />
                 <button class="wow-btn small" @onclick="SetDebugLevel">Set</button>
                 <span class="wow-muted">Current: <b>@_engine.Player.Level</b></span>
+            </div>
+            <div class="debug-level-row">
+                <span class="debug-speed-label">Quick:</span>
+                @foreach (var lvl in new[] { 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 })
+                {
+                    <button class="wow-tab @(_engine.Player.Level == lvl ? "active" : "")"
+                            @onclick="() => { _debugTargetLevel = lvl; SetDebugLevel(); }">
+                        @lvl
+                    </button>
+                }
             </div>
             @* *@
             @* <div class="debug-columns"> *@
@@ -847,6 +869,26 @@
         color: #9fd8ff;
     }
 
+    /* ── Pet-Leiste ── */
+    .pet-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .pet-icon {
+        width: 22px;
+        height: 22px;
+        border: 1px solid #5a4a28;
+        border-radius: 3px;
+    }
+
+    .hp-bar.pet-hp {
+        flex: 1;
+        height: 14px;
+    }
+
     /* ── Cast bar / GCD ── */
     .cast-row {
         display: flex;
@@ -942,11 +984,11 @@
         background: linear-gradient(180deg, #3a7fe0 0%, #1a3f9a 100%);
     }
 
-    .mana-bar-warrior .mana-fill {
+    .mana-bar-rage .mana-fill {
         background: linear-gradient(180deg, #e03a2a 0%, #8b1a1a 100%);
     }
 
-    .mana-bar-rogue .mana-fill {
+    .mana-bar-energy .mana-fill {
         background: linear-gradient(180deg, #ffe14a 0%, #c99a10 100%);
     }
 

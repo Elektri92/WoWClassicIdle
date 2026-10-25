@@ -17,6 +17,18 @@
     position: fixed;
     z-index: 1000;
     width: max-content;
+    font-family: 'Friz Quadrata', 'Segoe UI', Arial, sans-serif;
+    font-size: .8rem;
+    line-height: 1.35;
+    color: #fff;
+    text-align: left;
+    white-space: normal;
+    pointer-events: none;
+}
+
+/* Rahmen: einzelner Tooltip oder jedes Panel einer Vergleichsgruppe */
+.wow-tooltip:not(.tt-group),
+.tt-panel {
     max-width: 280px;
     padding: 7px 10px;
     flex-direction: column;
@@ -25,13 +37,36 @@
     border: 2px solid #8b8fa3;
     border-radius: 5px;
     box-shadow: 0 0 0 1px #000, 0 4px 14px rgba(0, 0, 0, .7);
-    font-family: 'Friz Quadrata', 'Segoe UI', Arial, sans-serif;
-    font-size: .8rem;
-    line-height: 1.35;
-    color: #fff;
-    text-align: left;
-    white-space: normal;
-    pointer-events: none;
+}
+
+/* Vergleich: gehovertes Item | ausgerüstetes Item | Stat-Differenzen – drei Panels nebeneinander */
+.wow-tooltip.tt-group {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.tt-panel {
+    display: flex;
+    width: max-content;
+}
+
+.tt-equipped-label {
+    margin-bottom: 2px;
+    color: #9d9d9d;
+    font-size: .72rem;
+}
+
+.tt-delta {
+    color: #9d9d9d;
+}
+
+.tt-delta-gain {
+    color: #1eff00;
+}
+
+.tt-delta-loss {
+    color: #ff4040;
 }
 
 .wow-tooltip.visible {

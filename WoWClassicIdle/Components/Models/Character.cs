@@ -105,7 +105,11 @@ public abstract class Character
         if (loadout.Class != CurrentClass) return;
         _loadout = loadout;
         InvalidateAbilityCache();
+        OnLoadoutChanged();
     }
+
+    /// <summary>Hook nach Loadout-Wechsel (z. B. Druiden-Gestalt ändert Ressource und Stats).</summary>
+    protected virtual void OnLoadoutChanged() { }
 
     
     protected Character(Stats stats)

@@ -22,10 +22,13 @@ public class Enemy
         CurrentHp = stats.MaxHp;
     }
 
-    public void TakeDamage(int amount)
+    /// <summary>Zieht Schaden ab und gibt den tatsächlich abgezogenen Wert zurück (ohne Overkill).</summary>
+    public int TakeDamage(int amount)
     {
-        CurrentHp = Math.Max(0, CurrentHp - amount);
+        int effective = Math.Min(amount, CurrentHp);
+        CurrentHp -= effective;
         DamageTaken?.Invoke(amount);
+        return effective;
     }
 
     // Setzt HP zurück (z. B. wenn Spieler stirbt und Rare erneut bekämpft wird)

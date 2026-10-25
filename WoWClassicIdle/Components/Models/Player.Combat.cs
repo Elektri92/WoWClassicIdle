@@ -13,8 +13,11 @@ namespace Models
             RecalculateStats();
         }
 
-        /// <summary>Gibt eine talentmodifizierte Kopie der Fähigkeit zurück (inkl. Manakosten).</summary>
-        public Ability GetEffectiveAbility(Ability ability)
+        /// <summary>Gibt eine talent- und gestaltmodifizierte Kopie der Fähigkeit zurück (inkl. Manakosten).</summary>
+        public Ability GetEffectiveAbility(Ability ability) =>
+            ApplyFormBonus(ApplyExtendedTalentBonus(GetTalentModifiedAbility(ability)));
+
+        private Ability GetTalentModifiedAbility(Ability ability)
         {
             if (ability.Id.StartsWith("Arcane_Intellect"))
             {
@@ -68,9 +71,8 @@ namespace Models
                 double dmgBonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.HeroicStrikeDamage);
                 int    costRed  = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.HeroicStrikeManaCost);
                 if (dmgBonus > 0 || costRed > 0)
-                    return ability with
+                    return ability.WithDamageBonus(dmgBonus) with
                     {
-                        Damage   = (int)Math.Round(ability.Damage * (1.0 + dmgBonus)),
                         ManaCost = Math.Max(0, ability.ManaCost - costRed),
                     };
             }
@@ -96,7 +98,7 @@ namespace Models
             {
                 double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.SinisterStrikeDamage);
                 if (bonus > 0)
-                    return ability with { Damage = (int)Math.Round(ability.Damage * (1.0 + bonus)) };
+                    return ability.WithDamageBonus(bonus);
             }
             if (ability.Id.StartsWith("Deadly_Poison"))
             {
@@ -181,11 +183,27 @@ namespace Models
                         ManaCost = Math.Max(0, ability.ManaCost - costRed),
                     };
             }
-            if (ability.Id.StartsWith("Rockbiter_Weapon"))
+            if (ability.Id.StartsWith("Lightning_Shield"))
             {
-                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.RockbiterDmgBonus);
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.LightningShieldDamage);
                 if (bonus > 0)
-                    return ability with { BuffWeaponDamageBonus = ability.BuffWeaponDamageBonus + bonus };
+                    return ability with { BuffRetaliationDamage = (int)Math.Round(ability.BuffRetaliationDamage * (1.0 + bonus)) };
+            }
+            if (ability.Id.StartsWith("Flame_Shock"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FlameShockDamage);
+                if (bonus > 0)
+                    return ability with
+                    {
+                        Damage          = (int)Math.Round(ability.Damage * (1.0 + bonus)),
+                        DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)),
+                    };
+            }
+            if (ability.Id.StartsWith("Healing_Wave"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.HealingWaveHealing);
+                if (bonus > 0)
+                    return ability with { Heal = (int)Math.Round(ability.Heal * (1.0 + bonus)) };
             }
             if (ability.Id.StartsWith("Earthbind_Totem"))
             {
@@ -199,12 +217,82 @@ namespace Models
                 if (red > 0)
                     return ability with { ManaCost = Math.Max(0, ability.ManaCost - red) };
             }
+            if (ability.Id.StartsWith("Moonfire"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.MoonfireDamage);
+                if (bonus > 0)
+                    return ability with
+                    {
+                        Damage          = (int)Math.Round(ability.Damage * (1.0 + bonus)),
+                        DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)),
+                    };
+            }
+            if (ability.Id.StartsWith("Maul"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.MaulDamage);
+                if (bonus > 0)
+                    return ability.WithDamageBonus(bonus);
+            }
+            if (ability.Id.StartsWith("Claw"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.ClawDamage);
+                if (bonus > 0)
+                    return ability.WithDamageBonus(bonus);
+            }
+            if (ability.Id.StartsWith("Smite"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.SmiteDamage);
+                if (bonus > 0)
+                    return ability with { Damage = (int)Math.Round(ability.Damage * (1.0 + bonus)) };
+            }
+            if (ability.Id.StartsWith("Power_Word_Fortitude"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.PowerWordFortitudeBonus);
+                if (bonus > 0)
+                    return ability with { BuffDamageTakenReduction = ability.BuffDamageTakenReduction + bonus };
+            }
+            if (ability.Id.StartsWith("Renew"))
+            {
+                double healBonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.RenewHealing);
+                double costPct   = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.RenewManaCost);
+                if (healBonus > 0 || costPct > 0)
+                    return ability with
+                    {
+                        HotTotalHeal = (int)Math.Round(ability.HotTotalHeal * (1.0 + healBonus)),
+                        ManaCost     = Math.Max(0, (int)Math.Round(ability.ManaCost * (1.0 - costPct))),
+                    };
+            }
+            if (ability.Id.StartsWith("Mind_Blast"))
+            {
+                double pct = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.MindBlastManaCost);
+                if (pct > 0)
+                    return ability with { ManaCost = Math.Max(0, (int)Math.Round(ability.ManaCost * (1.0 - pct))) };
+            }
+            if (ability.Id.StartsWith("Drain_Mana"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.DrainManaBonus);
+                if (bonus > 0)
+                    return ability with { MotManaRestorePct = ability.MotManaRestorePct * (1.0 + bonus) };
+            }
+            if (ability.Id.StartsWith("Regrowth"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.RegrowthHealing);
+                if (bonus > 0)
+                    return ability with
+                    {
+                        Heal         = (int)Math.Round(ability.Heal * (1.0 + bonus)),
+                        HotTotalHeal = (int)Math.Round(ability.HotTotalHeal * (1.0 + bonus)),
+                    };
+            }
             return ability;
         }
 
-        /// <summary>Effektive Manakosten einer Fähigkeit nach Talent-Reduktionen.</summary>
-        public int GetEffectiveManaCost(Ability ability)
+        /// <summary>Manakosten nach den Kosten-Talenten der ersten Reihe (bzw. Rage/Energie der aktiven Gestalt).</summary>
+        private int GetTalentManaCost(Ability ability)
         {
+            // Gestalt-spezifische Kosten (z. B. Rejuvenation in Bear Form → Rage) ersetzen die Manakosten
+            if (ability.FormCosts.TryGetValue(ActiveForm, out int formCost))
+                return formCost;
             if (ability.Id.StartsWith("Fireball"))
             {
                 int reduction = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FireballManaCost);
@@ -260,6 +348,16 @@ namespace Models
                 int red = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.WrathManaCost);
                 return Math.Max(0, ability.ManaCost - red);
             }
+            if (ability.Id.StartsWith("Renew"))
+            {
+                double pct = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.RenewManaCost);
+                return Math.Max(0, (int)Math.Round(ability.ManaCost * (1.0 - pct)));
+            }
+            if (ability.Id.StartsWith("Mind_Blast"))
+            {
+                double pct = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.MindBlastManaCost);
+                return Math.Max(0, (int)Math.Round(ability.ManaCost * (1.0 - pct)));
+            }
             return ability.ManaCost;
         }
 
@@ -267,10 +365,10 @@ namespace Models
         public double GetAbilityCritBonus(Ability ability)
         {
             if (ability.Id.StartsWith("Fireball"))
-                return TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FireballCrit);
+                return ability.BonusCritChance + TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FireballCrit);
             if (ability.Id.StartsWith("Frostbolt"))
-                return TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FrostboltCrit);
-            return 0;
+                return ability.BonusCritChance + TalentState.GetTotalBonus(ActiveClass, TalentEffectType.FrostboltCrit);
+            return ability.BonusCritChance;
         }
 
         private void RecalculateStats()
@@ -289,6 +387,7 @@ namespace Models
             double autoAtkSpeedBonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.AutoAttackSpeed);
             double damageTakenRed    = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.DamageTaken);
             double healingBonus      = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.HealingBonus);
+            double spiritRegenBonus  = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.SpiritManaRegen);
 
             // Rüstungs- und Waffen-Boni aller ausgerüsteten Teile aufaddieren
             var armorBonus = PrimaryStats.Zero;
@@ -299,24 +398,36 @@ namespace Models
 
             var augPrimary = baseStats.Primary + armorBonus;
 
-            Stats = baseStats with
+            // Nahkampf-Formeln: Druiden-Gestalten skalieren wie Schurke (Katze) bzw. Krieger (Bär)
+            var meleeClass = MeleeScalingClass;
+
+            Stats = ApplyFormStats(baseStats with
             {
                 CopperReward               = old.CopperReward,
                 XpReward                   = old.XpReward,
-                CritChance                 = baseStats.CritChance + talentCrit,
-                AutoAttackDamageMultiplier = baseStats.AutoAttackDamageMultiplier * (1.0 + autoAtkBonus),
-                AttackSpeedBonus           = baseStats.AttackSpeedBonus + autoAtkSpeedBonus,
+                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit,
+                MeleeDamageMultiplier      = StatScaling.MeleeDamageMultiplier(meleeClass),
+                AutoAttackDamageMultiplier = StatScaling.AutoAttackDamageMultiplier(meleeClass) * (1.0 + autoAtkBonus),
+                AttackSpeedBonus           = StatScaling.AttackSpeedBonus(meleeClass) + autoAtkSpeedBonus,
                 DamageTakenReduction       = Math.Clamp(damageTakenRed, 0, 0.99),
                 HealingMultiplier          = 1.0 + healingBonus,
                 Primary                    = augPrimary,
-                MaxHp                      = baseStats.MaxHp   + StatScaling.BonusHp(armorBonus),
+                MaxHp                      = baseStats.MaxHp   + StatScaling.BonusHp(armorBonus) + StaminaTalentHp(augPrimary),
                 MaxMana                    = baseStats.MaxMana  + StatScaling.BonusMana(ActiveClass, armorBonus),
-                ManaRegenPer5              = StatScaling.ManaRegenPer5(ActiveClass, augPrimary),
-                AttackPower                = StatScaling.AttackPower(ActiveClass, level, augPrimary),
-            };
+                ManaRegenPer5              = ManaRegenWithSpiritBonus(StatScaling.ManaRegenPer5(ActiveClass, augPrimary), spiritRegenBonus),
+                HpRegenPer5                = StatScaling.HpRegenPer5(meleeClass, augPrimary),
+                AttackPower                = StatScaling.AttackPower(meleeClass, level, augPrimary),
+            });
 
             CurrentHp = Stats.MaxHp;
-            CurrentMana = ActiveClass == CharacterClass.Warrior ? 0 : Stats.MaxMana;
+            CurrentMana = StartingResource;
+        }
+
+        /// <summary>Erhöht nur den Spirit-Anteil der Manaregeneration (Basiswert bleibt), z. B. Restoration Mana.</summary>
+        private static int ManaRegenWithSpiritBonus(int regen, double bonus)
+        {
+            int spiritPart = Math.Max(0, regen - StatScaling.BaseManaRegenPer5);
+            return regen + (int)Math.Round(spiritPart * bonus);
         }
     }
 }

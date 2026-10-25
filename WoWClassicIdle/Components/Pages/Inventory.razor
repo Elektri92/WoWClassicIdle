@@ -9,6 +9,7 @@
 <div class="wow-page inventory-page">
     <h2>Inventory</h2>
     <p class="wow-hint">Your equipment and character stats.</p>
+    <p class="wow-hint">@BagUnlockHint</p>
 
     <div class="inventory-layout">
     <div class="wow-card char-pane">
@@ -16,7 +17,7 @@
         <div class="pane-header">
             <div class="portrait-area">
                 <img class="race-portrait"
-                     src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                     src="@(_engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender))"
                      alt="" onerror="this.style.display='none'" />
                 <img class="class-badge"
                      src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
@@ -54,7 +55,7 @@
 
             <div class="model-area">
                 <img class="model-portrait"
-                     src="@IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender)"
+                     src="@(_engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender))"
                      alt="" onerror="this.style.display='none'" />
             </div>
 
@@ -101,10 +102,10 @@
         <!-- ═══ STATS ═══ -->
         <div class="stats-area">
             <div class="wow-inset stat-box">
-                <StatTooltip StatName="Strength" Description="@StrengthTooltip(_engine.Player.ActiveClass)" IsUseless="@IsStrengthUseless(_engine.Player.ActiveClass)">
+                <StatTooltip StatName="Strength" Description="@StrengthTooltip(_engine.Player.MeleeScalingClass)" IsUseless="@IsStrengthUseless(_engine.Player.MeleeScalingClass)">
                     <div class="wow-stat-row"><span>Strength:</span><span>@Primary.Strength</span></div>
                 </StatTooltip>
-                <StatTooltip StatName="Agility" Description="@AgilityTooltip(_engine.Player.ActiveClass)" IsUseless="@IsAgilityUseless(_engine.Player.ActiveClass)">
+                <StatTooltip StatName="Agility" Description="@AgilityTooltip(_engine.Player.MeleeScalingClass)" IsUseless="@IsAgilityUseless(_engine.Player.MeleeScalingClass)">
                     <div class="wow-stat-row"><span>Agility:</span><span>@Primary.Agility</span></div>
                 </StatTooltip>
                 <StatTooltip StatName="Stamina" Description="@StaminaTooltip()">
@@ -113,7 +114,7 @@
                 <StatTooltip StatName="Intellect" Description="@IntellectTooltip(_engine.Player.ActiveClass)" IsUseless="@(!StatScaling.UsesMana(_engine.Player.ActiveClass))">
                     <div class="wow-stat-row"><span>Intellect:</span><span>@Primary.Intelligence</span></div>
                 </StatTooltip>
-                <StatTooltip StatName="Spirit" Description="@SpiritTooltip(_engine.Player.ActiveClass)" IsUseless="@(!StatScaling.UsesMana(_engine.Player.ActiveClass))">
+                <StatTooltip StatName="Spirit" Description="@SpiritTooltip(_engine.Player.ActiveClass)">
                     <div class="wow-stat-row"><span>Spirit:</span><span>@Primary.Spirit</span></div>
                 </StatTooltip>
             </div>
@@ -124,6 +125,9 @@
                 {
                     <div class="wow-stat-row"><span>Mana / 5s:</span><span>@_engine.Player.Stats.ManaRegenPer5</span></div>
                 }
+                <div class="wow-stat-row" title="Passive health regeneration from Spirit">
+                    <span>Health / 5s:</span><span>@_engine.Player.Stats.HpRegenPer5</span>
+                </div>
                 <div class="wow-stat-row"><span>Weapon Dmg:</span><span>@_engine.Player.Stats.WeaponMinDamage–@_engine.Player.Stats.WeaponMaxDamage</span></div>
                 <div class="wow-stat-row"><span>Attack Power:</span><span>@_engine.Player.Stats.AttackPower</span></div>
                 <div class="wow-stat-row"><span>Armor:</span><span>@_engine.Player.Stats.Defense</span></div>
@@ -149,12 +153,14 @@
             if (bag is null)
             {
                 var unlockLevel = Models.Inventory.BagUnlockLevels[bagIndex];
-                var lockedTitle = _engine.Player.Level < unlockLevel
-                    ? $"Bag Slot {bagIndex + 1}: Unlocks at level {unlockLevel}"
-                    : $"Bag Slot {bagIndex + 1} (empty)";
-                <div class="bar-slot empty bag-locked" title="@lockedTitle">
-                    <img src="@EmptyBagSlotIconUrl" alt="" onerror="this.style.display='none'" />
-                </div>
+                var lockedText = _engine.Player.Level < unlockLevel
+                    ? $"Unlocks at level {unlockLevel}."
+                    : "Empty.";
+                <StatTooltip StatName="@($"Bag Slot {bagIndex + 1}")" Description="@lockedText">
+                    <div class="bar-slot empty bag-locked">
+                        <img src="@EmptyBagSlotIconUrl" alt="" onerror="this.style.display='none'" />
+                    </div>
+                </StatTooltip>
             }
             else
             {
@@ -236,7 +242,8 @@
                             string? bagHint = levelLocked ? null : EquipHint;
                             if (armorItem is not null)
                             {
-                            <ArmorTooltip Armor="armorItem" Class="tt-contents" Hint="@bagHint" RequirementsMet="@(!levelLocked)">
+                            <ArmorTooltip Armor="armorItem" Class="tt-contents" Hint="@bagHint" RequirementsMet="@(!levelLocked)"
+                                          Compare="@EquippedArmorFor(armorItem)">
                                 <div class="@slotCss"
                                      style="--quality: @ItemQualityColors.Hex(stack.Item.Quality)"
                                      draggable="true"
@@ -254,7 +261,8 @@
                             }
                             else
                             {
-                            <WeaponTooltip Weapon="weaponItem" Class="tt-contents" Hint="@bagHint" RequirementsMet="@(!levelLocked)">
+                            <WeaponTooltip Weapon="weaponItem" Class="tt-contents" Hint="@bagHint" RequirementsMet="@(!levelLocked)"
+                                           Compare="@(weaponItem is not null ? _engine.Player.EquippedWeapon : null)">
                                 <div class="@slotCss"
                                      title="@(weaponItem is not null ? null : stack.Item.Name)"
                                      style="--quality: @ItemQualityColors.Hex(stack.Item.Quality)"
@@ -901,12 +909,7 @@
 
     private PrimaryStats Primary => _engine.Player.Stats.Primary;
 
-    private string ResourceName => _engine.Player.ActiveClass switch
-    {
-        CharacterClass.Warrior => "Rage",
-        CharacterClass.Rogue   => "Energy",
-        _                      => "Mana",
-    };
+    private string ResourceName => ShapeshiftForms.ResourceName(_engine.Player.Resource);
 
     /// <summary>Anteil als Prozentwert, z. B. 0.05 → "5.0%".</summary>
     private static string FormatPercent(double fraction) =>
@@ -948,15 +951,24 @@
             ? $"+{StatScaling.ManaPerIntelligence} maximum Mana per point."
             : "No benefit for this class (does not use Mana).";
 
-    private static string SpiritTooltip(CharacterClass cls) =>
-        StatScaling.UsesMana(cls)
-            ? $"+{StatScaling.ManaRegenPerSpiritStep} Mana per 5s for every {StatScaling.SpiritPerManaRegen} points of Spirit."
-            : "No benefit for this class (does not use Mana).";
+    private static string SpiritTooltip(CharacterClass cls)
+    {
+        // HP-Regeneration gilt für alle Klassen, Mana-Regeneration nur für Mana-Nutzer
+        string hpPart = $"+{StatScaling.HpRegenPerSpiritStep} Health per 5s for every {StatScaling.SpiritPerHpRegen} points of Spirit.";
+        return StatScaling.UsesMana(cls)
+            ? $"+{StatScaling.ManaRegenPerSpiritStep} Mana per 5s for every {StatScaling.SpiritPerManaRegen} points of Spirit. {hpPart}"
+            : hpPart;
+    }
 
     private static string SlotIconUrl(string icon) =>
         $"https://wow.zamimg.com/images/wow/icons/large/inventoryslot_{icon}.jpg";
 
     private static readonly string EmptyBagSlotIconUrl = SlotIconUrl("bag");
+
+    // Erklärtext zu Taschenplätzen – aus den Konstanten erzeugt, damit er bei Balancing-Änderungen stimmt
+    private static readonly string BagUnlockHint =
+        $"Bag slots unlock at levels {string.Join(", ", Models.Inventory.BagUnlockLevels[..^1])} and {Models.Inventory.BagUnlockLevels[^1]}. " +
+        $"Every bag has {Models.Inventory.BaseBagSlotSize} slots, plus one more for every 5 character levels.";
 
     // ─── Paperdoll-Slots ───
 
@@ -965,6 +977,10 @@
         slot.Armor is { } armor && _engine.Player.EquippedArmor.TryGetValue(armor, out var item)
             ? item
             : null;
+
+    /// <summary>Im Slot des Bag-Items getragenes Teil – Vergleichsziel für den Tooltip.</summary>
+    private ArmorItem? EquippedArmorFor(ArmorItem item) =>
+        _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var equipped) ? equipped : null;
 
     private static string SlotImage(EquipSlot slot, ArmorItem? gear) =>
         gear?.IconUrl ?? SlotIconUrl(slot.Icon);

@@ -189,8 +189,10 @@ public partial class IdleFighter
             {
                 loadout.EquippedAbilityIds.Add(n.Ability.Id);
             }
+            // Gestalt-Regeln: in Bear/Cat keine Mana-Zauber, Maul/Claw nur in ihrer Form
+            ShapeshiftForms.PurgeIncompatible(loadout);
             _loadoutService.SaveLoadout(loadout);
-            _engine.Player.ApplyLoadout(loadout);
+            _engine.ApplyLoadout(loadout);
         }
         lock (_abilityNotifications)
             _abilityNotifications.RemoveAll(x => x.Id == n.Id);

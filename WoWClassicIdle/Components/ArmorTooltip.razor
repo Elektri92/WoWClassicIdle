@@ -1,6 +1,7 @@
 @using Models
 
 @* Umschließt den Inhalt und zeigt beim Überfahren einen WoW-Tooltip für ein Rüstungsteil.
+   Mit Compare werden daneben das ausgerüstete Teil und ein Panel mit den Stat-Differenzen angezeigt.
    Positionierung über js/tooltip.js (position: fixed). *@
 @if (Armor is null)
 {
@@ -8,27 +9,37 @@
 }
 else
 {
-    string nameColor = ItemQualityColors.Hex(Armor.Quality);
-
     <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
         @ChildContent
-        <span class="wow-tooltip" role="tooltip">
-            <span class="tt-name" style="color: @nameColor">@Armor.Name</span>
-            <span class="tt-subtype">@ArmorSlots.Label(Armor.Slot)</span>
-            @foreach (var line in Armor.Bonuses.DescribeBonuses())
-            {
-                <span class="tt-stat">@line</span>
-            }
-            <span class="tt-quality">@Armor.Quality</span>
-            @if (Armor.RequiredLevel > 1)
-            {
-                <span class="tt-req-level @(RequirementsMet ? "" : "tt-req-blocked")">Requires level @Armor.RequiredLevel</span>
-            }
-            @if (!string.IsNullOrEmpty(Hint))
-            {
-                <span class="tt-hint">@Hint</span>
-            }
-        </span>
+        @if (Compare is null)
+        {
+            <span class="wow-tooltip" role="tooltip">
+                @Body(Armor, RequirementsMet, Hint)
+            </span>
+        }
+        else
+        {
+            var deltas = ItemComparison.Compare(Armor, Compare);
+            <span class="wow-tooltip tt-group" role="tooltip">
+                <span class="tt-panel">
+                    @Body(Armor, RequirementsMet, Hint)
+                </span>
+                <span class="tt-panel">
+                    <span class="tt-equipped-label">Currently Equipped</span>
+                    @Body(Compare, true, null)
+                </span>
+                <span class="tt-panel">
+                    @if (deltas.Count == 0)
+                    {
+                        <span class="tt-delta">No changes</span>
+                    }
+                    @foreach (var delta in deltas)
+                    {
+                        <span class="tt-delta @(delta.IsGain ? "tt-delta-gain" : "tt-delta-loss")">@delta.Text</span>
+                    }
+                </span>
+            </span>
+        }
     </span>
 }
 
@@ -40,4 +51,26 @@ else
 
     /// <summary>Erfüllt der Charakter die Levelvoraussetzung (färbt die Zeile rot wenn nicht).</summary>
     [Parameter] public bool RequirementsMet { get; set; } = true;
+
+    /// <summary>Aktuell ausgerüstetes Teil im selben Slot – wird als Vergleich daneben angezeigt.</summary>
+    [Parameter] public ArmorItem? Compare { get; set; }
+
+    // Tooltip-Inhalt eines Rüstungsteils (für Haupt- und Vergleichs-Panel)
+    private static RenderFragment Body(ArmorItem armor, bool requirementsMet, string? hint) => @<text>
+        <span class="tt-name" style="color: @ItemQualityColors.Hex(armor.Quality)">@armor.Name</span>
+        <span class="tt-subtype">@ArmorSlots.Label(armor.Slot)</span>
+        @foreach (var line in armor.Bonuses.DescribeBonuses())
+        {
+            <span class="tt-stat">@line</span>
+        }
+        <span class="tt-quality">@armor.Quality</span>
+        @if (armor.RequiredLevel > 1)
+        {
+            <span class="tt-req-level @(requirementsMet ? "" : "tt-req-blocked")">Requires level @armor.RequiredLevel</span>
+        }
+        @if (!string.IsNullOrEmpty(hint))
+        {
+            <span class="tt-hint">@hint</span>
+        }
+    </text>;
 }

@@ -47,15 +47,27 @@ public partial class IdleGameEngine
         if (ok)
         {
             TickUpdated?.Invoke();
-            // Talent-freigeschaltete Abilities (z. B. Warrior-Stances) dem Spieler mitteilen
-            if (!string.IsNullOrEmpty(talent.GrantsAbilityId))
+            // Talent-freigeschaltete Abilities (z. B. Warrior-Stances, Druiden-Gestalten) dem Spieler mitteilen
+            foreach (var abilityId in talent.GrantedAbilityIds)
             {
-                var granted = ClassAbilityRegistry.FindById(talent.GrantsAbilityId);
+                var granted = ClassAbilityRegistry.FindById(abilityId);
                 if (granted is not null)
                     AbilityUnlocked?.Invoke(granted);
             }
         }
         return ok;
+    }
+
+    /// <summary>
+    /// Übernimmt ein geändertes Loadout in den laufenden Kampf (thread-sicher).
+    /// Druiden-Gestalten wechseln dabei Ressource und Stats.
+    /// </summary>
+    public void ApplyLoadout(ClassLoadout loadout)
+    {
+        lock (_simLock)
+        {
+            Player.ApplyLoadout(loadout);
+        }
     }
 
     /// <summary>Setzt alle Talente der aktiven Klasse zurück (Respek).</summary>

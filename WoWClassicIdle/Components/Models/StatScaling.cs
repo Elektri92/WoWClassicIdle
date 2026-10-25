@@ -11,6 +11,8 @@ namespace Models
         public const int SpiritPerManaRegen      = 5;
         public const int ManaRegenPerSpiritStep  = 2;   // +2 Mana / 5s je 5 Spirit
         public const int BaseManaRegenPer5       = 3;
+        public const int SpiritPerHpRegen        = 5;
+        public const int HpRegenPerSpiritStep    = 1;   // +1 HP / 5s je 5 Spirit (alle Klassen)
 
         /// <summary>Kritische Trefferchance, die jede Klasse ohne Ausrüstung mitbringt (5 %).</summary>
         public const double DefaultCritChance       = 0.05;
@@ -22,6 +24,17 @@ namespace Models
         public static bool UsesMana(CharacterClass cls) =>
             cls is not (CharacterClass.Warrior or CharacterClass.Rogue);
 
+        /// <summary>
+        /// Klasse, nach deren Formeln Nahkampf-Werte skalieren (AP, Nahkampf-/Auto-Attack-Faktor,
+        /// HP-Regeneration, Crit, Angriffstempo): Druiden in Katzengestalt wie Schurken, in Bärengestalt wie Krieger.
+        /// </summary>
+        public static CharacterClass MeleeScalingClass(CharacterClass cls, DruidForm form) => (cls, form) switch
+        {
+            (CharacterClass.Druid, DruidForm.Cat)  => CharacterClass.Rogue,
+            (CharacterClass.Druid, DruidForm.Bear) => CharacterClass.Warrior,
+            _                                      => cls,
+        };
+
         public static int BonusHp(PrimaryStats p) => p.Stamina * HpPerStamina;
 
         public static int BonusMana(CharacterClass cls, PrimaryStats p) =>
@@ -29,6 +42,25 @@ namespace Models
 
         public static int ManaRegenPer5(CharacterClass cls, PrimaryStats p) =>
             UsesMana(cls) ? BaseManaRegenPer5 + p.Spirit * ManaRegenPerSpiritStep / SpiritPerManaRegen : 0;
+
+        /// <summary>
+        /// Passive HP-Regeneration alle 5 Sekunden aus Spirit – wirkt für jede Klasse,
+        /// skaliert mit <see cref="HpRegenClassFactor"/>.
+        /// </summary>
+        public static int HpRegenPer5(CharacterClass cls, PrimaryStats p) =>
+            (int)Math.Round(p.Spirit * HpRegenPerSpiritStep / (double)SpiritPerHpRegen * HpRegenClassFactor(cls));
+
+        /// <summary>
+        /// Wie in Classic: Klassen ohne eigene Heilung regenerieren pro Spirit deutlich mehr HP,
+        /// Stoffträger mit Heilzaubern weniger.
+        /// </summary>
+        public static double HpRegenClassFactor(CharacterClass cls) => cls switch
+        {
+            CharacterClass.Warrior or CharacterClass.Rogue or CharacterClass.Hunter    => 1.5,
+            CharacterClass.Shaman                                                      => 0.8,   // bis Lv 18 kein eigener Heal
+            CharacterClass.Paladin or CharacterClass.Druid                             => 0.6,   // Spirit-Loot + eigene Heilung
+            _                                                                          => 0.75,  // Mage, Priest, Warlock
+        };
 
         /// <summary>
         /// Nahkampf-Angriffskraft nach WoW-Classic-Formeln. 14 AP = +1 DPS auf Auto-Attacks.

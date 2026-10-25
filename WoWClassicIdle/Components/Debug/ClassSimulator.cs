@@ -21,7 +21,12 @@ public sealed record SimulationResult(
     Stats Stats,
     IReadOnlyList<MeterRow> Breakdown,
     WeaponItem? EquippedWeapon,
-    IReadOnlyDictionary<ArmorSlot, ArmorItem> EquippedArmor)
+    IReadOnlyDictionary<ArmorSlot, ArmorItem> EquippedArmor,
+    int SpecIndex,
+    string SpecName,
+    string TalentSummary,
+    IReadOnlyList<string> LoadoutIds,
+    IReadOnlyList<TalentPick> TalentPicks)
 {
     private double Hours => SimSeconds / 3600.0;
 
@@ -54,6 +59,12 @@ public sealed record SimulationSettings(
     double MinutesPerRun,
     IReadOnlyList<CharacterClass> Classes);
 
+/// <summary>
+/// Simulierte Spec-Variante: Talentbaum plus optional festgelegte Druiden-Gestalt.
+/// <see cref="Index"/> ist eindeutig pro Klasse (Druide: 4 Varianten), <see cref="TreeIndex"/> der Talentbaum.
+/// </summary>
+public sealed record SimSpec(int Index, int TreeIndex, string Name, DruidForm? Form = null);
+
 /// <summary>Zeitpunkt, zu dem ein Level während eines Leveling-Laufs erreicht wurde.</summary>
 public sealed record LevelTiming(int Level, double SimSecondsToReach);
 
@@ -83,7 +94,8 @@ public sealed record LevelingResult(
     WeaponItem? FinalWeapon,
     IReadOnlyDictionary<ArmorSlot, ArmorItem> FinalArmor,
     int SpecIndex,
-    string SpecName)
+    string SpecName,
+    IReadOnlyList<TalentPick> TalentPicks)
 {
     public bool ReachedTarget => FinalLevel >= LevelTo;
 
@@ -111,70 +123,98 @@ public sealed record LevelingResult(
 /// </summary>
 public static class ClassSimulator
 {
-    /// <summary>Anzahl der Benchmark-Läufe für die gegebenen Einstellungen.</summary>
+    /// <summary>
+    /// Zu simulierende Spec-Varianten einer Klasse: je Talentbaum eine,
+    /// beim Druiden wird Feral zusätzlich in Bär und Katze aufgeteilt (4 Varianten).
+    /// </summary>
+    public static IReadOnlyList<SimSpec> SpecsFor(CharacterClass cls)
+    {
+        var trees = TalentRegistry.GetTreeNames(cls);
+        if (cls == CharacterClass.Druid)
+            return
+            [
+                new(0, 0, trees[0]),
+                new(1, 1, $"{trees[1]} (Bear)", DruidForm.Bear),
+                new(2, 1, $"{trees[1]} (Cat)",  DruidForm.Cat),
+                new(3, 2, trees[2]),
+            ];
+        return Enumerable.Range(0, 3).Select(i => new SimSpec(i, i, trees[i])).ToList();
+    }
+
+    /// <summary>Anzahl der Benchmark-Läufe für die gegebenen Einstellungen (alle Specs je Klasse und Level).</summary>
     public static int RunCount(SimulationSettings s) =>
-        s.Classes.Count * Math.Max(0, s.LevelTo - s.LevelFrom + 1);
+        s.Classes.Sum(c => SpecsFor(c).Count) * Math.Max(0, s.LevelTo - s.LevelFrom + 1);
 
-    /// <summary>Anzahl der Leveling-Läufe (3 Specs je Klasse).</summary>
-    public static int LevelingRunCount(SimulationSettings s) => s.Classes.Count * 3;
+    /// <summary>Anzahl der Leveling-Läufe (alle Specs je Klasse).</summary>
+    public static int LevelingRunCount(SimulationSettings s) => s.Classes.Sum(c => SpecsFor(c).Count);
 
+    /// <summary>Lesbares Label eines Leveling-Laufs (für die Fortschrittsanzeige).</summary>
+    public static string LevelingLabel(CharacterClass cls, string specName) => $"{cls} · {specName}";
+
+    // Jeder Lauf hat eine eigene Engine (eigener RNG, eigener Zustand); die statischen Registries
+    // werden nur in statischen Konstruktoren befüllt → Läufe können gefahrlos parallel laufen.
+    private static ParallelOptions ParallelOpts(CancellationToken ct) => new()
+    {
+        CancellationToken      = ct,
+        MaxDegreeOfParallelism = Environment.ProcessorCount,
+    };
+
+    /// <summary>Alle Benchmark-Läufe (Klasse × Spec × Level) parallel. Callbacks feuern auf Worker-Threads.</summary>
     public static async Task<IReadOnlyList<SimulationResult>> RunAllAsync(
         SimulationSettings settings,
         Action<SimulationResult>? onResult = null,
         CancellationToken ct = default)
     {
-        var results = new List<SimulationResult>();
+        var jobs = settings.Classes
+            .SelectMany(cls => SpecsFor(cls)
+                .SelectMany(spec => Enumerable.Range(settings.LevelFrom, Math.Max(0, settings.LevelTo - settings.LevelFrom + 1))
+                    .Select(level => (Class: cls, Spec: spec, Level: level))))
+            .ToList();
+        var results = new SimulationResult[jobs.Count];
 
-        await Task.Run(() =>
+        await Task.Run(() => Parallel.For(0, jobs.Count, ParallelOpts(ct), i =>
         {
-            foreach (var cls in settings.Classes)
-            {
-                for (int level = settings.LevelFrom; level <= settings.LevelTo; level++)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    var result = Run(cls, level, settings.MinutesPerRun, ct);
-                    results.Add(result);
-                    onResult?.Invoke(result);
-                }
-            }
-        }, ct);
+            var result = Run(jobs[i].Class, jobs[i].Level, settings.MinutesPerRun, jobs[i].Spec, ct);
+            results[i] = result;
+            onResult?.Invoke(result);
+        }), ct);
 
         return results;
     }
 
+    /// <summary>Alle Leveling-Läufe (Klasse × Spec) parallel. Callbacks feuern auf Worker-Threads.</summary>
     public static async Task<IReadOnlyList<LevelingResult>> RunAllLevelingAsync(
         SimulationSettings settings,
         Action<LevelingResult>? onResult = null,
         Action<string>? onStart = null,
         CancellationToken ct = default)
     {
-        var results = new List<LevelingResult>();
+        var jobs = settings.Classes
+            .SelectMany(cls => SpecsFor(cls).Select(spec => (Class: cls, Spec: spec)))
+            .ToList();
+        var results = new LevelingResult[jobs.Count];
 
-        await Task.Run(() =>
+        await Task.Run(() => Parallel.For(0, jobs.Count, ParallelOpts(ct), i =>
         {
-            foreach (var cls in settings.Classes)
-            {
-                var treeNames = TalentRegistry.GetTreeNames(cls);
-                for (int specIdx = 0; specIdx < 3; specIdx++)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    onStart?.Invoke($"{cls} · {treeNames[specIdx]}");
-                    var result = RunLeveling(cls, settings.LevelFrom, settings.LevelTo, settings.MinutesPerRun, specIdx, ct);
-                    results.Add(result);
-                    onResult?.Invoke(result);
-                }
-            }
-        }, ct);
+            var (cls, spec) = jobs[i];
+            onStart?.Invoke(LevelingLabel(cls, spec.Name));
+            var result = RunLeveling(cls, settings.LevelFrom, settings.LevelTo, settings.MinutesPerRun, spec, ct);
+            results[i] = result;
+            onResult?.Invoke(result);
+        }), ct);
 
         return results;
     }
 
     /// <summary>
     /// Benchmark-Lauf: Level wird eingefroren, XP wird gezählt aber nicht angerechnet.
-    /// Loadout und Talente werden automatisch für das gegebene Level gewählt.
+    /// Talente werden komplett in den Baum von <paramref name="spec"/> investiert; der Loadout
+    /// bevorzugt die dadurch freigeschalteten Talent-Abilities und spec-passende Fähigkeiten.
     /// </summary>
-    public static SimulationResult Run(CharacterClass cls, int level, double minutes, CancellationToken ct = default)
+    public static SimulationResult Run(CharacterClass cls, int level, double minutes, SimSpec spec, CancellationToken ct = default)
     {
+        int specIndex = spec.TreeIndex;
+
         var race    = RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key;
         var faction = RaceClassInfo.RaceToFaction[race];
 
@@ -186,11 +226,20 @@ public static class ClassSimulator
         progress.SetLevel(level);
         player.SetActiveClass(cls);
 
+        // Ausrüstung und Start-Loadout zuerst – Talente werden damit per Probe-Kampf gemessen
+        SimStarterGear.Equip(player, cls, specIndex, level, spec.Form);
         var loadout = new ClassLoadout { Class = cls };
-        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, level);
+        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, level, specIndex, new HashSet<string>());
         player.ApplyLoadout(loadout);
-        AutoInvestTalents(player, cls);
-        SimStarterGear.Equip(player, cls, specIndex: 0, level);
+        var talentPicks = AutoInvestTalentsForSpec(player, cls, spec, ct);
+
+        // Loadout (inkl. Talent-Fähigkeiten) per Probe-Kämpfen auf maximalen Schaden optimieren
+        loadout = new ClassLoadout
+        {
+            Class              = cls,
+            EquippedAbilityIds = SimLoadoutOptimizer.Optimize(player, player.GetCurrentLoadout().EquippedAbilityIds, ct),
+        };
+        player.ApplyLoadout(loadout);
 
         engine.Meter.Reset();
         engine.CurrentEnemy = null;
@@ -249,7 +298,12 @@ public static class ClassSimulator
             Stats: player.Stats,
             Breakdown: meter.Rows,
             EquippedWeapon: player.EquippedWeapon,
-            EquippedArmor: new Dictionary<ArmorSlot, ArmorItem>(player.EquippedArmor));
+            EquippedArmor: new Dictionary<ArmorSlot, ArmorItem>(player.EquippedArmor),
+            SpecIndex: spec.Index,
+            SpecName: spec.Name,
+            TalentSummary: BuildTalentSummary(player, cls),
+            LoadoutIds: player.GetCurrentLoadout().EquippedAbilityIds.ToList(),
+            TalentPicks: talentPicks);
     }
 
     /// <summary>
@@ -257,10 +311,9 @@ public static class ClassSimulator
     /// Loadout und Talente werden nach jedem Level-Up automatisch aktualisiert.
     /// Stoppt sobald <paramref name="levelTo"/> erreicht wird oder <paramref name="maxMinutes"/> verstrichen sind.
     /// </summary>
-    public static LevelingResult RunLeveling(CharacterClass cls, int levelFrom, int levelTo, double maxMinutes, int specIndex, CancellationToken ct = default)
+    public static LevelingResult RunLeveling(CharacterClass cls, int levelFrom, int levelTo, double maxMinutes, SimSpec spec, CancellationToken ct = default)
     {
-        var treeNames = TalentRegistry.GetTreeNames(cls);
-        var specName  = treeNames[specIndex];
+        int specIndex = spec.TreeIndex;
 
         var race    = RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key;
         var faction = RaceClassInfo.RaceToFaction[race];
@@ -273,12 +326,18 @@ public static class ClassSimulator
         progress.SetLevel(levelFrom);
         player.SetActiveClass(cls);
 
-        AutoInvestTalentsForSpec(player, cls, specIndex);
+        // Ausrüstung und Start-Loadout zuerst – Talente werden damit per Probe-Kampf gemessen
+        SimStarterGear.Equip(player, cls, specIndex, levelFrom, spec.Form);
         var loadout = new ClassLoadout { Class = cls };
-        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(
-            cls, levelFrom, specIndex, GetUnlockedTalentAbilityIds(player, cls));
+        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, levelFrom, specIndex, new HashSet<string>());
         player.ApplyLoadout(loadout);
-        SimStarterGear.Equip(player, cls, specIndex, levelFrom);
+        var talentPicks = AutoInvestTalentsForSpec(player, cls, spec, ct);
+
+        // Loadout (inkl. Talent-Fähigkeiten) per Probe-Kämpfen auf maximalen Schaden optimieren
+        var startIds = player.GetCurrentLoadout().EquippedAbilityIds;
+        string poolKey = SimLoadoutOptimizer.PoolKey(SimLoadoutOptimizer.CandidatePool(player, startIds));
+        loadout = new ClassLoadout { Class = cls, EquippedAbilityIds = SimLoadoutOptimizer.Optimize(player, startIds, ct) };
+        player.ApplyLoadout(loadout);
 
         engine.Meter.Reset();
         engine.CurrentEnemy = null;
@@ -325,10 +384,16 @@ public static class ClassSimulator
 
                 lastLevel = currentLevel;
 
-                // Talente zuerst investieren, dann Loadout aktualisieren damit Talent-Abilities bevorzugt werden
-                AutoInvestTalentsForSpec(player, cls, specIndex);
-                var newAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(
-                    cls, currentLevel, specIndex, GetUnlockedTalentAbilityIds(player, cls));
+                // Talente zuerst per Probe-Kampf investieren (übernimmt ggf. neue Talent-Fähigkeiten in den Loadout)
+                talentPicks.AddRange(AutoInvestTalentsForSpec(player, cls, spec, ct));
+                var seedIds = player.GetCurrentLoadout().EquippedAbilityIds.ToList();
+
+                // Nur neu optimieren, wenn neue Fähigkeiten bzw. Ränge verfügbar sind (Probe-Kämpfe sind teuer)
+                string newPoolKey = SimLoadoutOptimizer.PoolKey(SimLoadoutOptimizer.CandidatePool(player, seedIds));
+                var newAbilityIds = newPoolKey == poolKey
+                    ? seedIds
+                    : SimLoadoutOptimizer.Optimize(player, seedIds, ct);
+                poolKey = newPoolKey;
 
                 // Loadout-Wechsel erkennen: Snapshot für den abgeschlossenen Bereich ablegen
                 if (!newAbilityIds.SequenceEqual(currentLoadoutIds))
@@ -377,63 +442,55 @@ public static class ClassSimulator
             TalentSummary: BuildTalentSummary(player, cls),
             FinalWeapon: player.EquippedWeapon,
             FinalArmor: new Dictionary<ArmorSlot, ArmorItem>(player.EquippedArmor),
-            SpecIndex: specIndex,
-            SpecName: specName);
+            SpecIndex: spec.Index,
+            SpecName: spec.Name,
+            TalentPicks: talentPicks);
     }
 
-    /// <summary>Investiert alle Punkte greedy in einen einzigen Talent-Baum (für Spec-Simulationen).</summary>
     /// <summary>Sammelt die Ability-IDs aller durch Talente freigeschalteten Fähigkeiten die der Spieler bereits besitzt.</summary>
-    private static IReadOnlySet<string> GetUnlockedTalentAbilityIds(Player player, CharacterClass cls)
+    internal static IReadOnlySet<string> GetUnlockedTalentAbilityIds(Player player, CharacterClass cls)
     {
         var result = new HashSet<string>();
         foreach (var talent in TalentRegistry.GetTalents(cls))
         {
-            if (!string.IsNullOrEmpty(talent.GrantsAbilityId)
-                && player.TalentState.GetRanks(talent.Id) > 0)
-            {
-                result.Add(talent.GrantsAbilityId);
-            }
+            if (player.TalentState.GetRanks(talent.Id) > 0)
+                result.UnionWith(talent.GrantedAbilityIds);
         }
         return result;
     }
 
-    private static void AutoInvestTalentsForSpec(Player player, CharacterClass cls, int specIndex)
+    /// <summary>
+    /// Investiert alle Punkte in einen einzigen Talent-Baum (für Spec-Simulationen): pro Punkt gewinnt
+    /// das Talent mit dem größten gemessenen Schaden (<see cref="SimTalentOptimizer"/>).
+    /// </summary>
+    private static List<TalentPick> AutoInvestTalentsForSpec(Player player, CharacterClass cls, SimSpec spec, CancellationToken ct)
     {
-        // Talente die eine Ability freischalten (GrantsAbilityId) werden bevorzugt investiert,
-        // sobald ihre Reihe freigeschaltet ist — sonst würden Row=0-Talente mit vielen Rängen
-        // die Ability-Grants für viele Level blockieren.
-        var talents = TalentRegistry.GetTalents(cls)
-            .Where(t => t.TreeIndex == specIndex)
+        // Reihenfolge nur noch als Gleichstands-Regel: Ability-Grants zuerst, dann Reihe/Spalte
+        var all = TalentRegistry.GetTalents(cls);
+        var talents = all
+            .Where(t => t.TreeIndex == spec.TreeIndex)
+            // Feste Gestalt (Bär/Katze): Talente der anderen Gestalt samt Folgetalenten auslassen
+            .Where(t => !GrantsOtherForm(t, spec.Form, all))
             .OrderBy(t => string.IsNullOrEmpty(t.GrantsAbilityId) ? 1 : 0)
             .ThenBy(t => t.Row)
             .ThenBy(t => t.Column)
             .ToList();
 
-        int available;
-        while ((available = player.GetAvailableTalentPoints(cls)) > 0)
-        {
-            var next = talents.FirstOrDefault(t => player.TalentState.CanInvest(t, available));
-            if (next is null) break;
-            player.InvestTalent(next);
-        }
+        return SimTalentOptimizer.InvestPoints(player, talents, spec.TreeIndex, ct);
     }
 
-    /// <summary>Investiert alle verfügbaren Talent-Punkte greedy (Baum 0 → 1 → 2, frühe Reihen zuerst).</summary>
-    private static void AutoInvestTalents(Player player, CharacterClass cls)
+    /// <summary>True, wenn das Talent (oder eine Voraussetzung davon) eine andere Gestalt als <paramref name="form"/> freischaltet.</summary>
+    private static bool GrantsOtherForm(TalentDefinition talent, DruidForm? form, IReadOnlyList<TalentDefinition> all)
     {
-        var talents = TalentRegistry.GetTalents(cls)
-            .OrderBy(t => t.TreeIndex)
-            .ThenBy(t => t.Row)
-            .ThenBy(t => t.Column)
-            .ToList();
+        if (form is null) return false;
 
-        int available;
-        while ((available = player.GetAvailableTalentPoints(cls)) > 0)
+        for (var t = talent; t is not null;
+             t = t.RequiresTalentId is { } req ? all.FirstOrDefault(x => x.Id == req) : null)
         {
-            var next = talents.FirstOrDefault(t => player.TalentState.CanInvest(t, available));
-            if (next is null) break;
-            player.InvestTalent(next);
+            var granted = string.IsNullOrEmpty(t.GrantsAbilityId) ? null : ClassAbilityRegistry.FindById(t.GrantsAbilityId);
+            if (granted is { IsForm: true } && granted.Form != form) return true;
         }
+        return false;
     }
 
     /// <summary>Lesbare Zusammenfassung der investierten Talente.</summary>

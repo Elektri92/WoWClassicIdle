@@ -79,6 +79,19 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Arcane_Intellect_r2",
+            Name = "Arcane Intellect",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_magicalsentry.jpg",
+            Cooldown = 0,
+            ManaCost = 0,
+            BuffDuration = 60,
+            BuffIntellectBonus = 45,    // ×1,5 gegenüber Rank 1
+            BuffSpiritBonus = 45,       // ×1,5 gegenüber Rank 1
+            LevelRequired = 12,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Conjure_Water_r1",
             Name = "Conjure Water",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_drink_10.jpg",
@@ -114,9 +127,9 @@ public static partial class ClassAbilityRegistry
             CastTime = 1.0,
             ManaCost = 10,
             BuffDuration = 20,              // HoT über 20 s
-            HotHealPct = 0.30,              // 30 % max. HP gesamt
-            HotTickInterval = 5.0,          // 4 Ticks à 6 %
-            LevelRequired = 8,
+            HotHealPct = 0.25,              // 25 % max. HP gesamt (war 35 % – Mage ab Lv 4 kaum noch Tode)
+            HotTickInterval = 5.0,          // 4 Ticks à 6,25 %
+            LevelRequired = 4,              // war 8 – Lv-4-Ausreißer entstand nur mit HP-Regen-Faktor 1,0
             Rank = 1,
         },
         new Ability
@@ -179,7 +192,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 1.0,
             ManaCost = 10,
             BuffDuration = 20,
-            HotHealPct = 0.30,
+            HotHealPct = 0.35,
             HotTickInterval = 5.0,
             LevelRequired = 11,
             Rank = 2,

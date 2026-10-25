@@ -29,6 +29,8 @@ public sealed class CombatMeter
     public const int MaxHistory = 20;
     public const string AutoAttackName = "Auto Attack";
     public const string AutoAttackIconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_sword_04.jpg";
+    public const string SpiritRegenName = "Passive Spirit Regeneration";
+    public const string SpiritRegenIconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_divinespirit.jpg";
 
     private sealed class Entry
     {
@@ -55,6 +57,10 @@ public sealed class CombatMeter
 
     public void RecordAbility(Ability ability, CombatActionKind kind, int amount) =>
         Record(ability.Name, ability.IconUrl, kind, amount);
+
+    /// <summary>Passive HP-Regeneration aus Spirit – erscheint als eigene Heal-Zeile.</summary>
+    public void RecordSpiritRegen(int amount) =>
+        Record(SpiritRegenName, SpiritRegenIconUrl, CombatActionKind.Heal, amount);
 
     private void Record(string name, string iconUrl, CombatActionKind kind, int amount)
     {

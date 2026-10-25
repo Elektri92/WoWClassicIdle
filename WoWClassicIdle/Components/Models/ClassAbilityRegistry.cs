@@ -82,14 +82,24 @@ public static partial class ClassAbilityRegistry
         IReadOnlySet<string> unlockedTalentAbilityIds)
     {
         // Talent-freigeschaltete Abilities die der Spieler bereits besitzt
+        // (pro ExclusiveGroup nur eine, z. B. eine Druiden-Gestalt – Spec-passende bevorzugt)
         var talentAbilities = GetAbilitiesFor(cls)
             .Where(a => a.TalentUnlockOnly && unlockedTalentAbilityIds.Contains(a.Id))
+            .GroupBy(a => string.IsNullOrEmpty(a.ExclusiveGroup) ? a.Id : a.ExclusiveGroup)
+            .Select(g => g.FirstOrDefault(a => a.SpecHint == specIndex) ?? g.First())
             .ToList();
+
+        // Gestalt bestimmt, welche Fähigkeiten nutzbar sind (Bear/Cat: keine Mana-Zauber)
+        var form = ShapeshiftForms.FormOf(talentAbilities);
+        talentAbilities = talentAbilities.Where(a => ShapeshiftForms.IsUsableIn(a, form)).ToList();
 
         // Reguläre Abilities (gleiche Spec-Logik wie GetDefaultLoadoutIds(cls, level, specIndex))
         var regularAbilities = GetAbilitiesFor(cls)
             .Where(a => a.LevelRequired <= level)
             .Where(a => !a.TalentUnlockOnly)
+            .Where(a => ShapeshiftForms.IsUsableIn(a, form))
+            // Talent-Ability ersetzt reguläre derselben ExclusiveGroup (Windfury statt Rockbiter)
+            .Where(a => string.IsNullOrEmpty(a.ExclusiveGroup) || talentAbilities.All(t => t.ExclusiveGroup != a.ExclusiveGroup))
             .GroupBy(a => a.Name)
             .Select(g => g.OrderByDescending(a => a.Rank).First())
             .GroupBy(a => string.IsNullOrEmpty(a.ExclusiveGroup) ? a.Id : a.ExclusiveGroup)

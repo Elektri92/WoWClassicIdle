@@ -1,77 +1,110 @@
 # WoW Classic Idle
 
-Ein Idle-Spiel im Stil von **World of Warcraft Classic** — als Blazor-Web-App gebaut, die im Desktop-Modus als natives Fenster läuft. Der Charakter kämpft automatisch gegen stufenangepasste Gegner, steigt von Stufe 1 auf 60 auf, lernt Klassenfähigkeiten, sammelt Beute und schaltet Erfolge frei.
+An idle game inspired by **World of Warcraft Classic** — built as a Blazor Web App that runs as a native desktop window. Your character fights level-appropriate enemies automatically, levels from 1 to 60, learns class abilities, collects loot, and unlocks achievements.
 
 ## Features
 
-- **Charaktererstellung** nach Classic-Vorbild: 8 Rennen, 9 Klassen, Fraktionen Allianz/Horde mit klassischer Rennen-Klassen-Matrix
-- **Automatischer Kampf** mit Kampftext, Crits, Ausweichen/Widerstand und Combat-Log
-- **Fähigkeiten & Cooldowns** (Heroic Strike, Fireball, Lightning Bolt, Sinister Strike, …) inkl. Buffs, Debuffs und Mana-Management
-- **Talentsystem** mit eigenem Talentbaum pro Klasse
-- **Stufenaufstieg 1–60** mit Classic-orientierter XP-Kurve und Level-Ups
-- **Gegner** nach Classic-Vorlagen (Wolf, Murloc & Co.), gewichtet nach Spielerstufe
-- **Inventar, seltene Beute & Gold** (Beutetabellen nach Gegnerstufe)
-- **Erfolge** mit Toast-Benachrichtigungen
-- **Autosave** alle ~1 Minute als JSON unter `LocalApplicationData/WoWClassicIdle` (Debug-Nutzung nutzt eine eigene Save-Datei)
-- **Pause bei Inaktivität**: Die Simulation pausiert, wenn der Browser-Tab bzw. das Fenster nicht sichtbar ist
-- **Debug-Simulator** (`/debug/simulation`, nur im Debug-Build) zum Vergleich der Klassen
+- **Character creation** following Classic conventions: 8 races, 9 classes, Alliance/Horde factions with the classic race-class matrix
+- **Automatic combat** with combat text, crits, dodge/resist, and a combat log
+- **Abilities & cooldowns** (Heroic Strike, Fireball, Lightning Bolt, Sinister Strike, …) including buffs, debuffs, and mana management
+- **Talent system** with a unique talent tree per class
+- **Level 1–60 progression** with a Classic-oriented XP curve
+- **Enemies** based on Classic archetypes (Wolf, Murloc & more), weighted by player level
+- **Inventory, rare loot & gold** (loot tables scaled by enemy level)
+- **Achievements** with toast notifications
+- **Autosave** every ~1 minute as JSON in `LocalApplicationData/WoWClassicIdle`
+- **Pause on inactivity**: simulation pauses when the window is not visible
 
-## Tech-Stack
+---
 
-- .NET 10 / C# 13, Blazor Web App (Render-Modus: Interactive Server), ohne JS-Framework
-- Photino.NET 4.0.16 als einziger NuGet-Package: im Release/Production-Modus öffnet sich ein natives WebView-Fenster statt eines Browsers
-- Game-Loop: `System.Timers.Timer` mit 100 ms Intervall auf einem Thread-Pool-Thread (`Components/Models/IdleGameEngine.cs`), geteilter Zustand über `lock`
-- Keine Datenbank: Spielstand liegt als JSON-Datei auf der Festplatte, Services sind In-Memory-Singletons
+## Installation
 
-## Voraussetzungen
+Pre-built binaries are available on the [Releases](https://github.com/Elektri92/WoWClassicIdle/releases) page. No .NET SDK required to run them — they are fully self-contained.
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- Für den Desktop-Modus unter Linux zusätzlich `webkit2gtk`:
-  - Arch/CachyOS: `sudo pacman -S webkit2gtk-4.1`
-  - Debian/Ubuntu: `sudo apt install libwebkit2gtk-4.1-0`
-  - Fedora: `sudo dnf install webkit2gtk4.1`
+### Windows
 
-## Start
+1. Download `WoWClassicIdle-win-x64.exe` from the latest release.
+2. Run the `.exe` directly — no installation needed.
+3. Windows may show a SmartScreen warning the first time (unknown publisher). Click **More info → Run anyway**.
+
+### Linux
+
+1. Download `WoWClassicIdle-linux-x64` from the latest release.
+2. Install the WebKit dependency for your distribution:
+   - **Arch / CachyOS:** `sudo pacman -S webkit2gtk-4.1`
+   - **Debian / Ubuntu:** `sudo apt install libwebkit2gtk-4.1-0`
+   - **Fedora:** `sudo dnf install webkit2gtk4.1`
+3. Make the binary executable and run it:
+   ```bash
+   chmod +x WoWClassicIdle-linux-x64
+   ./WoWClassicIdle-linux-x64
+   ```
+
+### macOS
+
+> macOS builds are not yet available as pre-built binaries. See [Build from Source](#build-from-source) below.
+
+---
+
+## Build from Source
+
+**Requirements:** [.NET 10 SDK](https://dotnet.microsoft.com/download)
 
 ```bash
-# Build
-dotnet build
+# Clone the repository
+git clone https://github.com/Elektri92/WoWClassicIdle.git
+cd WoWClassicIdle
 
-# Entwicklung (Playground im Browser)
+# Run in development mode (opens in browser)
 dotnet run --project WoWClassicIdle
-# https://localhost:7243  bzw.  http://localhost:5067
+# https://localhost:7243  or  http://localhost:5067
 ```
 
-Im **Development**-Modus läuft die App im Browser; ab **Production/Release** öffnet Photino ein eigenes Desktop-Fenster.
+In **Development** mode the app runs in the browser. In **Release/Production** mode Photino opens a native desktop window.
 
-## Publish (Desktop-Builds)
-
-Vorhandene Publish-Profile: `linux-x64`, `win-x64`, `osx-x64` (jeweils self-contained, Single-File).
+### Publish a self-contained binary
 
 ```bash
-dotnet publish -c Release -r linux-x64
+# Windows
 dotnet publish -c Release -r win-x64
+
+# Linux
+dotnet publish -c Release -r linux-x64
+
+# macOS (Intel)
+dotnet publish -c Release -r osx-x64
+
+# macOS (Apple Silicon)
+dotnet publish -c Release -r osx-arm64
 ```
 
-Unter Linux wird die Binary nach dem Publish automatisch in `WoWClassicIdle.bin` umbenannt und ein Launcher-Skript (`WoWClassicIdle`) mit gesetzter `WEBKIT_DISABLE_DMABUF_RENDERER`-Variable abgelegt.
+On Linux the binary is automatically renamed to `WoWClassicIdle.bin` and a launcher script (`WoWClassicIdle`) with the required `WEBKIT_DISABLE_DMABUF_RENDERER` variable is placed alongside it.
 
-## Projektstruktur
+---
+
+## Tech Stack
+
+- .NET 10 / C# 13, Blazor Web App (Interactive Server render mode), no JS framework
+- [Photino.NET](https://www.tryphotino.io/) as the only NuGet dependency — wraps the app in a native WebView window for desktop use
+- Game loop: `System.Timers.Timer` at 100 ms on a thread-pool thread, shared state guarded by `lock`
+- No database: save state is a single JSON file; services are in-memory singletons
+
+## Project Structure
 
 ```
 WoWClassicIdle/
 ├── Components/
-│   ├── Models/          # Spiellogik: IdleGameEngine, CombatEngine, Enemy, Player,
-│   │                    # Abilities, Talents, Items, Achievements, Registries (hartcodierte Spieldaten)
-│   ├── Pages/           # UI: Charakterwahl, IdleFighter, Talents, Inventar, Erfolge, Ability-Loadout
-│   ├── Services/        # SaveGame-, AbilityLoadout- & Achievement-Services (Singletons)
-│   └── Debug/           # Klassen-Simulator (nur Debug-Build, per csproj aus Release ausgeschlossen)
-├── wwwroot/             # statische Assets (CSS, JS)
-└── Program.cs           # DI-Registrierung, Kestrel & Photino-Desktop-Hosting
+│   ├── Models/          # Game logic: IdleGameEngine, CombatEngine, Enemy, Player,
+│   │                    # Abilities, Talents, Items, Achievements, Registries (hardcoded game data)
+│   ├── Pages/           # UI: Character select, IdleFighter, Talents, Inventory, Achievements, Ability Loadout
+│   ├── Services/        # SaveGame, AbilityLoadout & Achievement services (singletons)
+│   └── Debug/           # Class simulator (Debug build only, excluded from Release via .csproj)
+├── wwwroot/             # Static assets (CSS, JS)
+└── Program.cs           # DI registration, Kestrel & Photino desktop hosting
 ```
 
-Alle Spieldaten (Waffen, Gegner, Klassenfähigkeiten, Talente) sind bewusst in C# hartcodiert — es gibt keine externen Datendateien.
+All game data (weapons, enemies, class abilities, talents) is intentionally hardcoded in C# — there are no external data files.
 
-## Hinweise
+---
 
-- Debug-only-Code (`Components/Debug/**`, `Components/Pages/Debug/**`) ist in Release-Builds nicht kompiliert; shared Code darf diese Typen nicht referenzieren (UI-Gating über `BuildInfo.IsDebug`).
-- Persönliches Fan-Projekt ohne Verbindung zu Blizzard; die verwendeten Icon-URLs zeigen auf öffentliche WoW-Icon-CDNs.
+*Personal fan project, not affiliated with Blizzard Entertainment.*

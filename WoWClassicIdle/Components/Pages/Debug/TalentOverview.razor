@@ -1,0 +1,255 @@
+@page "/debug/talents"
+@rendermode InteractiveServer
+@using Models
+
+<PageTitle>Talent Overview (Debug)</PageTitle>
+
+<div class="wow-page wide">
+    <h2>Talent Overview <span class="wow-badge">DEBUG</span></h2>
+    <p class="wow-hint">
+        All talents of all classes as defined in <code>TalentRegistry</code>.
+        A row unlocks after 5 points per row in the same tree. Hover a granted ability for its tooltip.
+    </p>
+
+    <div class="wow-card talent-filters">
+        <input class="talent-search" type="search" placeholder="Search name, description, effect…"
+               @bind="_search" @bind:event="oninput" />
+        <div class="class-filter">
+            <button class="class-chip @(_classFilter is null ? "on" : "")" @onclick="() => _classFilter = null">All</button>
+            @foreach (var cls in AllClasses)
+            {
+                var c = cls;
+                <button class="class-chip class-@ClassCss(c) @(_classFilter == c ? "on" : "")" @onclick="() => _classFilter = c">@c</button>
+            }
+        </div>
+    </div>
+
+    @{ var issues = FindIssues().ToList(); }
+    @if (issues.Count > 0)
+    {
+        <div class="wow-alert warning">
+            <b>Data issues (@issues.Count)</b>
+            <ul class="issue-list">
+                @foreach (var issue in issues)
+                {
+                    <li>@issue</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @foreach (var cls in AllClasses.Where(c => _classFilter is null || _classFilter == c))
+    {
+        var talents   = TalentRegistry.GetTalents(cls);
+        var treeNames = TalentRegistry.GetTreeNames(cls);
+        var visible   = talents.Where(Matches).ToList();
+        if (visible.Count == 0) continue;
+
+        <div class="wow-card talent-class-card">
+            <div class="talent-class-header class-@ClassCss(cls)">
+                @cls
+                <span class="talent-count">
+                    @talents.Count talents · @talents.Sum(t => t.MaxRanks) points total
+                </span>
+            </div>
+
+            <div class="tree-grid">
+                @for (int ti = 0; ti < 3; ti++)
+                {
+                    var treeIndex = ti;
+                    var tree      = talents.Where(t => t.TreeIndex == treeIndex).ToList();
+                    var treeShown = visible.Where(t => t.TreeIndex == treeIndex).ToList();
+                    int maxRow    = tree.Count > 0 ? tree.Max(t => t.Row) : -1;
+
+                    <div class="tree">
+                        <div class="tree-header">
+                            @treeNames[treeIndex]
+                            <span class="tree-meta">@tree.Count talents · @tree.Sum(t => t.MaxRanks) pts</span>
+                        </div>
+
+                        @for (int row = 0; row <= maxRow; row++)
+                        {
+                            var r       = row;
+                            var rowShow = treeShown.Where(t => t.Row == r).OrderBy(t => t.Column).ToList();
+                            if (rowShow.Count == 0) continue;
+
+                            <div class="tree-row-label">
+                                Row @(r + 1)
+                                <span class="tree-meta">
+                                    @(r == 0 ? "available from the start" : $"requires {r * 5} points in tree")
+                                </span>
+                            </div>
+
+                            @foreach (var t in rowShow)
+                            {
+                                var granted = t.GrantedAbilityIds
+                                    .Select(id => (Id: id, Ability: ClassAbilityRegistry.FindById(id)))
+                                    .ToList();
+                                var requires = t.RequiresTalentId is null ? null : TalentRegistry.GetById(cls, t.RequiresTalentId);
+
+                                <div class="talent @(granted.Count > 0 ? "grants" : "")">
+                                    <img class="talent-icon" src="@t.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                                    <div class="talent-body">
+                                        <div class="talent-title">
+                                            <span class="talent-name">@t.Name</span>
+                                            <span class="talent-ranks">0/@t.MaxRanks</span>
+                                            <span class="talent-pos">C@(t.Column + 1)</span>
+                                        </div>
+                                        <div class="talent-desc">@t.Description</div>
+                                        <div class="talent-effect">
+                                            <span class="effect-type">@t.EffectType</span>
+                                            @if (t.MaxRanks > 1)
+                                            {
+                                                <span>1 rank: @t.EffectDescription(1)</span>
+                                                <span class="sep">·</span>
+                                                <span>max: @t.EffectDescription(t.MaxRanks)</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@t.EffectDescription(1)</span>
+                                            }
+                                        </div>
+                                        @if (granted.Count > 0)
+                                        {
+                                            <div class="talent-grants">
+                                                Grants:
+                                                @foreach (var (id, ability) in granted)
+                                                {
+                                                    if (ability is null)
+                                                    {
+                                                        <span class="missing">@id (missing!)</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <AbilityTooltip Ability="ability">
+                                                            <span class="granted-ability">
+                                                                <img src="@ability.IconUrl" alt="" onerror="this.style.display='none'" />
+                                                                @ability.Name
+                                                            </span>
+                                                        </AbilityTooltip>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                        @if (t.RequiresTalentId is not null)
+                                        {
+                                            <div class="talent-requires">Requires: @(requires?.Name ?? $"{t.RequiresTalentId} (missing!)")</div>
+                                        }
+                                        <div class="talent-id">@t.Id</div>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        @if (treeShown.Count == 0)
+                        {
+                            <div class="tree-empty">@(tree.Count == 0 ? "No talents yet." : "No match.")</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .talent-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .talent-search { flex: 1 1 240px; background: #0a0806; color: #e0d8c8; border: 1px solid #4a3d22; border-radius: 4px; padding: 6px 8px; }
+    .class-filter { display: flex; flex-wrap: wrap; gap: 4px; }
+    .class-chip { background: #1a150d; border: 1px solid #3a2f1a; border-radius: 4px; padding: 3px 9px; font-size: .8rem; font-weight: 600; cursor: pointer; color: #e0d8c8; }
+    .class-chip.on { border-color: #ffd100; background: #2a2010; }
+
+    .issue-list { margin: 4px 0 0; padding-left: 18px; font-size: .85rem; }
+
+    .talent-class-card { padding: 0; overflow: hidden; }
+    .talent-class-header { padding: 8px 14px; font-size: 1rem; font-weight: 700; letter-spacing: .04em; display: flex; align-items: baseline; gap: 10px; background: #1a150d; border-bottom: 1px solid #4a3d22; }
+    .talent-count { font-size: .75rem; font-weight: 400; color: #9a8a64; }
+
+    .tree-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tree { padding: 8px 10px; border-right: 1px solid #2a2214; min-width: 0; }
+    .tree:last-child { border-right: none; }
+    .tree-header { color: #ffd100; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .tree-meta { font-size: .72rem; font-weight: 400; color: #9a8a64; }
+    .tree-row-label { font-size: .75rem; color: #c5a55a; font-weight: 600; margin: 10px 0 4px; display: flex; justify-content: space-between; border-bottom: 1px solid #2a2214; }
+    .tree-empty { color: #6a5d44; font-size: .8rem; font-style: italic; }
+
+    .talent { display: flex; gap: 8px; padding: 6px; border-radius: 4px; margin-bottom: 4px; background: #120e08; border: 1px solid #1e1810; }
+    .talent.grants { border-color: #4a3d22; }
+    .talent-icon { width: 32px; height: 32px; border-radius: 3px; flex-shrink: 0; }
+    .talent-body { min-width: 0; flex: 1; }
+    .talent-title { display: flex; gap: 6px; align-items: baseline; }
+    .talent-name { color: #ffd100; font-weight: 600; font-size: .88rem; }
+    .talent-ranks { color: #7ddc6f; font-size: .75rem; font-weight: 700; }
+    .talent-pos { margin-left: auto; color: #6a5d44; font-size: .7rem; }
+    .talent-desc { color: #e0d8c8; font-size: .78rem; margin-top: 2px; }
+    .talent-effect { color: #9a8a64; font-size: .74rem; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
+    .effect-type { background: #2a2010; color: #c5a55a; border-radius: 3px; padding: 0 5px; font-size: .68rem; font-family: monospace; }
+    .talent-grants { font-size: .76rem; color: #9a8a64; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .granted-ability { display: inline-flex; align-items: center; gap: 4px; color: #1eff00; cursor: default; }
+    .granted-ability img { width: 16px; height: 16px; border-radius: 2px; }
+    .talent-requires { font-size: .74rem; color: #ff9f5b; margin-top: 2px; }
+    .talent-id { font-size: .66rem; color: #5a4f3a; font-family: monospace; margin-top: 2px; }
+    .missing { color: #ff6b5b; font-weight: 700; }
+
+    @@media (max-width: 1100px) {
+        .tree-grid { grid-template-columns: 1fr; }
+        .tree { border-right: none; border-bottom: 1px solid #2a2214; }
+    }
+</style>
+
+@code {
+    private static readonly CharacterClass[] AllClasses = Enum.GetValues<CharacterClass>();
+
+    private string _search = "";
+    private CharacterClass? _classFilter;
+
+    private static string ClassCss(CharacterClass cls) => cls.ToString().ToLowerInvariant();
+
+    private bool Matches(TalentDefinition t) =>
+        string.IsNullOrWhiteSpace(_search)
+        || t.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
+        || t.Description.Contains(_search, StringComparison.OrdinalIgnoreCase)
+        || t.EffectType.ToString().Contains(_search, StringComparison.OrdinalIgnoreCase)
+        || t.Id.Contains(_search, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Konsistenzprüfung der Talentdaten (unerreichbare Reihen, doppelte Plätze, fehlende Referenzen).</summary>
+    private IEnumerable<string> FindIssues()
+    {
+        foreach (var cls in AllClasses.Where(c => _classFilter is null || _classFilter == c))
+        {
+            var talents   = TalentRegistry.GetTalents(cls);
+            var treeNames = TalentRegistry.GetTreeNames(cls);
+
+            foreach (var dup in talents.GroupBy(t => t.Id).Where(g => g.Count() > 1))
+                yield return $"{cls}: duplicate talent id '{dup.Key}'.";
+
+            foreach (var slot in talents.GroupBy(t => (t.TreeIndex, t.Row, t.Column)).Where(g => g.Count() > 1))
+                yield return $"{cls} · {treeNames[slot.Key.TreeIndex]}: row {slot.Key.Row + 1}, column {slot.Key.Column + 1} is used by {string.Join(", ", slot.Select(t => t.Name))}.";
+
+            foreach (var t in talents)
+            {
+                foreach (var id in t.GrantedAbilityIds.Where(id => ClassAbilityRegistry.FindById(id) is null))
+                    yield return $"{cls}: '{t.Name}' grants unknown ability '{id}'.";
+                if (t.RequiresTalentId is not null && TalentRegistry.GetById(cls, t.RequiresTalentId) is null)
+                    yield return $"{cls}: '{t.Name}' requires unknown talent '{t.RequiresTalentId}'.";
+                if (string.IsNullOrEmpty(t.EffectDescription(1)))
+                    yield return $"{cls}: '{t.Name}' has no effect description for {t.EffectType}.";
+            }
+
+            // Reihe N braucht N×5 Punkte aus den Reihen darüber – sonst ist sie nie erreichbar
+            for (int ti = 0; ti < 3; ti++)
+            {
+                var tree = talents.Where(t => t.TreeIndex == ti).ToList();
+                if (tree.Count == 0) continue;
+                for (int row = 1; row <= tree.Max(t => t.Row); row++)
+                {
+                    int r = row;
+                    if (!tree.Any(t => t.Row == r)) continue;
+                    int above = tree.Where(t => t.Row < r).Sum(t => t.MaxRanks);
+                    if (above < r * 5)
+                        yield return $"{cls} · {treeNames[ti]}: row {r + 1} is unreachable ({above} points above, {r * 5} required).";
+                }
+            }
+        }
+    }
+}

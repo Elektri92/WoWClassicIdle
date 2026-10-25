@@ -11,7 +11,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_righteousfury.jpg",
             Cooldown = 8,
             ManaCost = 20,
-            Damage = 22,        // +3 Buff
+            Damage = 15,        // 22 → 17 → 15 Nerf (Lv 1–2 weiterhin +29 % DPS über Median)
             LevelRequired = 1,
             Rank = 1,
         },
@@ -22,7 +22,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_righteousfury.jpg",
             Cooldown = 8,
             ManaCost = 20,
-            Damage = 24,        // +3 Buff
+            Damage = 19,        // 24 → 19 Nerf (Abstand zu Rank 1 bleibt)
             LevelRequired = 10,
             Rank = 2,
         },
@@ -31,12 +31,24 @@ public static partial class ClassAbilityRegistry
             Id = "Holy_Light_r1",
             Name = "Holy Light",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holybolt.jpg",
-            Cooldown = 0,       // kein Cooldown – Tempo kommt aus Cast-Zeit
+            Cooldown = 15,      // war 0 – Dauer-Spam machte den Paladin unsterblich
             CastTime = 3.0,     // 3,0 s Cast-Zeit
-            ManaCost = 18,              // −50 % (war 35)
-            Heal = 19,
+            ManaCost = 30,              // war 18
+            Heal = 24,                  // war 19 – stärker pro Cast, dafür seltener
             LevelRequired = 3,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Holy_Light_r2",
+            Name = "Holy Light",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holybolt.jpg",
+            Cooldown = 15,
+            CastTime = 3.0,
+            ManaCost = 38,              // ×1,25 gegenüber Rank 1
+            Heal = 36,                  // ×1,5 gegenüber Rank 1
+            LevelRequired = 13,
+            Rank = 2,
         },
         new Ability
         {
@@ -53,6 +65,19 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Holy_Strike_r2",
+            Name = "Holy Strike",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_excorcism_02.jpg",
+            Cooldown = 10,
+            ManaCost = 19,              // ×1,25 gegenüber Rank 1
+            Damage = 30,                // Waffenschaden + 30 (×1,5 gegenüber Rank 1)
+            AddsWeaponDamage = true,
+            ReplacesAutoAttack = true,
+            LevelRequired = 14,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Divine_Shield_r1",
             Name = "Divine Shield",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_divineshield.jpg",
@@ -62,6 +87,18 @@ public static partial class ClassAbilityRegistry
             BuffGrantsImmunity = true,
             LevelRequired = 7,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Divine_Shield_r2",
+            Name = "Divine Shield",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_divineshield.jpg",
+            Cooldown = 60,
+            ManaCost = 0,
+            BuffDuration = 8,           // +2 s Immunität gegenüber Rank 1
+            BuffGrantsImmunity = true,
+            LevelRequired = 17,
+            Rank = 2,
         },
         new Ability
         {
@@ -85,6 +122,7 @@ public static partial class ClassAbilityRegistry
             ManaCost = 15,
             BuffDuration = 30,
             BuffWeaponDamageBonus = 0.06,       // +6 % Waffenschaden
+            ExclusiveGroup = "paladin_seal",    // nur ein Seal gleichzeitig
             LevelRequired = 18,
             Rank = 1,
         },
@@ -100,6 +138,52 @@ public static partial class ClassAbilityRegistry
             DebuffIsStun = true,
             LevelRequired = 24,
             Rank = 1,
+        },
+
+        // ── Talent-Fähigkeiten (Reihe 2) ──────────────────────────────────────
+        new Ability
+        {
+            Id               = "Holy_Shock_r1",
+            Name             = "Holy Shock",
+            IconUrl          = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_searinglight.jpg",
+            Cooldown         = 15,
+            ManaCost         = 25,
+            Damage           = 16,              // Schaden + Heilung gleichzeitig (wie Holy Nova)
+            Heal             = 16,
+            LevelRequired    = 1,
+            Rank             = 1,
+            TalentUnlockOnly = true,
+        },
+        new Ability
+        {
+            Id                       = "Holy_Shield_r1",
+            Name                     = "Holy Shield",
+            IconUrl                  = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_blessingofprotection.jpg",
+            Cooldown                 = 20,
+            ManaCost                 = 20,
+            BuffDuration             = 10,
+            BuffHitCharges           = 4,       // endet nach 4 erlittenen Treffern (war 3)
+            BuffDamageTakenReduction = 0.35,    // −35 % Schaden dieser Treffer (war 30 %)
+            BuffRetaliationDamage    = 16,      // Heiliger Schaden am Angreifer (war 8 – Prot lag bei −14 % XP/h)
+            LevelRequired            = 1,
+            Rank                     = 1,
+            TalentUnlockOnly         = true,
+        },
+        new Ability
+        {
+            Id                    = "Seal_of_Command_r1",
+            Name                  = "Seal of Command",
+            IconUrl               = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_innerrage.jpg",
+            Cooldown              = 0,
+            ManaCost              = 15,
+            BuffDuration          = 30,
+            BuffWeaponDamageBonus = 0.12,       // +12 % Auto-Attack-Schaden (war 5 % – Sim: 0 % gegenüber Seal of Righteousness)
+            BuffExtraAttackChance = 0.25,       // 25 % Chance auf einen Zusatzschlag (war 15 %)
+            BuffExtraAttacks      = 1,
+            ExclusiveGroup        = "paladin_seal",
+            LevelRequired         = 1,
+            Rank                  = 1,
+            TalentUnlockOnly      = true,
         },
     };
 }

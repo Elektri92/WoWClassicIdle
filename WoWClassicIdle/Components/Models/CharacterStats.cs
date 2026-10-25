@@ -19,6 +19,9 @@ public record Stats
     /// <summary>Mana-Regeneration alle 5 Sekunden (Basis + Spirit).</summary>
     public int ManaRegenPer5 { get; init; }
 
+    /// <summary>Passive HP-Regeneration alle 5 Sekunden (aus Spirit, alle Klassen).</summary>
+    public int HpRegenPer5 { get; init; }
+
     /// <summary>Nahkampf-Angriffskraft – skaliert Auto-Attacks (14 AP = +1 DPS).</summary>
     public int AttackPower { get; init; }
 

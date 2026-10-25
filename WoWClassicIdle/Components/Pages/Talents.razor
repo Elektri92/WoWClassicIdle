@@ -10,7 +10,7 @@
     <h2>Talents</h2>
 
     <div class="wow-card char-preview">
-        <img src="@IconUrls.RaceIconUrl(Engine.Race, Engine.Gender)"
+        <img src="@(Engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(Engine.Race, Engine.Gender))"
              alt="@Engine.Race"
              class="char-preview-icon"
              onerror="this.style.display='none'" />
@@ -81,7 +81,7 @@
                                     string? lockReason = locked
                                         ? (!rowUnlocked
                                             ? $"Requires {currentRow * 5} points in {treeName} tree"
-                                            : $"Requires {talent.RequiresTalentId}")
+                                            : $"Requires {TalentRegistry.GetById(Engine.PlayerClass, talent.RequiresTalentId!)?.Name ?? talent.RequiresTalentId}")
                                         : null;
 
                                     <div class="talent-cell">

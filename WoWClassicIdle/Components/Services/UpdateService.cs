@@ -40,6 +40,10 @@ public class UpdateService
     {
         if (_hasStarted) return;
         _hasStarted = true;
+
+        // Im Debug/Development nie nach Updates suchen – würde sonst die Dev-Binary ersetzen
+        if (WoWClassicIdle.Components.BuildInfo.IsDebug) return;
+
         CleanupStagingDir();
         _ = Task.Run(CheckAndApplyAsync);
     }

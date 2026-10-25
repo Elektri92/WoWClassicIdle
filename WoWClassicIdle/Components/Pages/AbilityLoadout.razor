@@ -12,7 +12,7 @@
     <p class="wow-hint">Click an ability on the right to equip it / click a slot on the left to remove it (max. @ClassAbilityRegistry.MaxSlotsPerClass).</p>
 
     <div class="wow-card char-preview">
-        <img src="@IconUrls.RaceIconUrl(Engine.Race, Engine.Gender)"
+        <img src="@(Engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(Engine.Race, Engine.Gender))"
              alt="@Engine.Race"
              class="char-preview-icon"
              onerror="this.style.display='none'" />
@@ -121,7 +121,7 @@
                                     <span>@AbilityText.TimingText(eff)</span>
                                     @if (eff.ManaCost > 0)
                                     {
-                                        <span class="sep"> · </span><span>@AbilityText.CostText(eff)</span>
+                                        <span class="sep"> · </span><span>@AbilityText.CostText(eff, CurrentForm)</span>
                                     }
                                     <span class="sep"> · </span><span class="req-level">Lv. @ability.LevelRequired</span>
                                 </small>
@@ -140,6 +140,13 @@
                 else if (FilteredUnlocked.Count == 0)
                 {
                     <div class="pool-empty">No abilities match this filter.</div>
+                }
+
+                @if (HiddenByFormCount > 0)
+                {
+                    <div class="pool-empty">
+                        @HiddenByFormCount @(HiddenByFormCount == 1 ? "ability is" : "abilities are") hidden – not usable in @ShapeshiftForms.Get(CurrentForm)?.Name.
+                    </div>
                 }
 
                 @if (FilteredLocked.Count > 0)
@@ -308,24 +315,39 @@
     // Abilities, die per Talent freigeschaltet wurden
     private HashSet<string> TalentGrantedAbilityIds =>
         TalentRegistry.GetTalents(Engine.PlayerClass)
-            .Where(t => !string.IsNullOrEmpty(t.GrantsAbilityId)
-                     && Engine.Player.TalentState.GetRanks(t.Id) > 0)
-            .Select(t => t.GrantsAbilityId!)
+            .Where(t => Engine.Player.TalentState.GetRanks(t.Id) > 0)
+            .SelectMany(t => t.GrantedAbilityIds)
             .ToHashSet();
 
-    private IReadOnlyList<Ability> UnlockedAbilities => CurrentPool
+    // Gestalt laut Loadout (nicht Engine), damit der Pool sofort nach dem Wechsel stimmt
+    private DruidForm CurrentForm => ShapeshiftForms.FormOf(CurrentLoadout);
+
+    // Nur in der aktuellen Gestalt nutzbare Fähigkeiten zeigen; Gestalten selbst bleiben zum Wechseln sichtbar
+    private bool IsUsableNow(Ability a) => a.IsForm || ShapeshiftForms.IsUsableIn(a, CurrentForm);
+
+    private IEnumerable<Ability> AllUnlockedAbilities => CurrentPool
         .Where(a => a.LevelRequired <= Engine.Player.Level
-                 && (!a.TalentUnlockOnly || TalentGrantedAbilityIds.Contains(a.Id)))
+                 && (!a.TalentUnlockOnly || TalentGrantedAbilityIds.Contains(a.Id)));
+
+    private IReadOnlyList<Ability> UnlockedAbilities => AllUnlockedAbilities
+        .Where(IsUsableNow)
         .ToList();
+
+    // Anzahl freigeschalteter Fähigkeiten, die nur wegen der Gestalt ausgeblendet sind (Namen, nicht Ränge)
+    private int HiddenByFormCount => AllUnlockedAbilities
+        .Where(a => !IsUsableNow(a))
+        .Select(a => a.Name)
+        .Distinct()
+        .Count();
 
     // "Coming Up": nur level-gesperrte, keine talent-exklusiven Abilities
     private IReadOnlyList<Ability> LockedAbilities => CurrentPool
-        .Where(a => a.LevelRequired > Engine.Player.Level && !a.TalentUnlockOnly)
+        .Where(a => a.LevelRequired > Engine.Player.Level && !a.TalentUnlockOnly && IsUsableNow(a))
         .ToList();
 
     private bool MatchesCategory(Ability a) => _categoryFilter switch {
         AbilityCategory.Damage  => a.IsDamage || a.IsDebuffDot,
-        AbilityCategory.Buff    => a.IsPlayerBuff || a.IsShield,
+        AbilityCategory.Buff    => a.IsPlayerBuff || a.IsShield || a.IsForm,
         AbilityCategory.Heal    => a.IsHealing,
         AbilityCategory.Debuff  => a.IsDebuff && !a.IsDebuffDot && !a.IsDamage,
         AbilityCategory.Passive => a.IsPassive,
@@ -377,10 +399,23 @@
         }
 
         CurrentLoadout.RemoveSlot(slotIndex);
-        LoadoutService.SaveLoadout(CurrentLoadout);
         _statusMessage = "Ability removed.";
         _statusPositive = true;
+        CommitLoadout();
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Entfernt in der ausgerüsteten Gestalt unbrauchbare Fähigkeiten, speichert das Loadout
+    /// und übernimmt es direkt in die Engine (Ressource/Portrait wechseln sofort).
+    /// </summary>
+    private void CommitLoadout()
+    {
+        var removed = ShapeshiftForms.PurgeIncompatible(CurrentLoadout);
+        if (removed.Count > 0)
+            _statusMessage += $" Unequipped (not usable in current form): {string.Join(", ", removed.Select(a => a.Name))}.";
+        LoadoutService.SaveLoadout(CurrentLoadout);
+        Engine.ApplyLoadout(CurrentLoadout);
     }
 
     private void OnPoolClicked(Ability ability)
@@ -410,6 +445,18 @@
         }
         else
         {
+            // Gestalt-Regeln: Formen ersetzen sich gegenseitig, alles andere muss zur aktuellen Form passen
+            var form = ShapeshiftForms.FormOf(CurrentLoadout);
+            if (!ability.IsForm && !ShapeshiftForms.IsUsableIn(ability, form))
+            {
+                _statusMessage = ability.RequiredForm != DruidForm.None
+                    ? $"{ability.Name} requires {ShapeshiftForms.Get(ability.RequiredForm)?.Name}."
+                    : $"{ability.Name} cannot be equipped in {ShapeshiftForms.Get(form)?.Name}.";
+                _statusPositive = false;
+                StateHasChanged();
+                return;
+            }
+
             // Gleicher Spell-Name (anderer Rank): vorhandenen Rank in-place ersetzen
             var sameSpell = CurrentPool
                 .FirstOrDefault(a => a.Name == ability.Name
@@ -419,9 +466,9 @@
             {
                 int sameIdx = CurrentLoadout.EquippedAbilityIds.ToList().FindIndex(x => x == sameSpell.Id);
                 CurrentLoadout.SetSlot(sameIdx, ability.Id);
-                LoadoutService.SaveLoadout(CurrentLoadout);
                 _statusMessage = $"{ability.Name} Rank {sameSpell.Rank} replaced by Rank {ability.Rank}.";
                 _statusPositive = true;
+                CommitLoadout();
                 StateHasChanged();
                 return;
             }
@@ -436,9 +483,9 @@
                 {
                     int conflictIdx = CurrentLoadout.EquippedAbilityIds.ToList().FindIndex(x => x == conflict.Id);
                     CurrentLoadout.SetSlot(conflictIdx, ability.Id);
-                    LoadoutService.SaveLoadout(CurrentLoadout);
                     _statusMessage = $"{conflict.Name} replaced by {ability.Name}.";
                     _statusPositive = true;
+                    CommitLoadout();
                     StateHasChanged();
                     return;
                 }
@@ -456,7 +503,7 @@
             _statusMessage = $"{ability.Name} → Slot {nextSlot + 1}.";
             _statusPositive = true;
         }
-        LoadoutService.SaveLoadout(CurrentLoadout);
+        CommitLoadout();
         StateHasChanged();
     }
 

@@ -37,8 +37,22 @@ public static partial class ClassAbilityRegistry
             ManaCost = 10,
             BuffDuration = 60,
             BuffWeaponDamageBonus = 0.08, // +8% auto-attack damage
+            ExclusiveGroup = "shaman_weapon_enchant",   // nur eine Waffenverzauberung gleichzeitig
             LevelRequired = 2,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Rockbiter_Weapon_r2",
+            Name = "Rockbiter Weapon",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_rockbiter.jpg",
+            Cooldown = 0,
+            ManaCost = 13,                // ×1,25 gegenüber Rank 1
+            BuffDuration = 60,
+            BuffWeaponDamageBonus = 0.10, // ×1,3 gegenüber Rank 1
+            ExclusiveGroup = "shaman_weapon_enchant",
+            LevelRequired = 12,
+            Rank = 2,
         },
         new Ability
         {
@@ -54,15 +68,39 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Earthbind_Totem_r2",
+            Name = "Earthbind Totem",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_earthbindtotem.jpg",
+            Cooldown = 30,
+            ManaCost = 6,                       // ×1,25 gegenüber Rank 1
+            DebuffDuration = 10,
+            DebuffAttackSpeedReduction = 0.26,  // ×1,3 gegenüber Rank 1
+            LevelRequired = 14,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Lightning_Shield_r1",
             Name = "Lightning Shield",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_lightningshield.jpg",
             Cooldown = 0,
             ManaCost = 10,
             BuffDuration = 30,              // Buff läuft 30 s
-            BuffRetaliationDamage = 5,      // 5 DMG wenn der Spieler getroffen wird
+            BuffRetaliationDamage = 4,      // 4 DMG wenn der Spieler getroffen wird (war 5 – Shaman Lv 7–10 ~12 % zu schnell)
             LevelRequired = 7,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Lightning_Shield_r2",
+            Name = "Lightning Shield",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_lightningshield.jpg",
+            Cooldown = 0,
+            ManaCost = 13,                  // ×1,25 gegenüber Rank 1
+            BuffDuration = 30,
+            BuffRetaliationDamage = 6,      // ×1,5 gegenüber Rank 1
+            LevelRequired = 17,
+            Rank = 2,
         },
         new Ability
         {
@@ -87,7 +125,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 3.0,     // 3,0 s Cast-Zeit
             ManaCost = 30,
             Heal = 30,
-            LevelRequired = 18,
+            LevelRequired = 13,
             Rank = 1,
         },
         new Ability
@@ -98,8 +136,46 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 10,
             BuffDuration = 60,
-            BuffAttackSpeedBonus = 0.12,        // +12 % Angriffsgeschwindigkeit
-            LevelRequired = 24,
+            BuffExtraAttackChance = 0.20,       // 20 % Chance pro Auto-Attack …
+            BuffExtraAttacks = 2,               // … auf 2 Zusatzschläge (3 statt 1)
+            ExclusiveGroup = "shaman_weapon_enchant",   // ersetzt Rockbiter Weapon
+            TalentUnlockOnly = true,
+            SpecHint = 1,
+            LevelRequired = 1,
+            Rank = 1,
+        },
+
+        // ── Talent-Fähigkeiten (Reihe 2) ──
+        new Ability
+        {
+            Id = "Chain_Lightning_r1",
+            Name = "Chain Lightning",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_chainlightning.jpg",
+            Cooldown = 8,
+            CastTime = 2.5,
+            ManaCost = 30,
+            Damage = 8,                         // 3 Treffer à 8 = 24 DMG (Lightning Bolt R2: 15)
+            HitCount = 3,
+            BonusCritChance = 0.20,             // +20 % Crit-Chance
+            TalentUnlockOnly = true,
+            SpecHint = 0,
+            LevelRequired = 1,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Mana_Tide_Totem_r1",
+            Name = "Mana Tide Totem",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_summonwaterelemental.jpg",
+            Cooldown = 60,
+            ManaCost = 0,
+            BuffDuration = 12,                  // MoT über 12 s
+            MotManaRestorePct = 0.24,           // 4 Ticks à 6 % maximales Mana
+            MotTickInterval = 3.0,
+            CastWhenManaBelowPct = 0.5,         // erst unter 50 % Mana
+            TalentUnlockOnly = true,
+            SpecHint = 2,
+            LevelRequired = 1,
             Rank = 1,
         },
     };

@@ -33,6 +33,7 @@ namespace Models
                   MaxHp              = stats.MaxHp   + StatScaling.BonusHp(primary),
                   MaxMana            = stats.MaxMana + StatScaling.BonusMana(characterClass, primary),
                   ManaRegenPer5      = StatScaling.ManaRegenPer5(characterClass, primary),
+                  HpRegenPer5        = StatScaling.HpRegenPer5(characterClass, primary),
                     MeleeDamageMultiplier = StatScaling.MeleeDamageMultiplier(characterClass),
                     AutoAttackDamageMultiplier = StatScaling.AutoAttackDamageMultiplier(characterClass),
                   CritChance         = StatScaling.CritChance(characterClass),

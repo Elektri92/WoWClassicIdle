@@ -9,18 +9,14 @@ public partial class IdleGameEngine
 {
     private Timer _timer;
     private readonly Stopwatch _stopwatch = new();
-#if DEBUG
-    private readonly EnemySpawner _spawner = new(
-        DefaultEnemyTemplates.Default.Concat(DebugEnemyTemplates.All).ToList());
-#else
-    private readonly EnemySpawner _spawner = new();
-#endif
-    private readonly Random _rng = new();
+    private readonly EnemySpawner _spawner;
+    private readonly Random _rng;
 
     private double _playerAttackAcc;
     private double _enemyAttackAcc;
     private double _rogueManaAcc;
     private double _manaRegenAcc;
+    private double _hpRegenAcc;
 
     public double SpeedMultiplier { get; private set; } = 1.0;
     private const double MinSpeed = 0.1;
@@ -100,8 +96,16 @@ public partial class IdleGameEngine
     /// </summary>
     public bool AutoEquipDrops { get; set; }
 
-    public IdleGameEngine(int intervalMs = 100)
+    /// <param name="seed">Fester Zufalls-Seed für reproduzierbare Kämpfe (Debug-Simulator); null = zufällig.</param>
+    public IdleGameEngine(int intervalMs = 100, int? seed = null)
     {
+        _rng = seed is { } s ? new Random(s) : new Random();
+        var spawnRng = seed is { } s2 ? new Random(s2 + 1) : new Random();
+#if DEBUG
+        _spawner = new EnemySpawner(DefaultEnemyTemplates.Default.Concat(DebugEnemyTemplates.All).ToList(), spawnRng);
+#else
+        _spawner = new EnemySpawner(DefaultEnemyTemplates.Default, spawnRng);
+#endif
         _baseDt = intervalMs / 1000.0;
         Player = CreatePlayerInternal();
 

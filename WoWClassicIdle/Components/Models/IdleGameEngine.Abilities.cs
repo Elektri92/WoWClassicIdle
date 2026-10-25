@@ -21,49 +21,88 @@ public partial class IdleGameEngine
             return 0;
         }
 
-        if (ability.IsBuff)
+        // Begleittier beschwören bzw. wiederbeleben (Hunter-Pets, Warlock-Dämonen)
+        if (ability.IsPetSummon)
         {
-            Player.Buffs.Apply(Player.GetEffectiveAbility(ability), Player.Stats.MaxMana, Player.Stats.MaxHp);
+            SummonPet(ability);
+            Player.TriggerAbilityUsed(ability.Name, 0);
+            return 0;
+        }
+
+        // Talent- und Gestalt-Boni (z. B. Improved Moonfire, Moonkin Form)
+        var effective = Player.GetEffectiveAbility(ability);
+
+        // Schadensfähigkeiten mit Buff (Ghostly Strike) laufen über den Schadenszweig
+        if (ability.IsBuff && !ability.IsDamage)
+        {
+            Player.Buffs.Apply(effective, Player.Stats.MaxMana, Player.Stats.MaxHp);
             LastLog = $"✦ {ability.Name} active ({ability.BuffDuration:0}s)";
+            if (ability.IsHeal)   // z. B. Regrowth: Direktheilung + HoT
+                ApplyDirectHeal(ability, effective.Heal);
         }
         else if (ability.IsDamage)
         {
             double abilityMult = Player.Buffs.DamageMultiplier
                 * (ability.AddsWeaponDamage ? Player.Buffs.WeaponDamageMultiplier : 1.0)
-                * enemy.Debuffs.DamageTakenMultiplier;
-            var (abilityDmg, abilityCrit) = RollPlayerCrit(
-                CombatEngine.CalculateAbilityDamage(ability, Player.Stats, _rng, abilityMult),
-                Player.GetAbilityCritBonus(ability));
-            enemy.TakeDamage(abilityDmg);
-            Meter.RecordAbility(ability, CombatActionKind.Damage, abilityDmg);
-            CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, abilityDmg, abilityCrit));
+                * enemy.Debuffs.DamageTakenMultiplier
+                * Player.Buffs.ConsumeEmpower(ability.Name);   // z. B. Mongoose Bite → Raptor Strike
+            // Cold Blood: garantierter Crit für alle Treffer dieser Fähigkeit
+            double extraCrit = Player.GetAbilityCritBonus(ability) + (Player.Buffs.ConsumeGuaranteedCrit() ? 1.0 : 0.0);
+            // Mehrfachtreffer (Chain Lightning): jeder Treffer würfelt eigenen Crit
+            int  abilityDmg  = 0;
+            bool abilityCrit = false;
+            for (int hit = 0; hit < ability.HitCount && enemy.IsAlive; hit++)
+            {
+                var (hitDmg, hitCrit) = RollPlayerCrit(
+                    CombatEngine.CalculateAbilityDamage(effective, Player.Stats, _rng, abilityMult),
+                    extraCrit);
+                Meter.RecordAbility(ability, CombatActionKind.Damage, enemy.TakeDamage(hitDmg));
+                CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, hitDmg, hitCrit));
+                abilityDmg  += hitDmg;
+                abilityCrit |= hitCrit;
+            }
             dealt += abilityDmg;
-            LastLog = $"⚔ {ability.Name} → {abilityDmg} DMG!";
+            LastLog = ability.HitCount > 1
+                ? $"⚔ {ability.Name} → {abilityDmg} DMG ({ability.HitCount} hits)!"
+                : $"⚔ {ability.Name} → {abilityDmg} DMG!";
 
             if (ability.IsDebuff)   // e.g. Moonfire: direkter Treffer + DoT
-                enemy.Debuffs.Apply(Player.GetEffectiveAbility(ability));
+                enemy.Debuffs.Apply(effective);
+
+            if (ability.IsHeal)     // z. B. Holy Nova: Schaden + Heilung gleichzeitig
+                ApplyDirectHeal(ability, effective.Heal);
+
+            if (ability.IsBuff)     // z. B. Ghostly Strike: Schaden + Schild
+                Player.Buffs.Apply(effective, Player.Stats.MaxMana, Player.Stats.MaxHp);
 
             ApplyDamageTalentProcs(ability, abilityDmg, abilityCrit);
         }
         else if (ability.IsDebuff)  // reiner Debuff (Hunter's Mark, Curse of Agony)
         {
-            enemy.Debuffs.Apply(Player.GetEffectiveAbility(ability));
+            enemy.Debuffs.Apply(effective);
             LastLog = $"✦ {ability.Name} on {enemy.Name} ({ability.DebuffDuration:0}s)";
         }
         else
         {
-            int scaledHeal = (int)Math.Round(ability.Heal * Player.Stats.HealingMultiplier);
-            var (healAmount, healCrit) = RollPlayerCrit(scaledHeal);
-            int hpBefore = Player.CurrentHp;
-            Player.RegenHp(healAmount);
-            int healed = Player.CurrentHp - hpBefore;
-            Meter.RecordAbility(ability, CombatActionKind.Heal, healed);
-            CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, healAmount, healCrit));
-            LastLog = $"✚ {ability.Name} → +{healed} HP";
+            ApplyDirectHeal(ability, effective.Heal);
         }
 
+        ApplyAbilityAfterEffects(ability);
         Player.TriggerAbilityUsed(ability.Name, ability.IsDamage ? ability.Damage : ability.Heal);
         return dealt;
+    }
+
+    /// <summary>Direktheilung inkl. Heilungs-Multiplikator und Crit.</summary>
+    private void ApplyDirectHeal(Ability ability, int baseHeal)
+    {
+        int scaledHeal = (int)Math.Round(baseHeal * Player.Stats.HealingMultiplier);
+        var (healAmount, healCrit) = RollPlayerCrit(scaledHeal);
+        int hpBefore = Player.CurrentHp;
+        Player.RegenHp(healAmount);
+        int healed = Player.CurrentHp - hpBefore;
+        Meter.RecordAbility(ability, CombatActionKind.Heal, healed);
+        CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, healAmount, healCrit));
+        LastLog = $"✚ {ability.Name} → +{healed} HP";
     }
 
     /// <summary>Talent-Effekte, die an bestimmten Schadenszaubern hängen (Smite-Heal, Periodic Fire, Ignite).</summary>
@@ -85,28 +124,28 @@ public partial class IdleGameEngine
             }
         }
 
-        // Periodic Fire: Fireball-DoT durch Talent
-        double dotDmg = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FireballDot);
-        if (dotDmg > 0 && ability.Id.StartsWith("Fireball"))
+        // Periodic Fire: Fireball-DoT durch Talent (Anteil des Fireball-Treffers)
+        double dotPct = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FireballDot);
+        if (dotPct > 0 && ability.Id.StartsWith("Fireball"))
         {
             var periodicFire = new Ability
             {
                 Id                   = "talent_periodic_fire",
                 Name                 = "Periodic Fire",
                 DebuffDuration       = 5,
-                DebuffDotDamage      = (int)Math.Max(1, dotDmg),
+                DebuffDotDamage      = (int)Math.Max(1, Math.Round(abilityDmg * dotPct)),
                 DebuffDotTickInterval = 5.0,
             };
             enemy.Debuffs.Apply(periodicFire);
         }
 
-        // Ignite: Feuerzauber-Crit löst DoT aus (15 % des Schadens über 3 Ticks)
+        // Ignite: Feuerzauber-Crit löst DoT aus (40 % des Schadens über 3 Ticks)
         if (abilityCrit
             && (ability.Id.StartsWith("Fireball") || ability.Id.StartsWith("Fire_Blast"))
             && Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.GrantIgnite) > 0
             && enemy.IsAlive)
         {
-            int ignitePerTick = (int)Math.Max(1, Math.Round(abilityDmg * 0.15 / 3.0));
+            int ignitePerTick = (int)Math.Max(1, Math.Round(abilityDmg * 0.40 / 3.0));
             var igniteDebuff = new Ability
             {
                 Id                    = "talent_ignite",

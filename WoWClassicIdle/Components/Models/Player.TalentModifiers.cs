@@ -1,0 +1,106 @@
+// Models/Player.TalentModifiers.cs
+namespace Models
+{
+    // Talent-Modifikatoren ab Reihe 2 – laufen nach GetTalentModifiedAbility, damit sich Boni beider Reihen addieren.
+    public partial class Player
+    {
+        private double TalentBonus(TalentEffectType type) => TalentState.GetTotalBonus(ActiveClass, type);
+
+        /// <summary>Effektive Manakosten einer Fähigkeit nach allen Talent-Reduktionen (bzw. Rage/Energie der aktiven Gestalt).</summary>
+        public int GetEffectiveManaCost(Ability ability) => ApplyExtendedManaCost(ability, GetTalentManaCost(ability));
+
+        private int ApplyExtendedManaCost(Ability ability, int cost)
+        {
+            switch (ability.Name)
+            {
+                case "Sinister Strike":
+                    return Math.Max(0, cost - (int)TalentBonus(TalentEffectType.SinisterStrikeEnergyCost));
+                case "Raptor Strike":
+                    double pct = TalentBonus(TalentEffectType.RaptorStrikeBonus);
+                    return pct > 0 ? Math.Max(0, (int)Math.Round(cost * (1.0 - pct))) : cost;
+                default:
+                    return cost;
+            }
+        }
+
+        private Ability ApplyExtendedTalentBonus(Ability ability)
+        {
+            // Lifesteal-Talent gilt für alle Fähigkeiten mit Lebensentzug (Drain Life, Siphon Life)
+            if (ability.DebuffDotLifesteal > 0)
+            {
+                double lifesteal = TalentBonus(TalentEffectType.LifestealBonus);
+                if (lifesteal > 0)
+                    ability = ability with { DebuffDotLifesteal = ability.DebuffDotLifesteal * (1.0 + lifesteal) };
+            }
+
+            // Allgemeiner Fähigkeitsschaden (Shadow Power, Inner Focus, Arcane Instability)
+            double dmgBonus = TalentBonus(TalentEffectType.DamageBonus);
+            if (dmgBonus > 0)
+            {
+                if (ability.IsDamage)
+                    ability = ability.WithDamageBonus(dmgBonus);
+                if (ability.DebuffDotDamage > 0)
+                    ability = ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + dmgBonus)) };
+            }
+
+            switch (ability.Name)
+            {
+                case "Consecration":
+                {
+                    double bonus = TalentBonus(TalentEffectType.ConsecrationDamage);
+                    return bonus > 0 ? ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)) } : ability;
+                }
+                case "Holy Strike":
+                {
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.HolyStrikeDamage));
+                }
+                case "Sinister Strike":
+                {
+                    int red = (int)TalentBonus(TalentEffectType.SinisterStrikeEnergyCost);
+                    return red > 0 ? ability with { ManaCost = Math.Max(0, ability.ManaCost - red) } : ability;
+                }
+                case "Slice and Dice":
+                {
+                    double bonus = TalentBonus(TalentEffectType.SliceAndDiceBonus);
+                    return bonus > 0 ? ability with { BuffAttackSpeedBonus = ability.BuffAttackSpeedBonus + bonus } : ability;
+                }
+                case "Expose Armor":
+                {
+                    double bonus = TalentBonus(TalentEffectType.ExposeArmorBonus);
+                    return bonus > 0 ? ability with { DebuffDamageTakenBonus = ability.DebuffDamageTakenBonus * (1.0 + bonus) } : ability;
+                }
+                case "Fireball":
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.FireballDamage));
+                case "Fire Blast":
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.FireBlastDamage));
+                case "Mind Blast":
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.MindBlastDamage));
+                case "Shadow Bolt":
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.ShadowBoltDamage));
+                case "Multi-Shot":
+                {
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.MultiShotDamage));
+                }
+                case "Raptor Strike":
+                {
+                    double bonus = TalentBonus(TalentEffectType.RaptorStrikeBonus);
+                    return bonus > 0
+                        ? ability.WithDamageBonus(bonus) with
+                        {
+                            ManaCost = Math.Max(0, (int)Math.Round(ability.ManaCost * (1.0 - bonus))),
+                        }
+                        : ability;
+                }
+                default:
+                    return ability;
+            }
+        }
+
+        /// <summary>Zusätzliche HP aus Stamina durch Talente (Strong Life).</summary>
+        private int StaminaTalentHp(PrimaryStats primary) =>
+            (int)Math.Round(primary.Stamina * StatScaling.HpPerStamina * TalentBonus(TalentEffectType.StaminaHpBonus));
+
+        /// <summary>Zusätzliche Pet-HP als Anteil der Spieler-HP (Strong Pet, Strong Demon).</summary>
+        public double PetHealthTalentBonus => TalentBonus(TalentEffectType.PetHealthBonus);
+    }
+}

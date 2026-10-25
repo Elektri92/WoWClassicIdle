@@ -111,6 +111,16 @@ public sealed record Ability
     /// <summary>Vergeltungsschaden wenn der Spieler während dieses Buffs getroffen wird (z. B. Thorns, Lightning Shield).</summary>
     public int BuffRetaliationDamage { get; init; }
 
+    /// <summary>Waffen-Buff (Windfury): Chance pro Auto-Attack auf <see cref="BuffExtraAttacks"/> zusätzliche Schläge.</summary>
+    public double BuffExtraAttackChance { get; init; }
+    public int BuffExtraAttacks { get; init; }
+
+    /// <summary>Anzahl Treffer des Direktschadens (Chain Lightning: 3). Jeder Treffer würfelt eigenen Crit.</summary>
+    public int HitCount { get; init; } = 1;
+
+    /// <summary>Zusätzliche Crit-Chance nur für diese Fähigkeit (0.20 = +20 %).</summary>
+    public double BonusCritChance { get; init; }
+
     /// <summary>Kann nur über ein Talent freigeschaltet werden, erscheint nicht im Standard-Loadout.</summary>
     public bool TalentUnlockOnly { get; init; }
 
@@ -135,6 +145,59 @@ public sealed record Ability
     /// <summary>Debuff betäubt den Gegner: keine Angriffe für <see cref="DebuffDuration"/> Sekunden.</summary>
     public bool DebuffIsStun { get; init; }
 
+    /// <summary>Druiden-Gestalt: wirkt passiv, solange die Fähigkeit ausgerüstet ist (siehe <see cref="ShapeshiftForms"/>).</summary>
+    public DruidForm Form { get; init; }
+
+    /// <summary>Nur in dieser Gestalt ausrüst- und einsetzbar (z. B. Maul → Bear). None = keine Einschränkung.</summary>
+    public DruidForm RequiredForm { get; init; }
+
+    /// <summary>
+    /// Alternative Kosten in Rage-/Energie-Gestalten (z. B. Rejuvenation: Bear → Rage, Cat → Energy).
+    /// Eine Fähigkeit mit Eintrag für eine Gestalt ist dort trotz Manakosten nutzbar.
+    /// </summary>
+    public IReadOnlyDictionary<DruidForm, int> FormCosts { get; init; } = NoFormCosts;
+    private static readonly IReadOnlyDictionary<DruidForm, int> NoFormCosts = new Dictionary<DruidForm, int>();
+
+    /// <summary>Buff endet nach so vielen erlittenen Gegnertreffern vorzeitig (Holy Shield: 3). 0 = nur Laufzeit.</summary>
+    public int BuffHitCharges { get; init; }
+
+    /// <summary>Buff macht die nächste Schadensfähigkeit zu einem garantierten Crit und wird dabei verbraucht (Cold Blood).</summary>
+    public bool BuffGuaranteesCrit { get; init; }
+
+    /// <summary>
+    /// Verstärkt die nächste Fähigkeit mit diesem Namen um <see cref="EmpowerDamageBonus"/> (Mongoose Bite → Raptor Strike).
+    /// Bei einer Schadensfähigkeit: Treffer legt den Verstärkungs-Buff an. Bei einem Buff: der Buff selbst ist die Verstärkung.
+    /// </summary>
+    public string EmpowersAbilityName { get; init; } = "";
+    public double EmpowerDamageBonus { get; init; }
+
+    /// <summary>Laufzeit des Verstärkungs-Buffs in Sekunden.</summary>
+    public double EmpowerDuration { get; init; } = 10;
+
+    public bool IsEmpowering => EmpowersAbilityName.Length > 0 && EmpowerDamageBonus > 0;
+
+    /// <summary>Beschwört (bzw. belebt) dieses Begleittier (Hunter-Pets, Warlock-Dämonen).</summary>
+    public PetKind SummonsPet { get; init; }
+
+    public bool IsPetSummon => SummonsPet != PetKind.None;
+
+    /// <summary>
+    /// Multiplikator auf den gesamten Treffer inkl. Waffenschaden (Talente/Gestalten auf Waffenschläge).
+    /// Prozent-Boni nur auf <see cref="Damage"/> würden bei Waffenschlägen fast verpuffen (4 × 1.02 → 4).
+    /// </summary>
+    public double DamageMultiplier { get; init; } = 1.0;
+
+    /// <summary>
+    /// Kopie mit +<paramref name="bonus"/> Schaden: Waffenschläge über <see cref="DamageMultiplier"/>,
+    /// Zauber direkt auf <see cref="Damage"/>.
+    /// </summary>
+    public Ability WithDamageBonus(double bonus) =>
+        bonus == 0 ? this
+        : AddsWeaponDamage ? this with { DamageMultiplier = DamageMultiplier * (1.0 + bonus) }
+        : this with { Damage = (int)Math.Round(Damage * (1.0 + bonus)) };
+
+    public bool IsForm => Form != DruidForm.None;
+
     public bool IsLifeTap => LifeTapHpCost > 0 && LifeTapManaGain > 0;
 
     public bool IsDamage => Damage > 0;
@@ -149,8 +212,11 @@ public sealed record Ability
     /// <summary>Total number of DoT ticks over <see cref="DebuffDuration"/>.</summary>
     public int DebuffDotTickCount => IsDebuffDot ? Math.Max(1, (int)Math.Round(DebuffDuration / DebuffDotTickInterval)) : 0;
 
-    /// <summary>Direktheilung oder HoT – wird erst unter <see cref="HealThreshold"/> gewirkt.</summary>
-    public bool IsHealing => IsHeal || IsHot;
+    /// <summary>
+    /// Direktheilung oder HoT – wird erst unter <see cref="HealThreshold"/> gewirkt.
+    /// Schadenszauber mit Nebenheilung (Holy Nova) zählen nicht dazu und werden normal eingesetzt.
+    /// </summary>
+    public bool IsHealing => (IsHeal && !IsDamage) || IsHot;
 
     public bool IsShield => IsBuff && BuffShieldPct > 0;
 
@@ -158,11 +224,11 @@ public sealed record Ability
     public bool IsPlayerBuff => IsBuff && !IsHealing && !IsShield;
 
     /// <summary>
-    /// Cast-Priorität: 0 = Spieler-Buffs (+ Utility ohne Schaden wie Life Tap, Stuns, Marks),
+    /// Cast-Priorität: 0 = Spieler-Buffs (+ Utility ohne Schaden wie Life Tap, Stuns, Marks, Pet-Beschwörung),
     /// 1 = Heilung/Schild, 2 = Schaden (innerhalb der Gruppe nach geschätztem DPS).
     /// </summary>
     public int CastPriorityGroup =>
-        IsPlayerBuff || IsLifeTap || (IsDebuff && !IsDamage && !IsDebuffDot) ? 0
+        IsPlayerBuff || IsLifeTap || IsPetSummon || (IsDebuff && !IsDamage && !IsDebuffDot) ? 0
         : IsHealing || IsShield ? 1
         : 2;
 

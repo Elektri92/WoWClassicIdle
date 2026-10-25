@@ -28,7 +28,7 @@ public static class CombatEngine
         double dmg = ability.Damage;
         if (ability.AddsWeaponDamage)
             dmg = (dmg + RollWeaponSwing(stats, rng)) * stats.MeleeDamageMultiplier;
-        return Math.Max(1, (int)Math.Round(dmg * damageMultiplier));
+        return Math.Max(1, (int)Math.Round(dmg * ability.DamageMultiplier * damageMultiplier));
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public static class CombatEngine
             double avgSwing = (stats.WeaponMinDamage + stats.WeaponMaxDamage) / 2.0 + stats.AttackPower / 14.0 * stats.Speed;
             dmg = (dmg + avgSwing) * stats.MeleeDamageMultiplier;
         }
-        return dmg + ability.DebuffDotDamage * ability.DebuffDotTickCount;
+        return dmg * ability.DamageMultiplier * ability.HitCount + ability.DebuffDotDamage * ability.DebuffDotTickCount;
     }
 
     private static double RollWeaponSwing(Stats stats, Random rng)

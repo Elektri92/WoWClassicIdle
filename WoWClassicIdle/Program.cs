@@ -6,7 +6,12 @@ using Photino.NET;
 // Auf Linux müssen GDK/WebKit-Env-Vars gesetzt sein BEVOR GTK durch die nativen Bibliotheken
 // initialisiert wird. Da der Single-File-Bootstrapper native Libs vor managed Code lädt,
 // starten wir den Prozess bei Bedarf mit den korrekten Vars neu.
-if (OperatingSystem.IsLinux() && Environment.GetEnvironmentVariable("GDK_BACKEND") != "x11")
+// Nicht in Development (dort kein Photino) und nicht mit Debugger – sonst hängt der Debugger am beendeten Elternprozess.
+bool isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+if (OperatingSystem.IsLinux()
+    && !isDevelopment
+    && !System.Diagnostics.Debugger.IsAttached
+    && Environment.GetEnvironmentVariable("GDK_BACKEND") != "x11")
 {
     var psi = new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!)
     {
@@ -51,7 +56,12 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 
 app.UseAntiforgery();
 
-app.UseStaticFiles();
+// Statische Dateien haben keine Fingerprint-URLs (kein MapStaticAssets) – ohne no-cache zeigt
+// WebKit/Photino nach einem Update/Rebuild alte CSS/JS aus dem Cache. Revalidierung per ETag (304).
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "no-cache"
+});
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

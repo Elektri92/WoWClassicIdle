@@ -1,80 +1,6 @@
 // Models/TalentDefinition.cs
 namespace Models;
 
-public enum TalentEffectType
-{
-    CritChance,
-    ArcaneIntellectBonus,       // +x% Stärke von Arcane Intellect
-    ConjureWaterManaRegen,      // +x% Manaregg-Wert von Conjure Water
-    AutoAttackDamage,           // +x% Auto-Angriff-Schaden
-    FireballManaCost,           // -x Mana Kosten von Fireball (Flat)
-    FireballDot,                // Fireball-DoT-Schaden pro Rang
-    FireballCrit,               // +x% Crit-Chance für Fireball
-    FrostboltManaCost,          // -x Mana Kosten von Frostbolt (Flat)
-    FrostboltAttackSpeedDebuff, // +x% Angriffstempo-Debuff von Frostbolt
-    FrostboltCrit,              // +x% Crit-Chance für Frostbolt
-
-    // ─── Allgemein ───
-    AutoAttackSpeed,             // +x% Angriffsgeschwindigkeit
-    AutoAttackCrit,              // +x% Crit-Chance nur für Auto-Attacks
-    DamageTaken,                 // -x% erlittener Schaden
-    HealingBonus,                // +x% Heilung
-    RageGenBonus,                // +x% Rage-Generierung durch Auto-Attacks
-
-    // ─── Warrior ───
-    HeroicStrikeDamage,          // +x% Heroic Strike Schaden
-    HeroicStrikeManaCost,        // -x Rage-Kosten Heroic Strike (flat)
-    ExecuteCooldown,             // -x Sekunden Cooldown Execute
-    ThunderclapBonus,            // +x% Thunderclap Schaden und Attack-Slow
-    CritHeal,                    // Heilt x HP bei Crit
-    RageOnHit,                   // +x Rage wenn Angegriffen (flat)
-    GrantBattleStance,           // Schaltet Battle Stance frei
-    GrantBerserkerStance,        // Schaltet Berserker Stance frei
-    GrantDefensiveStance,        // Schaltet Defensive Stance frei
-
-    // ─── Priest ───
-    SmiteHeal,                   // Heilt x HP wenn Smite Schaden verursacht
-    ShadowWordPainDamage,        // +x% Shadow Word Pain Schaden
-
-    // ─── Rogue ───
-    SinisterStrikeDamage,        // +x% Sinister Strike Schaden
-    DeadlyPoisonProcChance,      // +x% Proc-Chance Deadly Poison
-    KidneyShotDuration,          // +x% Dauer Kidney Shot
-
-    // ─── Paladin ───
-    HolyLightManaCost,           // -x% Manakosten Holy Light
-    HolyStrikeManaCost,          // -x% Manakosten Holy Strike
-    DivineshieldDuration,        // +x Sekunden Dauer Divine Shield
-
-    // ─── Hunter ───
-    RaptorStrikeManaCost,        // -x Manakosten Raptor Strike (flat)
-    SerpentStingManaCost,        // -x Manakosten Serpent Sting (flat)
-    HuntersMarkBonus,            // +x% Schadensbuff von Hunter's Mark
-
-    // ─── Warlock ───
-    CurseOfAgonyDuration,        // +x Sekunden Dauer Curse of Agony
-    DrainLifeTickDamage,         // +x Schaden pro Drain Life Tick
-    LifeTapHpCostReduction,      // -x HP-Kosten Life Tap (flat)
-    ShadowBoltManaCost,          // -x Manakosten Shadow Bolt (flat)
-
-    // ─── Shaman ───
-    LightningBoltManaCost,       // -x Manakosten Lightning Bolt (flat)
-    LightningBoltDamage,         // +x Schaden Lightning Bolt (flat)
-    RockbiterDmgBonus,           // +x% Autoattack-Schadensbonus von Rockbiter Weapon
-    EarthbindCooldown,           // -x Sekunden Cooldown Earthbind Totem
-
-    // ─── Druid ───
-    WrathManaCost,               // -x Manakosten Wrath (flat)
-
-    // ─── Mage (Reihe 2) ───
-    GrantEvocation,             // Schaltet Evocation frei
-    ArcaneMissilesDamage,       // +x% Arcane Missiles Schaden
-    GrantIgnite,                // Schaltet Ignite frei
-    FireBlastManaCost,          // -x Manakosten Fire Blast (Flat)
-    GrantIceBarrier,            // Schaltet Ice Barrier frei
-    FrostboltDamage,            // +x% Frostbolt Schaden
-}
-
 public class TalentDefinition
 {
     public string Id { get; init; } = "";
@@ -92,6 +18,15 @@ public class TalentDefinition
     /// <summary>ID der Fähigkeit die durch dieses Talent freigeschaltet wird (optional).</summary>
     public string? GrantsAbilityId { get; init; }
 
+    /// <summary>Weitere freigeschaltete Fähigkeiten (z. B. Bear Form → Maul).</summary>
+    public IReadOnlyList<string> AlsoGrantsAbilityIds { get; init; } = [];
+
+    /// <summary>Alle durch dieses Talent freigeschalteten Fähigkeiten.</summary>
+    public IEnumerable<string> GrantedAbilityIds =>
+        string.IsNullOrEmpty(GrantsAbilityId)
+            ? AlsoGrantsAbilityIds
+            : AlsoGrantsAbilityIds.Prepend(GrantsAbilityId);
+
     /// <summary>Beschreibung des Effekts für einen bestimmten Rang.</summary>
     public string EffectDescription(int ranks) => EffectType switch
     {
@@ -106,7 +41,7 @@ public class TalentDefinition
         TalentEffectType.FireballManaCost =>
             $"-{(EffectPerRank * ranks):0.##} Fireball mana cost",
         TalentEffectType.FireballDot =>
-            $"Fireball DoT: {(EffectPerRank * ranks):0.##} DMG over 5s",
+            $"Fireball DoT: {(EffectPerRank * ranks * 100):0.##}% of its damage over 5s",
         TalentEffectType.FireballCrit =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Fireball crit chance",
         TalentEffectType.FrostboltManaCost =>
@@ -147,6 +82,24 @@ public class TalentDefinition
             $"Heal {(EffectPerRank * ranks):0.##} HP when Smite deals damage",
         TalentEffectType.ShadowWordPainDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Shadow Word: Pain damage",
+        TalentEffectType.GrantDivineShield =>
+            "Grants ability: Divine Shield (absorbs 25% max HP as a shield)",
+        TalentEffectType.SmiteDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Smite damage",
+        TalentEffectType.PowerWordFortitudeBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% damage reduction from Power Word: Fortitude",
+        TalentEffectType.GrantHolyNova =>
+            "Grants ability: Holy Nova (damages the enemy and heals you at the same time)",
+        TalentEffectType.RenewManaCost =>
+            $"-{(EffectPerRank * ranks * 100):0.##}% Renew mana cost",
+        TalentEffectType.RenewHealing =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Renew healing",
+        TalentEffectType.GrantShadowForm =>
+            "Grants ability: Shadowform (+25% Smite, Mind Blast and Shadow Word: Pain damage, -15% damage taken)",
+        TalentEffectType.MindBlastManaCost =>
+            $"-{(EffectPerRank * ranks * 100):0.##}% Mind Blast mana cost",
+        TalentEffectType.DrainManaBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Drain Mana restoration",
         TalentEffectType.SinisterStrikeDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Sinister Strike damage",
         TalentEffectType.DeadlyPoisonProcChance =>
@@ -177,24 +130,112 @@ public class TalentDefinition
             $"-{(EffectPerRank * ranks):0.##} Lightning Bolt mana cost",
         TalentEffectType.LightningBoltDamage =>
             $"+{(EffectPerRank * ranks):0.##} Lightning Bolt damage",
-        TalentEffectType.RockbiterDmgBonus =>
-            $"+{(EffectPerRank * ranks * 100):0.##}% Rockbiter Weapon damage bonus",
+        TalentEffectType.LightningShieldDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Lightning Shield damage",
+        TalentEffectType.GrantChainLightning =>
+            "Grants ability: Chain Lightning (hits the enemy 3 times, +20% crit chance)",
+        TalentEffectType.FlameShockDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Flame Shock damage",
+        TalentEffectType.GrantWindfuryWeapon =>
+            "Grants ability: Windfury Weapon (20% chance per auto attack to strike 2 extra times)",
+        TalentEffectType.FlurryAttackSpeed =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% attack speed for 3 swings after a melee crit",
+        TalentEffectType.GrantManaTideTotem =>
+            "Grants ability: Mana Tide Totem (restores 24% mana over 12s)",
+        TalentEffectType.SpiritManaRegen =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% mana regeneration from Spirit",
+        TalentEffectType.HealingWaveHealing =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Healing Wave healing",
         TalentEffectType.EarthbindCooldown =>
             $"-{(EffectPerRank * ranks):0.##}s Earthbind Totem cooldown",
         TalentEffectType.WrathManaCost =>
             $"-{(EffectPerRank * ranks):0.##} Wrath mana cost",
+        TalentEffectType.GrantMoonkinForm =>
+            "Grants ability: Moonkin Form (+15% Wrath and Moonfire damage)",
+        TalentEffectType.MoonfireDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Moonfire damage",
+        TalentEffectType.GrantBearForm =>
+            "Grants abilities: Bear Form (uses Rage, -6% damage taken) and Maul",
+        TalentEffectType.MaulDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Maul damage",
+        TalentEffectType.GrantCatForm =>
+            "Grants abilities: Cat Form (uses Energy), Claw and Rip",
+        TalentEffectType.ClawDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Claw damage",
+        TalentEffectType.GrantTreeForm =>
+            "Grants ability: Tree Form (+20% healing, +50% mana regeneration from Spirit)",
+        TalentEffectType.RegrowthHealing =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Regrowth healing",
         TalentEffectType.GrantEvocation =>
             "Grants ability: Evocation (restores 80% mana over 8s)",
         TalentEffectType.ArcaneMissilesDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Arcane Missiles damage",
         TalentEffectType.GrantIgnite =>
-            "Grants ability: Ignite (fire crits apply 15% damage as DoT over 3s)",
+            "Grants ability: Ignite (fire crits apply 40% damage as DoT over 3s)",
         TalentEffectType.FireBlastManaCost =>
             $"-{(EffectPerRank * ranks):0.##} Fire Blast mana cost",
         TalentEffectType.GrantIceBarrier =>
             "Grants ability: Ice Barrier (absorbs 30% max HP as a shield)",
         TalentEffectType.FrostboltDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Frostbolt damage",
+        TalentEffectType.GrantHolyShock =>
+            "Grants ability: Holy Shock (damages the enemy and heals you at the same time)",
+        TalentEffectType.HolyLightShield =>
+            $"Holy Light shields you for {(EffectPerRank * ranks * 100):0.##}% of your max HP",
+        TalentEffectType.GrantHolyShield =>
+            "Grants ability: Holy Shield (-35% damage from the next 4 attacks, damages attackers)",
+        TalentEffectType.ConsecrationDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Consecration damage",
+        TalentEffectType.GrantSealOfCommand =>
+            "Grants ability: Seal of Command (+12% auto-attack damage, 25% chance for an extra attack)",
+        TalentEffectType.HolyStrikeDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Holy Strike damage",
+        TalentEffectType.GrantColdBlood =>
+            "Grants ability: Cold Blood (your next damaging ability is a guaranteed critical strike)",
+        TalentEffectType.GrantBladeFlurry =>
+            "Grants ability: Blade Flurry (auto attacks strike twice for 10s)",
+        TalentEffectType.SinisterStrikeEnergyCost =>
+            $"-{(EffectPerRank * ranks):0.##} Sinister Strike energy cost",
+        TalentEffectType.SliceAndDiceBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Slice and Dice attack speed",
+        TalentEffectType.GrantGhostlyStrike =>
+            "Grants ability: Ghostly Strike (weapon strike that shields you)",
+        TalentEffectType.StaminaHpBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% health gained from Stamina",
+        TalentEffectType.ExposeArmorBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Expose Armor effect",
+        TalentEffectType.GrantTamePet =>
+            "Grants abilities: Call Cat (damage pet) and Call Bear (tank pet)",
+        TalentEffectType.PetHealthBonus =>
+            $"Pet health +{(EffectPerRank * ranks * 100):0.##}% of your max HP",
+        TalentEffectType.GrantSniperShot =>
+            "Grants ability: Sniper Shot (long cast, very high damage)",
+        TalentEffectType.MultiShotDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Multi-Shot damage",
+        TalentEffectType.GrantMongooseBite =>
+            "Grants ability: Mongoose Bite (strike that empowers your next Raptor Strike by 30%)",
+        TalentEffectType.RaptorStrikeBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Raptor Strike damage, -{(EffectPerRank * ranks * 100):0.##}% mana cost",
+        TalentEffectType.GrantSiphonLife =>
+            "Grants ability: Siphon Life (damage over time that heals you)",
+        TalentEffectType.LifestealBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% healing from lifesteal",
+        TalentEffectType.GrantSummonDemon =>
+            "Grants ability: Summon Voidwalker (tank demon)",
+        TalentEffectType.GrantIncinerate =>
+            "Grants ability: Incinerate (high fire damage, cooldown)",
+        TalentEffectType.IncinerateEmpower =>
+            $"Shadow Bolt increases the damage of your next Incinerate by {(EffectPerRank * ranks * 100):0.##}%",
+        TalentEffectType.FireballDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Fireball damage",
+        TalentEffectType.FireBlastDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Fire Blast damage",
+        TalentEffectType.MindBlastDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Mind Blast damage",
+        TalentEffectType.DamageBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% damage of all abilities",
+        TalentEffectType.ShadowBoltDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Shadow Bolt damage",
         _ => ""
     };
 }

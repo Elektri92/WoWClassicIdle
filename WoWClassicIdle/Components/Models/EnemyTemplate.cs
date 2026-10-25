@@ -18,6 +18,16 @@ public class EnemyTemplate
         return MaxHpByLevel[index];
     }
     public int BaseAttack     { get; init; }
+    public IReadOnlyList<int>? AttackByLevel { get; init; } // Index 0 = MinLevel; überschreibt BaseAttack
+
+    public int GetAttack(int level)
+    {
+        if (AttackByLevel is not { Count: > 0 })
+            return BaseAttack;
+
+        var index = Math.Clamp(level - MinLevel, 0, AttackByLevel.Count - 1);
+        return AttackByLevel[index];
+    }
     public int BaseDefense    { get; init; }
     public double BaseSpeed   { get; init; } = 1.0;
     public int MinCopperReward { get; init; }   // Loot-Spanne auf MinLevel, +1 Kupfer je Level darüber

@@ -13,6 +13,7 @@ public static class DefaultEnemyTemplates
             BaseMaxHp    = 42,
             MaxHpByLevel = [42, 55, 71, 86, 102, 120], // WoW Classic: Young Wolf (1) … Mangy Wolf (5-6)
             BaseAttack   = 6,
+            AttackByLevel = [5, 5, 6, 6, 6, 6],         // Lv 1–2 −15 %: Sim zeigte 9–25 Tode/h auf Lv 1–2
             BaseDefense  = 0,
             BaseSpeed    = 3.3,
             MinCopperReward = 1,
@@ -47,6 +48,7 @@ public static class DefaultEnemyTemplates
             BaseMaxHp    = 42,
             MaxHpByLevel = [42, 55, 71],               // WoW Classic: Mottled Boar (1-2) … Small Crag Boar (3)
             BaseAttack   = 5,
+            AttackByLevel = [4, 4, 5],                 // Lv 1–2 −15 % (wie Wolf)
             BaseDefense  = 0,
             BaseSpeed    = 3.0,
             MinCopperReward = 1,

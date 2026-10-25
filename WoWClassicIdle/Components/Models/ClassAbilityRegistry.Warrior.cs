@@ -47,6 +47,19 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Battle_Shout_r2",
+            Name = "Battle Shout",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_battleshout.jpg",
+            Cooldown = 0,
+            CastTime = 1.0,
+            ManaCost = 10,
+            BuffDuration = 30,
+            BuffDamageBonus = 0.07, // ×1,3 gegenüber Rank 1
+            LevelRequired = 12,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Thunderclap_r1",
             Name = "Thunder Clap",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_thunderclap.jpg",
@@ -59,6 +72,18 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
+            Id = "Thunderclap_r2",
+            Name = "Thunder Clap",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_thunderclap.jpg",
+            Cooldown = 30,
+            ManaCost = 20,
+            DebuffDuration = 10,
+            DebuffAttackSpeedReduction = 0.26,  // ×1,3 gegenüber Rank 1
+            LevelRequired = 14,
+            Rank = 2,
+        },
+        new Ability
+        {
             Id = "Execute_r1",
             Name = "Execute",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_sword_48.jpg",
@@ -68,6 +93,18 @@ public static partial class ClassAbilityRegistry
             RequiresEnemyBelowHpPct = 0.20,         // nur unter 20 % Gegner-HP
             LevelRequired = 8,
             Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Execute_r2",
+            Name = "Execute",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_sword_48.jpg",
+            Cooldown = 120,
+            ManaCost = 20,
+            Damage = 75,                            // ×1,5 gegenüber Rank 1
+            RequiresEnemyBelowHpPct = 0.20,
+            LevelRequired = 18,
+            Rank = 2,
         },
         new Ability
         {
@@ -87,9 +124,9 @@ public static partial class ClassAbilityRegistry
             Id = "Overpower_r1",
             Name = "Overpower",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
-            Cooldown = 6,
+            Cooldown = 12,
             ManaCost = 15,                      // 15 Rage
-            Damage = 30,
+            Damage = 5,          // war 30 / CD 6 – Krieger ab Lv 18 bei +28–43 % XP/h
             AddsWeaponDamage = true,
             LevelRequired = 18,
             Rank = 1,

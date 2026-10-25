@@ -5,7 +5,7 @@ namespace Models;
 /// Ein laufender Buff: die auslösende Fähigkeit und die Restlaufzeit in Sekunden.
 /// <see cref="TickAcc"/>/<see cref="TicksDone"/> zählen die HoT-Ticks mit.
 /// </summary>
-public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0, int ShieldRemaining = 0);
+public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0, int ShieldRemaining = 0, int ChargesRemaining = 0);
 
 /// <summary>Ein fälliger HoT- oder MoT-Tick. <see cref="IsMana"/> = true → Mana-Regenerierung statt HP-Heilung.</summary>
 public readonly record struct HotTick(Ability Source, int Amount, bool IsMana = false);
@@ -14,7 +14,7 @@ public readonly record struct HotTick(Ability Source, int Amount, bool IsMana = 
 /// Aktive Buffs eines Charakters. Wird vom Simulations-Thread geschrieben und vom UI gelesen,
 /// daher alle Zugriffe unter Lock.
 /// </summary>
-public class BuffTracker
+public partial class BuffTracker
 {
     // Schutz gegen Gleitkomma-Drift (20 × 0.1 s ergibt nicht exakt 2.0)
     private const double Epsilon = 1e-9;
@@ -50,7 +50,8 @@ public class BuffTracker
             var oldKey = _active.Keys.FirstOrDefault(k => k != ability.Id && _active[k].Source.Name == ability.Name);
             if (oldKey is not null) _active.Remove(oldKey);
             _active[ability.Id] = new ActiveBuff(ability, ability.BuffDuration,
-                MotAmountPerTick: motAmount, HotAmountPerTick: hotPctAmount, ShieldRemaining: shieldAmount);
+                MotAmountPerTick: motAmount, HotAmountPerTick: hotPctAmount, ShieldRemaining: shieldAmount,
+                ChargesRemaining: ability.BuffHitCharges);
         }
     }
 
@@ -188,6 +189,13 @@ public class BuffTracker
             lock (_lock)
                 return _active.Values.Any(b => b.Source.BuffGrantsImmunity);
         }
+    }
+
+    /// <summary>Aktiver Buff mit Extra-Schlag-Chance (Windfury Weapon), sonst null.</summary>
+    public Ability? GetExtraAttackSource()
+    {
+        lock (_lock)
+            return _active.Values.FirstOrDefault(b => b.Source.BuffExtraAttackChance > 0)?.Source;
     }
 
     /// <summary>Gibt alle Buff-Quellen zurück, die Vergeltungsschaden haben (z. B. Thorns, Lightning Shield).</summary>
