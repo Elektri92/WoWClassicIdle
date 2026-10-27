@@ -58,6 +58,10 @@ public sealed class CombatMeter
     public void RecordAbility(Ability ability, CombatActionKind kind, int amount) =>
         Record(ability.Name, ability.IconUrl, kind, amount);
 
+    /// <summary>Benutzte Items (z. B. Dynamit) – eigene Zeile je Item.</summary>
+    public void RecordItem(Item item, CombatActionKind kind, int amount) =>
+        Record(item.Name, item.IconUrl, kind, amount);
+
     /// <summary>Passive HP-Regeneration aus Spirit – erscheint als eigene Heal-Zeile.</summary>
     public void RecordSpiritRegen(int amount) =>
         Record(SpiritRegenName, SpiritRegenIconUrl, CombatActionKind.Heal, amount);

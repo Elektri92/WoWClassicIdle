@@ -8,7 +8,12 @@ public partial class IdleGameEngine
 
     private int _flurryCharges;
 
-    private double FlurryBonus => Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FlurryAttackSpeed);
+    // Schamanen-Talent + Warrior-Flurry (nur in Berserker Stance)
+    private double FlurryBonus =>
+        Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FlurryAttackSpeed)
+        + (Player.ActiveForm == DruidForm.BerserkerStance
+            ? Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.BerserkerFlurry)
+            : 0);
 
     /// <summary>Tempo-Multiplikator durch Flurry (1.0 = kein Bonus aktiv).</summary>
     private double FlurryAttackSpeedMultiplier => _flurryCharges > 0 ? 1.0 + FlurryBonus : 1.0;
@@ -18,6 +23,14 @@ public partial class IdleGameEngine
     {
         if (_flurryCharges > 0) _flurryCharges--;
         if (isCrit && FlurryBonus > 0) _flurryCharges = FlurryChargesPerCrit;
+    }
+
+    /// <summary>Passiver Proc (Deadly Poison) – mit Talent-Boni (Proc-Chance, Stacks, Tick-Tempo).</summary>
+    private void TryProcPassive(Ability passive)
+    {
+        var effective = Player.GetEffectiveAbility(passive);
+        if (CurrentEnemy!.IsAlive && _rng.NextDouble() < effective.ProcChance)
+            CurrentEnemy.Debuffs.ApplyStack(effective);
     }
 
     /// <summary>

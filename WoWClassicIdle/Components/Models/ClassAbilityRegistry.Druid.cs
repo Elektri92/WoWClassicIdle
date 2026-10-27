@@ -148,7 +148,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 3.0,     // 3,0 s Cast-Zeit
             ManaCost = 30,
             Damage = 28,
-            LevelRequired = 24,
+            LevelRequired = 20,     // war 24 – Classic-Stufe, Voraussetzung für Eclipse
             Rank = 1,
         },
 
@@ -247,6 +247,54 @@ public static partial class ClassAbilityRegistry
             RequiredForm = DruidForm.Cat,
             TalentUnlockOnly = true,
             LevelRequired = 1,
+            Rank = 1,
+        },
+
+        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ──
+        new Ability
+        {
+            Id = "Faerie_Fire_Cat",
+            Name = "Faerie Fire (Cat)",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_faeriefire.jpg",
+            ManaCost = 0,                   // in Classic kostenlos in Gestalt
+            DebuffDuration = 30,
+            DebuffDamageTakenBonus = 0.08,  // Rüstung gesenkt: +8 % erlittener Schaden
+            RequiredForm = DruidForm.Cat,
+            TalentUnlockOnly = true,
+            SpecHint = 1,
+            LevelRequired = 20,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Faerie_Fire_Bear",
+            Name = "Faerie Fire (Bear)",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_faeriefire.jpg",
+            Cooldown = 10,
+            ManaCost = 0,
+            Damage = 4,                     // Bär: trifft zusätzlich und bremst den Gegner (10 / CD 6 ergab +12,5 % XP/h)
+            DebuffDuration = 30,
+            DebuffDamageTakenBonus = 0.05,
+            DebuffAttackSpeedReduction = 0.10,
+            RequiredForm = DruidForm.Bear,
+            TalentUnlockOnly = true,
+            LevelRequired = 20,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Tranquility_r1",
+            Name = "Tranquility",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_tranquility.jpg",
+            Cooldown = 30,
+            CastTime = 4.0,                 // Kanalisierung
+            ManaCost = 45,
+            Damage = 10,                    // 4 Wellen à 10 Schaden – knapp über Starfire-DPS, sonst nie gewirkt
+            HitCount = 4,
+            Heal = 40,                      // … und heilt dich gleichzeitig
+            TalentUnlockOnly = true,
+            SpecHint = 2,
+            LevelRequired = 20,
             Rank = 1,
         },
     };

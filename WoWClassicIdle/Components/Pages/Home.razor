@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using Models
 
 <PageTitle>Home</PageTitle>
 
@@ -14,19 +15,50 @@
         <p class="home-tagline">
             Pick a class, level up, loot gear – your hero fights while you watch.
         </p>
+        <div class="home-level-cap">Level cap: @StaticHelpers.MaxLevel</div>
     </div>
 
     <div class="home-features">
         <div class="wow-card">
             <h4>⚔️ Classes &amp; Abilities</h4>
             <p class="mb-0">
-                Choose from nine classic classes. Each unlocks unique abilities as you level up and lets you build a custom combat loadout.
+                Choose from nine classic classes and keep a roster of characters. Each class unlocks unique abilities as you level up and lets you build a custom combat loadout.
             </p>
         </div>
         <div class="wow-card">
             <h4>🌿 Talents</h4>
             <p class="mb-0">
-                Spend talent points starting at level 10 to specialise your character and boost its combat performance.
+                Spend talent points starting at level 10 to specialise your character, unlock talent abilities and boost its combat performance.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>🐾 Pets &amp; Forms</h4>
+            <p class="mb-0">
+                Hunters fight alongside a Cat or Bear, Warlocks summon a Voidwalker. Druids shift into Bear, Cat, Moonkin or Tree form, Priests embrace Shadowform and Warriors switch stances.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>🎒 Loot &amp; Equipment</h4>
+            <p class="mb-0">
+                Collect drops from every enemy you defeat. Hunt ★ rare enemies for better gear and blue class weapons – tooltips compare each item with what you have equipped.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>⚒️ Professions</h4>
+            <p class="mb-0">
+                From level 5, pick a crafting profession per character and level shared gathering and secondary skills like Mining, Herbalism, Skinning, Fishing, First Aid and Cooking – actively or in passive slots.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>🧪 Consumables</h4>
+            <p class="mb-0">
+                Craft and use food, flasks, bandages and explosives to give your character an edge in combat.
+            </p>
+        </div>
+        <div class="wow-card">
+            <h4>📊 Combat Meter</h4>
+            <p class="mb-0">
+                Track your damage and healing per ability to see which loadout performs best.
             </p>
         </div>
         <div class="wow-card">
@@ -35,24 +67,18 @@
                 Complete challenges across combat, exploration and collection categories to earn achievement points.
             </p>
         </div>
-        <div class="wow-card">
-            <h4>🎒 Loot &amp; Equipment</h4>
-            <p class="mb-0">
-                Collect drops from every enemy you defeat. Equip weapons and armor to strengthen your character's stats.
-            </p>
-        </div>
     </div>
 
     <div class="home-alpha-notice wow-card mt-4">
         <strong>Early Access – Alpha</strong>
         <p class="mb-0 mt-1">
             This game is in active development. Content, balance and features will change frequently.
-            Professions and many planned systems are not yet available.
+            Characters are currently capped at level @StaticHelpers.MaxLevel – higher levels will follow in future updates.
         </p>
     </div>
 
     <p class="mt-4 text-center wow-footer">
-        Everything runs right in your browser – no installation required.
+        Your progress is saved automatically, and the game keeps itself up to date.
     </p>
 </div>
 
@@ -83,6 +109,17 @@
         color: #a89060;
         font-size: 0.95rem;
         margin-top: 0.25rem;
+    }
+
+    .home-level-cap {
+        display: inline-block;
+        margin-top: 0.5rem;
+        padding: 2px 10px;
+        border: 1px solid #c8860a;
+        border-radius: 3px;
+        color: #ffd100;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
     }
 
     .home-alpha-notice {

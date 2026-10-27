@@ -52,6 +52,22 @@ namespace Models
         long SellPrice = 0)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
+    /// <summary>
+    /// Berufs-Item (Rohstoff oder hergestelltes Verbrauchsgut) – stapelt bis 9999.
+    /// <paramref name="IsCraftingReagent"/> = wird in Rezepten verarbeitet (Tooltip-Zeile "Crafting Reagent").
+    /// </summary>
+    public record TradeItem(
+        int Id,
+        string Name,
+        string Icon,
+        bool IsCraftingReagent,
+        ItemQuality Quality = ItemQuality.Common,
+        long SellPrice = 1)
+        : Item(Id, Name, Icon, Quality, MaxStack: TradeItem.StackSize, SellPrice)
+    {
+        public const int StackSize = 9999;
+    }
+
     public enum WeaponType { Sword, Mace, Axe, Dagger, Staff, Wand, Bow }
 
     public enum ArmorSlot
@@ -89,7 +105,10 @@ namespace Models
         };
     }
 
-    /// <summary>Ein Rüstungsteil das in einen Ausrüstungsslot angelegt werden kann.</summary>
+    /// <summary>
+    /// Ein Rüstungsteil das in einen Ausrüstungsslot angelegt werden kann.
+    /// <paramref name="RequiredClass"/> = nur für diese Klasse (hergestellte Klassen-Sets), <c>null</c> = alle Klassen.
+    /// </summary>
     public record ArmorItem(
         int Id,
         string Name,
@@ -98,7 +117,8 @@ namespace Models
         PrimaryStats Bonuses,
         int RequiredLevel = 1,
         ItemQuality Quality = ItemQuality.Uncommon,
-        long SellPrice = 0)
+        long SellPrice = 0,
+        CharacterClass? RequiredClass = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
     /// <summary>A weapon item that can be equipped in a weapon slot.</summary>
@@ -123,16 +143,25 @@ namespace Models
         /// <summary>Gefordertes Level des Items (1 wenn das Item kein Level verlangt).</summary>
         public static int LevelOf(Item item) => item switch
         {
-            ArmorItem  a    => a.RequiredLevel,
-            WeaponItem w    => w.RequiredLevel,
+            ArmorItem      a => a.RequiredLevel,
+            WeaponItem     w => w.RequiredLevel,
+            ConsumableItem c => c.RequiredLevel,
             _               => 1,
         };
 
         public static bool MatchesLevel(Item item, int level) => LevelOf(item) <= level;
 
-        /// <summary>Nur klassenspezifische Waffen sind an andere Klassen gebunden.</summary>
+        /// <summary>Geforderte Klasse des Items (<c>null</c> = alle Klassen).</summary>
+        public static CharacterClass? ClassOf(Item item) => item switch
+        {
+            ArmorItem  a => a.RequiredClass,
+            WeaponItem w => w.RequiredClass,
+            _            => null,
+        };
+
+        /// <summary>Klassenspezifische Waffen und hergestellte Klassen-Rüstung sind an ihre Klasse gebunden.</summary>
         public static bool MatchesClass(Item item, CharacterClass cls) =>
-            item is not WeaponItem weapon || weapon.RequiredClass is null || weapon.RequiredClass == cls;
+            ClassOf(item) is not { } required || required == cls;
     }
 
     /// <summary>Ein Stapel eines Items in einem Taschenslot.</summary>

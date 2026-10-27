@@ -7,6 +7,10 @@ public static partial class AbilityText
     /// <summary>Gelber Effekttext für Sonder-Mechaniken; null = Standardtext verwenden.</summary>
     private static string? SpecialDescription(Ability ability)
     {
+        // Spezialisierungs-Fähigkeiten (Reihe 3) – siehe AbilityText.SpecAbilities.cs
+        if (SpecDescription(ability) is { } spec)
+            return spec;
+
         if (ability.IsPetSummon && PetRegistry.Get(ability.SummonsPet) is { } pet)
             return $"Summons your {pet.Name} ({pet.Role.ToLowerInvariant()}). It has {Num(pet.HpPctOfOwner * 100)}% of your maximum health,"
                  + $" attacks every {Num(pet.AttackInterval)} sec and takes {Num(PetRegistry.DamageShare * 100)}% of all damage dealt to you."
@@ -52,6 +56,8 @@ public static partial class AbilityText
     /// <summary>Einzeiler für Sonder-Mechaniken; null = Standardtext verwenden.</summary>
     private static string? SpecialShortSummary(Ability ability)
     {
+        if (SpecShortSummary(ability) is { } spec)
+            return spec;
         if (ability.IsPetSummon && PetRegistry.Get(ability.SummonsPet) is { } pet)
             return $"Summon {pet.Name} · {pet.Role}";
         if (ability.IsBuff && ability.BuffGuaranteesCrit)

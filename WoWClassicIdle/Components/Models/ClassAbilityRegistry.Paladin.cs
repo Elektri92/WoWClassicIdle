@@ -185,5 +185,54 @@ public static partial class ClassAbilityRegistry
             Rank                  = 1,
             TalentUnlockOnly      = true,
         },
+
+        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20): passive Auren, nur eine gleichzeitig ──
+        new Ability
+        {
+            Id                     = "Holy_Aura",
+            Name                   = "Holy Aura",
+            IconUrl                = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_mindsooth.jpg",
+            ManaCost               = 0,
+            IsPassive              = true,
+            BuffDuration           = 9999,      // Aura: wirkt solange ausgerüstet
+            BuffHealingBonus       = 0.20,
+            BuffResourceRegenBonus = 0.25,      // +25 % Manaregeneration
+            BuffDamageBonus        = 0.05,      // ohne Schadensanteil im Sim nie ausgerüstet
+            ExclusiveGroup         = "paladin_aura",
+            SpecHint               = 0,
+            LevelRequired          = 20,
+            Rank                   = 1,
+            TalentUnlockOnly       = true,
+        },
+        new Ability
+        {
+            Id                       = "Protection_Aura",
+            Name                     = "Protection Aura",
+            IconUrl                  = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_devotionaura.jpg",
+            ManaCost                 = 0,
+            IsPassive                = true,
+            BuffDuration             = 9999,
+            BuffDamageTakenReduction = 0.10,
+            ExclusiveGroup           = "paladin_aura",
+            SpecHint                 = 1,
+            LevelRequired            = 20,
+            Rank                     = 1,
+            TalentUnlockOnly         = true,
+        },
+        new Ability
+        {
+            Id                    = "Retribution_Aura",
+            Name                  = "Retribution Aura",
+            IconUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_auraoflight.jpg",
+            ManaCost              = 0,
+            IsPassive             = true,
+            BuffDuration          = 9999,
+            BuffRetaliationDamage = 7,          // Heiliger Schaden an jedem Angreifer
+            ExclusiveGroup        = "paladin_aura",
+            SpecHint              = 2,
+            LevelRequired         = 20,
+            Rank                  = 1,
+            TalentUnlockOnly      = true,
+        },
     };
 }

@@ -1,0 +1,134 @@
+@using Models
+@inject IdleGameEngine Engine
+
+@* Entzaubern: grüne Items aus den Taschen zerstören → Staub/Essenz nach Item-Level. 1 s Zauberzeit je Item (aktiver Slot). *@
+<div class="wow-card">
+    <div class="disenchant-head">
+        <h4>Disenchant</h4>
+        @if (Run is not null)
+        {
+            <button class="prof-mini-btn" @onclick="Engine.StopActiveProfession">Stop</button>
+        }
+        @if (Candidates.Count > 0)
+        {
+            <button class="prof-mini-btn @(_confirmAll ? "danger" : "")" disabled="@(UsableCount == 0)" @onclick="DisenchantAll">
+                @(_confirmAll ? $"Confirm: destroy {UsableCount} items" : $"Disenchant All ({UsableCount})")
+            </button>
+            @if (_confirmAll)
+            {
+                <button class="prof-mini-btn" @onclick="() => _confirmAll = false">Cancel</button>
+            }
+        }
+    </div>
+    <p class="wow-hint">Destroys an uncommon (green) item from your bags and extracts enchanting materials based on its level (@IdleGameEngine.DisenchantCastSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) s per item). Equipped items are not affected.</p>
+
+    <div class="wow-progress prof-run-bar">
+        <div class="bar" style="width: @RunPercent%"></div>
+        <span>@RunLabel</span>
+    </div>
+
+    @if (Candidates.Count == 0)
+    {
+        <p class="wow-hint">No uncommon items in your bags.</p>
+    }
+    else
+    {
+        // Eingereihte Items je Wert zählen (gleiche Items können mehrfach in den Taschen liegen)
+        var queued = Engine.DisenchantQueue.GroupBy(i => i).ToDictionary(g => g.Key, g => g.Count());
+        <div class="wow-inset disenchant-list">
+            @foreach (var candidate in Candidates)
+            {
+                var item = candidate.Item;
+                var band = EnchantingRegistry.BandFor(item);
+                var blocker = Engine.DisenchantBlocker(item);
+                bool isQueued = queued.TryGetValue(item, out int left) && left > 0;
+                if (isQueued) queued[item] = left - 1;
+                bool skillUp = blocker is null && ProfessionRegistry.GivesSkillUp(Profession.Enchanting, band.RequiredSkill, Progress.Skill);
+                RenderFragment entry = @<div class="craft-list-entry disenchant-entry @(blocker is not null ? "locked" : "")"
+                                             style="--quality: @ItemQualityColors.Hex(item.Quality)">
+                    @if (blocker is null)
+                    {
+                        <span class="craft-skill-dot @(skillUp ? "up" : "trivial")"></span>
+                    }
+                    <img class="craft-list-icon" src="@item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span class="craft-list-name">@item.Name</span>
+                    <span class="disenchant-level">Lv @ItemRequirements.LevelOf(item)</span>
+                </div>;
+
+                <div class="disenchant-row @(isQueued ? "queued" : "")">
+                    @if (item is ArmorItem armor)
+                    {
+                        <ArmorTooltip Armor="armor" Class="tt-contents disenchant-item" Hint="@blocker"
+                                      RequirementsMet="@Engine.Player.MeetsItemRequirements(armor)">
+                            @entry
+                        </ArmorTooltip>
+                    }
+                    else if (item is WeaponItem weapon)
+                    {
+                        <WeaponTooltip Weapon="weapon" Class="tt-contents disenchant-item" Hint="@blocker">
+                            @entry
+                        </WeaponTooltip>
+                    }
+                    <span class="disenchant-yield" title="@($"{band.Dust.Name} or {band.Essence.Name}")">
+                        <img src="@band.Dust.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                        <img src="@band.Essence.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    </span>
+                    @if (isQueued)
+                    {
+                        <span class="disenchant-queued">Queued</span>
+                    }
+                    else
+                    {
+                        <button class="prof-mini-btn" disabled="@(blocker is not null)" title="@blocker"
+                                @onclick="() => DisenchantOne(item)">Disenchant</button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ProfessionProgress Progress { get; set; } = null!;
+
+    private bool _confirmAll;
+
+    private IReadOnlyList<DisenchantCandidate> Candidates => Engine.DisenchantCandidates();
+
+    private int UsableCount => Candidates.Count(c => Engine.DisenchantBlocker(c.Item) is null);
+
+    private ActiveProfessionRun? Run =>
+        Engine.ActiveProfessionRun is { DisenchantQueue: not null } run && run.Profession == Progress.Profession ? run : null;
+
+    private string RunPercent => ((Run?.Progress ?? 0) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string RunLabel => Run is { DisenchantQueue: { } queue } && queue.TryPeek(out var next)
+        ? $"Disenchanting {next.Name}… ({queue.Count} left)"
+        : "Idle";
+
+    private void DisenchantOne(Item item)
+    {
+        _confirmAll = false;
+        Engine.QueueDisenchant([item]);
+    }
+
+    // Zweistufig: erster Klick fragt nach, zweiter reiht alle entzauberbaren (noch nicht eingereihten) Items ein
+    private void DisenchantAll()
+    {
+        if (!_confirmAll)
+        {
+            _confirmAll = true;
+            return;
+        }
+        _confirmAll = false;
+
+        var queued = Engine.DisenchantQueue.GroupBy(i => i).ToDictionary(g => g.Key, g => g.Count());
+        var items = new List<Item>();
+        foreach (var candidate in Candidates.Where(c => Engine.DisenchantBlocker(c.Item) is null))
+        {
+            if (queued.TryGetValue(candidate.Item, out int left) && left > 0) queued[candidate.Item] = left - 1;
+            else items.Add(candidate.Item);
+        }
+        Engine.QueueDisenchant(items);
+    }
+}

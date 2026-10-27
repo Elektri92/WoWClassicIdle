@@ -76,6 +76,23 @@ namespace Models
         public int CountOf(int itemId) => AllContainers.Sum(b => b.CountOf(itemId));
 
         /// <summary>
+        /// Teilt <paramref name="amount"/> Items von einem Stapel ab und legt sie in den nächsten freien Slot
+        /// (gleiche Tasche zuerst, dann übrige Container). <c>false</c> wenn kein Platz oder ungültige Menge.
+        /// </summary>
+        public bool SplitStack(Bag bag, int index, int amount)
+        {
+            if (bag[index] is not { } stack || amount < 1 || amount >= stack.Count) return false;
+
+            var target = bag.FreeSlots > 0 ? bag : AllContainers.FirstOrDefault(b => b.FreeSlots > 0);
+            if (target is null) return false;
+
+            int freeIndex = Enumerable.Range(0, target.SlotCount).First(i => target[i] is null);
+            stack.Remove(amount);
+            target.Put(freeIndex, new ItemStack(stack.Item, amount));
+            return true;
+        }
+
+        /// <summary>
         /// Erstellt oder vergrößert virtuelle Taschen basierend auf dem Spielerlevel.
         /// Taschenplätze mit einem manuell ausgerüsteten BagItem (Source != null) werden nicht verändert.
         /// </summary>

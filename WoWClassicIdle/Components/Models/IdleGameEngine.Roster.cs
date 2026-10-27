@@ -89,8 +89,33 @@ public partial class IdleGameEngine
         ActivateSlot(slot);
     }
 
+    // Charakter, der vor einem Wechsel in den Berufsfenstern gespielt wurde – wird beim Kämpfen wiederhergestellt
+    private int? _characterBeforeProfessions;
+
+    /// <summary>
+    /// Wechsel aus den Berufsfenstern (Klick in der Charakterliste, Hauptberuf eines anderen Charakters):
+    /// merkt sich beim ersten Wechsel den ursprünglichen Charakter, siehe <see cref="RestoreCharacterAfterProfessions"/>.
+    /// </summary>
+    public void SelectCharacterForProfessions(int id)
+    {
+        int? original = _characterBeforeProfessions ?? _activeSlotId;
+        SelectCharacter(id);
+        _characterBeforeProfessions = original != id ? original : null;
+    }
+
+    /// <summary>Zurück zum Kämpfen: ursprünglich gespielten Charakter wieder auswählen (falls noch vorhanden).</summary>
+    public void RestoreCharacterAfterProfessions()
+    {
+        if (_characterBeforeProfessions is not { } id) return;
+        _characterBeforeProfessions = null;
+        if (id != _activeSlotId && _roster.Any(s => s.Id == id))
+            SelectCharacter(id);
+    }
+
     private void ActivateSlot(CharacterSlot slot)
     {
+        // Jede andere Auswahl (Charakterauswahl, neuer Charakter) ist eine bewusste Entscheidung → nichts wiederherstellen
+        _characterBeforeProfessions = null;
         lock (_simLock)
         {
             _activeSlotId = slot.Id;
@@ -112,6 +137,24 @@ public partial class IdleGameEngine
             ResetCastState();
             DismissPet();
             CurrentEnemy = _spawner.Spawn(Player.Stats.Level, 0);
+        }
+        TickUpdated?.Invoke();
+    }
+
+    /// <summary>
+    /// Debug: Setzt alle Charaktere im Roster auf dasselbe Level und spawnt einen passenden Gegner.
+    /// </summary>
+    public void SetAllCharactersLevel(int level)
+    {
+        level = Math.Clamp(level, 1, 60);
+        lock (_simLock)
+        {
+            foreach (var slot in _roster)
+                slot.Player.SetLevel(level);
+
+            Player.Inventory.UpdateBagsForLevel(Player.Level);
+            CurrentEnemy = _spawner.Spawn(Player.Stats.Level, _stopwatch.Elapsed.TotalSeconds);
+            LastLog = $"All characters set to level {level}";
         }
         TickUpdated?.Invoke();
     }

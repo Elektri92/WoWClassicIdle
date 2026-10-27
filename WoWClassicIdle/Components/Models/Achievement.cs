@@ -7,7 +7,8 @@ public enum AchievementCategory
     Kills,
     Deaths,
     Loot,
-    Inventory
+    Inventory,
+    Professions
 }
 
 public class AchievementDefinition

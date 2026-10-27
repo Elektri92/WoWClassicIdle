@@ -38,7 +38,8 @@ public partial class IdleGameEngine
         {
             Pet.AttackAcc -= def.AttackInterval;
             double variance = 0.85 + _rng.NextDouble() * 0.30;   // 85–115 % wie bei Gegnertreffern
-            int dmg = Math.Max(1, (int)Math.Round(PetRegistry.AverageHit(def, Player.Level) * variance * enemyDmgTakenMult));
+            int dmg = Math.Max(1, (int)Math.Round(PetRegistry.AverageHit(def, Player.Level) * variance * enemyDmgTakenMult
+                                                  * (1.0 + Player.PetDamageTalentBonus + Player.Buffs.PetDamageBonus)));
             Meter.RecordAbility(Pet.MeterSource, CombatActionKind.Damage, enemy.TakeDamage(dmg));
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, dmg, false));
             dealt += dmg;
@@ -54,7 +55,8 @@ public partial class IdleGameEngine
     {
         if (Pet is not { IsAlive: true }) return damage;
         // Mindestens 1 Schaden, auch wenn 10 % eines kleinen Treffers auf 0 runden würden
-        int share = Math.Max(1, (int)Math.Round(damage * PetRegistry.DamageShare));
+        // Soul Link erhöht den Anteil
+        int share = Math.Max(1, (int)Math.Round(damage * (PetRegistry.DamageShare + Player.Buffs.PetDamageShareBonus)));
 
         Pet.TakeDamage(share);
         if (!Pet.IsAlive)

@@ -29,7 +29,7 @@ public static class SimTalentOptimizer
         int available;
         while ((available = player.GetAvailableTalentPoints(cls)) > 0)
         {
-            var candidates = talents.Where(t => player.TalentState.CanInvest(t, available)).ToList();
+            var candidates = talents.Where(t => player.TalentState.CanInvest(t, available, player.Level)).ToList();
             if (candidates.Count == 0) break;
 
             TalentDefinition best        = candidates[0];
@@ -68,6 +68,13 @@ public static class SimTalentOptimizer
         var current = player.GetCurrentLoadout().EquippedAbilityIds.ToList();
         var trials  = new List<List<string>> { current };
 
+        // Gestalt-Talente (Shadowform, Moonkin …): Gestalt ist Pflicht, gemessen wird nur, welcher Slot dafür weicht
+        var formGrant = talent.GrantedAbilityIds.Select(ClassAbilityRegistry.FindById)
+            .FirstOrDefault(a => a is { IsForm: true } && a.LevelRequired <= player.Level);
+        if (formGrant is not null && current.Count >= ClassAbilityRegistry.MaxSlotsPerClass)
+            trials.AddRange(Enumerable.Range(0, current.Count)
+                .Select(i => current.Select((id, j) => j == i ? formGrant.Id : id).ToList()));
+
         var granted = talent.GrantedAbilityIds
             .Select(ClassAbilityRegistry.FindById)
             .OfType<Ability>()
@@ -91,6 +98,9 @@ public static class SimTalentOptimizer
             trials.Add(ClassAbilityRegistry.GetDefaultLoadoutIds(player.ActiveClass, player.Level, specIndex, unlocked));
         }
 
+        if (formGrant is not null)
+            trials = trials.Select(t => WithForm(t, formGrant)).ToList();
+
         double       bestScore = double.MinValue;
         List<string> best      = current;
         foreach (var trial in trials.Where(t => !SimLoadoutOptimizer.HasExclusiveConflict(t)))
@@ -103,5 +113,15 @@ public static class SimTalentOptimizer
             }
         }
         return (bestScore, best);
+    }
+
+    /// <summary>Stellt sicher, dass <paramref name="form"/> im Loadout ist; in der Gestalt unbrauchbare Fähigkeiten fallen raus.</summary>
+    private static List<string> WithForm(List<string> ids, Ability form)
+    {
+        var result = ids.Contains(form.Id) ? ids.ToList() : ids.Prepend(form.Id).ToList();
+        return result
+            .Where(id => ClassAbilityRegistry.FindById(id) is { } a && ShapeshiftForms.IsUsableIn(a, form.Form))
+            .Take(ClassAbilityRegistry.MaxSlotsPerClass)
+            .ToList();
     }
 }

@@ -18,6 +18,10 @@
     <!--  PLAYER FRAME  (links)                     -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="unit-frame player-frame">
+        <!-- ═══ CONSUMABLES: Spalte links neben dem Spieler, füllt von oben nach unten ═══ -->
+        <div class="consumable-dock">
+            <ConsumableBar />
+        </div>
         <!-- Zuletzt ausgelöste Spells: Icon fliegt links neben dem Charakter von unten nach oben -->
         <div class="spell-scroll" aria-hidden="true">
             @foreach (var s in SnapshotSpellFloats())
@@ -45,7 +49,8 @@
                 else
                 {
                     <img class="race-portrait"
-                         src="@(_engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender))"
+                         src="@(Costumes.PortraitUrl(_engine.Player.Costume) ?? _engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(_engine.Player.Race, _engine.Gender))"
+                         title="@(_engine.Player.Costume != Costume.None ? Costumes.Name(_engine.Player.Costume) : null)"
                          alt="" onerror="this.style.display='none'" />
                     <img class="class-badge"
                          src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
@@ -90,9 +95,17 @@
                 </div>
                 <div class="xp-row">
                     <div class="xp-bar">
-                        <div class="xp-fill"
-                             style="width: @(CalcPct(_engine.Player.Xp, _engine.Player.XpToNextLevel))%"></div>
-                        <span class="bar-text">@_engine.Player.Xp / @_engine.Player.XpToNextLevel</span>
+                        @if (_engine.Player.XpToNextLevel == 0)
+                        {
+                            <div class="xp-fill" style="width: 100%"></div>
+                            <span class="bar-text">Max Level</span>
+                        }
+                        else
+                        {
+                            <div class="xp-fill"
+                                 style="width: @(CalcPct(_engine.Player.Xp, _engine.Player.XpToNextLevel))%"></div>
+                            <span class="bar-text">@_engine.Player.Xp / @_engine.Player.XpToNextLevel</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -584,7 +597,7 @@
         justify-content: center;
         gap: 12px;
         margin: 1rem 0;
-        padding-left: 54px;   /* Platz für den Spell-Scroll links neben dem Spieler */
+        padding-left: 94px;   /* Platz für Verbrauchsgüter-Spalte + Spell-Scroll links neben dem Spieler */
     }
 
     .unit-frame {
@@ -1124,9 +1137,18 @@
     }
 
     /* ── Spell-Scroll: zuletzt ausgelöster Spell fliegt links neben dem Charakter nach oben ── */
+    /* Verbrauchsgüter direkt links am Spieler-Frame, Spell-Scroll weiter außen */
+    .consumable-dock {
+        position: absolute;
+        right: calc(100% + 6px);
+        top: 0;
+        bottom: 0;
+        z-index: 6;
+    }
+
     .spell-scroll {
         position: absolute;
-        right: calc(100% + 10px);
+        right: calc(100% + 48px);
         top: 0;
         bottom: 0;
         width: 44px;
@@ -1586,6 +1608,11 @@
         .spell-scroll {
             right: auto;
             left: 6px;
+        }
+        /* Verbrauchsgüter als Zeile oben im Frame */
+        .consumable-dock {
+            position: static;
+            margin-bottom: 6px;
         }
         .debug-columns {
             flex-direction: column;

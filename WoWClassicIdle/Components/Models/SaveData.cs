@@ -3,7 +3,7 @@ namespace Models;
 
 public class SaveData
 {
-    public int Version { get; set; } = 3;
+    public int Version { get; set; } = 4;
     public int? ActiveSlotId { get; set; }
     public int NextSlotId { get; set; }
     public int TotalKills { get; set; }
@@ -18,6 +18,11 @@ public class SaveData
     public List<ItemStackSaveData> SharedInventoryItems { get; set; } = new();
     // Taschenplätze 0-3 (ab Version 3)
     public List<BagItemSaveData> SharedBagItems { get; set; } = new();
+    // Accountweite Berufe (Sammeln + Angeln) und passive Berufs-Slots (ab Version 4; Name aus Kompatibilitätsgründen)
+    public List<ProfessionSaveData> SecondaryProfessions { get; set; } = new();
+    public List<PassiveAssignmentSaveData> PassiveAssignments { get; set; } = new();
+    // Profession.ToString() → zuletzt gewählte Zone/Rezept
+    public Dictionary<string, string> LastProfessionTargets { get; set; } = new();
 }
 
 public class SlotSaveData
@@ -43,6 +48,27 @@ public class PlayerSaveData
     public Dictionary<string, List<string>> LoadoutAbilityIdsByClass { get; set; } = new();
     // TalentId → investierte Ränge
     public Dictionary<string, int> TalentInvestedPoints { get; set; } = new();
+    // Hauptberuf (ab Version 4; ältere Stände enthalten hier auch Sammel-/Sekundärberufe → werden accountweit übernommen)
+    public List<ProfessionSaveData> Professions { get; set; } = new();
+}
+
+public class ProfessionSaveData
+{
+    // Profession.ToString()
+    public string Profession { get; set; } = "";
+    public int Skill { get; set; } = 1;
+    public int RankIndex { get; set; }
+}
+
+/// <summary>Ein mit einem Charakter belegter passiver Berufs-Slot.</summary>
+public class PassiveAssignmentSaveData
+{
+    public string Profession { get; set; } = "";
+    public string Group { get; set; } = "";
+    public int Index { get; set; }
+    public int CharacterId { get; set; }
+    public string? Target { get; set; }
+    public double Elapsed { get; set; }
 }
 
 public class ClassProgressSaveData

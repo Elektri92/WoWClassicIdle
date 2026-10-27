@@ -37,5 +37,16 @@ namespace Models
 
         public static string ClassIconUrl(CharacterClass cls) =>
             ClassIcons.TryGetValue(cls, out var url) ? url : "";
+
+        // PvP-Banner als Fraktionswappen (Classic: _01 = Horde, _02 = Alliance)
+        public static string FactionIconUrl(Faction faction) =>
+            faction == Faction.Horde
+                ? "https://wow.zamimg.com/images/wow/icons/large/inv_bannerpvp_01.jpg"
+                : "https://wow.zamimg.com/images/wow/icons/large/inv_bannerpvp_02.jpg";
+
+        // UI-Icons für Buttons (ersetzen Unicode-Glyphen)
+        public const string EditIcon = "https://wow.zamimg.com/images/wow/icons/medium/inv_misc_note_01.jpg";
+        public const string PlayIcon = "https://wow.zamimg.com/images/wow/icons/medium/inv_sword_04.jpg";
+        public const string NewCharacterIcon = "https://wow.zamimg.com/images/wow/icons/medium/spell_holy_resurrection.jpg";
     }
 }

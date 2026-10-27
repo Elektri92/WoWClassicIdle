@@ -1,0 +1,142 @@
+@using Models
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+@* Kampf-Anzeige der Verbrauchsgüter: je Art (Trank, Elixier je Stat, Essen, Fläschchen, Verband, Dynamit)
+   das stärkste nutzbare Item im Inventar mit Anzahl, darüber Abklingzeit bzw. Restlaufzeit des aktiven Buffs.
+   Benutzte Verbrauchsgüter steigen kurz als Icon auf. *@
+<div class="consumable-bar">
+    @foreach (var tile in BuildTiles())
+    {
+        <TradeItemTooltip @key="tile.Key" Item="tile.Item">
+            <span class="consumable-icon kind-@tile.Item.Kind.ToString().ToLowerInvariant() @(tile.Count == 0 ? "empty" : "") @(tile.IsActive ? "active" : "")"
+                  @onclick="() => UseManually(tile)">
+                <span class="consumable-frame">
+                    <img src="@tile.Item.IconUrl" alt="@tile.Item.Name" onerror="this.style.visibility='hidden'" />
+                    @if (tile.Remaining > 0)
+                    {
+                        @* Abklingzeit/Restlaufzeit als Uhrzeiger-Abdunklung (--pct ohne Einheit) *@
+                        <span class="consumable-sweep @(tile.IsActive ? "buff" : "")" style="--pct: @Pct(tile.Remaining, tile.Total)"></span>
+                        <span class="consumable-time">@FormatTime(tile.Remaining)</span>
+                    }
+                    <span class="consumable-count">@tile.Count</span>
+                </span>
+            </span>
+        </TradeItemTooltip>
+    }
+
+    <div class="consumable-pops" aria-hidden="true">
+        @foreach (var pop in SnapshotPops())
+        {
+            <span @key="pop.Id" class="consumable-pop" style="margin-right: @(pop.Offset)px">
+                <img src="@pop.Item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                <span>@pop.Item.Name</span>
+            </span>
+        }
+    </div>
+</div>
+
+@code {
+    private static readonly TimeSpan PopLifetime = TimeSpan.FromSeconds(1.8);
+    private const int MaxPops = 6;
+
+    private record Pop(int Id, ConsumableItem Item, int Offset, DateTime Created);
+
+    /// <summary>Eine Kachel je Verbrauchsgut-Art (BuffKey).</summary>
+    private record Tile(string Key, ConsumableItem Item, int Count, double Remaining, double Total, bool IsActive);
+
+    private readonly List<Pop> _pops = new();
+    private int _nextPopId;
+
+    private List<Tile> BuildTiles()
+    {
+        var player = Engine.Player;
+        var owned = player.Inventory.AllContainers
+            .SelectMany(b => b.Slots)
+            .Select(s => s?.Item)
+            .OfType<ConsumableItem>()
+            .Where(c => c.RequiredLevel <= player.Level && player.CanUseConsumable(c))
+            .Distinct()
+            .ToList();
+        var active = player.ActiveConsumables.ToDictionary(a => a.Item.BuffKey);
+
+        // Laufende Verkleidung auch ohne Vorrat anzeigen (Restzeit)
+        if (player.Costume != Costume.None && ConsumableRegistry.GetById(ConsumableRegistry.SavoryDeviateDelightId) is { } delight)
+            active.TryAdd(delight.BuffKey, new ActiveConsumable(delight, player.CostumeRemaining));
+
+        var tiles = new List<Tile>();
+        foreach (var key in owned.Select(c => c.BuffKey).Concat(active.Keys).Distinct())
+        {
+            // Stärkstes vorhandenes Item der Art; ist keins mehr da, das aktive Buff-Item (grau)
+            var best = owned.Where(c => c.BuffKey == key).MaxBy(c => c.Potency);
+            active.TryGetValue(key, out var buff);
+            var item = best ?? buff!.Item;
+            int count = best is null ? 0 : player.Inventory.CountOf(best.Id);
+
+            var (remaining, total, isActive) = item.Kind switch
+            {
+                ConsumableKind.HealthPotion or ConsumableKind.ManaPotion =>
+                    (Engine.PotionCooldownRemaining, IdleGameEngine.PotionCooldownTotal, false),
+                ConsumableKind.Explosive =>
+                    (Engine.ExplosiveCooldownRemaining, IdleGameEngine.ExplosiveCooldownSeconds, false),
+                ConsumableKind.Costume =>
+                    (player.CostumeRemaining, item.DurationSeconds, player.Costume != Costume.None),
+                _ when buff is not null => (buff.Remaining, buff.Item.DurationSeconds, true),
+                _ => (0.0, 1.0, false),
+            };
+            tiles.Add(new Tile(key, item, count, remaining, total, isActive));
+        }
+        return tiles.OrderBy(t => t.Item.Kind).ThenBy(t => t.Key).ToList();
+    }
+
+    // Nur Verkleidungen werden manuell benutzt (Klick auf die Kachel)
+    private void UseManually(Tile tile)
+    {
+        if (tile.Item.Kind == ConsumableKind.Costume && tile.Count > 0)
+            Engine.UseConsumableManually(tile.Item);
+    }
+
+    protected override void OnInitialized()
+    {
+        Engine.ConsumableUsed += OnConsumableUsed;
+        Engine.TickUpdated += OnTick;
+    }
+
+    // Ohne Parameter rendert die Elternseite diese Komponente nicht mit → eigener Tick (Restzeiten)
+    private void OnTick() => _ = InvokeAsync(StateHasChanged);
+
+    // Sim-Thread → merken und neu rendern
+    private void OnConsumableUsed(ConsumableItem item)
+    {
+        lock (_pops)
+        {
+            _pops.Add(new Pop(Interlocked.Increment(ref _nextPopId), item, (_nextPopId % 3) * 24, DateTime.UtcNow));
+            if (_pops.Count > MaxPops) _pops.RemoveRange(0, _pops.Count - MaxPops);
+        }
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private Pop[] SnapshotPops()
+    {
+        var cutoff = DateTime.UtcNow - PopLifetime;
+        lock (_pops)
+        {
+            _pops.RemoveAll(p => p.Created < cutoff);
+            return _pops.ToArray();
+        }
+    }
+
+    private static string Pct(double remaining, double total) =>
+        (100 * Math.Clamp(remaining / Math.Max(total, 0.001), 0, 1)).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string FormatTime(double seconds) =>
+        seconds >= 3600 ? $"{seconds / 3600:0}h"
+        : seconds >= 60 ? $"{seconds / 60:0}m"
+        : $"{seconds:0}s";
+
+    public void Dispose()
+    {
+        Engine.ConsumableUsed -= OnConsumableUsed;
+        Engine.TickUpdated -= OnTick;
+    }
+}

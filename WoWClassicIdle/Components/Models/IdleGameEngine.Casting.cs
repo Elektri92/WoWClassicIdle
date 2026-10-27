@@ -70,7 +70,8 @@ public partial class IdleGameEngine
         var next = SelectNextAbility();
         if (next is null) return dealt;
 
-        if (next.HasCastTime)
+        // Shadow Trance (Nightfall): Zauber mit Cast-Zeit wird sofort gewirkt
+        if (next.HasCastTime && !Player.Buffs.ConsumeInstantCast(next.Name))
         {
             CurrentCast  = next;
             CastElapsed  = 0;
@@ -79,7 +80,7 @@ public partial class IdleGameEngine
             return dealt;
         }
 
-        if (!Player.ConsumeMana(Player.GetEffectiveManaCost(next))) return dealt;
+        if (!PayCastCost(next)) return dealt;
         dealt += ExecuteAbility(next);
         Player.Cooldowns.StartCooldown(next.Id, next.Cooldown);
         GcdRemaining = GlobalCooldown;
@@ -89,7 +90,7 @@ public partial class IdleGameEngine
     /// <summary>Cast abgeschlossen: Mana erst jetzt abziehen, dann Effekt auslösen.</summary>
     private int FinishCast(Ability ability)
     {
-        if (!Player.ConsumeMana(Player.GetEffectiveManaCost(ability)))
+        if (!PayCastCost(ability))
         {
             LastLog = $"{ability.Name} failed – not enough {ShapeshiftForms.ResourceName(Player.Resource)}";
             return 0;
@@ -113,7 +114,7 @@ public partial class IdleGameEngine
             // Liste ist nach Gruppe sortiert → erste bereite Buff/Heal-Fähigkeit gewinnt
             if (ability.CastPriorityGroup < 2) return ability;
 
-            double dps = CombatEngine.EstimateAbilityDamage(ability, Player.Stats)
+            double dps = CombatEngine.EstimateAbilityDamage(ability, Player.Stats) * SelectionDamageFactor(ability)
                          / Math.Max(ability.CastTime, GlobalCooldown);
             if (dps > bestDps)
             {
@@ -138,6 +139,6 @@ public partial class IdleGameEngine
         if (ability.IsLifeTap
             && (Player.CurrentMana >= Player.Stats.MaxMana / 2 || PlayerNeedsHeal || Player.CurrentHp <= ability.LifeTapHpCost))
             return false;
-        return Player.CurrentMana >= Player.GetEffectiveManaCost(ability);
+        return Player.CurrentMana >= CastCost(ability);
     }
 }

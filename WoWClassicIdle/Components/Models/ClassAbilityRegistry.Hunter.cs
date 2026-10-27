@@ -196,5 +196,55 @@ public static partial class ClassAbilityRegistry
             Rank                = 1,
             TalentUnlockOnly    = true,
         },
+
+        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20): passive Aspekte, nur einer gleichzeitig ──
+        new Ability
+        {
+            Id                     = "Aspect_of_the_Owl",
+            Name                   = "Aspect of the Owl",
+            IconUrl                = "https://wow.zamimg.com/images/wow/icons/large/ability_eyeoftheowl.jpg",
+            ManaCost               = 0,
+            IsPassive              = true,
+            BuffDuration           = 9999,      // Aspekt: wirkt solange ausgerüstet
+            BuffPetDamageBonus     = 0.50,      // Beast Mastery: stärkeres Begleittier
+            BuffResourceRegenBonus = 0.30,
+            ExclusiveGroup         = "hunter_aspect",
+            SpecHint               = 0,
+            LevelRequired          = 20,
+            Rank                   = 1,
+            TalentUnlockOnly       = true,
+        },
+        new Ability
+        {
+            Id                  = "Aspect_of_the_Hawk",
+            Name                = "Aspect of the Hawk",
+            IconUrl             = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_ravenform.jpg",
+            ManaCost            = 0,
+            IsPassive           = true,
+            BuffDuration        = 9999,
+            BuffDamageBonus     = 0.05,         // Marksmanship: mehr Schusschaden (8 % + 5 % Crit ergab +9,3 % XP/h)
+            BuffCritChanceBonus = 0.03,
+            ExclusiveGroup      = "hunter_aspect",
+            SpecHint            = 1,
+            LevelRequired       = 20,
+            Rank                = 1,
+            TalentUnlockOnly    = true,
+        },
+        new Ability
+        {
+            Id                       = "Aspect_of_the_Monkey",
+            Name                     = "Aspect of the Monkey",
+            IconUrl                  = "https://wow.zamimg.com/images/wow/icons/large/ability_hunter_aspectofthemonkey.jpg",
+            ManaCost                 = 0,
+            IsPassive                = true,
+            BuffDuration             = 9999,
+            BuffDamageTakenReduction = 0.15,    // Survival: Ausweichen im Nahkampf (12 % / 5 % brachte nur +0,9 %)
+            BuffAttackSpeedBonus     = 0.08,
+            ExclusiveGroup           = "hunter_aspect",
+            SpecHint                 = 2,
+            LevelRequired            = 20,
+            Rank                     = 1,
+            TalentUnlockOnly         = true,
+        },
     };
 }

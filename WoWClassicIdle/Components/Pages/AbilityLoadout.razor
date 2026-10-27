@@ -145,7 +145,7 @@
                 @if (HiddenByFormCount > 0)
                 {
                     <div class="pool-empty">
-                        @HiddenByFormCount @(HiddenByFormCount == 1 ? "ability is" : "abilities are") hidden – not usable in @ShapeshiftForms.Get(CurrentForm)?.Name.
+                        @HiddenByFormCount @(HiddenByFormCount == 1 ? "ability is" : "abilities are") hidden – not usable in @(ShapeshiftForms.Get(CurrentForm)?.Name ?? "your current form or stance").
                     </div>
                 }
 

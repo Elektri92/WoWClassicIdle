@@ -136,4 +136,16 @@ public enum TalentEffectType
     MindBlastDamage,            // +x% Mind Blast Schaden
     ShadowBoltDamage,           // +x% Shadow Bolt Schaden
     DamageBonus,                // +x% Schaden aller Fähigkeiten (Direkt + DoT)
+    ThornsDamage,               // +x% Vergeltungsschaden von Thorns
+    InsectSwarmDamage,          // +x% Insect Swarm Schaden
+    DeadlyPoisonStacks,         // +x maximale Stacks Deadly Poison
+    DeadlyPoisonTickRate,       // Deadly Poison tickt x% schneller
+    PetDamageBonus,             // +x% Schaden des Begleittiers
+
+    // ─── Spezialisierung (Reihe 3, ab Lv 20) ───
+    GrantSpecAbility,           // Schaltet die Spezialisierungs-Fähigkeit des Baums frei (GrantsAbilityId)
+    BerserkerFlurry,            // Flurry wie beim Schamanen (+x% Tempo nach Crit), nur in Berserker Stance
+    SpiritOfRedemption,         // Tödlicher Treffer → unverwundbarer Geist (Priester, Holy)
+    Nightfall,                  // x% Chance pro DoT-Tick: nächstes Shadow Bolt sofort
+    Eclipse,                    // Wrath verstärkt Starfire und umgekehrt
 }

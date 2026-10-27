@@ -178,5 +178,55 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 1,
             Rank = 1,
         },
+
+        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ──
+        new Ability
+        {
+            Id = "Lava_Burst_r1",
+            Name = "Lava Burst",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shaman_lavaburst.jpg",
+            Cooldown = 8,
+            CastTime = 2.0,
+            ManaCost = 25,
+            Damage = 26,
+            SynergyDebuffName = "Flame Shock",
+            SynergyCritBonus = 1.0,             // garantierter Crit, wenn Flame Shock auf dem Ziel liegt
+            TalentUnlockOnly = true,
+            SpecHint = 0,
+            LevelRequired = 20,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Stormstrike_r1",
+            Name = "Stormstrike",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_shaman_stormstrike.jpg",
+            Cooldown = 10,
+            ManaCost = 20,
+            Damage = 3,
+            AddsWeaponDamage = true,
+            HitCount = 2,                       // zwei Waffenschläge
+            DebuffDuration = 10,
+            DebuffDamageTakenBonus = 0.05,      // Ziel erleidet 10 s lang +5 % Schaden (10 % ergab +13,7 % XP/h)
+            TalentUnlockOnly = true,
+            SpecHint = 1,
+            LevelRequired = 20,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Earth_Shield_r1",
+            Name = "Earth Shield",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_skinofearth.jpg",
+            Cooldown = 0,
+            ManaCost = 25,
+            BuffDuration = 60,
+            BuffHitCharges = 6,                 // 6 Ladungen
+            BuffHealOnHit = 12,                 // heilt bei jedem erlittenen Treffer
+            TalentUnlockOnly = true,
+            SpecHint = 2,
+            LevelRequired = 20,
+            Rank = 1,
+        },
     };
 }

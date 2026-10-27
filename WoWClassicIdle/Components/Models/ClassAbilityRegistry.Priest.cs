@@ -187,5 +187,40 @@ public static partial class ClassAbilityRegistry
             LevelRequired = 1,
             Rank = 1,
         },
+
+        // ─── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───
+        new Ability
+        {
+            Id = "Penance_r1",
+            Name = "Penance",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_penance.jpg",
+            Cooldown = 10,
+            CastTime = 2.0,                     // Kanalisierung: 3 heilige Blitze
+            ManaCost = 30,
+            Damage = 10,
+            HitCount = 3,
+            Heal = 20,                          // heilt nebenbei – Disziplin: Schaden + Schutz
+            TalentUnlockOnly = true,
+            SpecHint = 0,
+            LevelRequired = 20,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Mind_Flay_r1",
+            Name = "Mind Flay",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_siphonmana.jpg",
+            Cooldown = 0,
+            CastTime = 3.0,                     // Kanalisierung, Filler statt Smite
+            ManaCost = 25,
+            Damage = 27,
+            DebuffDuration = 3,
+            DebuffAttackSpeedReduction = 0.20,  // −20 % Angriffstempo während des Flays
+            RequiredForm = DruidForm.Shadow,
+            TalentUnlockOnly = true,
+            SpecHint = 2,
+            LevelRequired = 20,
+            Rank = 1,
+        },
     };
 }

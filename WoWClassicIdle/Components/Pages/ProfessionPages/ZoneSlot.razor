@@ -1,0 +1,51 @@
+@using Models
+
+@* Kleiner Slot im Zonen-Block (aktiv oder passiv): Charakter-Icon per Drag & Drop hinein-/herausziehen. *@
+<div class="zone-slot @(IsActive ? "active" : "") @(Character is not null ? "filled" : "") @(IsPaused ? "paused" : "") @(IsLocked ? "locked" : "") @(DropReady ? "drop-ready" : "")"
+     title="@Tooltip"
+     @onclick:stopPropagation="true"
+     @ondragover:preventDefault
+     @ondrop="OnDrop"
+     @ondrop:stopPropagation="true">
+    @if (Character is { } character)
+    {
+        <img src="@IconUrls.ClassIconUrl(character.Class)" alt="" draggable="true"
+             @ondragstart="() => OnDragStart.InvokeAsync(character.Id)"
+             @ondragend="OnDragEnd"
+             onerror="this.style.visibility='hidden'" />
+        <span class="zone-slot-level">@character.Player.Level</span>
+        @if (OnClear.HasDelegate)
+        {
+            <button class="zone-slot-clear" title="Remove character" @onclick="OnClear">×</button>
+        }
+    }
+    else
+    {
+        <span class="zone-slot-placeholder">@(IsActive ? "A" : IsLocked ? "–" : "+")</span>
+    }
+    <div class="zone-slot-bar"><div style="width: @PercentText%"></div></div>
+</div>
+
+@code {
+    [Parameter] public CharacterSlot? Character { get; set; }
+    [Parameter] public bool IsActive { get; set; }
+    [Parameter] public bool IsPaused { get; set; }
+
+    /// <summary>Leerer passiver Slot, der wegen des Limits je Beruf nicht belegt werden kann.</summary>
+    [Parameter] public bool IsLocked { get; set; }
+
+    /// <summary>Gerade wird ein Charakter gezogen, der hier abgelegt werden darf → hervorheben.</summary>
+    [Parameter] public bool DropReady { get; set; }
+
+    /// <summary>Fortschritt des laufenden Durchlaufs (0–1).</summary>
+    [Parameter] public double Progress { get; set; }
+    [Parameter] public string Tooltip { get; set; } = "";
+
+    [Parameter] public EventCallback OnDrop { get; set; }
+    [Parameter] public EventCallback<int> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+
+    private string PercentText =>
+        (100 * Math.Clamp(Progress, 0, 1)).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+}

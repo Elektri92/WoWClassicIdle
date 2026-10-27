@@ -43,6 +43,8 @@ public static partial class ClassAbilityRegistry
             Damage = 13,        // 1 weniger als Fireball – Utility durch Slow gleicht aus
             DebuffDuration = 5,
             DebuffAttackSpeedReduction = 0.05,  // −5 % Angriffstempo
+            SynergyDebuffName = "Frost Nova",   // Shatter: +50 % Crit gegen eingefrorene Gegner
+            SynergyCritBonus = 0.50,
             LevelRequired = 1,
             Rank = 1,
             ExclusiveGroup = "mage_bolt",
@@ -59,6 +61,8 @@ public static partial class ClassAbilityRegistry
             Damage = 15,        // +2 gegenüber Rank 1, Slow bleibt
             DebuffDuration = 5,
             DebuffAttackSpeedReduction = 0.05,
+            SynergyDebuffName = "Frost Nova",
+            SynergyCritBonus = 0.50,
             LevelRequired = 10,
             Rank = 2,
             ExclusiveGroup = "mage_bolt",
@@ -173,18 +177,6 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
-            Id = "Frost_Nova_r1",
-            Name = "Frost Nova",
-            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_frostnova.jpg",
-            Cooldown = 30,
-            ManaCost = 15,
-            DebuffDuration = 4,                 // Einstun für 4 s
-            DebuffIsStun = true,
-            LevelRequired = 24,
-            Rank = 1,
-        },
-        new Ability
-        {
             Id = "Conjure_Food_r2",
             Name = "Conjure Food",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_food_30.jpg",
@@ -204,14 +196,14 @@ public static partial class ClassAbilityRegistry
             Id                   = "Evocation_r1",
             Name                 = "Evocation",
             IconUrl              = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_purge.jpg",
-            Cooldown             = 60,
+            Cooldown             = 45,          // war 60 + nur unter 20 % Mana – im Sim nie genutzt (0 % XP/h)
             ManaCost             = 0,
             BuffDuration         = 8,
             MotManaRestorePct    = 0.80,
             MotTickInterval      = 2.0,
+            BuffDamageBonus      = 0.20,        // +20 % Schaden während der Evocation
             LevelRequired        = 1,
             TalentUnlockOnly     = true,
-            CastWhenManaBelowPct = 0.20,
         },
         new Ability
         {
@@ -233,6 +225,54 @@ public static partial class ClassAbilityRegistry
             BuffDuration     = 60,
             BuffShieldPct    = 0.30,
             LevelRequired    = 1,
+            TalentUnlockOnly = true,
+        },
+
+        // ─── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───
+        new Ability
+        {
+            Id                  = "Arcane_Blast_r1",
+            Name                = "Arcane Blast",
+            IconUrl             = "https://wow.zamimg.com/images/wow/icons/large/spell_arcane_blast.jpg",
+            Cooldown            = 8,
+            CastTime            = 2.0,
+            ManaCost            = 30,
+            Damage              = 30,
+            EmpowersAbilityName = "Arcane Missiles",   // Arcane-Rotation: Blast → verstärkte Missiles
+            EmpowerDamageBonus  = 0.30,
+            EmpowerDuration     = 10,
+            SpecHint            = 0,
+            LevelRequired       = 20,
+            TalentUnlockOnly    = true,
+        },
+        new Ability
+        {
+            Id                    = "Flamestrike_r1",
+            Name                  = "Flamestrike",
+            IconUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_selfdestruct.jpg",
+            Cooldown              = 15,
+            CastTime              = 3.0,
+            ManaCost              = 35,
+            Damage                = 24,
+            DebuffDuration        = 8,             // brennender Boden; Crits lösen Ignite aus
+            DebuffDotDamage       = 5,
+            DebuffDotTickInterval = 2,
+            SpecHint              = 1,
+            LevelRequired         = 20,
+            TalentUnlockOnly      = true,
+        },
+        new Ability
+        {
+            Id               = "Frost_Nova_r1",
+            Name             = "Frost Nova",
+            IconUrl          = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_frostnova.jpg",
+            Cooldown         = 25,
+            ManaCost         = 20,
+            Damage           = 10,
+            DebuffDuration   = 5,                  // eingefroren: keine Angriffe, Frostbolt mit Shatter-Crit
+            DebuffIsStun     = true,
+            SpecHint         = 2,
+            LevelRequired    = 20,                 // war regulär Lv 24 – jetzt Frost-Talent
             TalentUnlockOnly = true,
         },
     };

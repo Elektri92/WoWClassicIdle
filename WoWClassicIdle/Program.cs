@@ -41,6 +41,15 @@ var app = builder.Build();
 
 BuildInfo.Initialize(app.Environment);
 
+// Berufe laufen in Echtzeit unabhängig vom Kampf-Timer
+app.Services.GetRequiredService<IdleGameEngine>().StartProfessionTimer();
+
+#if DEBUG
+// Debug-Start: Preset-Charaktere für alle Klassen anlegen
+if (app.Environment.IsDevelopment())
+    DebugTools.DebugCharacterPresets.Apply(app.Services.GetRequiredService<IdleGameEngine>());
+#endif
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

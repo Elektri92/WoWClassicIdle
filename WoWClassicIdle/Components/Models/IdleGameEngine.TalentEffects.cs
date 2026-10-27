@@ -17,6 +17,8 @@ public partial class IdleGameEngine
             ApplyEmpowerBuff($"empower_{ability.Id}", ability.Name, ability.IconUrl,
                 ability.EmpowersAbilityName, ability.EmpowerDamageBonus, ability.EmpowerDuration);
 
+        ApplyEclipse(ability);   // Wrath ↔ Starfire (IdleGameEngine.SpecAbilities.cs)
+
         switch (ability.Name)
         {
             // Holy Barrier: Holy Light legt zusätzlich einen kleinen Schild an

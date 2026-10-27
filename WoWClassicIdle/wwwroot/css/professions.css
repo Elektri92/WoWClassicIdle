@@ -1,0 +1,772 @@
+/* ============================================
+   Professions – Übersicht und Unterseiten
+   ============================================ */
+
+.prof-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+}
+
+.prof-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 6px;
+    background: var(--wow-bg-deep);
+    cursor: pointer;
+    transition: border-color .12s, box-shadow .12s;
+}
+
+.prof-card:hover { border-color: var(--wow-gold-soft); box-shadow: 0 0 8px rgba(197,165,90,.25); }
+.prof-card.learned { border-color: var(--wow-border-inner); }
+
+.prof-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid #c5a55a55;
+    flex-shrink: 0;
+}
+
+.prof-icon.large { width: 56px; height: 56px; }
+
+.prof-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.prof-card-name {
+    font-family: var(--wow-font-title);
+    color: var(--wow-gold-pale);
+    font-weight: 700;
+}
+
+.prof-card-sub { font-size: .78rem; color: var(--wow-muted); }
+
+/* Aktionen (Learn/Unlearn) fest rechts oben im Block */
+.prof-card-actions { position: absolute; top: 5px; right: 6px; display: flex; gap: 3px; }
+.prof-card.has-action .prof-card-name { padding-right: 58px; }
+
+/* Kleiner Button im klassischen WoW-Panel-Stil: dunkles Rot, Goldrand, Goldschrift */
+.prof-mini-btn {
+    padding: 1px 7px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    background: linear-gradient(180deg, #4a3a22 0%, #241a0e 100%);
+    color: var(--wow-gold);
+    font-family: var(--wow-font-title);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    text-shadow: 0 1px 1px #000;
+    box-shadow: inset 0 1px 0 rgba(255,236,155,.15), 0 1px 2px rgba(0,0,0,.6);
+    cursor: pointer;
+}
+
+.prof-mini-btn:hover { color: var(--wow-gold-pale); filter: brightness(1.25); }
+.prof-mini-btn.danger { background: linear-gradient(180deg, #8b1a1a 0%, #4a0b0b 100%); }
+.prof-mini-btn:disabled { opacity: .35; cursor: not-allowed; filter: grayscale(.6); }
+
+.prof-skill-bar { height: 18px; }
+.prof-skill-bar .bar { background: linear-gradient(90deg, #1f4a8a, #3a7ad0); }
+
+.prof-header { display: flex; align-items: center; gap: 14px; }
+.prof-header h2 { margin: 0; }
+
+.prof-back {
+    color: var(--wow-gold-soft);
+    font-size: .85rem;
+    text-decoration: none;
+}
+
+.prof-back:hover { color: var(--wow-gold-pale); }
+
+/* ----- Unterseite: Quick-Select-Leiste links ----- */
+.wow-page.prof-detail-page { max-width: 980px; }
+
+.prof-detail-layout {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.prof-detail-main { min-width: 0; }
+
+.prof-quick {
+    position: sticky;
+    top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 1rem;
+    padding: 6px;
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
+    box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px var(--wow-border-inner);
+}
+
+.prof-quick-item { position: relative; display: block; line-height: 0; }
+
+.prof-quick-item > img:first-child {
+    width: 36px;
+    height: 36px;
+    border-radius: 5px;
+    border: 1px solid #c5a55a55;
+    filter: saturate(.7) brightness(.85);
+    transition: filter .12s, border-color .12s, box-shadow .12s;
+}
+
+.prof-quick-item:hover > img:first-child { filter: none; border-color: var(--wow-gold-soft); }
+
+.prof-quick-item.current > img:first-child {
+    filter: none;
+    border: 2px solid var(--wow-gold);
+    box-shadow: 0 0 8px rgba(255,209,0,.55);
+}
+
+.prof-quick-owner {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid #000;
+}
+
+.prof-quick-sep { height: 1px; margin: 2px 0; background: var(--wow-border-inner); }
+.prof-quick-sep:last-child { display: none; }
+
+@media (max-width: 640px) {
+    .prof-detail-layout { grid-template-columns: 1fr; }
+    .prof-quick { position: static; flex-direction: row; flex-wrap: wrap; }
+    .prof-quick-sep { width: 1px; height: auto; margin: 0 2px; }
+}
+
+/* ----- Ausbildungsstufen ----- */
+.prof-training { padding: 8px 12px; }
+.prof-training-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.prof-training-head h4 { margin: 0; }
+.prof-training-head .wow-muted { font-size: .75rem; }
+.prof-training-capped { margin-top: 6px; color: #ffb35a; font-size: .78rem; }
+
+.prof-ranks {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+}
+
+@media (max-width: 640px) {
+    .prof-ranks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.prof-rank {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 4px 8px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 4px;
+    background: var(--wow-bg-deep);
+}
+
+.prof-rank-name { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-family: var(--wow-font-title); font-size: .85rem; color: var(--wow-muted); }
+.prof-rank-sub  { font-size: .68rem; color: var(--wow-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prof-rank.learned   { border-color: #3f8a2f; }
+.prof-rank.learned .prof-rank-name   { color: #7ddc6f; }
+.prof-rank-missing { color: #ff4040; }
+.prof-rank.trainable { border-color: var(--wow-gold-soft); }
+.prof-rank.trainable .prof-rank-name { color: var(--wow-gold); }
+.prof-rank.locked { opacity: .6; }
+
+/* ----- Slots ----- */
+.prof-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.prof-row label { min-width: 48px; color: var(--wow-gold-soft); font-size: .85rem; }
+
+.prof-run-bar { margin: 6px 0; }
+.prof-run-bar .bar { transition: none; }
+.prof-run-bar .bar.passive { background: linear-gradient(90deg, #5a4a1f, #a8893a); }
+
+.prof-shared { font-family: var(--wow-font-body); font-size: .75rem; }
+
+/* ----- Zonen-Blöcke (groß, Farbverlauf je Zonen-Thema) ----- */
+.zone-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+}
+
+.zone-block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 130px;
+    padding: 12px 14px;
+    border: 2px solid var(--wow-border-dark);
+    border-radius: 8px;
+    background: var(--wow-bg-deep);
+    cursor: pointer;
+    overflow: hidden;
+    text-shadow: 0 1px 3px #000;
+    transition: border-color .12s, box-shadow .12s, transform .12s;
+}
+
+.zone-block:hover { border-color: var(--wow-border-inner); transform: translateY(-1px); }
+.zone-block.selected { border-color: var(--wow-gold); box-shadow: 0 0 12px rgba(255,209,0,.4), inset 0 0 0 1px rgba(255,236,155,.3); }
+
+.zone-block-name { font-family: var(--wow-font-title); color: var(--wow-gold-pale); font-size: 1.25rem; font-weight: 700; }
+.zone-block-desc { color: #e8e2c8; font-size: .78rem; font-style: italic; }
+
+.zone-block-drops { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+
+.zone-drop {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px 2px 2px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    font-size: .78rem;
+}
+
+.zone-drop img { width: 24px; height: 24px; border-radius: 3px; }
+
+/* Mulgore: saftiges Grasland – grüner Verlauf mit feinen Grashalm-Streifen */
+.zone-theme-grassland {
+    background:
+        repeating-linear-gradient(100deg, rgba(255,255,255,.035) 0 2px, transparent 2px 9px),
+        radial-gradient(ellipse at 80% 0%, rgba(255,236,155,.25), transparent 55%),
+        linear-gradient(180deg, #4f9a2e 0%, #2f7a1f 45%, #1d5214 100%);
+    border-color: #3f7a24;
+}
+
+.zone-theme-savanna {
+    background:
+        repeating-linear-gradient(100deg, rgba(255,255,255,.03) 0 2px, transparent 2px 11px),
+        radial-gradient(ellipse at 80% 0%, rgba(255,214,120,.3), transparent 55%),
+        linear-gradient(180deg, #b08a3e 0%, #8a6526 45%, #5a3f16 100%);
+    border-color: #8a6a2c;
+}
+
+/* Duskwood: dunkler Nachtwald, kühles Mondlicht */
+.zone-theme-duskwood {
+    background:
+        radial-gradient(ellipse at 80% 0%, rgba(170,190,255,.22), transparent 55%),
+        linear-gradient(180deg, #2c3a4a 0%, #1c2733 50%, #10161d 100%);
+    border-color: #3c4e62;
+}
+
+/* Stranglethorn: sattes Dschungelgrün mit Lianen-Streifen */
+.zone-theme-jungle {
+    background:
+        repeating-linear-gradient(75deg, rgba(0,0,0,.08) 0 3px, transparent 3px 12px),
+        radial-gradient(ellipse at 80% 0%, rgba(255,240,160,.22), transparent 55%),
+        linear-gradient(180deg, #2f8a4a 0%, #1d6634 50%, #0f3f1f 100%);
+    border-color: #2f7a45;
+}
+
+/* Feralas: uralter Wald, blaugrün */
+.zone-theme-feralas {
+    background:
+        radial-gradient(ellipse at 80% 0%, rgba(200,255,230,.2), transparent 55%),
+        linear-gradient(180deg, #2f7a6a 0%, #1f5a4e 50%, #123a32 100%);
+    border-color: #2f6e60;
+}
+
+/* Felwood: verderbtes Grün mit violettem Schimmer */
+.zone-theme-felwood {
+    background:
+        radial-gradient(ellipse at 20% 100%, rgba(140,255,60,.25), transparent 60%),
+        radial-gradient(ellipse at 80% 0%, rgba(170,90,220,.3), transparent 55%),
+        linear-gradient(180deg, #3d3a2a 0%, #2a2a1c 50%, #191a10 100%);
+    border-color: #5a6a2a;
+}
+
+/* Eastern Plaguelands: fahles, krankes Gelbgrün */
+.zone-theme-plague {
+    background:
+        radial-gradient(ellipse at 80% 0%, rgba(230,240,150,.2), transparent 55%),
+        linear-gradient(180deg, #6a6a3a 0%, #4a4a28 50%, #2a2a16 100%);
+    border-color: #6a6a3a;
+}
+
+/* Winterspring: Schnee und Eis */
+.zone-theme-snow {
+    background:
+        radial-gradient(ellipse at 80% 0%, rgba(255,255,255,.35), transparent 55%),
+        linear-gradient(180deg, #7aa0c0 0%, #4f7698 50%, #2c4a66 100%);
+    border-color: #8ab0d0;
+}
+
+.prof-drops { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.prof-drop,
+.craft-result,
+.craft-reagent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px 3px 3px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 4px;
+    background: var(--wow-bg-deep);
+    font-size: .85rem;
+}
+
+.prof-drop img,
+.craft-reagent img { width: 28px; height: 28px; border-radius: 4px; }
+
+/* ----- Slots im Zonen-Block (aktiv + passiv, Drag & Drop) ----- */
+.zone-block.locked { cursor: not-allowed; filter: grayscale(.75) brightness(.6); }
+.zone-block.locked:hover { transform: none; border-color: var(--wow-border-dark); }
+
+.zone-block-skill {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .55);
+    color: var(--wow-gold-pale);
+    font-size: .7rem;
+}
+
+.zone-locked {
+    margin-top: 4px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .55);
+    color: #ff8a7a;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.zone-block.drop-ready { border-color: var(--wow-gold); border-style: dashed; box-shadow: 0 0 10px rgba(255,209,0,.35); }
+
+.zone-slots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+
+.zone-slot {
+    position: relative;
+    width: 44px;
+    height: 50px;
+    padding: 3px 3px 0;
+    border: 1px dashed rgba(255,255,255,.35);
+    border-radius: 5px;
+    background: rgba(0, 0, 0, .5);
+    cursor: default;
+}
+
+.zone-slot.filled        { border-style: solid; border-color: #a8893a; }
+.zone-slot.active        { border-color: #4fa83a; }
+.zone-slot.active.filled { box-shadow: 0 0 6px rgba(79,168,58,.6); }
+.zone-slot.paused        { opacity: .6; }
+.zone-slot.locked        { opacity: .35; border-style: dotted; }
+.zone-slot.drop-ready    { border-color: var(--wow-gold); box-shadow: 0 0 8px rgba(255,209,0,.45); }
+
+.zone-slot > img { width: 36px; height: 36px; border-radius: 4px; cursor: grab; display: block; }
+
+.zone-slot-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: rgba(255,255,255,.45);
+    font-family: var(--wow-font-title);
+    font-size: 1rem;
+}
+
+.zone-slot.active .zone-slot-placeholder { color: #7ddc6f; }
+
+.zone-slot-level {
+    position: absolute;
+    top: 25px;
+    right: 5px;
+    font-size: .62rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 2px #000, 0 0 2px #000;
+    pointer-events: none;
+}
+
+.zone-slot-bar {
+    height: 5px;
+    margin-top: 3px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, .6);
+    overflow: hidden;
+}
+
+.zone-slot-bar > div { height: 100%; background: linear-gradient(90deg, #5a4a1f, #d4b04a); }
+.zone-slot.active .zone-slot-bar > div { background: linear-gradient(90deg, #2a6e1f, #6fd05a); }
+
+.zone-slot-clear {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 1px solid #000;
+    border-radius: 50%;
+    background: #3a1a1a;
+    color: #ffb0b0;
+    font-size: .7rem;
+    line-height: 14px;
+    cursor: pointer;
+    display: none;
+}
+
+.zone-slot:hover .zone-slot-clear { display: block; }
+.zone-slot-clear:hover { background: #8a2020; color: #fff; }
+
+.char-chip.playing { border-color: #4fa83a; box-shadow: 0 0 5px rgba(79,168,58,.6); }
+
+/* ----- Herstellungsfenster ----- */
+.craft-window {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .craft-window { grid-template-columns: 1fr; }
+}
+
+.craft-list { padding: 4px; min-height: 160px; max-height: 420px; overflow-y: auto; }
+
+.craft-list-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 2px;
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--wow-border-dark);
+    color: var(--wow-gold);
+    font-family: var(--wow-font-title);
+    font-size: .74rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+}
+
+.craft-list-group:first-child { margin-top: 0; }
+.craft-list-group:hover { background: #2a2218; }
+.craft-list-group.locked { color: var(--wow-muted); }
+.craft-list-caret { width: 10px; color: var(--wow-gold-soft); }
+.craft-list-group-sub { color: var(--wow-muted); font-family: var(--wow-font-body); font-size: .68rem; letter-spacing: 0; text-transform: none; }
+
+.craft-list-group-badge {
+    margin-left: auto;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: #2a5a1f;
+    color: #c8ffb8;
+    font-family: var(--wow-font-body);
+    font-size: .66rem;
+    letter-spacing: 0;
+}
+
+/* Klassen-Unterüberschrift (Filter "All") */
+.craft-list-class-head {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 4px 0 1px 6px;
+    font-size: .72rem;
+    font-weight: 600;
+    opacity: .85;
+}
+
+.craft-list-class-head img { width: 14px; height: 14px; border-radius: 2px; }
+
+/* Klassen-Filter über dem Herstellungsfenster */
+.craft-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
+
+.craft-filter-btn {
+    height: 28px;
+    min-width: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 4px;
+    background: var(--wow-bg-deep);
+    color: var(--wow-gold-soft);
+    font-family: var(--wow-font-title);
+    font-size: .7rem;
+    cursor: pointer;
+}
+
+.craft-filter-btn.icon { padding: 1px; }
+.craft-filter-btn.icon img { width: 24px; height: 24px; border-radius: 3px; display: block; filter: saturate(.6) brightness(.8); }
+.craft-filter-btn:hover { border-color: var(--wow-gold-soft); }
+.craft-filter-btn.active { border-color: var(--wow-gold); box-shadow: 0 0 6px rgba(255,209,0,.4); color: var(--wow-gold-pale); }
+.craft-filter-btn.active img { filter: none; }
+
+/* Rezept-Eintrag: Item-Icon + Name in Item-Qualitätsfarbe (--quality), Anzahl rechts */
+.craft-list-entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px 2px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: .84rem;
+}
+
+.craft-list-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid var(--quality);
+    flex-shrink: 0;
+}
+
+.craft-list-name {
+    color: var(--quality);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* Nicht herstellbar (Material fehlt): gedimmt; Skill zu niedrig: stärker gedimmt */
+.craft-list-entry.empty  { opacity: .6; }
+.craft-list-entry.locked { opacity: .35; }
+.craft-list-entry:hover { background: #2a2218; opacity: 1; }
+.craft-list-entry.selected { background: #3a3022; outline: 1px solid var(--wow-gold-soft); opacity: 1; }
+
+.craft-count {
+    margin-left: auto;
+    padding: 0 5px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.craft-detail { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.craft-detail .prof-run-bar { align-self: stretch; }
+
+.craft-result { font-family: var(--wow-font-title); font-size: 1rem; }
+.craft-result img { width: 40px; height: 40px; border-radius: 4px; }
+
+.craft-req { color: #ff4040; font-size: .8rem; }
+.craft-reagents-label { color: var(--wow-gold); font-size: .85rem; margin-top: 4px; }
+.craft-have { margin-left: auto; padding-left: 10px; color: #fff; }
+.craft-reagent.missing .craft-have { color: #ff4040; }
+
+/* ----- Entzaubern (Verzauberkunst) ----- */
+.disenchant-head { display: flex; align-items: center; gap: 6px; }
+.disenchant-head h4 { margin-right: auto; }
+
+.disenchant-list { padding: 4px; max-height: 320px; overflow-y: auto; }
+
+.disenchant-row { display: flex; align-items: center; gap: 8px; }
+.disenchant-row .disenchant-item { flex: 1; min-width: 0; }
+.disenchant-entry { padding-left: 6px; cursor: default; }
+.disenchant-level { margin-left: auto; padding-left: 8px; color: var(--wow-muted); font-size: .72rem; white-space: nowrap; }
+
+.disenchant-row.queued { opacity: .55; }
+.disenchant-queued { color: var(--wow-gold-soft); font-size: .72rem; padding: 0 6px; }
+.disenchant-yield { display: flex; gap: 2px; flex-shrink: 0; }
+
+/* Skill-Range: orange = gibt Skillpunkte, grau = zu niedrig */
+.craft-skill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-left: -9px; }
+.craft-skill-dot.up      { background: #ff8040; box-shadow: 0 0 4px rgba(255,128,64,.6); }
+.craft-skill-dot.trivial { background: #808080; }
+.craft-skillup { font-size: .8rem; }
+.craft-skillup.up      { color: #ff8040; }
+.craft-skillup.trivial { color: #9d9d9d; }
+.zone-trivial { color: #b0b0b0; font-size: .72rem; font-style: italic; }
+.disenchant-yield img { width: 18px; height: 18px; border-radius: 3px; }
+
+/* ----- Scrolling-Text (Berufsereignisse fliegen im Bogen von links nach oben) ----- */
+.prof-detail-page { position: relative; }
+
+.prof-float-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 20;
+}
+
+/* Außen: horizontal, schnell los und dann ausrollen */
+.prof-float-x {
+    position: absolute;
+    left: 2%;
+    animation-name: profFloatX;
+    animation-timing-function: cubic-bezier(.15, .7, .35, 1);
+    animation-fill-mode: forwards;
+}
+
+/* Innen: vertikal, langsam los und dann steil nach oben → Bogen */
+.prof-float-y {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    font-family: var(--wow-font-title);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 3px #000, 0 2px 4px #000;
+    animation-name: profFloatY;
+    animation-timing-function: cubic-bezier(.55, 0, .85, .4);
+    animation-fill-mode: forwards;
+}
+
+.prof-float-y img { width: 32px; height: 32px; border-radius: 4px; border: 1px solid #000; box-shadow: 0 0 6px rgba(0,0,0,.8); }
+.prof-float-loot    { color: #fff; }
+.prof-float-skillup { color: #6a9aff; font-size: 1.2rem; }
+.prof-float-error   { color: #ff4040; }
+.prof-float-source  { font-family: var(--wow-font-body); font-size: .72rem; font-weight: 400; color: var(--wow-gold-soft); }
+
+@keyframes profFloatX {
+    from { transform: translateX(0); }
+    to   { transform: translateX(min(55vw, 420px)); }
+}
+
+@keyframes profFloatY {
+    0%   { transform: translateY(0) scale(.6); opacity: 0; }
+    12%  { transform: translateY(-4px) scale(1.1); opacity: 1; }
+    25%  { transform: translateY(-12px) scale(1); }
+    75%  { opacity: 1; }
+    100% { transform: translateY(-46vh) scale(.9); opacity: 0; }
+}
+
+/* ----- Drag & Drop der Charaktere ----- */
+.char-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 6px 8px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 6px;
+    background: var(--wow-bg-deep);
+}
+
+.char-bar.drop-ready { border-color: #b32121; border-style: dashed; }
+.char-bar-label { color: var(--wow-gold-soft); font-size: .8rem; margin-right: 4px; }
+
+.char-chip {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 5px;
+    cursor: grab;
+}
+
+.char-chip > img:first-child { width: 100%; height: 100%; border-radius: 4px; pointer-events: none; }
+.char-chip.blocked { opacity: .35; cursor: not-allowed; filter: grayscale(1); }
+.char-chip.busy { border-color: #a8893a; }
+
+.char-chip-level {
+    position: absolute;
+    bottom: -1px;
+    right: 1px;
+    font-size: .65rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 2px #000, 0 0 2px #000;
+    pointer-events: none;
+}
+
+.char-chip-busy {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid #000;
+    pointer-events: none;
+}
+
+.prof-tag {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 3px;
+    background: #3a3022;
+    border: 1px solid var(--wow-border-inner);
+    color: var(--wow-gold-soft);
+    font-family: var(--wow-font-body);
+    font-size: .65rem;
+    font-weight: 400;
+    vertical-align: middle;
+}
+
+.prof-owner-icon { width: 18px; height: 18px; border-radius: 3px; vertical-align: middle; margin-left: 6px; }
+.prof-workers .prof-owner-icon { width: 16px; height: 16px; margin-left: 4px; }
+
+/* ----- Layout: Charakterliste links, Berufe rechts ----- */
+.professions-page { max-width: 1200px; }
+
+.prof-layout {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    gap: 12px;
+    margin-top: 1rem;
+    align-items: start;
+}
+
+.prof-main { min-width: 0; }
+.prof-layout .prof-main > .wow-card:first-child { margin-top: 0; }
+
+.prof-layout .prof-roster { position: sticky; top: 12px; margin-top: 0; display: flex; flex-direction: column; gap: 3px; }
+
+.roster-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 7px;
+    border-radius: 4px;
+    background: var(--wow-bg-deep);
+    border: 1px solid transparent;
+}
+
+.roster-entry img { width: 30px; height: 30px; border-radius: 4px; flex-shrink: 0; }
+.roster-entry-body { display: flex; flex-direction: column; min-width: 0; }
+.roster-entry-name { font-size: .86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roster-entry-sub { font-size: .72rem; }
+.roster-entry .prof-tag { margin-left: 4px; }
+
+.roster-entry-profs { margin-left: auto; display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.roster-entry .roster-prof { width: 22px; height: 22px; border-radius: 3px; border: 1px solid #c5a55a88; }
+.roster-entry .roster-prof.passive { width: 18px; height: 18px; border-color: #4fa83a; }
+
+.roster-entry.current { border-color: var(--wow-gold-soft); }
+.roster-entry.selectable { cursor: pointer; }
+.roster-entry.selectable:hover { border-color: var(--wow-border-inner); filter: brightness(1.15); }
+
+@media (max-width: 760px) {
+    .prof-layout { grid-template-columns: 1fr; }
+    .prof-layout .prof-roster { position: static; }
+}
+
+.prof-debug-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.prof-debug-label { color: var(--wow-gold-soft); font-size: .8rem; margin-left: 6px; }

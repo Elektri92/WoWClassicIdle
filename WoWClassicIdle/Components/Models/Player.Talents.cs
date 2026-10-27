@@ -15,11 +15,15 @@ namespace Models
             return Math.Max(0, earned - spent);
         }
 
+        /// <summary>Ist eine Talent-Fähigkeit durch ein geskilltes Talent freigeschaltet?</summary>
+        public bool HasTalentAbility(string abilityId) =>
+            TalentRegistry.GetGrantingTalents(ActiveClass, abilityId).Any(t => TalentState.GetRanks(t.Id) > 0);
+
         /// <summary>Investiert einen Talent-Punkt und berechnet Stats neu.</summary>
         public bool InvestTalent(TalentDefinition talent)
         {
             int available = GetAvailableTalentPoints(ActiveClass);
-            bool ok = TalentState.Invest(talent, available);
+            bool ok = TalentState.Invest(talent, available, Level);
             if (ok) RecalculateStats();
             return ok;
         }

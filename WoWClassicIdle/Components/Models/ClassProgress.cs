@@ -32,6 +32,9 @@ public class ClassProgress
             levelsGained++;
         }
 
+        // Auf Max-Level sammeln sich keine XP an
+        if (XpToNextLevel == 0) Xp = 0;
+
         return levelsGained;
     }
 

@@ -37,6 +37,8 @@ public partial class IdleFighter
 
     protected override void OnInitialized()
     {
+        // Wurde in den Berufsfenstern der Charakter gewechselt, wieder den ursprünglichen spielen
+        _engine.RestoreCharacterAfterProfessions();
         _engine.TickUpdated += OnTick;
         _engine.CombatTextRaised += OnCombatText;
         _engine.AbilityUnlocked += OnAbilityUnlocked;

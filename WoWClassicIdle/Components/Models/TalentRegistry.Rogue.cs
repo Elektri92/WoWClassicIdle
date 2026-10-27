@@ -23,14 +23,14 @@ public static partial class TalentRegistry
         {
             Id            = "rogue_ass_poison_master",
             Name          = "Poison Master",
-            Description   = "Increases the chance that Deadly Poison is applied by 2% per rank.",
+            Description   = "Increases the maximum stacks of Deadly Poison by 1 per rank.",
             Class         = CharacterClass.Rogue,
             TreeIndex     = 0,
             Row           = 0,
             Column        = 1,
             MaxRanks      = 5,
-            EffectType    = TalentEffectType.DeadlyPoisonProcChance,
-            EffectPerRank = 0.02,
+            EffectType    = TalentEffectType.DeadlyPoisonStacks,
+            EffectPerRank = 1.0,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/ability_poisons.jpg",
         },
 
@@ -113,15 +113,15 @@ public static partial class TalentRegistry
         new TalentDefinition
         {
             Id            = "rogue_ass_poison_procs",
-            Name          = "Poison Procs",
-            Description   = "Increases the chance that Deadly Poison is applied by 2% per rank.",
+            Name          = "Virulent Poisons",
+            Description   = "Deadly Poison deals its damage 6% faster per rank.",
             Class         = CharacterClass.Rogue,
             TreeIndex     = 0,
             Row           = 1,
             Column        = 1,
             MaxRanks      = 5,
-            EffectType    = TalentEffectType.DeadlyPoisonProcChance,
-            EffectPerRank = 0.02,
+            EffectType    = TalentEffectType.DeadlyPoisonTickRate,
+            EffectPerRank = 0.06,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/ability_rogue_dualweild.jpg",
         },
 

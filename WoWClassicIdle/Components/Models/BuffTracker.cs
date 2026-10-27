@@ -5,7 +5,7 @@ namespace Models;
 /// Ein laufender Buff: die auslösende Fähigkeit und die Restlaufzeit in Sekunden.
 /// <see cref="TickAcc"/>/<see cref="TicksDone"/> zählen die HoT-Ticks mit.
 /// </summary>
-public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0, int ShieldRemaining = 0, int ChargesRemaining = 0);
+public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0, int ShieldRemaining = 0, int ChargesRemaining = 0, int FreeCastsRemaining = 0);
 
 /// <summary>Ein fälliger HoT- oder MoT-Tick. <see cref="IsMana"/> = true → Mana-Regenerierung statt HP-Heilung.</summary>
 public readonly record struct HotTick(Ability Source, int Amount, bool IsMana = false);
@@ -51,7 +51,7 @@ public partial class BuffTracker
             if (oldKey is not null) _active.Remove(oldKey);
             _active[ability.Id] = new ActiveBuff(ability, ability.BuffDuration,
                 MotAmountPerTick: motAmount, HotAmountPerTick: hotPctAmount, ShieldRemaining: shieldAmount,
-                ChargesRemaining: ability.BuffHitCharges);
+                ChargesRemaining: ability.BuffHitCharges, FreeCastsRemaining: ability.BuffFreeCasts);
         }
     }
 

@@ -22,9 +22,10 @@ public class TalentState
     public bool IsRowUnlocked(CharacterClass cls, int treeIndex, int row) =>
         row == 0 || TotalInvestedInTree(cls, treeIndex) >= row * 5;
 
-    public bool CanInvest(TalentDefinition talent, int availablePoints)
+    public bool CanInvest(TalentDefinition talent, int availablePoints, int level)
     {
         if (availablePoints <= 0) return false;
+        if (level < talent.LevelRequired) return false;
         if (GetRanks(talent.Id) >= talent.MaxRanks) return false;
         if (!IsRowUnlocked(talent.Class, talent.TreeIndex, talent.Row)) return false;
         if (talent.RequiresTalentId is not null && GetRanks(talent.RequiresTalentId) == 0) return false;
@@ -32,9 +33,9 @@ public class TalentState
     }
 
     /// <summary>Investiert einen Punkt. Gibt true zurück wenn erfolgreich.</summary>
-    public bool Invest(TalentDefinition talent, int availablePoints)
+    public bool Invest(TalentDefinition talent, int availablePoints, int level)
     {
-        if (!CanInvest(talent, availablePoints)) return false;
+        if (!CanInvest(talent, availablePoints, level)) return false;
         _invested[talent.Id] = GetRanks(talent.Id) + 1;
         return true;
     }

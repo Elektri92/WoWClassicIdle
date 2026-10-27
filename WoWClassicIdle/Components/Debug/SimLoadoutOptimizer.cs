@@ -46,6 +46,26 @@ public static class SimLoadoutOptimizer
             .ToList();
     }
 
+    /// <summary>
+    /// Talent-Gestalten (Shadowform, Moonkin, Tree, Bear, Cat) sind im Simulator immer ausgerüstet:
+    /// fehlt im Loadout eine Gestalt, wird die freigeschaltete vorne eingefügt und der letzte Slot verdrängt.
+    /// </summary>
+    public static List<string> WithTalentForm(Player player, IReadOnlyList<string> ids)
+    {
+        var result = ids.ToList();
+        if (result.Any(id => ClassAbilityRegistry.FindById(id) is { IsForm: true })) return result;
+
+        var form = ClassSimulator.GetUnlockedTalentAbilityIds(player, player.ActiveClass)
+            .Select(ClassAbilityRegistry.FindById)
+            .FirstOrDefault(a => a is { IsForm: true } && a.LevelRequired <= player.Level);
+        if (form is null) return result;
+
+        result.Insert(0, form.Id);
+        // In Rage-/Energie-Gestalten nicht nutzbare Fähigkeiten fallen raus
+        result = result.Where(id => ClassAbilityRegistry.FindById(id) is { } a && ShapeshiftForms.IsUsableIn(a, form.Form)).ToList();
+        return result.Take(ClassAbilityRegistry.MaxSlotsPerClass).ToList();
+    }
+
     /// <summary>Lesbarer Schlüssel des Pools – ändert er sich nicht, muss nicht neu optimiert werden.</summary>
     public static string PoolKey(IReadOnlyList<Ability> pool) =>
         string.Join(",", pool.Select(a => a.Id).OrderBy(id => id));
@@ -56,6 +76,7 @@ public static class SimLoadoutOptimizer
     /// </summary>
     public static List<string> Optimize(Player player, IReadOnlyList<string> seedIds, CancellationToken ct = default)
     {
+        seedIds   = WithTalentForm(player, seedIds);
         var pool  = CandidatePool(player, seedIds);
         var fixedIds = seedIds.Where(id => ClassAbilityRegistry.FindById(id) is { IsForm: true }).ToList();
         // Ausgerüstete Fähigkeiten auf den höchsten verfügbaren Rang heben; nicht mehr nutzbare fallen raus

@@ -68,9 +68,10 @@
                                 if (talent is not null)
                                 {
                                     var ranks    = Engine.Player.TalentState.GetRanks(talent.Id);
-                                    var canSpend = Engine.Player.TalentState.CanInvest(talent, AvailablePoints);
+                                    var canSpend = Engine.Player.TalentState.CanInvest(talent, AvailablePoints, Engine.Player.Level);
                                     var maxed    = ranks >= talent.MaxRanks;
-                                    var locked   = !rowUnlocked || (talent.RequiresTalentId is not null &&
+                                    var levelLow = Engine.Player.Level < talent.LevelRequired;
+                                    var locked   = !rowUnlocked || levelLow || (talent.RequiresTalentId is not null &&
                                                    Engine.Player.TalentState.GetRanks(talent.RequiresTalentId) == 0);
 
                                     string stateClass = maxed    ? "talent-maxed"
@@ -81,6 +82,8 @@
                                     string? lockReason = locked
                                         ? (!rowUnlocked
                                             ? $"Requires {currentRow * 5} points in {treeName} tree"
+                                            : levelLow
+                                            ? $"Requires level {talent.LevelRequired}"
                                             : $"Requires {TalentRegistry.GetById(Engine.PlayerClass, talent.RequiresTalentId!)?.Name ?? talent.RequiresTalentId}")
                                         : null;
 

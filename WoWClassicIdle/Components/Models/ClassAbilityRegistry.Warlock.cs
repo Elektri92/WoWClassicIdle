@@ -190,5 +190,38 @@ public static partial class ClassAbilityRegistry
             Rank             = 1,
             TalentUnlockOnly = true,
         },
+
+        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───────────
+        new Ability
+        {
+            Id                      = "Soul_Link",
+            Name                    = "Soul Link",
+            IconUrl                 = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_gathershadows.jpg",
+            ManaCost                = 0,
+            IsPassive               = true,
+            BuffDuration            = 9999,     // Aura: wirkt solange ausgerüstet und der Dämon lebt
+            RequiresActivePet       = true,
+            BuffPetDamageShareBonus = 0.20,     // Dämon fängt zusätzlich 20 % des Schadens ab
+            BuffDamageBonus         = 0.05,
+            SpecHint                = 1,
+            LevelRequired           = 20,
+            Rank                    = 1,
+            TalentUnlockOnly        = true,
+        },
+        new Ability
+        {
+            Id                 = "Conflagrate_r1",
+            Name               = "Conflagrate",
+            IconUrl            = "https://wow.zamimg.com/images/wow/icons/large/spell_fire_fireball.jpg",
+            Cooldown           = 10,
+            ManaCost           = 25,
+            Damage             = 22,            // sofort
+            SynergyDebuffName  = "Immolate",
+            SynergyDamageBonus = 0.50,          // +50 % gegen brennende Gegner
+            SpecHint           = 2,
+            LevelRequired      = 20,
+            Rank               = 1,
+            TalentUnlockOnly   = true,
+        },
     };
 }

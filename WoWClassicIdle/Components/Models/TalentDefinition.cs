@@ -12,6 +12,9 @@ public class TalentDefinition
     public int Column { get; init; }      // 0–3
     public int MaxRanks { get; init; } = 1;
     public string? RequiresTalentId { get; init; }
+
+    /// <summary>Mindest-Charakterlevel zum Investieren (Spezialisierungs-Talente: 20). 0 = nur Reihen-Regel.</summary>
+    public int LevelRequired { get; init; }
     public TalentEffectType EffectType { get; init; }
     public double EffectPerRank { get; init; }
     public string IconUrl { get; init; } = "";
@@ -163,11 +166,11 @@ public class TalentDefinition
         TalentEffectType.ClawDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Claw damage",
         TalentEffectType.GrantTreeForm =>
-            "Grants ability: Tree Form (+20% healing, +50% mana regeneration from Spirit)",
+            "Grants ability: Tree Form (+20% healing, +10% Wrath, Moonfire and Insect Swarm damage)",
         TalentEffectType.RegrowthHealing =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Regrowth healing",
         TalentEffectType.GrantEvocation =>
-            "Grants ability: Evocation (restores 80% mana over 8s)",
+            "Grants ability: Evocation (restores 80% mana and +20% damage for 8s)",
         TalentEffectType.ArcaneMissilesDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Arcane Missiles damage",
         TalentEffectType.GrantIgnite =>
@@ -232,10 +235,31 @@ public class TalentDefinition
             $"+{(EffectPerRank * ranks * 100):0.##}% Fire Blast damage",
         TalentEffectType.MindBlastDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Mind Blast damage",
+        TalentEffectType.ThornsDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Thorns damage",
+        TalentEffectType.InsectSwarmDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Insect Swarm damage",
+        TalentEffectType.DeadlyPoisonStacks =>
+            $"+{(EffectPerRank * ranks):0.##} maximum Deadly Poison stacks",
+        TalentEffectType.DeadlyPoisonTickRate =>
+            $"Deadly Poison ticks {(EffectPerRank * ranks * 100):0.##}% faster",
+        TalentEffectType.PetDamageBonus =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% pet damage",
         TalentEffectType.DamageBonus =>
             $"+{(EffectPerRank * ranks * 100):0.##}% damage of all abilities",
         TalentEffectType.ShadowBoltDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Shadow Bolt damage",
+        TalentEffectType.GrantSpecAbility when GrantsAbilityId is not null
+                                            && ClassAbilityRegistry.FindById(GrantsAbilityId) is { } ability =>
+            $"Grants ability: {ability.Name} ({AbilityText.ShortSummary(ability)})",
+        TalentEffectType.BerserkerFlurry =>
+            $"Passive: +{(EffectPerRank * ranks * 100):0.##}% attack speed for 3 swings after a melee crit (Berserker Stance only)",
+        TalentEffectType.SpiritOfRedemption =>
+            $"Passive: a killing blow turns you into an immune spirit for {IdleGameEngine.SpiritOfRedemptionBuff.BuffDuration:0} sec instead",
+        TalentEffectType.Nightfall =>
+            $"Passive: {(EffectPerRank * ranks * 100):0.##}% chance per damage over time tick to make your next Shadow Bolt instant",
+        TalentEffectType.Eclipse =>
+            $"Passive: Wrath empowers your next Starfire by {IdleGameEngine.LunarEclipseBonus * 100:0}%, Starfire your next Wrath by {IdleGameEngine.SolarEclipseBonus * 100:0}%",
         _ => ""
     };
 }

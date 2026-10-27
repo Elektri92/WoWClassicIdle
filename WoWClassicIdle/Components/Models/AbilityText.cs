@@ -15,10 +15,11 @@ public static partial class AbilityText
         _                      => "Mana",
     };
 
-    /// <summary>Ressource einer Fähigkeit – Form-gebundene (Maul, Claw) nutzen die Ressource ihrer Gestalt.</summary>
+    /// <summary>Ressource einer Fähigkeit – Form-gebundene (Maul, Claw) nutzen die Ressource ihrer Gestalt, Haltungen die der Klasse.</summary>
     public static string ResourceName(Ability ability) =>
         ability.RequiredForm != DruidForm.None
-            ? ShapeshiftForms.ResourceName(ShapeshiftForms.ResourceFor(CharacterClass.Druid, ability.RequiredForm))
+            ? ShapeshiftForms.ResourceName(ShapeshiftForms.ResourceFor(
+                ClassAbilityRegistry.ClassOf(ability) ?? CharacterClass.Druid, ability.RequiredForm))
             : ResourceName(ClassAbilityRegistry.ClassOf(ability));
 
     /// <summary>Kostenzeile – gestaltabhängige Kosten werden angehängt (z. B. „14 Mana / 10 Rage / 25 Energy").</summary>
@@ -40,7 +41,8 @@ public static partial class AbilityText
     /// <summary>Rechte Seite der Kostenzeile: „Passive", „Next melee" oder Cooldown.</summary>
     public static string TimingText(Ability ability)
     {
-        if (ability.IsForm)             return "Shapeshift";
+        if (ability.IsForm)             return ShapeshiftForms.Get(ability.Form) is { IsStance: true } ? "Stance" : "Shapeshift";
+        if (ability.IsAura)             return "Aura";
         if (ability.IsPassive)          return "Passive";
         if (ability.ReplacesAutoAttack)
             return ability.Cooldown > 0 ? $"Next melee · {Num(ability.Cooldown)} sec cooldown" : "Next melee";
@@ -52,8 +54,11 @@ public static partial class AbilityText
         return "Instant";
     }
 
-    /// <summary>Gelber Effekttext wie im Classic-Tooltip.</summary>
-    public static string Description(Ability ability)
+    /// <summary>Gelber Effekttext wie im Classic-Tooltip – inkl. Synergie- und Gestalt-Hinweis.</summary>
+    public static string Description(Ability ability) =>
+        CoreDescription(ability) + SynergyText(ability) + RequiredFormText(ability);
+
+    private static string CoreDescription(Ability ability)
     {
         // Mechaniken ab Talent-Reihe 2 (Pets, Ladungen, Verstärkungen …) – siehe AbilityText.Special.cs
         if (SpecialDescription(ability) is { } special)
@@ -80,6 +85,7 @@ public static partial class AbilityText
         if (ability.IsMot)
             return $"Restores {Num(ability.MotManaRestorePct * 100)}% of your maximum mana over"
                  + $" {Num(ability.BuffDuration)} sec ({ability.MotTickCount} ticks, every {Num(ability.MotTickInterval)} sec)."
+                 + (ability.BuffDamageBonus > 0 ? $" Increases all damage you deal by {Num(ability.BuffDamageBonus * 100)}% during that time." : "")
                  + " Recast automatically when it expires.";
 
         // Prozentuale HoT (z. B. Conjure Food) – vor allgemeinem IsHot prüfen
@@ -169,6 +175,9 @@ public static partial class AbilityText
     {
         var form = ShapeshiftForms.Get(ability.Form);
         if (form is null) return "";
+        if (form.IsStance)
+            return $"Enter {form.Name} while equipped: {AuraEffectText(ability)}. Unlocks abilities that require this stance."
+                 + " Only one stance can be equipped at a time.";
 
         string desc = $"Shapeshift into {form.Name} while equipped.";
         if (form.Resource != ResourceKind.Mana)
@@ -231,8 +240,9 @@ public static partial class AbilityText
     /// <summary>Zusatzhinweis zur Auto-Cast-Logik (z. B. Rage-Schwelle, Heilungs-Gate).</summary>
     public static string AutoCastNote(Ability ability)
     {
-        if (ability.IsForm)
+        if (ability.IsForm || ability.IsAura)
             return "Active as long as it is equipped — no cast required.";
+
 
         if (ability.IsPassive)
             return "Equipped passively. Triggers automatically on each attack — no cast required.";
@@ -251,6 +261,8 @@ public static partial class AbilityText
     {
         if (SpecialShortSummary(ability) is { } special)
             return special;
+        if (ability.IsForm && ShapeshiftForms.Get(ability.Form) is { IsStance: true })
+            return $"Stance · {AuraEffectText(ability)}";
         if (ability.IsForm)
             return ShapeshiftForms.Get(ability.Form) is { Resource: not ResourceKind.Mana } f
                 ? $"Shapeshift · uses {ShapeshiftForms.ResourceName(f.Resource)}"

@@ -25,6 +25,12 @@ public class DebuffTracker
         lock (_lock) return _active.ContainsKey(abilityId);
     }
 
+    /// <summary>True wenn ein Debuff dieses Namens aktiv ist – rangunabhängig (Synergien wie Lava Burst → Flame Shock).</summary>
+    public bool HasDebuffNamed(string name)
+    {
+        lock (_lock) return _active.Values.Any(d => d.Source.Name == name);
+    }
+
     /// <summary>Applies the debuff, resetting duration if already present.</summary>
     public void Apply(Ability ability)
     {

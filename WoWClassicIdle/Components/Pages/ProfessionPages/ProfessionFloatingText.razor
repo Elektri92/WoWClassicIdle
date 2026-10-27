@@ -1,0 +1,70 @@
+@using Models
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+@* Scrolling-Text der Berufsereignisse: Item-Icons fliegen im Bogen von links nach oben und verblassen.
+   Außen bewegt sich X (ease-out), innen Y (ease-in) → gekrümmte Flugbahn. *@
+<div class="prof-float-layer" aria-hidden="true">
+    @foreach (var f in _floats)
+    {
+        <div @key="f.Entry.Id" class="prof-float-x" style="top: @(f.Top)%; animation-duration: @Duration">
+            <div class="prof-float-y prof-float-@f.Entry.Kind.ToString().ToLowerInvariant()" style="animation-duration: @Duration">
+                @if (f.Entry.Item is { } item)
+                {
+                    <img src="@item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span>+@f.Entry.Count @item.Name</span>
+                }
+                else
+                {
+                    <span>@(f.Entry.Kind == ProfessionLogKind.SkillUp ? $"Skill up! {f.Entry.Text}" : f.Entry.Text)</span>
+                }
+                @if (f.Entry.Source is not null)
+                {
+                    <span class="prof-float-source">@f.Entry.Source</span>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Profession Profession { get; set; }
+
+    private const double LifetimeSeconds = 2.2;
+    private const int MaxFloats = 12;
+    private static readonly string Duration = $"{LifetimeSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}s";
+
+    private record Float(ProfessionLogEntry Entry, double Top, DateTime Created);
+
+    private readonly List<Float> _floats = new();
+    private readonly Random _rng = new();
+    private long _lastSeenId;
+
+    protected override void OnInitialized()
+    {
+        // Bereits vorhandene Einträge nicht nachträglich animieren
+        _lastSeenId = Engine.ProfessionLog.Select(e => e.Id).DefaultIfEmpty().Max();
+        Engine.ProfessionUpdated += OnProfessionUpdated;
+    }
+
+    // Timer-Thread → Auswertung auf dem Renderer-Thread
+    private void OnProfessionUpdated() => _ = InvokeAsync(() =>
+    {
+        var now = DateTime.UtcNow;
+        bool changed = _floats.RemoveAll(f => (now - f.Created).TotalSeconds > LifetimeSeconds) > 0;
+
+        // Log ist neueste zuerst → für die Animationsreihenfolge umdrehen
+        foreach (var entry in Engine.ProfessionLog.Where(e => e.Id > _lastSeenId).Reverse())
+        {
+            _lastSeenId = Math.Max(_lastSeenId, entry.Id);
+            if (entry.Profession != Profession) continue;
+            _floats.Add(new Float(entry, 55 + _rng.Next(0, 25), now));
+            changed = true;
+        }
+        if (_floats.Count > MaxFloats) _floats.RemoveRange(0, _floats.Count - MaxFloats);
+
+        if (changed) StateHasChanged();
+    });
+
+    public void Dispose() => Engine.ProfessionUpdated -= OnProfessionUpdated;
+}

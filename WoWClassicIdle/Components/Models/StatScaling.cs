@@ -63,6 +63,18 @@ namespace Models
         };
 
         /// <summary>
+        /// Bringt der Stat der Klasse laut den Formeln hier etwas? (Verbrauchsgüter wählen danach aus)
+        /// Stärke → Angriffskraft (nicht für Stoffträger), Beweglichkeit → nur Schurke/Jäger,
+        /// Ausdauer und Willenskraft (HP-Regeneration) → alle, Intelligenz → nur Mana-Klassen.
+        /// </summary>
+        public static bool IsUsefulStat(CharacterClass cls, PrimaryStats bonus) =>
+            bonus.Stamina > 0
+            || bonus.Spirit > 0
+            || (bonus.Strength > 0 && cls is not (CharacterClass.Mage or CharacterClass.Priest or CharacterClass.Warlock))
+            || (bonus.Agility > 0 && cls is CharacterClass.Rogue or CharacterClass.Hunter)
+            || (bonus.Intelligence > 0 && UsesMana(cls));
+
+        /// <summary>
         /// Nahkampf-Angriffskraft nach WoW-Classic-Formeln. 14 AP = +1 DPS auf Auto-Attacks.
         /// </summary>
         public static int AttackPower(CharacterClass cls, int level, PrimaryStats p) => Math.Max(0, cls switch

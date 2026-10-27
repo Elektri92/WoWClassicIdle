@@ -68,6 +68,10 @@ else
         {
             <span class="tt-req-level @(requirementsMet ? "" : "tt-req-blocked")">Requires level @armor.RequiredLevel</span>
         }
+        @if (armor.RequiredClass is { } cls)
+        {
+            <span class="tt-req-class @(requirementsMet ? "" : "tt-req-blocked")">Classes: @cls</span>
+        }
         @if (!string.IsNullOrEmpty(hint))
         {
             <span class="tt-hint">@hint</span>

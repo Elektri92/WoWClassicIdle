@@ -1,0 +1,63 @@
+@using Models
+
+@* Umschließt den Inhalt und zeigt beim Überfahren einen WoW-Tooltip für ein Berufs-Item.
+   Positionierung über js/tooltip.js (position: fixed). *@
+@if (Item is null)
+{
+    @ChildContent
+}
+else
+{
+    <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
+        @ChildContent
+        <span class="wow-tooltip" role="tooltip">
+            <span class="tt-name" style="color: @ItemQualityColors.Hex(Item.Quality)">@Item.Name</span>
+            @if (Item is ConsumableItem consumable)
+            {
+                <span class="tt-consumable">Consumable · @consumable.KindLabel</span>
+                <span class="tt-use">Use: @consumable.EffectText</span>
+                @if (consumable.RequiredLevel > 1)
+                {
+                    <span class="tt-req-level">Requires level @consumable.RequiredLevel</span>
+                }
+                @if (consumable.IsBuff)
+                {
+                    <span class="tt-note">Used automatically in combat. A stronger one of the same kind replaces a weaker one.</span>
+                }
+                else
+                {
+                    <span class="tt-note">@(consumable.Kind switch
+                    {
+                        ConsumableKind.Bandage   => "Used automatically on death.",
+                        ConsumableKind.Explosive => "Thrown automatically in combat (1 min cooldown).",
+                        ConsumableKind.Costume   => "Use manually (right-click in bags or click in combat). Renews itself while you have more.",
+                        _                        => "Used automatically when running low (1 min shared cooldown).",
+                    })</span>
+                }
+            }
+            @if (Item.IsCraftingReagent)
+            {
+                <span class="tt-reagent">Crafting Reagent</span>
+            }
+            @if (Count > 0)
+            {
+                <span class="tt-count">Owned: @Count / @TradeItem.StackSize</span>
+            }
+            <span class="tt-sell">Sell Price: @Money.Format(Item.SellPrice)</span>
+            @if (!string.IsNullOrEmpty(Hint))
+            {
+                <span class="tt-hint">@Hint</span>
+            }
+        </span>
+    </span>
+}
+
+@code {
+    [Parameter] public TradeItem? Item { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Hint { get; set; }
+
+    /// <summary>Anzahl im Stack/Inventar (0 = nicht anzeigen).</summary>
+    [Parameter] public int Count { get; set; }
+}

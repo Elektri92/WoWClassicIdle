@@ -103,6 +103,17 @@
     color: #ff4040;
 }
 
+/* Klassenbindung hergestellter Rüstung */
+.tt-req-class {
+    margin-top: 2px;
+    color: #ffffff;
+    font-size: .75rem;
+}
+
+.tt-req-class.tt-req-blocked {
+    color: #ff4040;
+}
+
 /* Bedienhinweis (Rechtsklick/Ziehen) am Ende des Tooltips */
 .tt-hint {
     margin-top: 4px;

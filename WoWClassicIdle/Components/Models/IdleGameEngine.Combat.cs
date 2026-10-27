@@ -30,7 +30,7 @@ public partial class IdleGameEngine
 
     /// <summary>Level, Cooldown und (bei Buffs/Debuffs) Ablauf erlauben einen Cast – Mana wird nicht geprüft.</summary>
     private bool IsReadyToCast(Ability ability) =>
-        Player.Level >= ability.LevelRequired
+        IsAbilityAvailable(ability)
         && Player.Cooldowns.IsReady(ability.Id)
         && !(ability.IsBuff && Player.Buffs.IsActive(ability.Id))
         // Aktiver Debuff blockiert nur reine Debuffs – Schadenszauber mit Debuff (z. B. Frostbolt) werden weiter gewirkt und frischen ihn auf
@@ -44,7 +44,7 @@ public partial class IdleGameEngine
     /// </summary>
     private bool IsSavingManaForHeal() =>
         PlayerNeedsHeal
-        && Player.EquippedAbilities.Any(a => a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < Player.GetEffectiveManaCost(a));
+        && Player.EquippedAbilities.Any(a => a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < CastCost(a));
 
     /// <summary>Simulierte Spielzeit pro Schritt in Sekunden.</summary>
     public double StepSeconds => _baseDt;
@@ -96,6 +96,15 @@ public partial class IdleGameEngine
 
         double dt = _baseDt;
         Meter.AddCombatTime(dt);
+        MaintainPassiveAuras();
+        UpdateConsumables(dt);
+
+        // Dynamit kann den Gegner bereits töten
+        if (!CurrentEnemy.IsAlive)
+        {
+            HandleEnemyDeath();
+            return;
+        }
 
         int totalPlayerDmg = 0;
         int totalEnemyDmg  = 0;
@@ -112,7 +121,7 @@ public partial class IdleGameEngine
             }
             else
             {
-                int scaledHot = (int)Math.Round(tick.Amount * Player.Stats.HealingMultiplier);
+                int scaledHot = (int)Math.Round(tick.Amount * HealingMultiplier);
                 var (hotHeal, hotCrit) = RollPlayerCrit(scaledHot);
                 int hpBefore = Player.CurrentHp;
                 Player.RegenHp(hotHeal);
@@ -129,6 +138,7 @@ public partial class IdleGameEngine
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, dotDmg, dotCrit));
             totalPlayerDmg += dotDmg;
             playerAttacked = true;
+            TryNightfallProc();
 
             // Lifesteal (z. B. Drain Life)
             if (dot.Source.DebuffDotLifesteal > 0)
@@ -154,7 +164,7 @@ public partial class IdleGameEngine
             while (_rogueManaAcc >= 3.0)
             {
                 _rogueManaAcc -= 3.0;
-                Player.RegenMana(20);
+                Player.RegenMana((int)Math.Round(20 * ResourceRegenMultiplier));
             }
         }
         else if (resource == ResourceKind.Mana)
@@ -163,7 +173,7 @@ public partial class IdleGameEngine
             while (_manaRegenAcc >= 5.0)
             {
                 _manaRegenAcc -= 5.0;
-                Player.RegenMana(Player.Stats.ManaRegenPer5);
+                Player.RegenMana((int)Math.Round(Player.Stats.ManaRegenPer5 * ResourceRegenMultiplier));
             }
         }
 
@@ -208,7 +218,7 @@ public partial class IdleGameEngine
 
         // ── Spielerangriffe ──
         var nextSwingRaw = Player.EquippedAbilities
-            .FirstOrDefault(a => a.ReplacesAutoAttack && Player.Level >= a.LevelRequired && Player.CanUseInCurrentForm(a));
+            .FirstOrDefault(a => a.ReplacesAutoAttack && IsAbilityAvailable(a) && Player.CanUseInCurrentForm(a));
         var nextSwingAbility = nextSwingRaw is null ? null : Player.GetEffectiveAbility(nextSwingRaw);
 
         // Spell mit Manakosten wird gerade gewirkt → Swing wartet (Timer bleibt voll geladen)
@@ -242,8 +252,7 @@ public partial class IdleGameEngine
 
                 // Passive Procs (z. B. Deadly Poison) – auch bei On-Next-Swing
                 foreach (var passive in Player.PassiveAbilities)
-                    if (CurrentEnemy.IsAlive && _rng.NextDouble() < passive.ProcChance)
-                        CurrentEnemy.Debuffs.ApplyStack(passive);
+                    TryProcPassive(passive);
 
                 continue;
             }
@@ -271,8 +280,7 @@ public partial class IdleGameEngine
 
             // Passive Procs (z. B. Deadly Poison)
             foreach (var passive in Player.PassiveAbilities)
-                if (CurrentEnemy.IsAlive && _rng.NextDouble() < passive.ProcChance)
-                    CurrentEnemy.Debuffs.ApplyStack(passive);
+                TryProcPassive(passive);
         }
 
         if (!CurrentEnemy.IsAlive)
@@ -303,6 +311,10 @@ public partial class IdleGameEngine
             reducedDmg = SplitDamageWithPet(reducedDmg);   // Pet fängt einen Teil des Treffers ab
             var (taken, absorbs) = Player.TakeDamage(reducedDmg);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, taken));
+            if (!Player.IsAlive)
+                TryCheatDeath();   // Spirit of Redemption
+            else
+                ApplyHealOnHit();  // Earth Shield
             foreach (var (src, amt) in absorbs)
                 Meter.RecordAbility(src, CombatActionKind.Heal, amt);
             totalEnemyDmg += reducedDmg;
@@ -351,6 +363,7 @@ public partial class IdleGameEngine
             RespawnDuration  = 10 + Player.Level;
             RespawnRemaining = RespawnDuration;
             LastLog = "Defeated! Resurrecting at the Spirit Healer…";
+            HandleConsumablesOnDeath();
             ResetCastState();
             _playerAttackAcc = 0;
             _enemyAttackAcc  = 0;
@@ -428,6 +441,7 @@ public partial class IdleGameEngine
     {
         var deadEnemy = CurrentEnemy!;
         Player.Copper += deadEnemy.Stats.CopperReward;
+        RollCombatTradeDrops(deadEnemy);
 
         // Rare-Loot: Rüstung + 25 % Chance auf Klassenwaffe
         if (deadEnemy.IsRare)
@@ -502,8 +516,9 @@ public partial class IdleGameEngine
         {
             for (int l = oldLevel + 1; l <= Player.Level; l++)
             {
+                // Talent-Fähigkeiten melden sich beim Skillen (InvestTalentPoint), nicht beim Level-Up
                 foreach (var ability in ClassAbilityRegistry.GetAbilitiesFor(Player.ActiveClass)
-                             .Where(a => a.LevelRequired == l))
+                             .Where(a => a.LevelRequired == l && !a.TalentUnlockOnly))
                     AbilityUnlocked?.Invoke(ability);
             }
             LastLog = $"⬆ {Player.ActiveClass} → Lv. {Player.Level}";

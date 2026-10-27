@@ -32,6 +32,14 @@
                          src="@IconUrls.ClassIconUrl(slot.Class)"
                          alt="@slot.Class"
                          onerror="this.remove()" />
+                    @if (slot.Player.ProfessionState.Primary is { } primary)
+                    {
+                        <img class="char-portrait profession-portrait"
+                             src="@primary.Definition.IconUrl"
+                             alt="@primary.Definition.Name"
+                             title="@($"{primary.Definition.Name} ({primary.Skill}/{primary.SkillCap})")"
+                             onerror="this.remove()" />
+                    }
                 </div>
                 <div class="char-card-info">
                     <div class="char-card-name">
@@ -48,15 +56,33 @@
                     <button class="wow-btn char-edit-btn"
                             title="Edit Character"
                             @onclick:stopPropagation="true"
-                            @onclick="() => EditCharacter(slot)">✎</button>
-                    <div class="char-card-arrow">▶</div>
+                            @onclick="() => EditCharacter(slot)">
+                        <img class="btn-icon" src="@IconUrls.EditIcon" alt="" aria-hidden="true" onerror="this.remove()" />
+                    </button>
+                    <img class="char-card-arrow" src="@IconUrls.PlayIcon" alt="Play" title="Play" onerror="this.remove()" />
                 </div>
+            </div>
+        }
+
+        @if (BuildInfo.IsDebug)
+        {
+            <div class="debug-all-level-row">
+                <span class="wow-badge">DEBUG</span>
+                <span class="debug-all-level-label">Set all to level:</span>
+                @foreach (var lvl in new[] { 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 })
+                {
+                    <button class="wow-tab @(Engine.CharacterRoster.All(s => s.Player.Level == lvl) ? "active" : "")"
+                            @onclick="() => Engine.SetAllCharactersLevel(lvl)">
+                        @lvl
+                    </button>
+                }
             </div>
         }
 
         <div class="new-char-toggle-row">
             <button class="wow-btn new-char-toggle" @onclick="ToggleCreation">
-                @(showCreation ? "▲ Hide" : "＋ Create New Character")
+                <img class="btn-icon" src="@IconUrls.NewCharacterIcon" alt="" aria-hidden="true" onerror="this.remove()" />
+                <span>@(showCreation ? "Hide" : "Create New Character")</span>
             </button>
         </div>
     }
@@ -67,12 +93,14 @@
         <div class="wow-card">
             <h4>Gender</h4>
             <div class="wow-button-group centered">
-                <button class="wow-btn @(selectedGender == Gender.Male ? "active" : "")"
+                <button class="wow-btn wow-btn-icon @(selectedGender == Gender.Male ? "active" : "")"
                         @onclick="() => SetGender(Gender.Male)">
+                    <img src="@IconUrls.RaceIconUrl(selectedRace, Gender.Male)" alt="" onerror="this.remove()" />
                     <span>Male</span>
                 </button>
-                <button class="wow-btn @(selectedGender == Gender.Female ? "active" : "")"
+                <button class="wow-btn wow-btn-icon @(selectedGender == Gender.Female ? "active" : "")"
                         @onclick="() => SetGender(Gender.Female)">
+                    <img src="@IconUrls.RaceIconUrl(selectedRace, Gender.Female)" alt="" onerror="this.remove()" />
                     <span>Female</span>
                 </button>
             </div>
@@ -82,7 +110,10 @@
             <h4>Race</h4>
             <div class="race-row">
                 <div class="race-column">
-                    <h3 class="race-column-title alliance-title">Alliance</h3>
+                    <h3 class="race-column-title alliance-title">
+                        <img src="@IconUrls.FactionIconUrl(Faction.Alliance)" alt="" aria-hidden="true" onerror="this.remove()" />
+                        Alliance
+                    </h3>
                     <div class="race-buttons alliance">
                         @foreach (var race in AllianceRaces)
                         {
@@ -95,7 +126,10 @@
                     </div>
                 </div>
                 <div class="race-column">
-                    <h3 class="race-column-title horde-title">Horde</h3>
+                    <h3 class="race-column-title horde-title">
+                        <img src="@IconUrls.FactionIconUrl(Faction.Horde)" alt="" aria-hidden="true" onerror="this.remove()" />
+                        Horde
+                    </h3>
                     <div class="race-buttons horde">
                         @foreach (var race in HordeRaces)
                         {
@@ -132,8 +166,9 @@
         }
 
         <div class="creation-confirm-row">
-            <button class="wow-btn active confirm-btn" @onclick="ConfirmAndPlay">
-                ▶ Play as @selectedRace @selectedClass
+            <button class="wow-btn primary confirm-btn" @onclick="ConfirmAndPlay">
+                <img class="btn-icon" src="@IconUrls.ClassIconUrl(selectedClass)" alt="" aria-hidden="true" onerror="this.remove()" />
+                <span>Play as @selectedRace @selectedClass</span>
             </button>
         </div>
     }
@@ -194,12 +229,51 @@
         flex-shrink: 0;
     }
 
+    /* Icons wie Aktionsleisten-Slots rahmen (Goldrand + schwarze Kontur) */
     .char-portrait {
         width: 48px;
         height: 48px;
-        border-radius: 6px;
-        border: 1px solid #c5a55a55;
+        border-radius: 3px;
+        border: 1px solid #c5a55a;
+        box-shadow: 0 0 0 1px #000, 0 2px 6px rgba(0,0,0,.8);
         object-fit: cover;
+    }
+
+    .active-card .char-portrait {
+        border-color: #ffd100;
+        box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,209,0,.5);
+    }
+
+    .btn-icon {
+        width: 20px;
+        height: 20px;
+        border: 1px solid #c5a55a;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px #000;
+        pointer-events: none;
+    }
+
+    .character-selection .wow-btn-icon img {
+        border: 1px solid #c5a55a88;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px #000;
+    }
+
+    .character-selection .wow-btn-icon.active img {
+        border-color: #ffd100;
+        box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255,209,0,.6);
+    }
+
+    /* Nicht verfügbare Klassen entsättigt wie gesperrte Spells */
+    .character-selection .wow-btn-icon.disabled img {
+        filter: grayscale(1);
+    }
+
+    .profession-portrait {
+        width: 32px;
+        height: 32px;
+        align-self: flex-end;
+        border-color: #ffd10088;
     }
 
     .char-card-info {
@@ -235,21 +309,42 @@
     }
 
     .char-card-arrow {
-        font-size: 1.1rem;
-        color: #c5a55a;
+        width: 32px;
+        height: 32px;
+        border: 1px solid #c5a55a;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px #000;
         opacity: .7;
         flex-shrink: 0;
+        transition: opacity .12s, box-shadow .12s;
+    }
+
+    .existing-char-card:hover .char-card-arrow {
+        opacity: 1;
+        box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,209,0,.6);
     }
 
     .char-edit-btn {
-        font-size: .95rem;
-        padding: 4px 9px;
+        padding: 4px 6px;
         opacity: .7;
         transition: opacity .12s;
     }
 
     .char-edit-btn:hover {
         opacity: 1;
+    }
+
+    .debug-all-level-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        margin: 12px 0 4px;
+    }
+
+    .debug-all-level-label {
+        font-size: .8rem;
+        margin: 0 4px;
     }
 
     .new-char-toggle-row {
@@ -296,6 +391,9 @@
     }
 
     .character-selection .race-column-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-size: .95rem;
         font-weight: 700;
         margin: 0;
@@ -303,6 +401,14 @@
         border-radius: 4px;
         text-transform: uppercase;
         letter-spacing: 1px;
+    }
+
+    .character-selection .race-column-title img {
+        width: 24px;
+        height: 24px;
+        border: 1px solid #c5a55a;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px #000;
     }
 
     .character-selection .race-column-title.alliance-title {

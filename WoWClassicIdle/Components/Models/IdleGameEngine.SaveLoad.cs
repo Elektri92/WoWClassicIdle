@@ -15,6 +15,11 @@ public partial class IdleGameEngine
             _sharedInventory = new Inventory();
 
             _roster.Clear();
+            ActiveProfessionRun = null;
+            _professionLog.Clear();
+            _sharedProfessions.Clear();
+            _passiveAssignments.Clear();
+            _lastProfessionTargets.Clear();
             TotalKills           = save.TotalKills;
             TotalDeaths          = save.TotalDeaths;
             TotalRareKills       = save.TotalRareKills;
@@ -27,10 +32,12 @@ public partial class IdleGameEngine
             foreach (var slotData in save.Roster)
                 _roster.Add(RestoreSlot(slotData));
 
+            RestoreProfessions(save);
+
             // Gemeinsames Inventar befüllen – Rucksack
             foreach (var itemData in save.SharedInventoryItems ?? [])
             {
-                Item? item = WeaponRegistry.GetById(itemData.ItemId) ?? (Item?)RareLootRegistry.GetById(itemData.ItemId);
+                Item? item = ResolveSavedItem(itemData.ItemId);
                 if (item is null) continue;
                 if (itemData.RequiredLevel > 0)
                 {
@@ -54,7 +61,7 @@ public partial class IdleGameEngine
             foreach (var itemData in save.SharedBagItems ?? [])
             {
                 if (itemData.BagIndex < 0 || itemData.BagIndex >= Inventory.BagSlotCount) continue;
-                Item? item = WeaponRegistry.GetById(itemData.ItemId) ?? (Item?)RareLootRegistry.GetById(itemData.ItemId);
+                Item? item = ResolveSavedItem(itemData.ItemId);
                 if (item is null) continue;
                 if (itemData.RequiredLevel > 0)
                 {
@@ -83,6 +90,57 @@ public partial class IdleGameEngine
         RosterChanged?.Invoke();
         TickUpdated?.Invoke();
     }
+
+    /// <summary>Accountweite Berufe und passive Slots wiederherstellen (nach dem Roster).</summary>
+    private void RestoreProfessions(SaveData save)
+    {
+        foreach (var profData in save.SecondaryProfessions ?? [])
+        {
+            if (Enum.TryParse<Profession>(profData.Profession, out var profession) && !Professions.Get(profession).IsPrimary)
+                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex);
+        }
+
+        foreach (var data in save.PassiveAssignments ?? [])
+        {
+            if (!Enum.TryParse<Profession>(data.Profession, out var profession)) continue;
+            if (_passiveAssignments.Any(a => a.CharacterId == data.CharacterId || a.Matches(profession, data.Group, data.Index))) continue;
+            if (!HasPassiveCapacity(profession, data.CharacterId)) continue; // Altstand mit mehr Slots je Beruf als erlaubt
+            _passiveAssignments.Add(new PassiveAssignment
+            {
+                Profession  = profession,
+                Group       = data.Group,
+                Index       = data.Index,
+                CharacterId = data.CharacterId,
+                Target      = data.Target,
+                Elapsed     = data.Elapsed,
+            });
+        }
+
+        foreach (var (name, target) in save.LastProfessionTargets ?? [])
+        {
+            if (Enum.TryParse<Profession>(name, out var profession))
+                _lastProfessionTargets[profession] = target;
+        }
+
+        UnlockSharedProfessions();
+    }
+
+    /// <summary>Übernimmt einen accountweiten Beruf – bei mehrfachen Altständen gewinnt der höchste Skill.</summary>
+    private void RestoreSharedProfession(Profession profession, int skill, int rankIndex)
+    {
+        var current = _sharedProfessions.GetValueOrDefault(profession);
+        if (current is not null && current.Skill >= skill && current.RankIndex >= rankIndex) return;
+        var progress = new ProfessionProgress(profession);
+        progress.Restore(Math.Max(skill, current?.Skill ?? 1), Math.Max(rankIndex, current?.RankIndex ?? 0));
+        _sharedProfessions[profession] = progress;
+    }
+
+    private static Item? ResolveSavedItem(int itemId) =>
+        WeaponRegistry.GetById(itemId)
+        ?? (Item?)RareLootRegistry.GetById(itemId)
+        ?? (Item?)CraftedGearRegistry.GetById(itemId)
+        ?? (Item?)EnchantingRegistry.GetById(itemId)
+        ?? ProfessionRegistry.GetById(itemId);
 
     private CharacterSlot RestoreSlot(SlotSaveData data)
     {
@@ -118,7 +176,8 @@ public partial class IdleGameEngine
         foreach (var (slotName, itemId) in p.EquippedArmorIdBySlot)
         {
             if (Enum.TryParse<ArmorSlot>(slotName, out var slot)
-                && RareLootRegistry.GetById(itemId) is { } armor)
+                && (RareLootRegistry.GetById(itemId) ?? CraftedGearRegistry.GetById(itemId)
+                    ?? EnchantingRegistry.GetById(itemId)) is { } armor)
             {
                 armorBySlot[slot] = armor;
             }
@@ -129,6 +188,16 @@ public partial class IdleGameEngine
         // Talente wiederherstellen (vor SetActiveClass, damit CritBonus in Stats einfließt)
         foreach (var (talentId, ranks) in p.TalentInvestedPoints)
             player.TalentState.RestoreRanks(talentId, ranks);
+
+        // Berufe wiederherstellen
+        foreach (var profData in p.Professions ?? [])
+        {
+            if (!Enum.TryParse<Profession>(profData.Profession, out var profession)) continue;
+            if (Professions.Get(profession).IsPrimary)
+                player.ProfessionState.Restore(profession, profData.Skill, profData.RankIndex);
+            else
+                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex); // Altstand migrieren
+        }
 
         // Aktive Klasse setzen (berechnet Stats neu, stellt Waffe wieder her)
         player.SetClass(p.ActiveClass);

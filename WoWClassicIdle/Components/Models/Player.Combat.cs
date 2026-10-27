@@ -58,7 +58,7 @@ namespace Models
             {
                 double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.ArcaneMissilesDamage);
                 if (bonus > 0)
-                    return ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)) };
+                    return ability.WithDamageBonus(bonus);   // Arcane Missiles ist inzwischen Direktschaden, kein DoT mehr
             }
             if (ability.Id.StartsWith("Fire_Blast"))
             {
@@ -395,6 +395,8 @@ namespace Models
                 armorBonus = armorBonus + armor.Bonuses;
             if (EquippedWeapon?.Bonuses is { } weaponBonus)
                 armorBonus = armorBonus + weaponBonus;
+            // Verbrauchsgüter (Elixiere, Fläschchen, Essen) wirken wie Ausrüstungs-Boni
+            armorBonus = armorBonus + ConsumableBonus;
 
             var augPrimary = baseStats.Primary + armorBonus;
 

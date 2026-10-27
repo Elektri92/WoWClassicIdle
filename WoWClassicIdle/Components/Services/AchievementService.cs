@@ -55,6 +55,7 @@ public class AchievementService : IAchievementService
             _lastKnownLevels[cls] = 1;
 
         _engine.TickUpdated += OnTick;
+        _engine.ProfessionUpdated += CheckProfessions;   // Berufe laufen auf eigenem Timer
     }
 
     private void OnTick()
@@ -68,6 +69,21 @@ public class AchievementService : IAchievementService
         CheckRareItemsLooted();
         CheckGeneral();
         CheckInventory();
+    }
+
+    private static readonly int[] ProfessionSkillMilestones = { 75, 150, 225, 300 };
+
+    private void CheckProfessions()
+    {
+        foreach (var def in Professions.All)
+        {
+            int skill = _engine.HighestProfessionSkill(def.Profession);
+            foreach (int milestone in ProfessionSkillMilestones)
+            {
+                if (skill >= milestone)
+                    TryAward($"prof_{def.Profession}_{milestone}");
+            }
+        }
     }
 
     private void CheckClassLevels()
@@ -292,6 +308,16 @@ public class AchievementService : IAchievementService
             list.Add(new() { Id = $"class_{cls}_40", Category = AchievementCategory.Classes, Points = 10, Class = cls, Title = $"{name}: Expert",      Description = $"Reach level 40 as a {name}.", IconUrl = icon });
             list.Add(new() { Id = $"class_{cls}_50", Category = AchievementCategory.Classes, Points = 10, Class = cls, Title = $"{name}: Elite",       Description = $"Reach level 50 as a {name}.", IconUrl = icon });
             list.Add(new() { Id = $"class_{cls}_60", Category = AchievementCategory.Classes, Points = 10, Class = cls, Title = $"{name}: Master",      Description = $"Reach level 60 as a {name}.", IconUrl = icon });
+        }
+
+        // ── Professions: Skill 75/150/225/300 in jedem Beruf ──
+        foreach (var def in Professions.All)
+        {
+            string icon = def.IconUrl;
+            list.Add(new() { Id = $"prof_{def.Profession}_75",  Category = AchievementCategory.Professions, Points = 10, Title = $"Apprentice {def.Name}", Description = $"Reach skill 75 in {def.Name}.",  IconUrl = icon });
+            list.Add(new() { Id = $"prof_{def.Profession}_150", Category = AchievementCategory.Professions, Points = 10, Title = $"Journeyman {def.Name}", Description = $"Reach skill 150 in {def.Name}.", IconUrl = icon });
+            list.Add(new() { Id = $"prof_{def.Profession}_225", Category = AchievementCategory.Professions, Points = 15, Title = $"Expert {def.Name}",     Description = $"Reach skill 225 in {def.Name}.", IconUrl = icon });
+            list.Add(new() { Id = $"prof_{def.Profession}_300", Category = AchievementCategory.Professions, Points = 25, Title = $"Artisan {def.Name}",    Description = $"Reach skill 300 in {def.Name}.", IconUrl = icon });
         }
 
         // ── Kills ──

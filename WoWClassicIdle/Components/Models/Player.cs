@@ -23,6 +23,9 @@ namespace Models
         /// <summary>Talent-Punkte und investierte Ränge je Klasse.</summary>
         public TalentState TalentState { get; } = new();
 
+        /// <summary>Erlernte Berufe (ein Herstellungsberuf; Sammel-/Sekundärberufe sind accountweit).</summary>
+        public ProfessionState ProfessionState { get; } = new();
+
         /// <summary>Currently equipped weapon. Auto-set to class starter on creation.</summary>
         public WeaponItem? EquippedWeapon { get; private set; }
 

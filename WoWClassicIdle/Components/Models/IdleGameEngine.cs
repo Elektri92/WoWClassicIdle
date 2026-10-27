@@ -56,6 +56,12 @@ public partial class IdleGameEngine
     public int TotalRareItemsLooted { get; private set; }
     public string? LastLog { get; private set; }
 
+    /// <summary>Teilt einen Inventar-Stapel (Shift-Klick) – gesperrt gegen gleichzeitige Loot-/Berufs-Ticks.</summary>
+    public bool SplitInventoryStack(Bag bag, int index, int amount)
+    {
+        lock (_simLock) return _sharedInventory.SplitStack(bag, index, amount);
+    }
+
     /// <summary>Erhöht den Zähler für manuell verkaufte Items (z.B. per Drag-and-Drop an den Händler).</summary>
     public void TrackItemSold(int count = 1) => TotalItemsSold += count;
 

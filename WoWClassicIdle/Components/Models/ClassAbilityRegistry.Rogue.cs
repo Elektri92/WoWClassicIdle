@@ -188,5 +188,53 @@ public static partial class ClassAbilityRegistry
             Rank             = 1,
             TalentUnlockOnly = true,
         },
+
+        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───────────
+        new Ability
+        {
+            Id                 = "Mutilate_r1",
+            Name               = "Mutilate",
+            IconUrl            = "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_shadowstrikes.jpg",
+            Cooldown           = 6,
+            ManaCost           = 50,            // 50 Energy
+            Damage             = 4,
+            AddsWeaponDamage   = true,
+            HitCount           = 2,             // trifft mit beiden Klingen
+            SynergyDebuffName  = "Deadly Poison",
+            SynergyDamageBonus = 0.25,          // +25 % gegen vergiftete Gegner
+            SpecHint           = 0,
+            LevelRequired      = 20,
+            Rank               = 1,
+            TalentUnlockOnly   = true,
+        },
+        new Ability
+        {
+            Id                     = "Adrenaline_Rush_r1",
+            Name                   = "Adrenaline Rush",
+            IconUrl                = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowworddominate.jpg",
+            Cooldown               = 60,
+            ManaCost               = 0,
+            BuffDuration           = 15,
+            BuffResourceRegenBonus = 1.0,       // doppelte Energie-Regeneration
+            SpecHint               = 1,
+            LevelRequired          = 20,
+            Rank                   = 1,
+            TalentUnlockOnly       = true,
+        },
+        new Ability
+        {
+            Id                 = "Vanish_r1",
+            Name               = "Vanish",
+            IconUrl            = "https://wow.zamimg.com/images/wow/icons/large/ability_vanish.jpg",
+            Cooldown           = 45,
+            ManaCost           = 0,
+            BuffDuration       = 4,
+            BuffGrantsImmunity = true,          // kurzzeitig kein erlittener Schaden
+            BuffFreeCasts      = 1,             // nächste Fähigkeit kostet keine Energie
+            SpecHint           = 2,
+            LevelRequired      = 20,
+            Rank               = 1,
+            TalentUnlockOnly   = true,
+        },
     };
 }

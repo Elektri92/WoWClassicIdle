@@ -69,6 +69,26 @@ namespace Models
                     double bonus = TalentBonus(TalentEffectType.ExposeArmorBonus);
                     return bonus > 0 ? ability with { DebuffDamageTakenBonus = ability.DebuffDamageTakenBonus * (1.0 + bonus) } : ability;
                 }
+                case "Thorns":
+                {
+                    double bonus = TalentBonus(TalentEffectType.ThornsDamage);
+                    return bonus > 0 ? ability with { BuffRetaliationDamage = (int)Math.Round(ability.BuffRetaliationDamage * (1.0 + bonus)) } : ability;
+                }
+                case "Insect Swarm":
+                {
+                    double bonus = TalentBonus(TalentEffectType.InsectSwarmDamage);
+                    return bonus > 0 ? ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)) } : ability;
+                }
+                case "Deadly Poison":
+                {
+                    int    stacks = (int)TalentBonus(TalentEffectType.DeadlyPoisonStacks);
+                    double faster = TalentBonus(TalentEffectType.DeadlyPoisonTickRate);
+                    return ability with
+                    {
+                        DebuffMaxStacks       = ability.DebuffMaxStacks + stacks,
+                        DebuffDotTickInterval = ability.DebuffDotTickInterval * (1.0 - faster),
+                    };
+                }
                 case "Fireball":
                     return ability.WithDamageBonus(TalentBonus(TalentEffectType.FireballDamage));
                 case "Fire Blast":
@@ -99,6 +119,9 @@ namespace Models
         /// <summary>Zusätzliche HP aus Stamina durch Talente (Strong Life).</summary>
         private int StaminaTalentHp(PrimaryStats primary) =>
             (int)Math.Round(primary.Stamina * StatScaling.HpPerStamina * TalentBonus(TalentEffectType.StaminaHpBonus));
+
+        /// <summary>Zusätzlicher Pet-Schaden (Master Demonologist).</summary>
+        public double PetDamageTalentBonus => TalentBonus(TalentEffectType.PetDamageBonus);
 
         /// <summary>Zusätzliche Pet-HP als Anteil der Spieler-HP (Strong Pet, Strong Demon).</summary>
         public double PetHealthTalentBonus => TalentBonus(TalentEffectType.PetHealthBonus);

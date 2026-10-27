@@ -121,31 +121,9 @@ public static partial class ClassAbilityRegistry
         },
         new Ability
         {
-            Id = "Overpower_r1",
-            Name = "Overpower",
-            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
-            Cooldown = 12,
-            ManaCost = 15,                      // 15 Rage
-            Damage = 5,          // war 30 / CD 6 – Krieger ab Lv 18 bei +28–43 % XP/h
-            AddsWeaponDamage = true,
-            LevelRequired = 18,
-            Rank = 1,
-        },
-        new Ability
-        {
-            Id = "Intimidating_Shout_r1",
-            Name = "Intimidating Shout",
-            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_golemstormbolt.jpg",
-            Cooldown = 60,
-            ManaCost = 10,                      // 10 Rage
-            DebuffDuration = 5,                 // Betäubung 5 s
-            DebuffIsStun = true,
-            LevelRequired = 24,
-            Rank = 1,
-        },
-        new Ability
-        {
             Id = "Battle_Stance",
+            Form = DruidForm.BattleStance,   // Haltung: Voraussetzung für Haltungs-Fähigkeiten (Overpower, Flurry …)
+            IsPassive = true,          // Aura – liegt an, solange ausgerüstet
             Name = "Battle Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_offensivestance.jpg",
             Cooldown = 0,
@@ -160,6 +138,8 @@ public static partial class ClassAbilityRegistry
         new Ability
         {
             Id = "Berserker_Stance",
+            Form = DruidForm.BerserkerStance,   // Haltung: Voraussetzung für Haltungs-Fähigkeiten (Overpower, Flurry …)
+            IsPassive = true,          // Aura – liegt an, solange ausgerüstet
             Name = "Berserker Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_racial_avatar.jpg",
             Cooldown = 0,
@@ -175,6 +155,8 @@ public static partial class ClassAbilityRegistry
         new Ability
         {
             Id = "Defensive_Stance",
+            Form = DruidForm.DefensiveStance,   // Haltung: Voraussetzung für Haltungs-Fähigkeiten (Overpower, Flurry …)
+            IsPassive = true,          // Aura – liegt an, solange ausgerüstet
             Name = "Defensive Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_defensivestance.jpg",
             Cooldown = 0,
@@ -184,6 +166,39 @@ public static partial class ClassAbilityRegistry
             ExclusiveGroup = "warrior_stance",
             TalentUnlockOnly = true,
             LevelRequired = 1,
+            Rank = 1,
+        },
+
+        // ─── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───
+        new Ability
+        {
+            Id = "Overpower_r1",
+            Name = "Overpower",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
+            Cooldown = 12,
+            ManaCost = 10,                      // 10 Rage
+            Damage = 4,          // war regulär Lv 18 (+5) – als Arms-Talent mit +8 / CD 8 brachte es +26 % XP/h
+            AddsWeaponDamage = true,
+            BonusCritChance = 0.25,             // Improved Overpower
+            RequiredForm = DruidForm.BattleStance,
+            TalentUnlockOnly = true,
+            SpecHint = 0,
+            LevelRequired = 20,
+            Rank = 1,
+        },
+        new Ability
+        {
+            Id = "Intimidating_Shout_r1",
+            Name = "Intimidating Shout",
+            IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_golemstormbolt.jpg",
+            Cooldown = 40,
+            ManaCost = 10,                      // 10 Rage
+            DebuffDuration = 6,                 // Gegner flieht: keine Angriffe für 6 s
+            DebuffIsStun = true,
+            RequiredForm = DruidForm.DefensiveStance,
+            TalentUnlockOnly = true,
+            SpecHint = 2,
+            LevelRequired = 20,
             Rank = 1,
         },
     };

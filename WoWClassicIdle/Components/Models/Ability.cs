@@ -1,7 +1,7 @@
 // Models/Ability.cs
 namespace Models;
 
-public sealed record Ability
+public sealed partial record Ability
 {
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";

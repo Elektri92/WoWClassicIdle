@@ -1,8 +1,8 @@
 // Models/ShapeshiftForm.cs
 namespace Models;
 
-/// <summary>Gestalt (Druide + Shadowform des Priesters) – aktiv, solange die zugehörige Form-Fähigkeit ausgerüstet ist.</summary>
-public enum DruidForm { None, Moonkin, Bear, Cat, Tree, Shadow }
+/// <summary>Gestalt (Druide, Shadowform des Priesters, Warrior-Haltungen) – aktiv, solange die zugehörige Form-Fähigkeit ausgerüstet ist.</summary>
+public enum DruidForm { None, Moonkin, Bear, Cat, Tree, Shadow, BattleStance, BerserkerStance, DefensiveStance }
 
 /// <summary>Ressource, die die Fähigkeiten des Charakters verbrauchen.</summary>
 public enum ResourceKind { Mana, Rage, Energy }
@@ -30,6 +30,12 @@ public sealed record ShapeshiftFormInfo
     /// <summary>Schadensbonus (Direkt + DoT) für die Zauber in <see cref="BoostedAbilityNames"/>.</summary>
     public double BoostedAbilityDamageBonus { get; init; }
     public IReadOnlyList<string> BoostedAbilityNames { get; init; } = [];
+
+    /// <summary>
+    /// Haltung (Warrior): kein echter Gestaltwechsel – Ressource, Portrait und Stats bleiben, alle Fähigkeiten bleiben nutzbar.
+    /// Dient nur als Voraussetzung für <see cref="Ability.RequiredForm"/> (Overpower → Battle Stance); die Boni kommen aus dem Aura-Buff.
+    /// </summary>
+    public bool IsStance { get; init; }
 }
 
 /// <summary>Gestalt-Daten und Regeln, welche Fähigkeiten in welcher Gestalt nutzbar sind.</summary>
@@ -70,6 +76,9 @@ public static class ShapeshiftForms
             PortraitUrl          = "https://wow.zamimg.com/images/wow/icons/large/ability_druid_treeoflife.jpg",
             HealingBonus         = 0.20,
             SpiritManaRegenBonus = 0.50,
+            // Tree Form brachte im Sim nur +1,8 % – Resto-Druiden kämpfen mit Naturzaubern
+            BoostedAbilityDamageBonus = 0.10,
+            BoostedAbilityNames       = ["Wrath", "Moonfire", "Insect Swarm"],
         },
         [DruidForm.Shadow] = new ShapeshiftFormInfo
         {
@@ -81,12 +90,15 @@ public static class ShapeshiftForms
             BoostedAbilityDamageBonus = 0.25,
             BoostedAbilityNames       = ["Smite", "Mind Blast", "Shadow Word: Pain"],
         },
+        [DruidForm.BattleStance]    = new ShapeshiftFormInfo { Form = DruidForm.BattleStance,    Name = "Battle Stance",    IsStance = true },
+        [DruidForm.BerserkerStance] = new ShapeshiftFormInfo { Form = DruidForm.BerserkerStance, Name = "Berserker Stance", IsStance = true },
+        [DruidForm.DefensiveStance] = new ShapeshiftFormInfo { Form = DruidForm.DefensiveStance, Name = "Defensive Stance", IsStance = true },
     };
 
     public static ShapeshiftFormInfo? Get(DruidForm form) => Forms.GetValueOrDefault(form);
 
     public static ResourceKind ResourceFor(CharacterClass cls, DruidForm form) =>
-        Get(form)?.Resource ?? cls switch
+        Get(form) is { IsStance: false } info ? info.Resource : cls switch
         {
             CharacterClass.Warrior => ResourceKind.Rage,
             CharacterClass.Rogue   => ResourceKind.Energy,
@@ -116,7 +128,7 @@ public static class ShapeshiftForms
         if (ability.RequiredForm != DruidForm.None) return ability.RequiredForm == form;
         if (ability.FormCosts.ContainsKey(form)) return true;
         if (form == DruidForm.None || ability.IsForm || ability.ManaCost == 0) return true;
-        return Forms[form].Resource == ResourceKind.Mana;
+        return Forms[form].IsStance || Forms[form].Resource == ResourceKind.Mana;
     }
 
     /// <summary>Entfernt alle Fähigkeiten, die in der ausgerüsteten Gestalt nicht nutzbar sind. Gibt sie zurück.</summary>

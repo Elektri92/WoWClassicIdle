@@ -3,7 +3,12 @@ namespace Models;
 
 public static partial class StaticHelpers
 {
-    private const int MaxLevel = 60;
+    // Tabellen reichen bis Level 60; im Release ist das Spiel vorerst auf ReleaseLevelCap begrenzt.
+    private const int TableMaxLevel   = 60;
+    public  const int ReleaseLevelCap = 20;
+
+    public static int MaxLevel =>
+        WoWClassicIdle.Components.BuildInfo.IsDebug ? TableMaxLevel : ReleaseLevelCap;
 
     // XP needed to go from level N to level N+1 (index 0 = level 1 → 2)
     private static readonly int[] XpTable =
@@ -46,7 +51,7 @@ public static partial class StaticHelpers
     public static int GetEnemyXpReward(int level)
     {
         if (level < 1) level = 1;
-        if (level > MaxLevel) level = MaxLevel;
+        if (level > TableMaxLevel) level = TableMaxLevel;
         return EnemyXpReward[level - 1];
     }
 }

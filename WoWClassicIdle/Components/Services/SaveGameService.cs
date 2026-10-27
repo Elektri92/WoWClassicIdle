@@ -151,6 +151,25 @@ public class SaveGameService : ISaveGameService, IDisposable
             }
         }
 
+        // Accountweite Berufe (Sammeln + Angeln) + passive Slots
+        foreach (var progress in _engine.SharedProfessions)
+            save.SecondaryProfessions.Add(BuildProfessionSaveData(progress));
+        foreach (var a in _engine.PassiveAssignments)
+        {
+            save.PassiveAssignments.Add(new PassiveAssignmentSaveData
+            {
+                Profession  = a.Profession.ToString(),
+                Group       = a.Group,
+                Index       = a.Index,
+                CharacterId = a.CharacterId,
+                Target      = a.Target,
+                Elapsed     = a.Elapsed,
+            });
+        }
+
+        foreach (var (profession, target) in _engine.LastProfessionTargets)
+            save.LastProfessionTargets[profession.ToString()] = target;
+
         foreach (var earned in _achievements.EarnedAchievements)
             save.Achievements.Add(new AchievementSaveData { Id = earned.AchievementId, EarnedAt = earned.EarnedAt });
 
@@ -194,8 +213,19 @@ public class SaveGameService : ISaveGameService, IDisposable
         foreach (var (talentId, ranks) in p.TalentState.Invested)
             data.TalentInvestedPoints[talentId] = ranks;
 
+        // Hauptberuf
+        if (p.ProfessionState.Primary is { } primary)
+            data.Professions.Add(BuildProfessionSaveData(primary));
+
         return data;
     }
+
+    private static ProfessionSaveData BuildProfessionSaveData(ProfessionProgress progress) => new()
+    {
+        Profession = progress.Profession.ToString(),
+        Skill      = progress.Skill,
+        RankIndex  = progress.RankIndex,
+    };
 
     private SlotSaveData BuildSlotSaveData(CharacterSlot slot) => new()
     {

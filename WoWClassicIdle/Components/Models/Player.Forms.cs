@@ -17,7 +17,7 @@ namespace Models
         public ResourceKind Resource => ShapeshiftForms.ResourceFor(ActiveClass, ActiveForm);
 
         /// <summary>Portrait der aktiven Gestalt; null = normales Rassen-Portrait.</summary>
-        public string? FormPortraitUrl => ShapeshiftForms.Get(ActiveForm)?.PortraitUrl;
+        public string? FormPortraitUrl => ShapeshiftForms.Get(ActiveForm) is { PortraitUrl.Length: > 0 } f ? f.PortraitUrl : null;
 
         /// <summary>Rage startet leer, Mana und Energie voll.</summary>
         private int StartingResource => Resource == ResourceKind.Rage ? 0 : Stats.MaxMana;
@@ -28,6 +28,8 @@ namespace Models
         /// <summary>Gestaltwechsel → Ressource und Stats neu berechnen (HP bleiben erhalten).</summary>
         protected override void OnLoadoutChanged()
         {
+            // Abgelegte Auren (Paladin-Auren, Aspekte, Haltungen) enden sofort
+            Buffs.RemoveAurasExcept(EquippedAbilities);
             if (ActiveForm == _statsForm) return;
             int hp = CurrentHp;
             RecalculateStats();
@@ -39,7 +41,7 @@ namespace Models
         {
             _statsForm = ActiveForm;
             var form = ShapeshiftForms.Get(_statsForm);
-            if (form is null) return stats;
+            if (form is null || form.IsStance) return stats;   // Haltungen wirken über ihren Aura-Buff
 
             if (form.Resource != ResourceKind.Mana)
                 return stats with

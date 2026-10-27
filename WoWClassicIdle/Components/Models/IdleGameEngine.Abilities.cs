@@ -48,6 +48,12 @@ public partial class IdleGameEngine
                 * Player.Buffs.ConsumeEmpower(ability.Name);   // z. B. Mongoose Bite → Raptor Strike
             // Cold Blood: garantierter Crit für alle Treffer dieser Fähigkeit
             double extraCrit = Player.GetAbilityCritBonus(ability) + (Player.Buffs.ConsumeGuaranteedCrit() ? 1.0 : 0.0);
+            // Synergie mit einem Debuff auf dem Ziel (Lava Burst → Flame Shock, Mutilate → Deadly Poison, Shatter)
+            if (IsSynergyActive(ability))
+            {
+                abilityMult *= 1.0 + ability.SynergyDamageBonus;
+                extraCrit   += ability.SynergyCritBonus;
+            }
             // Mehrfachtreffer (Chain Lightning): jeder Treffer würfelt eigenen Crit
             int  abilityDmg  = 0;
             bool abilityCrit = false;
@@ -95,7 +101,7 @@ public partial class IdleGameEngine
     /// <summary>Direktheilung inkl. Heilungs-Multiplikator und Crit.</summary>
     private void ApplyDirectHeal(Ability ability, int baseHeal)
     {
-        int scaledHeal = (int)Math.Round(baseHeal * Player.Stats.HealingMultiplier);
+        int scaledHeal = (int)Math.Round(baseHeal * HealingMultiplier);
         var (healAmount, healCrit) = RollPlayerCrit(scaledHeal);
         int hpBefore = Player.CurrentHp;
         Player.RegenHp(healAmount);
@@ -116,7 +122,7 @@ public partial class IdleGameEngine
             double smiteHealBonus = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.SmiteHeal);
             if (smiteHealBonus > 0)
             {
-                int sh = (int)Math.Round(smiteHealBonus * Player.Stats.HealingMultiplier);
+                int sh = (int)Math.Round(smiteHealBonus * HealingMultiplier);
                 var (smHealed, _) = RollPlayerCrit(sh);
                 int hpSmBefore = Player.CurrentHp;
                 Player.RegenHp(smHealed);
@@ -139,9 +145,9 @@ public partial class IdleGameEngine
             enemy.Debuffs.Apply(periodicFire);
         }
 
-        // Ignite: Feuerzauber-Crit löst DoT aus (40 % des Schadens über 3 Ticks)
+        // Ignite: Feuerzauber-Crit (Fireball, Fire Blast, Flamestrike) löst DoT aus (40 % des Schadens über 3 Ticks)
         if (abilityCrit
-            && (ability.Id.StartsWith("Fireball") || ability.Id.StartsWith("Fire_Blast"))
+            && (ability.Id.StartsWith("Fireball") || ability.Id.StartsWith("Fire_Blast") || ability.Id.StartsWith("Flamestrike"))
             && Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.GrantIgnite) > 0
             && enemy.IsAlive)
         {

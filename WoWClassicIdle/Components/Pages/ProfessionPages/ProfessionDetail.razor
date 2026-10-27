@@ -1,0 +1,199 @@
+@page "/professions/{Slug}"
+@using Models
+@rendermode InteractiveServer
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+<PageTitle>@(_def?.Name ?? "Profession")</PageTitle>
+
+<div class="wow-page narrow professions-page prof-detail-page">
+    <a class="prof-back" href="professions">← Professions</a>
+
+    <div class="prof-detail-layout">
+    @* Quick-Select: alle Berufe untereinander, Klick springt direkt in den Beruf *@
+    <nav class="prof-quick">
+        @foreach (var group in new[] { Professions.All.Where(d => d.IsGathering), Professions.All.Where(d => !d.IsGathering) })
+        {
+            @foreach (var def in group)
+            {
+                var owner = def.IsPrimary ? Engine.ProfessionOwner(def.Profession) : null;
+                <a class="prof-quick-item @(def == _def ? "current" : "")" href="professions/@def.Slug"
+                   title="@(owner is not null ? $"{def.Name} – {IdleGameEngine.CharacterName(owner)}" : def.Name)">
+                    <img src="@def.IconUrl" alt="@def.Name" onerror="this.style.visibility='hidden'" />
+                    @if (owner is not null)
+                    {
+                        <img class="prof-quick-owner" src="@IconUrls.ClassIconUrl(owner.Class)" alt="" onerror="this.remove()" />
+                    }
+                </a>
+            }
+            <div class="prof-quick-sep"></div>
+        }
+    </nav>
+
+    <div class="prof-detail-main">
+
+    @if (_def is null)
+    {
+        <div class="wow-alert error">Unknown profession.</div>
+    }
+    else if (!Engine.HasActiveCharacter || Engine.Player.Level < Professions.MinCharacterLevel)
+    {
+        <h2>@_def.Name</h2>
+        <div class="wow-alert warning">Professions unlock at level @Professions.MinCharacterLevel.</div>
+    }
+    else
+    {
+        var progress = Engine.GetProfessionProgress(_def.Profession);
+        int trainingLevel = Engine.ProfessionTrainingLevel(_def.Profession);
+
+        <div class="wow-card prof-header">
+            <img class="prof-icon large" src="@_def.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+            <div class="prof-card-body">
+                <h2>@_def.Name</h2>
+                <div class="prof-card-sub">@CategoryLabel(_def)</div>
+                @if (progress is not null)
+                {
+                    <ProfessionSkillBar Progress="progress" />
+                }
+            </div>
+        </div>
+
+        @if (progress is null && !_def.IsPrimary)
+        {
+            <div class="wow-card">
+                <p class="wow-hint">@_def.Name is learned automatically once a character reaches level @Professions.MinCharacterLevel.</p>
+            </div>
+        }
+        else if (progress is null)
+        {
+            var blocker = Engine.ProfessionLearnBlocker(_def.Profession);
+            <div class="wow-card">
+                <p class="wow-hint">You have not learned @_def.Name yet.</p>
+                <button class="wow-btn primary" disabled="@(blocker is not null)" @onclick="Learn">Learn @_def.Name</button>
+                @if (blocker is not null)
+                {
+                    <div class="wow-alert warning">@blocker</div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="wow-card prof-training">
+                <div class="prof-training-head">
+                    <h4>Training</h4>
+                    @if (!_def.IsPrimary)
+                    {
+                        <span class="wow-muted">Shared – ranks use your highest character level (@trainingLevel)</span>
+                    }
+                </div>
+                <div class="prof-ranks">
+                    @for (int i = 0; i < Professions.Ranks.Count; i++)
+                    {
+                        var rank = Professions.Ranks[i];
+                        bool learned = i <= progress.RankIndex;
+                        bool next = i == progress.RankIndex + 1;
+                        bool levelOk = trainingLevel >= rank.RequiredLevel;
+                        bool skillOk = progress.Skill >= rank.RequiredSkill;
+                        <div class="prof-rank @(learned ? "learned" : next && levelOk && skillOk ? "trainable" : "locked")">
+                            <div class="prof-rank-name">
+                                @rank.Name
+                                @if (next)
+                                {
+                                    <button class="prof-mini-btn" disabled="@(!levelOk || !skillOk)" @onclick="Train">Train</button>
+                                }
+                            </div>
+                            <div class="prof-rank-sub">
+                                Cap @rank.MaxSkill ·
+                                <span class="@(learned || levelOk ? "" : "prof-rank-missing")">Lv @rank.RequiredLevel</span>
+                                @if (rank.RequiredSkill > 1)
+                                {
+                                    <span class="@(learned || skillOk ? "" : "prof-rank-missing")"> · Skill @rank.RequiredSkill</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (progress.IsCapped && progress.NextRank is { } nextRank)
+                {
+                    <div class="prof-training-capped">
+                        Skill capped at @progress.SkillCap – train @nextRank.Name to keep improving.
+                    </div>
+                }
+            </div>
+
+            @if (_def.IsGathering)
+            {
+                <ProfessionGatheringPanel Profession="_def.Profession" Progress="progress" />
+            }
+            else
+            {
+                <ProfessionCraftingPanel Progress="progress" />
+                @if (_def.Profession == Profession.Enchanting)
+                {
+                    <ProfessionDisenchantPanel Progress="progress" />
+                }
+            }
+
+            <p class="wow-hint">
+                Skill-ups (@((Professions.SkillUpChance * 100).ToString("0"))% chance per run) only happen in the active slot while this page is open.
+            </p>
+
+            <ProfessionFloatingText Profession="_def.Profession" />
+        }
+    }
+    </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private ProfessionDefinition? _def;
+
+    protected override void OnInitialized() => Engine.ProfessionUpdated += OnProfessionUpdated;
+
+    protected override void OnParametersSet()
+    {
+        var def = Professions.FromSlug(Slug);
+        // Wechsel zu einem anderen Beruf: aktiver Slot des alten Berufs endet mit dem Verlassen der Unterseite
+        if (_def is not null && _def != def) StopOwnActiveRun();
+        _def = def;
+        SwitchToOwner();
+    }
+
+    // Hauptberuf gehört einem anderen Charakter → zu diesem wechseln (Kampf wird wie in der Charakterauswahl angehalten)
+    private void SwitchToOwner()
+    {
+        if (_def is not { IsPrimary: true } || Engine.ProfessionOwner(_def.Profession) is not { } owner) return;
+        if (owner.Id == Engine.ActiveCharacter?.Id) return;
+        if (Engine.IsGameRunning) Engine.Stop();
+        Engine.SelectCharacterForProfessions(owner.Id);
+    }
+
+    private static string CategoryLabel(ProfessionDefinition def) =>
+        (def.IsGathering ? "Gathering" : "Crafting") + (def.IsPrimary ? " · Primary Profession" : " · Shared by all characters");
+
+    private void Learn()
+    {
+        if (_def is not null) Engine.LearnProfession(_def.Profession);
+    }
+
+    private void Train()
+    {
+        if (_def is not null) Engine.TrainProfessionRank(_def.Profession);
+    }
+
+    private void StopOwnActiveRun()
+    {
+        if (_def is not null && Engine.ActiveProfessionRun?.Profession == _def.Profession)
+            Engine.StopActiveProfession();
+    }
+
+    private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Engine.ProfessionUpdated -= OnProfessionUpdated;
+        StopOwnActiveRun();
+    }
+}
