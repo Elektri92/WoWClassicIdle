@@ -151,10 +151,10 @@ public class TalentDefinition
             $"+{(EffectPerRank * ranks * 100):0.##}% Healing Wave healing",
         TalentEffectType.EarthbindCooldown =>
             $"-{(EffectPerRank * ranks):0.##}s Earthbind Totem cooldown",
-        TalentEffectType.WrathManaCost =>
-            $"-{(EffectPerRank * ranks):0.##} Wrath mana cost",
+        TalentEffectType.WrathDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Wrath and Starfire damage",
         TalentEffectType.GrantMoonkinForm =>
-            "Grants ability: Moonkin Form (+15% Wrath and Moonfire damage)",
+            "Grants ability: Moonkin Form (+15% Wrath, Starfire and Moonfire damage)",
         TalentEffectType.MoonfireDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Moonfire damage",
         TalentEffectType.GrantBearForm =>
@@ -166,7 +166,7 @@ public class TalentDefinition
         TalentEffectType.ClawDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Claw damage",
         TalentEffectType.GrantTreeForm =>
-            "Grants ability: Tree Form (+20% healing, +10% Wrath, Moonfire and Insect Swarm damage)",
+            "Grants ability: Tree Form (+20% healing, +10% Wrath and Moonfire damage)",
         TalentEffectType.RegrowthHealing =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Regrowth healing",
         TalentEffectType.GrantEvocation =>

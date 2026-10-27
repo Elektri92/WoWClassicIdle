@@ -1,19 +1,21 @@
 @page "/debug/enemy-spawns"
 @rendermode InteractiveServer
+@using Models
 
 <PageTitle>Enemy Spawns (Debug)</PageTitle>
 
 <div class="wow-page wide enemy-spawns-page">
     <h2>Enemy Spawn Table <span class="wow-badge">DEBUG</span></h2>
     <p class="wow-hint">
-        All enemy templates from <code>DefaultEnemyTemplates</code>, sorted by minimum level.
-        Each row shows the level range, HP per level, base attack/defense/speed, and spawn weight.
+        All enemy templates per combat zone (<code>CombatZoneRegistry</code>), sorted by minimum level.
+        Each row shows the zone, level range, HP per level, attack range, defense/speed, and spawn weight.
     </p>
 
     <table class="spawn-table">
         <thead>
             <tr>
                 <th class="col-icon"></th>
+                <th class="col-zone">Zone</th>
                 <th class="col-name">Name</th>
                 <th class="col-type">Type</th>
                 <th class="col-level">Level Range</th>
@@ -26,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var t in _sorted)
+            @foreach (var (zone, t) in _rows)
             {
                 <tr>
                     <td class="col-icon">
@@ -35,6 +37,7 @@
                              alt=""
                              onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23222%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
                     </td>
+                    <td class="col-zone">@zone.Name</td>
                     <td class="col-name">@t.Name</td>
                     <td class="col-type">
                         <span class="type-badge type-@t.Type.ToLowerInvariant()">@t.Type</span>
@@ -54,7 +57,7 @@
                             }
                         </div>
                     </td>
-                    <td class="col-atk">@t.BaseAttack</td>
+                    <td class="col-atk">@t.GetAttack(t.MinLevel)–@t.GetAttack(t.MaxLevel)</td>
                     <td class="col-def">@t.BaseDefense</td>
                     <td class="col-spd">@t.BaseSpeed.ToString("F1")s</td>
                     <td class="col-copper">@t.MinCopperReward–@t.MaxCopperReward</td>
@@ -73,9 +76,8 @@
     </table>
 
     <p class="wow-hint" style="margin-top:12px;">
-        Spawn selection: only templates whose <em>MinLevel–MaxLevel</em> covers
-        <em>playerLevel ± 2</em> are eligible. Within that pool the engine does a
-        weighted random pick, so higher weight = more frequent.
+        Spawn selection: the enemy level is <em>playerLevel ± 2</em>, clamped to the selected zone's
+        level range. The zone's three enemy types are picked by weight, so higher weight = more frequent.
         A 10 % chance upgrades any enemy to a <b style="color:#ff8000">★ Rare</b>
         (2× HP, 1.5× Atk) once both player and enemy are ≥ level 3.
     </p>
@@ -217,10 +219,9 @@
 </style>
 
 @code {
-    // Alle Templates nach MinLevel sortiert
-    private static readonly IReadOnlyList<EnemyTemplate> _sorted =
-        DefaultEnemyTemplates.Default
-            .OrderBy(t => t.MinLevel)
-            .ThenBy(t => t.Name)
+    // Alle Zonen-Templates, Zonen nach MinLevel sortiert
+    private static readonly IReadOnlyList<(CombatZone Zone, EnemyTemplate Template)> _rows =
+        CombatZoneRegistry.All
+            .SelectMany(z => CombatZoneRegistry.TemplatesFor(z).Select(t => (z, t)))
             .ToList();
 }

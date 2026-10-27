@@ -136,7 +136,9 @@ public partial class IdleGameEngine
             _hpRegenAcc      = 0;
             ResetCastState();
             DismissPet();
-            CurrentEnemy = _spawner.Spawn(Player.Stats.Level, 0);
+            _pendingRareEnemy = null;
+            _travelRegenAcc  = 0;
+            CurrentEnemy = SpawnEnemy();
         }
         TickUpdated?.Invoke();
     }
@@ -153,7 +155,7 @@ public partial class IdleGameEngine
                 slot.Player.SetLevel(level);
 
             Player.Inventory.UpdateBagsForLevel(Player.Level);
-            CurrentEnemy = _spawner.Spawn(Player.Stats.Level, _stopwatch.Elapsed.TotalSeconds);
+            CurrentEnemy = SpawnEnemy();
             LastLog = $"All characters set to level {level}";
         }
         TickUpdated?.Invoke();

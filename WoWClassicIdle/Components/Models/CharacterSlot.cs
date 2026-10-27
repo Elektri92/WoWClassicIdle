@@ -8,5 +8,9 @@ namespace Models
         public Race Race          { get; internal set; }
         public Gender Gender      { get; internal set; }
         public Player Player      { get; init; } = null!;
+        /// <summary>Gewähltes Kampfgebiet (null = noch nie gewählt → Kampf pausiert bis zur Wahl).</summary>
+        public string? CombatZoneId { get; internal set; }
+        /// <summary>Laufende Reise in ein anderes Kampfgebiet (während der Reise wird nicht gekämpft).</summary>
+        public ZoneTravelState? Travel { get; internal set; }
     }
 }

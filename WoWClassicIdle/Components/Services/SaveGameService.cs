@@ -170,6 +170,8 @@ public class SaveGameService : ISaveGameService, IDisposable
         foreach (var (profession, target) in _engine.LastProfessionTargets)
             save.LastProfessionTargets[profession.ToString()] = target;
 
+        save.SeenFeatureIntros = _engine.SeenFeatureIntros.ToList();
+
         foreach (var earned in _achievements.EarnedAchievements)
             save.Achievements.Add(new AchievementSaveData { Id = earned.AchievementId, EarnedAt = earned.EarnedAt });
 
@@ -235,6 +237,9 @@ public class SaveGameService : ISaveGameService, IDisposable
         Race    = slot.Race,
         Gender  = slot.Gender,
         Player  = BuildPlayerSaveData(slot.Player),
+        CombatZone    = slot.CombatZoneId,
+        TravelTarget  = slot.Travel?.TargetZoneId,
+        TravelElapsed = slot.Travel?.Elapsed ?? 0,
     };
 
     public void Dispose()

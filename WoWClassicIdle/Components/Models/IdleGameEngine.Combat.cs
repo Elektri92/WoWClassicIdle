@@ -76,6 +76,10 @@ public partial class IdleGameEngine
             return;
         }
 
+        // ── Unterwegs in eine andere Zone: kein Kampf ──
+        if (AdvanceTravel(_baseDt))
+            return;
+
         if (CurrentEnemy is not { IsAlive: true })
         {
             if (_pendingRareEnemy != null)
@@ -84,9 +88,13 @@ public partial class IdleGameEngine
                 CurrentEnemy    = _pendingRareEnemy;
                 _pendingRareEnemy = null;
             }
+            else if (SpawnEnemy() is { } spawned)
+            {
+                CurrentEnemy = spawned;
+            }
             else
             {
-                CurrentEnemy = _spawner.Spawn(Player.Stats.Level, _stopwatch.Elapsed.TotalSeconds);
+                return; // noch keine Zone gewählt
             }
             LastLog = $"{CurrentEnemy.Name} appeared!";
             _playerAttackAcc = 0;
@@ -199,6 +207,7 @@ public partial class IdleGameEngine
         _playerAttackAcc += dt;
         _enemyAttackAcc  += dt;
         SwingInterval = playerInterval;
+        EnemySwingInterval = enemyInterval;
 
         // ── Abilities (Cooldown-basiert, mit Cast-Zeit und Global Cooldown) + Pet-Angriffe ──
         Player.Cooldowns.Tick(dt * attackSpeed);
@@ -508,7 +517,8 @@ public partial class IdleGameEngine
             }
         }
 
-        int xpReward = StaticHelpers.GetEnemyXpReward(deadEnemy.Stats.Level);
+        // Zu niedrige Gegner (3+ Level unter dem Spieler) geben stark reduzierte bzw. keine XP
+        int xpReward = StaticHelpers.GetKillXp(Player.Level, deadEnemy.Stats.Level);
         int oldLevel = Player.Level;
         int levelsGained = Player.GainXp(xpReward);
 
@@ -524,7 +534,9 @@ public partial class IdleGameEngine
             LastLog = $"⬆ {Player.ActiveClass} → Lv. {Player.Level}";
         }
         else
-            LastLog = $"💀 {deadEnemy.Name} defeated (+{xpReward} XP)";
+            LastLog = xpReward > 0
+                ? $"💀 {deadEnemy.Name} defeated (+{xpReward} XP)"
+                : $"💀 {deadEnemy.Name} defeated (no XP – too low level)";
 
         TotalKills++;
         if (deadEnemy.IsRare) TotalRareKills++;

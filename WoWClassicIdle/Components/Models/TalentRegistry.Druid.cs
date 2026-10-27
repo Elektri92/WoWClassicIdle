@@ -23,14 +23,14 @@ public static partial class TalentRegistry
         {
             Id            = "druid_bal_imp_wrath",
             Name          = "Improved Wrath",
-            Description   = "Reduces the mana cost of Wrath by 1 per rank.",
+            Description   = "Increases the damage of Wrath and Starfire by 2% per rank.",
             Class         = CharacterClass.Druid,
             TreeIndex     = 0,
             Row           = 0,
             Column        = 1,
             MaxRanks      = 5,
-            EffectType    = TalentEffectType.WrathManaCost,
-            EffectPerRank = 1.0,
+            EffectType    = TalentEffectType.WrathDamage,   // war Manakosten – brachte im Sim 0 %
+            EffectPerRank = 0.02,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_nature_abolishmagic.jpg",
         },
 
@@ -39,7 +39,7 @@ public static partial class TalentRegistry
         {
             Id              = "druid_bal_moonkin_form",
             Name            = "Moonkin Form",
-            Description     = "Grants the ability Moonkin Form. While equipped, you are shapeshifted into a Moonkin and Wrath and Moonfire deal 15% more damage. Only one form can be equipped at a time.",
+            Description     = "Grants the ability Moonkin Form. While equipped, you are shapeshifted into a Moonkin and Wrath, Starfire and Moonfire deal 15% more damage. Only one form can be equipped at a time.",
             Class           = CharacterClass.Druid,
             TreeIndex       = 0,
             Row             = 1,
@@ -194,7 +194,7 @@ public static partial class TalentRegistry
         {
             Id              = "druid_rest_tree_form",
             Name            = "Tree Form",
-            Description     = "Grants the ability Tree Form. While equipped, you are shapeshifted into a Tree: all healing done is increased by 20%, mana regeneration from Spirit by 50% and Wrath, Moonfire and Insect Swarm deal 10% more damage. Only one form can be equipped at a time.",
+            Description     = "Grants the ability Tree Form. While equipped, you are shapeshifted into a Tree: all healing done is increased by 20%, mana regeneration from Spirit by 50% and Wrath and Moonfire deal 10% more damage. Only one form can be equipped at a time.",
             Class           = CharacterClass.Druid,
             TreeIndex       = 2,
             Row             = 1,

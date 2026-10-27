@@ -33,6 +33,7 @@ public partial class IdleGameEngine
                 _roster.Add(RestoreSlot(slotData));
 
             RestoreProfessions(save);
+            RestoreFeatureIntros(save);
 
             // Gemeinsames Inventar befüllen – Rucksack
             foreach (var itemData in save.SharedInventoryItems ?? [])
@@ -82,7 +83,7 @@ public partial class IdleGameEngine
                 Gender      = activeSlot.Gender;
                 PlayerClass = activeSlot.Class;
                 Player      = activeSlot.Player;
-                CurrentEnemy = _spawner.Spawn(Player.Stats.Level, 0);
+                CurrentEnemy = SpawnEnemy();
             }
         }
 
@@ -207,7 +208,7 @@ public partial class IdleGameEngine
         if (p.LoadoutAbilityIdsByClass.TryGetValue(p.ActiveClass.ToString(), out var activeIds))
             player.ApplyLoadout(new ClassLoadout { Class = p.ActiveClass, EquippedAbilityIds = activeIds.ToList() });
 
-        return new CharacterSlot
+        var characterSlot = new CharacterSlot
         {
             Id      = data.Id,
             Class   = data.Class,
@@ -216,5 +217,7 @@ public partial class IdleGameEngine
             Gender  = data.Gender,
             Player  = player,
         };
+        RestoreCombatZone(characterSlot, data);
+        return characterSlot;
     }
 }

@@ -1,0 +1,348 @@
+@rendermode InteractiveServer
+@using Models
+@inject IdleGameEngine Engine
+@inject NavigationManager Nav
+@implements IDisposable
+
+@if (Current is { } f)
+{
+    <div class="feature-unlock-backdrop" @onclick="Dismiss">
+        <div @key="f.Id" class="feature-unlock-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-unlock-title"
+             @onclick:stopPropagation="true">
+            <div class="fu-rays" aria-hidden="true"></div>
+
+            <div class="fu-header">@(f.UnlockLevel > 0 ? "New Feature Unlocked!" : "New Feature")</div>
+
+            <div class="fu-icon-wrap">
+                <img class="fu-icon" src="@f.IconUrl" alt=""
+                     onerror="this.style.visibility='hidden'" />
+            </div>
+
+            <h2 id="feature-unlock-title" class="fu-title">@f.Title</h2>
+            @if (f.UnlockLevel > 0)
+            {
+                <div class="fu-level">Level @f.UnlockLevel</div>
+            }
+
+            <p class="fu-summary">@f.Summary</p>
+
+            @if (f.Points.Count > 0)
+            {
+                <ul class="fu-points">
+                    @foreach (var p in f.Points)
+                    {
+                        <li>@p</li>
+                    }
+                </ul>
+            }
+
+            <div class="fu-actions">
+                @if (f.Href is not null)
+                {
+                    <button class="fu-btn fu-btn-primary" @onclick="() => Open(f)">@(f.LinkLabel ?? "Open")</button>
+                }
+                <button class="fu-btn" @onclick="Dismiss">
+                    @(QueueCount > 1 ? $"Next ({QueueCount - 1} more)" : "Got it")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .feature-unlock-backdrop {
+        /* Nur den Inhaltsbereich abdecken – Navigation bleibt frei (Maße aus MainLayout/NavMenu) */
+        position: fixed;
+        inset: 3.5rem 0 0 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: radial-gradient(circle at center, rgba(20, 14, 4, 0.55) 0%, rgba(0, 0, 0, 0.82) 70%);
+        animation: fuFadeIn 0.3s ease-out;
+    }
+
+    @@media (min-width: 641px) {
+        .feature-unlock-backdrop { inset: 0 0 0 250px; }
+    }
+
+    .feature-unlock-dialog {
+        position: relative;
+        width: min(440px, 100%);
+        max-height: calc(100vh - 32px);
+        overflow: hidden auto;
+        padding: 0 26px 22px;
+        text-align: center;
+        background: linear-gradient(180deg, #2c1f0a 0%, #1a1205 45%, #0e0b07 100%);
+        border: 2px solid #c5a55a;
+        border-radius: 8px;
+        box-shadow:
+            0 0 0 1px #8a7444,
+            0 0 40px rgba(255, 209, 0, 0.35),
+            0 12px 48px rgba(0, 0, 0, 0.9);
+        animation: fuPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .feature-unlock-dialog::before {
+        content: '';
+        display: block;
+        height: 3px;
+        margin: 0 -26px;
+        background: linear-gradient(90deg, transparent, #ffd100, #c5a55a, #ffd100, transparent);
+    }
+
+    /* Rotierender Lichtkranz hinter dem Icon */
+    .fu-rays {
+        position: absolute;
+        top: -70px;
+        left: 50%;
+        width: 320px;
+        height: 320px;
+        margin-left: -160px;
+        background: repeating-conic-gradient(from 0deg, rgba(255, 209, 0, 0.13) 0deg 8deg, transparent 8deg 24deg);
+        -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 65%);
+        mask-image: radial-gradient(circle, #000 0%, transparent 65%);
+        animation: fuSpin 24s linear infinite;
+        pointer-events: none;
+    }
+
+    .fu-header {
+        position: relative;
+        font-family: 'Cinzel', serif;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #ffd100;
+        text-shadow: 0 0 10px rgba(255, 209, 0, 0.7);
+        padding: 12px 0 8px;
+        border-bottom: 1px solid #5a4a28;
+    }
+
+    .fu-icon-wrap {
+        position: relative;
+        width: 76px;
+        height: 76px;
+        margin: 20px auto 10px;
+        border-radius: 8px;
+        animation: fuGlow 2.4s ease-in-out infinite;
+    }
+
+    .fu-icon {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        border: 2px solid #c5a55a;
+        box-shadow: inset 0 0 0 1px #8a7444;
+    }
+
+    .fu-title {
+        position: relative;
+        margin: 0;
+        font-family: 'Cinzel', serif;
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 0 12px rgba(255, 209, 0, 0.45), 0 2px 3px #000;
+    }
+
+    .fu-level {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #1eff00;
+        margin-top: 2px;
+    }
+
+    .fu-summary {
+        margin: 14px 0 10px;
+        font-size: 0.92rem;
+        line-height: 1.45;
+        color: #e8dcb8;
+    }
+
+    .fu-points {
+        list-style: none;
+        margin: 0 0 18px;
+        padding: 12px 14px;
+        text-align: left;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid #3d3220;
+        border-radius: 5px;
+    }
+
+    .fu-points li {
+        position: relative;
+        padding-left: 18px;
+        font-size: 0.82rem;
+        line-height: 1.4;
+        color: #c9b88c;
+    }
+
+    .fu-points li + li { margin-top: 6px; }
+
+    .fu-points li::before {
+        content: '';
+        position: absolute;
+        left: 2px;
+        top: 0.45em;
+        width: 7px;
+        height: 7px;
+        background: #ffd100;
+        transform: rotate(45deg);
+        box-shadow: 0 0 5px rgba(255, 209, 0, 0.7);
+    }
+
+    .fu-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .fu-btn {
+        min-width: 120px;
+        padding: 7px 18px;
+        font-family: 'Cinzel', serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #ffd100;
+        background: linear-gradient(180deg, #5a0e0e 0%, #3a0606 100%);
+        border: 1px solid #c5a55a;
+        border-radius: 4px;
+        text-shadow: 0 1px 2px #000;
+        cursor: pointer;
+        transition: filter 0.15s, transform 0.15s;
+    }
+
+    .fu-btn:hover { filter: brightness(1.3); transform: translateY(-1px); }
+
+    .fu-btn-primary {
+        color: #1a1205;
+        background: linear-gradient(180deg, #ffe066 0%, #c5a55a 100%);
+        text-shadow: none;
+    }
+
+    @@keyframes fuFadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+
+    @@keyframes fuPopIn {
+        0%   { opacity: 0; transform: scale(0.7) translateY(20px); }
+        60%  { opacity: 1; transform: scale(1.03) translateY(0); }
+        100% { transform: scale(1); }
+    }
+
+    @@keyframes fuSpin {
+        to { transform: rotate(360deg); }
+    }
+
+    @@keyframes fuGlow {
+        0%, 100% { box-shadow: 0 0 12px rgba(255, 209, 0, 0.45); }
+        50%      { box-shadow: 0 0 26px rgba(255, 209, 0, 0.85); }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .feature-unlock-backdrop, .feature-unlock-dialog, .fu-rays, .fu-icon-wrap { animation: none; }
+    }
+</style>
+
+@code {
+    private readonly Queue<GameFeature> _queue = new();
+
+    // Zuletzt gesehener Charakter/Klasse/Level – Wechsel setzt die Basis neu, ohne Popups auszulösen
+    private Player? _trackedPlayer;
+    private CharacterClass _trackedClass;
+    private int _trackedLevel;
+
+    private GameFeature? Current { get { lock (_queue) return _queue.TryPeek(out var f) ? f : null; } }
+    private int QueueCount { get { lock (_queue) return _queue.Count; } }
+
+    protected override void OnInitialized()
+    {
+        ResetBaseline();
+        Engine.TickUpdated           += OnTickUpdated;
+        Engine.RosterChanged         += OnRosterChanged;
+        Engine.FeatureIntroRequested += OnFeatureIntroRequested;
+        // Intros, die vor dieser Komponente angefordert wurden, sofort übernehmen
+        EnqueuePendingIntros();
+    }
+
+    private void OnFeatureIntroRequested()
+    {
+        if (EnqueuePendingIntros())
+            _ = InvokeAsync(StateHasChanged);
+    }
+
+    private bool EnqueuePendingIntros()
+    {
+        var intros = Engine.TakePendingFeatureIntros();
+        lock (_queue)
+            foreach (var f in intros) _queue.Enqueue(f);
+        return intros.Count > 0;
+    }
+
+    private void ResetBaseline()
+    {
+        if (Engine.HasActiveCharacter)
+        {
+            _trackedPlayer = Engine.Player;
+            _trackedClass  = Engine.Player.ActiveClass;
+            _trackedLevel  = Engine.Player.Level;
+        }
+        else
+        {
+            _trackedPlayer = null;
+        }
+    }
+
+    private void OnRosterChanged() => ResetBaseline();
+
+    private void OnTickUpdated()
+    {
+        if (!Engine.HasActiveCharacter) return;
+        var player = Engine.Player;
+
+        if (!ReferenceEquals(player, _trackedPlayer) || player.ActiveClass != _trackedClass)
+        {
+            ResetBaseline();
+            return;
+        }
+
+        int level = player.Level;
+        if (level <= _trackedLevel)
+        {
+            _trackedLevel = level;
+            return;
+        }
+
+        var unlocked = GameFeatureRegistry.UnlockedBetween(_trackedLevel, level).ToList();
+        _trackedLevel = level;
+        if (unlocked.Count == 0) return;
+
+        lock (_queue)
+            foreach (var f in unlocked) _queue.Enqueue(f);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void Dismiss()
+    {
+        lock (_queue) _queue.TryDequeue(out _);
+    }
+
+    private void Open(GameFeature f)
+    {
+        Dismiss();
+        Nav.NavigateTo(f.Href!);
+    }
+
+    public void Dispose()
+    {
+        Engine.TickUpdated           -= OnTickUpdated;
+        Engine.RosterChanged         -= OnRosterChanged;
+        Engine.FeatureIntroRequested -= OnFeatureIntroRequested;
+    }
+}

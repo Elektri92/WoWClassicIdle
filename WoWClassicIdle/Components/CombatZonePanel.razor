@@ -1,0 +1,299 @@
+@using Models
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+@* Kampfgebiete in /idle: Banner der aktuellen Zone + Kachel-Karte aller Zonen (Farbverlauf je Zone, css/combat-zones.css).
+   Erste Wahl je Charakter ist sofort aktiv, danach wird gereist – beim Hovern zeigt jede Kachel die Reisezeit. *@
+@{
+    var current = Engine.CurrentCombatZone;
+    bool needsZone = Engine.NeedsCombatZone;
+    int level = Engine.Player.Level;
+}
+<div class="czone-panel">
+    @if (!needsZone && current is not null)
+    {
+        <div class="czone-banner zone-theme-@current.Theme">
+            <div class="czone-banner-text">
+                <span class="czone-banner-label">@(Engine.IsTraveling ? "Leaving" : "Fighting in")</span>
+                <span class="czone-banner-name">@current.Name</span>
+                <span class="czone-level @LevelClass(current, level)">Lv @current.LevelRange</span>
+                @if (XpHint(current, level) is { } hint)
+                {
+                    <span class="czone-xp-hint">@hint</span>
+                }
+            </div>
+            <div class="czone-banner-mobs">
+                @foreach (var mob in current.Mobs)
+                {
+                    <WowTooltip Title="@mob.Name" Body="MobTooltip(mob, current)">
+                        <img src="@mob.ImageUrl" alt="@mob.Name" onerror="this.style.visibility='hidden'" />
+                    </WowTooltip>
+                }
+            </div>
+            <button class="wow-btn primary czone-toggle @(Open && !_closing ? "active" : "")" @onclick="ToggleMap">
+                🗺 @(Open && !_closing ? "Hide map" : "Change zone")
+            </button>
+        </div>
+    }
+
+    @if (needsZone || Open)
+    {
+        @* Karte entfaltet sich beim Öffnen und blendet beim Schließen aus (css/combat-zones.css, czone-mapview) *@
+        <div class="czone-mapview @(_closing ? "closing" : "")">
+        @* Kurze Legende statt Fließtext: Regeln als Chips + Bedeutung der Levelfarben *@
+        <div class="czone-legend">
+            <span class="czone-legend-title">@(needsZone ? "Choose your hunting grounds" : "Choose a new zone")</span>
+            <span class="czone-chip">⚔ Enemies near your level</span>
+            <span class="czone-chip">@(needsZone ? "⚡ First pick is instant" : "🧭 Travel takes time – no fighting")</span>
+            <span class="czone-legend-levels">
+                <span class="czone-level lvl-yellow">Full XP</span>
+                <span class="czone-level lvl-green">Reduced</span>
+                <span class="czone-level lvl-gray">No XP</span>
+                <span class="czone-level lvl-red">Locked</span>
+            </span>
+        </div>
+
+        @* Weltkarte: Kalimdor links, Östliche Königreiche rechts – wie auf der WoW-Karte *@
+        <div class="czone-map">
+        @foreach (var continent in Continents)
+        {
+            <section class="czone-continent-frame continent-@continent.Key">
+            <div class="czone-sheen" aria-hidden="true"></div>
+            <header class="czone-continent-header">
+                <img src="@continent.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                <div>
+                    <div class="czone-continent-title">@continent.Title</div>
+                    <div class="czone-continent-sub">
+                        @continent.Zones.Count(z => CombatZoneRegistry.CanEnter(z, level)) / @continent.Zones.Count zones open
+                    </div>
+                </div>
+            </header>
+            <div class="czone-grid">
+                @{ int tileIndex = 0; }
+                @foreach (var zone in continent.Zones)
+                {
+                    int delayIndex = tileIndex++; // gestaffeltes Einblenden der Kacheln
+                    bool isHere = zone.Id == current?.Id && !needsZone;
+                    bool isTarget = zone.Id == Engine.Travel?.TargetZoneId;
+                    bool locked = !CombatZoneRegistry.CanEnter(zone, level);
+                    var blocker = Engine.CombatZoneBlocker(zone);
+                    var route = needsZone || isHere || locked ? null : RouteTo(zone);
+                    <WowTooltip Contents="true" Title="@zone.Name" TitleColor="#ffd100" Body="ZoneTooltip(zone, level, blocker, route, needsZone)">
+                    <div class="czone-tile zone-theme-@zone.Theme @(isHere ? "current" : "") @(isTarget ? "target" : "") @(locked ? "locked" : "") @(blocker is null ? "selectable" : "")"
+                         style="--i: @delayIndex" @onclick="() => Select(zone)">
+                        <div class="czone-tile-head">
+                            <span class="czone-tile-name">@zone.Name</span>
+                            <span class="czone-level @LevelClass(zone, level)">@zone.LevelRange</span>
+                        </div>
+                        <div class="czone-tile-desc">@zone.Description</div>
+                        <div class="czone-tile-mobs">
+                            @foreach (var mob in zone.Mobs)
+                            {
+                                <img src="@mob.ImageUrl" alt="@mob.Name" title="@mob.Name" onerror="this.style.visibility='hidden'" />
+                            }
+                        </div>
+
+                        @if (isHere)
+                        {
+                            <div class="czone-status here">📍 You are here</div>
+                        }
+                        else if (isTarget)
+                        {
+                            <div class="czone-status traveling">🧭 Traveling here…</div>
+                        }
+                        else if (locked)
+                        {
+                            <div class="czone-status locked">🔒 Requires level @zone.MinLevel</div>
+                        }
+                        else if (XpHint(zone, level) is { } hint)
+                        {
+                            <div class="czone-status xp">@hint</div>
+                        }
+
+                        @if (!locked && !isHere && !isTarget)
+                        {
+                            @* Erscheint beim Hovern (CSS) *@
+                            <div class="czone-travel">
+                                @if (route is null)
+                                {
+                                    <span>⚔ Start fighting here – no travel needed</span>
+                                }
+                                else
+                                {
+                                    <span class="czone-travel-time">🕒 @ZoneTravel.FormatDuration(route.Seconds)</span>
+                                    <span class="czone-travel-legs">
+                                        @foreach (var leg in route.Legs)
+                                        {
+                                            <span class="czone-travel-leg">@ModeEmoji(leg.Mode)</span>
+                                        }
+                                    </span>
+                                    @if (Engine.IsTraveling)
+                                    {
+                                        <span class="czone-travel-busy">Finish your current journey first</span>
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                    </WowTooltip>
+                }
+            </div>
+            </section>
+        }
+        </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Zonenkarte geöffnet (Two-Way-Binding, damit /idle Kampf und Meter ausblenden kann).</summary>
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    private Task SetOpen(bool open)
+    {
+        Open = open;
+        return OpenChanged.InvokeAsync(open);
+    }
+
+    // Dauer der Schließen-Animation – muss zu czone-map-close in combat-zones.css passen
+    private const int CloseAnimationMs = 320;
+    private bool _closing;
+
+    private Task ToggleMap() => Open && !_closing ? CloseAnimated() : SetOpen(true);
+
+    /// <summary>Spielt erst die Ausblend-Animation ab und schließt dann die Karte.</summary>
+    private async Task CloseAnimated()
+    {
+        if (_closing) return;
+        _closing = true;
+        StateHasChanged();
+        await Task.Delay(CloseAnimationMs);
+        _closing = false;
+        await SetOpen(false);
+    }
+    private string _signature = "";
+    private readonly Dictionary<string, TravelRoute> _routes = new();
+
+    private record Continent(string Key, string Title, string IconUrl, IReadOnlyList<CombatZone> Zones);
+
+    // Kalimdor links, Östliche Königreiche rechts (wie auf der Weltkarte); Teldrassil gehört zu Kalimdor
+    private static readonly Continent[] Continents =
+    [
+        new("kalimdor", "Kalimdor", "https://wow.zamimg.com/images/wow/icons/large/inv_misc_map_01.jpg",
+            CombatZoneRegistry.All.Where(z => z.Landmass != Landmass.EasternKingdoms).ToList()),
+        new("eastern-kingdoms", "Eastern Kingdoms", "https://wow.zamimg.com/images/wow/icons/large/inv_misc_map02.jpg",
+            CombatZoneRegistry.All.Where(z => z.Landmass == Landmass.EasternKingdoms).ToList()),
+    ];
+
+    protected override void OnInitialized()
+    {
+        _signature = Signature();
+        Engine.TickUpdated += OnTick;
+    }
+
+    // Nur neu zeichnen, wenn sich Charakter, Zone, Reise oder Level ändern (TickUpdated kommt 10× pro Sekunde)
+    private string Signature() =>
+        $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}";
+
+    private void OnTick()
+    {
+        var signature = Signature();
+        if (signature == _signature) return;
+        _signature = signature;
+        _ = InvokeAsync(() =>
+        {
+            _routes.Clear(); // Startzone/Level geändert → Reisezeiten neu berechnen
+            StateHasChanged();
+        });
+    }
+
+    private TravelRoute? RouteTo(CombatZone zone)
+    {
+        if (_routes.TryGetValue(zone.Id, out var cached)) return cached;
+        var route = Engine.RouteTo(zone);
+        if (route is not null) _routes[zone.Id] = route;
+        return route;
+    }
+
+    private async Task Select(CombatZone zone)
+    {
+        if (_closing) return;
+        // Erste Wahl (needsZone): Karte verschwindet sofort, der Kampf blendet selbst ein
+        if (Engine.SelectCombatZone(zone.Id))
+            await (Open ? CloseAnimated() : SetOpen(false));
+    }
+
+    /// <summary>Levelbadge wie die Quest-Farben in WoW: rot = gesperrt, gelb = volle XP, grün = reduziert, grau = keine XP.</summary>
+    private static string LevelClass(CombatZone zone, int level) =>
+        level < zone.MinLevel                   ? "lvl-red"
+        : level - zone.MaxLevel <= 2            ? "lvl-yellow"
+        : level < zone.NoXpLevel                ? "lvl-green"
+        : "lvl-gray";
+
+    private static string? XpHint(CombatZone zone, int level) =>
+        level >= zone.NoXpLevel        ? "No XP – enemies are too low"
+        : level - zone.MaxLevel >= 3   ? "Reduced XP – enemies are low level"
+        : null;
+
+    // WoW-Tooltip einer Zonen-Kachel: Level, Kontinent, Gegner, Status und Reiseroute
+    private RenderFragment ZoneTooltip(CombatZone zone, int level, string? blocker, TravelRoute? route, bool needsZone) => @<text>
+        <span class="zt-line @LevelClass(zone, level)">Level @zone.LevelRange</span>
+        <span class="zt-sub">@(zone.Landmass == Landmass.EasternKingdoms ? "Eastern Kingdoms" : "Kalimdor")</span>
+        <span class="zt-flavor">"@zone.Description"</span>
+        <span class="zt-section">Enemies</span>
+        @foreach (var mob in zone.Mobs)
+        {
+            <span class="zt-mob">
+                <img src="@mob.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
+                <span>@mob.Name</span>
+                <span class="zt-mob-type">@mob.Archetype.Type</span>
+            </span>
+        }
+        @if (XpHint(zone, level) is { } hint)
+        {
+            <span class="zt-warn">@hint</span>
+        }
+        @if (route is { Legs.Count: > 0 })
+        {
+            <span class="zt-section">Travel time <b>@ZoneTravel.FormatDuration(route.Seconds)</b></span>
+            @foreach (var leg in route.Legs)
+            {
+                <span class="zt-leg">
+                    <span class="zt-leg-icon">@ModeEmoji(leg.Mode)</span>
+                    <span>@ZoneTravel.ModeLabel(leg.Mode, Engine.GroundTravel): @leg.From → @leg.To</span>
+                    <span class="zt-leg-time">@ZoneTravel.FormatDuration(leg.Seconds)</span>
+                </span>
+            }
+        }
+        @if (blocker is not null)
+        {
+            <span class="zt-error">@blocker</span>
+        }
+        else if (needsZone)
+        {
+            <span class="zt-hint">Click to start fighting here</span>
+        }
+        else
+        {
+            <span class="zt-hint">Click to travel here – no fighting on the road</span>
+        }
+    </text>;
+
+    private static RenderFragment MobTooltip(ZoneMob mob, CombatZone zone) => @<text>
+        <span class="zt-sub">@mob.Archetype.Type</span>
+        <span class="zt-line lvl-yellow">Level @zone.LevelRange</span>
+    </text>;
+
+    public static string ModeEmoji(TravelMode mode) => mode switch
+    {
+        TravelMode.Flight   => "🦅",
+        TravelMode.Ship     => "⛵",
+        TravelMode.Zeppelin => "🎈",
+        TravelMode.Mount    => "🐎",
+        TravelMode.Form     => "🐾",
+        _                   => "🥾",
+    };
+
+    public void Dispose() => Engine.TickUpdated -= OnTick;
+}

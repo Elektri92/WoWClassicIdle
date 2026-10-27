@@ -153,20 +153,69 @@
     text-shadow: 0 0 6px rgba(255,236,155,.4);
 }
 
-/* Red "action" button with gold rim (classic UI panel button) */
+/* Red "action" button with gold rim – gleicher Look wie die Buttons der Navigation (wow-classic-navmenu.css) */
 .wow-btn.primary {
+    position: relative;
     font-weight: 700;
     color: var(--wow-gold);
     padding: 6px 22px;
-    background: linear-gradient(180deg, #8b1a1a 0%, #4a0b0b 100%);
-    border: 2px solid var(--wow-gold-soft);
-    border-radius: 6px;
+    letter-spacing: .5px;
+    text-transform: none;
+    text-shadow: 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, .8);
+    background: linear-gradient(180deg, #8e1a14 0%, #5e0d0a 45%, #3e0606 55%, #2a0404 100%);
+    border: 2px solid #8a7444;
+    border-top-color: #c5a55a;
+    border-bottom-color: #4a3d22;
+    border-radius: 5px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 190, 120, .35),
+        inset 0 -2px 3px rgba(0, 0, 0, .55),
+        0 2px 4px rgba(0, 0, 0, .7);
+    transition: filter .15s ease, box-shadow .15s ease, color .15s ease;
+}
+
+/* Glänzende obere Hälfte */
+.wow-btn.primary::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 50% 1px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, rgba(255, 220, 160, .18) 0%, rgba(255, 220, 160, 0) 100%);
+    pointer-events: none;
 }
 
 .wow-btn.primary:hover {
-    background: linear-gradient(180deg, #a52222 0%, #5e0f0f 100%);
-    color: var(--wow-gold-pale);
+    color: #fff;
+    filter: brightness(1.2);
+    background: linear-gradient(180deg, #8e1a14 0%, #5e0d0a 45%, #3e0606 55%, #2a0404 100%);
+    border-color: #c5a55a;
+    border-top-color: #ffec9b;
+    text-shadow: 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, .8);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 210, 140, .5),
+        inset 0 -2px 3px rgba(0, 0, 0, .55),
+        0 0 10px rgba(255, 209, 0, .35),
+        0 2px 4px rgba(0, 0, 0, .7);
 }
+
+.wow-btn.primary:active {
+    filter: brightness(.9);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8);
+}
+
+/* Eingeschaltet (z. B. geöffnete Karte): beleuchtet und eingedrückt wie der aktive Nav-Button */
+.wow-btn.primary.active {
+    color: #fff;
+    background: linear-gradient(180deg, #4a0808 0%, #6e120d 50%, #8e1a14 100%);
+    border-color: #ffd100;
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, .75),
+        0 0 12px rgba(255, 209, 0, .45),
+        0 2px 4px rgba(0, 0, 0, .7);
+}
+.wow-btn.primary.active::before { background: none; }
+
+.wow-btn.small.primary { padding: 2px 10px; }
 
 .wow-btn.small {
     padding: 2px 10px;

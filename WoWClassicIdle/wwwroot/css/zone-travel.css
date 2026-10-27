@@ -1,0 +1,409 @@
+/* ============================================
+   Reise-Animation zwischen Kampfzonen (ZoneTravelScene.razor)
+   --pace skaliert alle Scroll-Dauern: kleiner = schnellere Fortbewegung.
+   Landschafts-Layer sind 200 % breit und wiederholen sich ab 50 % → nahtlose Endlosschleife.
+   ============================================ */
+
+.travel-scene {
+    --footer: 46px;
+    position: relative;
+    height: 300px;
+    margin-bottom: 14px;
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0e0b07;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, .6);
+    user-select: none;
+}
+.travel-scene.faction-alliance { border-color: #3a64a8; }
+.travel-scene.faction-horde    { border-color: #9a2a1e; }
+
+/* ----- Himmel ----- */
+.travel-sky { position: absolute; inset: 0; }
+.travel-scene.day .travel-sky {
+    background: linear-gradient(180deg, #3f76b8 0%, #86b4de 55%, #f1d8a0 100%);
+}
+.travel-scene.night .travel-sky {
+    background:
+        radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+        radial-gradient(1px 1px at 28% 8%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 44% 26%, #fff, transparent),
+        radial-gradient(1px 1px at 63% 12%, #fff, transparent),
+        radial-gradient(1px 1px at 72% 32%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 88% 20%, #fff, transparent),
+        radial-gradient(1px 1px at 5% 40%, #fff, transparent),
+        radial-gradient(1px 1px at 52% 4%, #fff, transparent),
+        linear-gradient(180deg, #0a0f26 0%, #1c2452 60%, #3a2e58 100%);
+    animation: travel-twinkle 4s ease-in-out infinite alternate;
+}
+
+.travel-celestial {
+    position: absolute;
+    top: 22px;
+    right: 18%;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+}
+.travel-scene.day .travel-celestial {
+    background: radial-gradient(circle, #fff6c8 0%, #ffd24a 55%, rgba(255, 200, 60, 0) 72%);
+    box-shadow: 0 0 40px 10px rgba(255, 220, 120, .45);
+}
+.travel-scene.night .travel-celestial {
+    background: radial-gradient(circle at 35% 35%, #fbfbf0 0%, #d9dcc8 60%, #b9bca8 100%);
+    box-shadow: 0 0 30px 6px rgba(220, 225, 255, .35);
+}
+
+/* ----- Land: Berge, Hügel, Weg ----- */
+.travel-mountains,
+.travel-hills,
+.travel-ground-far,
+.travel-coast {
+    position: absolute;
+    left: 0;
+    width: 200%;
+    animation: travel-scroll linear infinite;
+}
+
+.travel-mountains {
+    bottom: calc(var(--footer) + 70px);
+    height: 120px;
+    clip-path: polygon(0% 100%, 0.0% 55%, 4.2% 22%, 8.3% 45%, 12.5% 30%, 16.7% 62%, 20.8% 8%, 25.0% 45%, 29.2% 40%, 33.3% 45%, 37.5% 22%, 41.7% 62%, 45.8% 8%, 50.0% 55%, 54.2% 22%, 58.3% 45%, 62.5% 30%, 66.7% 62%, 70.8% 8%, 75.0% 45%, 79.2% 40%, 83.3% 45%, 87.5% 22%, 91.7% 62%, 95.8% 8%, 100.0% 55%, 100% 100%);
+    filter: brightness(.62) saturate(.7);
+    opacity: .85;
+    animation-duration: calc(70s * var(--pace));
+}
+
+.travel-hills {
+    bottom: calc(var(--footer) + 34px);
+    height: 96px;
+    clip-path: polygon(0% 100%, 0.0% 37%, 1.2% 27%, 2.5% 21%, 3.8% 18%, 5.0% 19%, 6.2% 22%, 7.5% 28%, 8.8% 34%, 10.0% 40%, 11.2% 46%, 12.5% 50%, 13.8% 54%, 15.0% 56%, 16.2% 58%, 17.5% 59%, 18.8% 60%, 20.0% 61%, 21.2% 61%, 22.5% 60%, 23.8% 58%, 25.0% 53%, 26.2% 47%, 27.5% 40%, 28.8% 31%, 30.0% 24%, 31.2% 18%, 32.5% 15%, 33.8% 16%, 35.0% 20%, 36.2% 29%, 37.5% 40%, 38.8% 52%, 40.0% 63%, 41.2% 73%, 42.5% 78%, 43.8% 80%, 45.0% 77%, 46.2% 69%, 47.5% 59%, 48.8% 48%, 50.0% 37%, 51.2% 27%, 52.5% 21%, 53.8% 18%, 55.0% 19%, 56.2% 22%, 57.5% 28%, 58.8% 34%, 60.0% 40%, 61.2% 46%, 62.5% 50%, 63.8% 54%, 65.0% 56%, 66.2% 58%, 67.5% 59%, 68.8% 60%, 70.0% 61%, 71.2% 61%, 72.5% 60%, 73.8% 58%, 75.0% 53%, 76.2% 47%, 77.5% 40%, 78.8% 31%, 80.0% 24%, 81.2% 18%, 82.5% 15%, 83.8% 16%, 85.0% 20%, 86.2% 29%, 87.5% 40%, 88.8% 52%, 90.0% 63%, 91.2% 73%, 92.5% 78%, 93.8% 80%, 95.0% 77%, 96.2% 69%, 97.5% 59%, 98.8% 48%, 100.0% 37%, 100% 100%);
+    animation-duration: calc(26s * var(--pace));
+}
+.travel-scene.night .travel-hills     { filter: brightness(.6); }
+.travel-scene.night .travel-mountains { filter: brightness(.38) saturate(.6); }
+
+.travel-road {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: var(--footer);
+    height: 38px;
+    background:
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, .22) 0 6px, transparent 6px 34px, rgba(255, 255, 255, .08) 34px 38px, transparent 38px 60px),
+        linear-gradient(180deg, #8a6a3e 0%, #6a4e2a 60%, #4a361c 100%);
+    background-size: 120px 100%, 100% 100%;
+    box-shadow: inset 0 3px 4px rgba(0, 0, 0, .35);
+    animation: travel-road-scroll calc(2.6s * var(--pace)) linear infinite;
+}
+.travel-scene.night .travel-road { filter: brightness(.6); }
+
+/* ----- Luft: Wolken, ferne Landschaft ----- */
+.travel-ground-far {
+    bottom: var(--footer);
+    height: 56px;
+    clip-path: polygon(0% 100%, 0.0% 50%, 2.5% 26%, 5.0% 21%, 7.5% 41%, 10.0% 68%, 12.5% 80%, 15.0% 68%, 17.5% 41%, 20.0% 21%, 22.5% 26%, 25.0% 50%, 27.5% 74%, 30.0% 79%, 32.5% 59%, 35.0% 32%, 37.5% 20%, 40.0% 32%, 42.5% 59%, 45.0% 79%, 47.5% 74%, 50.0% 50%, 52.5% 26%, 55.0% 21%, 57.5% 41%, 60.0% 68%, 62.5% 80%, 65.0% 68%, 67.5% 41%, 70.0% 21%, 72.5% 26%, 75.0% 50%, 77.5% 74%, 80.0% 79%, 82.5% 59%, 85.0% 32%, 87.5% 20%, 90.0% 32%, 92.5% 59%, 95.0% 79%, 97.5% 74%, 100.0% 50%, 100% 100%);
+    filter: brightness(.75) saturate(.8);
+    opacity: .8;
+    animation-duration: calc(40s * var(--pace));
+}
+
+.travel-clouds {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-repeat: repeat-x;
+    animation: travel-cloud-scroll linear infinite;
+}
+.travel-clouds.back {
+    top: 30px;
+    height: 120px;
+    background-image:
+        radial-gradient(ellipse 70px 18px at 60px 30px, rgba(255, 255, 255, .7), transparent 70%),
+        radial-gradient(ellipse 50px 14px at 250px 80px, rgba(255, 255, 255, .55), transparent 70%),
+        radial-gradient(ellipse 90px 22px at 420px 50px, rgba(255, 255, 255, .6), transparent 70%);
+    background-size: 520px 100%;
+    animation-duration: calc(14s * var(--pace));
+}
+.travel-clouds.front {
+    top: 80px;
+    height: 150px;
+    background-image:
+        radial-gradient(ellipse 110px 28px at 120px 40px, rgba(255, 255, 255, .85), transparent 70%),
+        radial-gradient(ellipse 80px 22px at 520px 110px, rgba(255, 255, 255, .75), transparent 70%);
+    background-size: 780px 100%; /* Teiler von 1560 px (Keyframe) → nahtlos */
+    animation-duration: calc(6s * var(--pace));
+    z-index: 3;
+}
+.travel-scene.night .travel-clouds { opacity: .35; }
+
+/* ----- Meer: Küste und Wellen ----- */
+.travel-coast {
+    bottom: calc(var(--footer) + 50px);
+    height: 44px;
+    clip-path: polygon(0% 100%, 0.0% 50%, 2.5% 26%, 5.0% 21%, 7.5% 41%, 10.0% 68%, 12.5% 80%, 15.0% 68%, 17.5% 41%, 20.0% 21%, 22.5% 26%, 25.0% 50%, 27.5% 74%, 30.0% 79%, 32.5% 59%, 35.0% 32%, 37.5% 20%, 40.0% 32%, 42.5% 59%, 45.0% 79%, 47.5% 74%, 50.0% 50%, 52.5% 26%, 55.0% 21%, 57.5% 41%, 60.0% 68%, 62.5% 80%, 65.0% 68%, 67.5% 41%, 70.0% 21%, 72.5% 26%, 75.0% 50%, 77.5% 74%, 80.0% 79%, 82.5% 59%, 85.0% 32%, 87.5% 20%, 90.0% 32%, 92.5% 59%, 95.0% 79%, 97.5% 74%, 100.0% 50%, 100% 100%);
+    filter: brightness(.6) saturate(.7);
+    animation-duration: calc(90s * var(--pace));
+}
+
+.travel-waves {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-repeat: repeat-x;
+    animation: travel-wave-scroll linear infinite;
+}
+.travel-waves.back {
+    bottom: var(--footer);
+    height: 60px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='60'%3E%3Cpath d='M0 14 Q20 2 40 14 T80 14 T120 14 T160 14 V60 H0 Z' fill='%232b5f8e'/%3E%3C/svg%3E");
+    background-size: 160px 60px;
+    animation-duration: calc(5s * var(--pace));
+}
+.travel-waves.front {
+    bottom: var(--footer);
+    height: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='34'%3E%3Cpath d='M0 10 Q15 0 30 10 T60 10 T90 10 T120 10 V34 H0 Z' fill='%231c4670'/%3E%3Cpath d='M0 10 Q15 0 30 10 T60 10 T90 10 T120 10' fill='none' stroke='%23cfe6ff' stroke-opacity='.55' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: 120px 34px;
+    animation-duration: calc(2.6s * var(--pace));
+    z-index: 3;
+}
+.travel-scene.night .travel-waves { filter: brightness(.6); }
+
+/* ----- Reisender ----- */
+.traveler {
+    position: absolute;
+    left: 30%;
+    bottom: calc(var(--footer) + 14px);
+    width: 120px;
+    height: 120px;
+    z-index: 2;
+}
+
+.traveler-portrait,
+.traveler-steed {
+    position: absolute;
+    border: 2px solid var(--wow-gold-soft);
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .6);
+    background: #000;
+}
+
+/* Zu Fuß: großes Portrait, schnelles Wippen */
+.traveler-portrait.walker {
+    left: 26px;
+    bottom: 6px;
+    width: 68px;
+    height: 68px;
+    animation: travel-walk calc(.55s * var(--pace) + .15s) ease-in-out infinite;
+}
+
+/* Reittier / Gestalt: Reittier unten, Portrait sitzt darauf */
+.traveler-steed {
+    left: 18px;
+    bottom: 4px;
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    animation: travel-gallop calc(.5s * var(--pace) + .1s) ease-in-out infinite;
+}
+.traveler-portrait.rider {
+    left: 34px;
+    bottom: 64px;
+    width: 44px;
+    height: 44px;
+    animation: travel-gallop calc(.5s * var(--pace) + .1s) ease-in-out infinite;
+    animation-delay: -.08s;
+}
+
+.travel-dust { position: absolute; left: -8px; bottom: 2px; }
+.travel-dust i {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(220, 190, 140, .55);
+    animation: travel-dust 1.1s ease-out infinite;
+}
+.travel-dust i:nth-child(2) { animation-delay: .37s; bottom: 4px; }
+.travel-dust i:nth-child(3) { animation-delay: .74s; bottom: -2px; }
+
+/* Flug: Greif/Windreiter mit Flügelschlag, schwebt im Wind */
+.scene-air .traveler { bottom: calc(var(--footer) + 90px); animation: travel-hover 3.2s ease-in-out infinite; }
+.traveler-steed.flyer {
+    width: 84px;
+    height: 84px;
+    border-radius: 16px;
+    animation: travel-flap .45s ease-in-out infinite;
+}
+.scene-air .traveler-portrait.rider { left: 38px; bottom: 74px; width: 38px; height: 38px; animation: none; }
+
+/* Schiff & Zeppelin (SVG) */
+.traveler-vehicle { position: absolute; left: -10px; bottom: 0; }
+.traveler-vehicle.ship { width: 160px; height: 120px; transform-origin: 50% 90%; animation: travel-rock 3s ease-in-out infinite; }
+.scene-sea .traveler { bottom: calc(var(--footer) + 4px); }
+.traveler-vehicle.zeppelin { width: 180px; height: 120px; }
+.mode-zeppelin .traveler { bottom: calc(var(--footer) + 70px); }
+.zeppelin-prop { transform-origin: 166px 40px; animation: travel-spin .4s linear infinite; }
+
+.traveler-portrait.on-vehicle { width: 34px; height: 34px; }
+.mode-ship .traveler-portrait.on-vehicle { left: 82px; bottom: 34px; animation: travel-rock 3s ease-in-out infinite; transform-origin: -20px 60px; }
+.mode-zeppelin .traveler-portrait.on-vehicle { left: 64px; bottom: 6px; width: 30px; height: 30px; }
+
+/* ----- HUD ----- */
+.travel-hud {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 150px;
+    z-index: 4;
+    text-shadow: 0 1px 3px #000, 0 0 8px #000;
+}
+.travel-title { font-family: var(--wow-font-title); color: var(--wow-gold-pale); font-size: 1.25rem; }
+.travel-title b { color: var(--wow-gold); }
+.travel-leg-label { color: #f2ead2; font-size: .85rem; }
+
+.travel-timer {
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    z-index: 4;
+    color: var(--wow-gold);
+    font-family: var(--wow-font-title);
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 3px #000, 0 0 10px #000;
+}
+
+.wow-btn.travel-cancel {
+    position: absolute;
+    top: 48px;
+    right: 10px;
+    z-index: 4;
+    margin: 0;
+    padding: 4px 12px;
+    font-size: .72rem;
+}
+
+/* ----- Routenleiste ----- */
+.travel-route {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--footer);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    background: linear-gradient(180deg, #1f1810, #120d08);
+    border-top: 1px solid var(--wow-border);
+}
+.travel-route-end {
+    flex: 0 1 auto;
+    max-width: 22%;
+    overflow: hidden;
+    color: var(--wow-gold-pale);
+    font-size: .78rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.travel-route-bar {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    gap: 2px;
+    height: 18px;
+    border-radius: 9px;
+    overflow: visible;
+}
+.travel-route-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-basis: 0;
+    min-width: 22px;
+    border-radius: 4px;
+    font-size: .7rem;
+    opacity: .75;
+}
+.travel-route-seg.active { opacity: 1; box-shadow: 0 0 0 1px var(--wow-gold-soft); }
+.travel-route-seg.mode-foot,
+.travel-route-seg.mode-form,
+.travel-route-seg.mode-mount    { background: #6a4e2a; }
+.travel-route-seg.mode-flight   { background: #3f76b8; }
+.travel-route-seg.mode-ship     { background: #1c4670; }
+.travel-route-seg.mode-zeppelin { background: #8a3b2a; }
+
+.travel-route-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(255, 209, 0, .15), rgba(255, 209, 0, .45));
+    pointer-events: none;
+    transition: width .1s linear;
+}
+.travel-route-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: left .1s linear;
+}
+.travel-route-marker img {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--wow-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 209, 0, .6);
+}
+
+/* ----- Keyframes ----- */
+@keyframes travel-scroll       { to { transform: translateX(-50%); } }
+@keyframes travel-road-scroll  { to { background-position: -120px 0, 0 0; } }
+@keyframes travel-cloud-scroll { from { background-position-x: 0; } to { background-position-x: -1560px; } }
+@keyframes travel-wave-scroll  { from { background-position-x: 0; } to { background-position-x: -480px; } }
+@keyframes travel-twinkle      { to { filter: brightness(1.25); } }
+
+@keyframes travel-walk {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-7px) rotate(3deg); }
+}
+@keyframes travel-gallop {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50%      { transform: translateY(-9px) rotate(2deg); }
+}
+@keyframes travel-hover {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-14px); }
+}
+@keyframes travel-flap {
+    0%, 100% { transform: scaleY(1) rotate(-2deg); }
+    50%      { transform: scaleY(.86) rotate(2deg); }
+}
+@keyframes travel-rock {
+    0%, 100% { transform: rotate(-3deg); }
+    50%      { transform: rotate(3deg) translateY(-3px); }
+}
+@keyframes travel-spin { to { transform: rotate(360deg); } }
+@keyframes travel-dust {
+    0%   { transform: translate(0, 0) scale(.4); opacity: .8; }
+    100% { transform: translate(-46px, -12px) scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .travel-scene *, .travel-scene .travel-sky { animation: none !important; }
+}
+
+@media (max-width: 600px) {
+    .travel-scene { height: 270px; }
+    .travel-hud { right: 110px; }
+    .travel-title { font-size: 1.05rem; }
+    .traveler { left: 18%; }
+}

@@ -108,16 +108,16 @@ public partial class IdleGameEngine
         _rng = seed is { } s ? new Random(s) : new Random();
         var spawnRng = seed is { } s2 ? new Random(s2 + 1) : new Random();
 #if DEBUG
-        _spawner = new EnemySpawner(DefaultEnemyTemplates.Default.Concat(DebugEnemyTemplates.All).ToList(), spawnRng);
+        _spawner = new EnemySpawner(DebugEnemyTemplates.All, spawnRng);
 #else
-        _spawner = new EnemySpawner(DefaultEnemyTemplates.Default, spawnRng);
+        _spawner = new EnemySpawner(rng: spawnRng);
 #endif
         _baseDt = intervalMs / 1000.0;
         Player = CreatePlayerInternal();
 
         _timer = new Timer(intervalMs) { AutoReset = true };
         _timer.Elapsed += OnTick;
-        CurrentEnemy = _spawner.Spawn(1, 0);
+        CurrentEnemy = SpawnEnemy();
     }
 
     // ─── Spielsteuerung ───
@@ -152,7 +152,7 @@ public partial class IdleGameEngine
         lock (_simLock)
         {
             Player.SetLevel(Math.Clamp(level, 1, 60));
-            CurrentEnemy = _spawner.Spawn(Player.Stats.Level, _stopwatch.Elapsed.TotalSeconds);
+            CurrentEnemy = SpawnEnemy();
         }
         TickUpdated?.Invoke();
     }

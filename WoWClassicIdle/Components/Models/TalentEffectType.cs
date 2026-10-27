@@ -80,7 +80,7 @@ public enum TalentEffectType
     EarthbindCooldown,           // -x Sekunden Cooldown Earthbind Totem
 
     // ─── Druid ───
-    WrathManaCost,               // -x Manakosten Wrath (flat)
+    WrathDamage,                 // +x% Wrath- und Starfire-Schaden
     GrantMoonkinForm,            // Schaltet Moonkin Form frei
     MoonfireDamage,              // +x% Moonfire Schaden (Direkt + DoT)
     GrantBearForm,               // Schaltet Bear Form + Maul frei

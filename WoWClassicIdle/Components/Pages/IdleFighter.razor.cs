@@ -9,6 +9,10 @@ namespace WoWClassicIdle.Components.Pages;
 public partial class IdleFighter
 {
     private bool _running;
+    // Zonenkarte geöffnet (Two-Way-Binding mit CombatZonePanel)
+    private bool _zoneMenuOpen;
+    /// <summary>Zonenkarte sichtbar – auch beim ersten Betreten ohne gewählte Zone.</summary>
+    private bool ZoneMenuVisible => _zoneMenuOpen || _engine.NeedsCombatZone;
     private double _speedMultiplier = 1.0;
     private HashSet<string> _multiRankNames = new();
     private double _gameElapsedSeconds = 0.0;
@@ -18,7 +22,7 @@ public partial class IdleFighter
     private DotNetObjectReference<IdleFighter>? _selfRef;
     private IJSObjectReference? _visibilityHandle;
 
-    private record CombatFloat(int Id, CombatTextKind Kind, bool OnPlayer, int Amount, int XOffset, int YOffset, DateTime Created, bool IsCrit = false);
+    private record CombatFloat(int Id, CombatTextKind Kind, bool OnPlayer, int Amount, int XOffset, int YOffset, DateTime Created, bool IsCrit = false, int DelayMs = 0);
     private record AbilityNotification(int Id, Ability Ability, DateTime Created);
 
     private static readonly TimeSpan NotificationLifetime = TimeSpan.FromSeconds(8);
@@ -53,6 +57,8 @@ public partial class IdleFighter
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+        // Einmalige Einführung beim ersten Betreten (nicht im Prerendering)
+        _engine.RequestFeatureIntro(GameFeatureRegistry.IdleFighterIntroId);
         _selfRef = DotNetObjectReference.Create(this);
         try
         {
@@ -131,6 +137,8 @@ public partial class IdleFighter
     {
         DetectPlayerChange();
         DetectClassChange();
+        DetectResurrection();
+        FlushProjectiles();
         _ = InvokeAsync(StateHasChanged);
     }
 
@@ -215,11 +223,12 @@ public partial class IdleFighter
     {
         bool onPlayer = ct.Target == CombatTextTarget.Player;
         var list = onPlayer ? _playerFloats : _enemyFloats;
+        int delayMs = TakeHitDelay(ct);
         lock (list)
         {
             list.Add(new CombatFloat(
                 Interlocked.Increment(ref _nextFloatId), ct.Kind, onPlayer, ct.Amount,
-                _rng.Next(-45, 46), _rng.Next(0, 22), DateTime.UtcNow, ct.IsCrit));
+                _rng.Next(-45, 46), _rng.Next(0, 22), DateTime.UtcNow, ct.IsCrit, delayMs));
             if (list.Count > MaxFloatsPerFrame)
                 list.RemoveRange(0, list.Count - MaxFloatsPerFrame);
         }
@@ -229,9 +238,9 @@ public partial class IdleFighter
     {
         var cutoff = DateTime.UtcNow - FloatLifetime;
         lock (_playerFloats)
-            _playerFloats.RemoveAll(f => f.Created < cutoff);
+            _playerFloats.RemoveAll(f => f.Created.AddMilliseconds(f.DelayMs) < cutoff);
         lock (_enemyFloats)
-            _enemyFloats.RemoveAll(f => f.Created < cutoff);
+            _enemyFloats.RemoveAll(f => f.Created.AddMilliseconds(f.DelayMs) < cutoff);
 
         var notifCutoff = DateTime.UtcNow - NotificationLifetime;
         lock (_abilityNotifications)
@@ -286,6 +295,10 @@ public partial class IdleFighter
     }
 
     private void ResetMeter() => _engine.Meter.Reset();
+
+    // Action History ist standardmäßig ausgeblendet und lässt sich über den Meter-Header einblenden
+    private bool _showHistory;
+    private void ToggleHistory() => _showHistory = !_showHistory;
 
     private static string FormatNumber(long value) => value switch
     {

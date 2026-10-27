@@ -26,6 +26,12 @@ public partial class IdleGameEngine
     /// <summary>Fortschritt des Swing-Timers (0..1).</summary>
     public double SwingProgress => SwingInterval <= 0 ? 0 : Math.Clamp(_playerAttackAcc / SwingInterval, 0, 1);
 
+    /// <summary>Aktuelles Angriffsintervall des Gegners in Sekunden (inkl. Verlangsamungs-Debuffs).</summary>
+    public double EnemySwingInterval { get; private set; } = 1;
+
+    /// <summary>Fortschritt des Gegner-Swing-Timers (0..1).</summary>
+    public double EnemySwingProgress => EnemySwingInterval <= 0 ? 0 : Math.Clamp(_enemyAttackAcc / EnemySwingInterval, 0, 1);
+
     /// <summary>Spells mit Manakosten haben Vorrang: während ihres Casts wartet die Auto-Attack.</summary>
     public bool IsSwingHeld => CurrentCast is { ManaCost: > 0 };
 

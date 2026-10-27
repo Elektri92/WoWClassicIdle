@@ -23,6 +23,8 @@ public class SaveData
     public List<PassiveAssignmentSaveData> PassiveAssignments { get; set; } = new();
     // Profession.ToString() → zuletzt gewählte Zone/Rezept
     public Dictionary<string, string> LastProfessionTargets { get; set; } = new();
+    // Bereits gezeigte Feature-Intros; null = Altstand ohne dieses Feld
+    public List<string>? SeenFeatureIntros { get; set; }
 }
 
 public class SlotSaveData
@@ -33,6 +35,10 @@ public class SlotSaveData
     public Race Race { get; set; }
     public Gender Gender { get; set; }
     public PlayerSaveData Player { get; set; } = new();
+    // Kampfgebiet (null = noch nicht gewählt) und laufende Reise
+    public string? CombatZone { get; set; }
+    public string? TravelTarget { get; set; }
+    public double TravelElapsed { get; set; }
 }
 
 public class PlayerSaveData

@@ -33,8 +33,11 @@ WoWClassicIdle/Components/
 | `Models/IdleGameEngine.SaveLoad.cs` | RestoreFromSave, RestoreSlot |
 | `Models/ClassAbilityRegistry.cs` | Abilities-Dict + statische Methoden |
 | `Models/ClassAbilityRegistry.Warrior.cs` … `.Druid.cs` | Ability-Daten je Klasse |
-| `Models/EnemySpawner.cs` | Gegner-Spawn-Logik |
-| `Models/DefaultEnemyTemplates.cs` | Mob-Rohdaten (hardcoded) |
+| `Models/EnemySpawner.cs` | Gegner-Spawn-Logik (Level = Spieler ± 2, auf Zonenbereich begrenzt) |
+| `Models/CombatZoneRegistry*.cs` | Kampfzonen (40) mit je 3 Gegnern, Koordinaten, Theme |
+| `Models/EnemyArchetype.cs` / `EnemyScaling.cs` | Stat-Profile je Gegnerart + HP/Attack/Kupfer-Formeln |
+| `Models/ZoneTravel.cs` | Reisezeiten (Laufen/Reittier/Flug/Schiff/Zeppelin) |
+| `Models/IdleGameEngine.Zones.cs` | Zonenwahl je Charakter, Reisen, SpawnEnemy |
 | `Models/RareLootRegistry.cs` | Rare-Loottabellen |
 | `Models/Player.cs` | Spieler-Zustand, Equip, XP |
 | `Models/CombatEngine.cs` | Reine Kampfmathematik (keine Zustand) |

@@ -22,6 +22,7 @@ public partial class IdleFighter
             if (_spellFloats.Count > MaxSpellFloats)
                 _spellFloats.RemoveRange(0, _spellFloats.Count - MaxSpellFloats);
         }
+        QueueProjectile(ability);
     }
 
     private void CleanupOldSpellFloats()

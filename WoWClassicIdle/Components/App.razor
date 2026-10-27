@@ -14,6 +14,13 @@
     <link rel="stylesheet" href="@Assets["css/wow-classic-navmenu.css"]"/>
     <link rel="stylesheet" href="@Assets["css/wow-theme.css"]"/>
     <link rel="stylesheet" href="@Assets["css/professions.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/spellfx/core.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/spellfx/spells.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/spellfx/swings.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/spellfx/auras.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/spirit-healer.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/combat-zones.css"]"/>
+    <link rel="stylesheet" href="@Assets["css/zone-travel.css"]"/>
     <ImportMap/>
     <link rel="icon" type="image/png" href="images/wow_idle_game_logo.png"/>
     <HeadOutlet/>
@@ -25,6 +32,11 @@
 <script src="@Assets["_framework/blazor.web.js"]"></script>
 <script src="@Assets["js/visibility.js"]"></script>
 <script src="@Assets["js/tooltip.js"]"></script>
+<!-- Kampf-Effekte: core.js zuerst, die Module registrieren sich dort -->
+<script src="@Assets["js/spellfx/core.js"]"></script>
+<script src="@Assets["js/spellfx/spells.js"]"></script>
+<script src="@Assets["js/spellfx/swings.js"]"></script>
+<script src="@Assets["js/spellfx/auras.js"]"></script>
 </body>
 
 </html>

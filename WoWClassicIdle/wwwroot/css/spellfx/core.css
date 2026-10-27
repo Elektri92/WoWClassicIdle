@@ -1,0 +1,64 @@
+/* ── Kampf-Effekte (js/spellfx/*) – Effekt-Layer und gemeinsame Partikel/Einschläge ──
+   Farben kommen pro Element über --fx-glow / --fx-core / --fx-hi (Zauberschule). */
+.spellfx-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 40;
+    overflow: hidden;
+}
+
+.spellfx-layer > div {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    will-change: transform, opacity;
+}
+
+.spellfx-particle {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--fx-hi) 0%, var(--fx-glow) 50%, transparent 75%);
+    box-shadow: 0 0 6px var(--fx-core);
+}
+
+.spellfx-streak {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fx-hi);
+    box-shadow: 0 0 6px 2px var(--fx-glow);
+}
+
+/* ── Einschlag ── */
+.spellfx-flash {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--fx-hi) 0%, var(--fx-glow) 30%, color-mix(in srgb, var(--fx-core) 40%, transparent) 55%, transparent 72%);
+    mix-blend-mode: screen;
+}
+
+.spellfx-ring {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid var(--fx-glow);
+    box-shadow: 0 0 12px var(--fx-core), inset 0 0 12px var(--fx-core);
+}
+
+.spellfx-spark {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fx-hi);
+    box-shadow: 0 0 6px 2px var(--fx-glow);
+}
+
+.spellfx-slash {
+    width: 84px;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--fx-hi) 30%, #fff 50%, var(--fx-hi) 70%, transparent 100%);
+    box-shadow: 0 0 8px 2px var(--fx-glow);
+}

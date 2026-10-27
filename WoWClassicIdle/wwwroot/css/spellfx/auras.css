@@ -1,0 +1,115 @@
+/* ── Kampf-Effekte: Buffs und Debuffs (js/spellfx/auras.js) ── */
+
+/* Rotierender Runenkreis um das Portrait */
+.spellfx-rune {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    border: 2px dashed var(--fx-glow);
+    box-shadow: 0 0 14px var(--fx-core), inset 0 0 14px color-mix(in srgb, var(--fx-core) 60%, transparent);
+}
+
+.spellfx-rune::after {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    border-radius: 50%;
+    border: 1px solid var(--fx-hi);
+    opacity: .7;
+}
+
+/* Lichtsäule; transform-origin unten, damit sie aus dem Boden wächst */
+.spellfx-pillar {
+    width: 58px;
+    height: 120px;
+    transform-origin: 50% 100%;
+    border-radius: 50% 50% 8px 8px;
+    background: linear-gradient(0deg, color-mix(in srgb, var(--fx-glow) 75%, transparent) 0%, color-mix(in srgb, var(--fx-core) 30%, transparent) 55%, transparent 100%);
+    filter: blur(2px);
+    mix-blend-mode: screen;
+}
+
+.spellfx-mote {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fx-hi);
+    box-shadow: 0 0 6px 2px var(--fx-glow);
+}
+
+/* Heilungs-Kreuz */
+.spellfx-plus {
+    width: 12px;
+    height: 12px;
+    background:
+        linear-gradient(var(--fx-hi), var(--fx-hi)) center / 4px 100% no-repeat,
+        linear-gradient(var(--fx-hi), var(--fx-hi)) center / 100% 4px no-repeat;
+    filter: drop-shadow(0 0 4px var(--fx-glow)) drop-shadow(0 0 2px var(--fx-core));
+}
+
+/* Schild-Blase */
+.spellfx-bubble {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .55) 0%, transparent 22%),
+                radial-gradient(circle, transparent 55%, color-mix(in srgb, var(--fx-glow) 55%, transparent) 75%, var(--fx-core) 100%);
+    box-shadow: 0 0 16px var(--fx-glow);
+}
+
+/* Icon, das in die Buff-/Debuff-Leiste fliegt */
+.spellfx-badge {
+    width: 34px;
+    height: 34px;
+}
+
+.spellfx-badge img {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    border: 2px solid var(--fx-hi);
+    box-shadow: 0 0 10px 3px var(--fx-glow), 0 2px 6px #000;
+}
+
+/* ── Debuffs (Gegner) ── */
+/* Container ohne eigene Größe, Kinder kreisen um den Mittelpunkt */
+.spellfx-orbit {
+    width: 0;
+    height: 0;
+}
+
+.spellfx-orbit-mote,
+.spellfx-star {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.spellfx-orbit-mote {
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--fx-hi) 0%, var(--fx-glow) 45%, var(--fx-core) 100%);
+    box-shadow: 0 0 10px 3px var(--fx-core);
+}
+
+.spellfx-star {
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    line-height: 16px;
+    text-align: center;
+    font-size: 15px;
+    color: #ffe14a;
+    text-shadow: 0 0 6px #ffb000, 0 1px 2px #000;
+}
+
+/* Herabsinkender Tropfen (Schwächung) */
+.spellfx-drip {
+    width: 6px;
+    height: 11px;
+    border-radius: 50% 50% 50% 50% / 35% 35% 65% 65%;
+    background: linear-gradient(180deg, var(--fx-glow) 0%, var(--fx-core) 100%);
+    box-shadow: 0 0 6px var(--fx-glow);
+}

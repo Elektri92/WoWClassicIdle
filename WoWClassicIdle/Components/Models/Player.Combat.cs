@@ -211,12 +211,6 @@ namespace Models
                 if (red > 0)
                     return ability with { Cooldown = Math.Max(1, ability.Cooldown - red) };
             }
-            if (ability.Id.StartsWith("Wrath"))
-            {
-                int red = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.WrathManaCost);
-                if (red > 0)
-                    return ability with { ManaCost = Math.Max(0, ability.ManaCost - red) };
-            }
             if (ability.Id.StartsWith("Moonfire"))
             {
                 double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.MoonfireDamage);
@@ -341,11 +335,6 @@ namespace Models
             if (ability.Id.StartsWith("Lightning_bolt") || ability.Id.StartsWith("Lightning_Bolt"))
             {
                 int red = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.LightningBoltManaCost);
-                return Math.Max(0, ability.ManaCost - red);
-            }
-            if (ability.Id.StartsWith("Wrath"))
-            {
-                int red = (int)TalentState.GetTotalBonus(ActiveClass, TalentEffectType.WrathManaCost);
                 return Math.Max(0, ability.ManaCost - red);
             }
             if (ability.Id.StartsWith("Renew"))

@@ -1,0 +1,162 @@
+@using Models
+@inject IdleGameEngine Engine
+
+@* Reise-Animation (css/zone-travel.css): Parallax-Landschaft in den Farben der Zielzone, der Charakter zu Fuß,
+   in Klassen-Gestalt, auf seinem Rassen-Reittier, auf Greif/Windreiter, Schiff oder Zeppelin.
+   Travel als Parameter (Referenztyp) → Komponente zeichnet bei jedem Render der Seite mit. *@
+@if (Travel is { } travel && travel.CurrentLeg is { } current)
+{
+    var leg = current.Leg;
+    var ground = Engine.GroundTravel;
+    var target = CombatZoneRegistry.Get(travel.TargetZoneId);
+    var from = CombatZoneRegistry.Get(travel.FromZoneId);
+    string scene = leg.Mode switch
+    {
+        TravelMode.Flight or TravelMode.Zeppelin => "air",
+        TravelMode.Ship => "sea",
+        _ => "land",
+    };
+    <div class="travel-scene scene-@scene mode-@leg.Mode.ToString().ToLowerInvariant() @(CombatZoneRegistry.IsNightTheme(leg.Theme) ? "night" : "day") faction-@Engine.Faction.ToString().ToLowerInvariant()"
+         style="--pace: @Pace(leg.Mode, ground).ToString(System.Globalization.CultureInfo.InvariantCulture)">
+        <div class="travel-sky"></div>
+        <div class="travel-celestial"></div>
+
+        @if (scene == "air")
+        {
+            <div class="travel-ground-far zone-theme-@leg.Theme"></div>
+            <div class="travel-clouds back"></div>
+            <div class="travel-clouds front"></div>
+        }
+        else if (scene == "sea")
+        {
+            <div class="travel-coast zone-theme-@leg.Theme"></div>
+            <div class="travel-waves back"></div>
+            <div class="travel-waves front"></div>
+        }
+        else
+        {
+            <div class="travel-mountains zone-theme-@leg.Theme"></div>
+            <div class="travel-hills zone-theme-@leg.Theme"></div>
+            <div class="travel-road"></div>
+        }
+
+        @* ── Reisender ── *@
+        <div class="traveler">
+            @if (leg.Mode == TravelMode.Ship)
+            {
+                <svg class="traveler-vehicle ship" viewBox="0 0 160 120" aria-hidden="true">
+                    <path d="M78 8 L78 78" stroke="#5a3c1e" stroke-width="4" />
+                    <path d="M80 12 Q118 34 80 70 Z" fill="#efe6cf" stroke="#b9a983" stroke-width="2" />
+                    <path d="M76 18 Q44 40 76 70 Z" fill="#e2d6b8" stroke="#b9a983" stroke-width="2" />
+                    <path d="M78 8 l18 6 l-18 6 Z" fill="@FactionColor" />
+                    <path d="M14 78 L146 78 L128 104 Q80 112 32 104 Z" fill="#6b4523" stroke="#3e260f" stroke-width="3" />
+                    <path d="M22 86 L138 86" stroke="#8a5e33" stroke-width="3" />
+                </svg>
+                <img class="traveler-portrait on-vehicle" src="@Portrait" alt="" onerror="this.style.display='none'" />
+            }
+            else if (leg.Mode == TravelMode.Zeppelin)
+            {
+                <svg class="traveler-vehicle zeppelin" viewBox="0 0 180 120" aria-hidden="true">
+                    <ellipse cx="90" cy="40" rx="78" ry="32" fill="#8a3b2a" stroke="#4a1d12" stroke-width="3" />
+                    <path d="M20 40 Q90 18 160 40" fill="none" stroke="#b9573f" stroke-width="3" />
+                    <path d="M20 40 Q90 62 160 40" fill="none" stroke="#5e2618" stroke-width="3" />
+                    <path d="M12 40 L0 24 L0 56 Z" fill="#6b2b1c" />
+                    <path d="M60 70 L64 88 M120 70 L116 88" stroke="#3a2a1a" stroke-width="3" />
+                    <rect x="56" y="86" width="68" height="22" rx="5" fill="#5a3c1e" stroke="#2e1d0c" stroke-width="3" />
+                    <circle class="zeppelin-prop" cx="166" cy="40" r="10" fill="none" stroke="#ccc" stroke-width="3" stroke-dasharray="8 6" />
+                </svg>
+                <img class="traveler-portrait on-vehicle" src="@Portrait" alt="" onerror="this.style.display='none'" />
+            }
+            else if (leg.Mode == TravelMode.Flight)
+            {
+                <img class="traveler-steed flyer" src="@ZoneTravel.FlightIcon(Engine.Faction)" alt="" onerror="this.style.display='none'" />
+                <img class="traveler-portrait rider" src="@Portrait" alt="" onerror="this.style.display='none'" />
+            }
+            else
+            {
+                @if (ground.IconUrl is not null)
+                {
+                    <WowTooltip Contents="true" Title="@ground.Name" Body="SteedTooltip(ground)">
+                        <img class="traveler-steed" src="@ground.IconUrl" alt="@ground.Name" onerror="this.style.display='none'" />
+                    </WowTooltip>
+                }
+                <img class="traveler-portrait @(ground.IconUrl is null ? "walker" : "rider")" src="@Portrait" alt="" onerror="this.style.display='none'" />
+                <span class="travel-dust" aria-hidden="true"><i></i><i></i><i></i></span>
+            }
+        </div>
+
+        @* ── HUD ── *@
+        <div class="travel-hud">
+            <div class="travel-title">Traveling to <b>@target?.Name</b></div>
+            <div class="travel-leg-label">
+                @CombatZonePanel.ModeEmoji(leg.Mode) @ZoneTravel.ModeLabel(leg.Mode, ground): @leg.From → @leg.To
+            </div>
+        </div>
+        <WowTooltip Contents="true" Title="Remaining travel time" Body="TimerTooltip(travel)">
+            <div class="travel-timer">@ZoneTravel.FormatDuration(travel.Remaining)</div>
+        </WowTooltip>
+
+        <div class="travel-route">
+            <span class="travel-route-end">@from?.Name</span>
+            <div class="travel-route-bar">
+                @foreach (var l in travel.Route.Legs)
+                {
+                    <WowTooltip Contents="true" Title="@($"{CombatZonePanel.ModeEmoji(l.Mode)} {ZoneTravel.ModeLabel(l.Mode, ground)}")" Body="LegTooltip(l, l == leg)">
+                        <div class="travel-route-seg mode-@l.Mode.ToString().ToLowerInvariant() @(l == leg ? "active" : "")"
+                             style="flex-grow: @Math.Max(1, l.Seconds).ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                            <span>@CombatZonePanel.ModeEmoji(l.Mode)</span>
+                        </div>
+                    </WowTooltip>
+                }
+                <div class="travel-route-fill" style="width: @((travel.Progress * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                <div class="travel-route-marker" style="left: @((travel.Progress * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">
+                    <img src="@Portrait" alt="" onerror="this.style.display='none'" />
+                </div>
+            </div>
+            <span class="travel-route-end">@target?.Name</span>
+        </div>
+
+        <WowTooltip Contents="true" Title="Turn back" Body="TurnBackTooltip(from)">
+            <button class="wow-btn primary travel-cancel" @onclick="Engine.CancelTravel">↩ Turn back</button>
+        </WowTooltip>
+    </div>
+}
+
+@code {
+    [Parameter] public ZoneTravelState? Travel { get; set; }
+
+    private static RenderFragment LegTooltip(TravelLeg leg, bool isCurrent) => @<text>
+        <span class="zt-line">@leg.From → @leg.To</span>
+        <span class="zt-sub">Duration @ZoneTravel.FormatDuration(leg.Seconds)</span>
+        @if (isCurrent)
+        {
+            <span class="zt-good">You are here</span>
+        }
+    </text>;
+
+    private static RenderFragment TurnBackTooltip(CombatZone? from) => @<text>
+        <span class="zt-hint">Return to @from?.Name immediately and resume fighting there.</span>
+    </text>;
+
+    private static RenderFragment SteedTooltip(GroundTravel ground) => @<text>
+        <span class="zt-sub">Ground speed +@(((ground.SpeedMultiplier - 1) * 100).ToString("0"))%</span>
+    </text>;
+
+    private static RenderFragment TimerTooltip(ZoneTravelState travel) => @<text>
+        <span class="zt-line">@ZoneTravel.FormatDuration(travel.Remaining) of @ZoneTravel.FormatDuration(travel.Duration) left</span>
+        <span class="zt-hint">You don't fight while traveling, but you regenerate health and mana.</span>
+    </text>;
+
+    private string Portrait => IconUrls.RaceIconUrl(Engine.Race, Engine.Gender);
+
+    private string FactionColor => Engine.Faction == Faction.Horde ? "#b3261e" : "#1f4fa8";
+
+    /// <summary>Animationsdauer-Faktor: je schneller die Fortbewegung, desto schneller zieht die Landschaft vorbei.</summary>
+    private static double Pace(TravelMode mode, GroundTravel ground) => mode switch
+    {
+        TravelMode.Flight   => 0.35,
+        TravelMode.Zeppelin => 0.6,
+        TravelMode.Ship     => 0.8,
+        _                   => Math.Round(1.0 / ground.SpeedMultiplier, 2),
+    };
+}

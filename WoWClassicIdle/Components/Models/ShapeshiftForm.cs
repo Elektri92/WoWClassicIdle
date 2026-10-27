@@ -52,7 +52,8 @@ public static class ShapeshiftForms
             Name                      = "Moonkin Form",
             PortraitUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_forceofnature.jpg",
             BoostedAbilityDamageBonus = 0.15,
-            BoostedAbilityNames       = ["Wrath", "Moonfire"],
+            // Starfire ergänzt – ab Lv 20 ersetzt Starfire Wrath im Loadout, Moonkin brachte nur noch +2,4 %
+            BoostedAbilityNames       = ["Wrath", "Starfire", "Moonfire"],
         },
         [DruidForm.Bear] = new ShapeshiftFormInfo
         {
@@ -76,9 +77,10 @@ public static class ShapeshiftForms
             PortraitUrl          = "https://wow.zamimg.com/images/wow/icons/large/ability_druid_treeoflife.jpg",
             HealingBonus         = 0.20,
             SpiritManaRegenBonus = 0.50,
-            // Tree Form brachte im Sim nur +1,8 % – Resto-Druiden kämpfen mit Naturzaubern
+            // Tree Form brachte im Sim nur +1,8 % – Resto-Druiden kämpfen mit Naturzaubern.
+            // Insect Swarm entfernt: mit beiden DoTs lag Resto Lv 20 bei +34 % XP/h (vor Balance)
             BoostedAbilityDamageBonus = 0.10,
-            BoostedAbilityNames       = ["Wrath", "Moonfire", "Insect Swarm"],
+            BoostedAbilityNames       = ["Wrath", "Moonfire"],
         },
         [DruidForm.Shadow] = new ShapeshiftFormInfo
         {

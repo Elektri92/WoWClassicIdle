@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="fc801416-1d81-4338-b5d8-aeac4cb64a84" />
+    <option name="activeSessionId" value="67d859b6-778d-403a-9f2c-0ae37fc36f43" />
     <option name="openSessionIds">
       <list>
         <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
@@ -21,7 +21,8 @@
         <option value="050376ce-e083-4492-a0b8-ec937cfba4b6" />
         <option value="39c41c07-3cfb-43d9-ad79-e409b225ee45" />
         <option value="62998595-0526-4cd5-9985-83a13e515c24" />
-        <option value="fc801416-1d81-4338-b5d8-aeac4cb64a84" />
+        <option value="1f5d2b87-fd11-4257-a8a8-6a1b1b26b557" />
+        <option value="67d859b6-778d-403a-9f2c-0ae37fc36f43" />
       </list>
     </option>
     <option name="sessionPaths">
@@ -30,6 +31,7 @@
         <entry key="050376ce-e083-4492-a0b8-ec937cfba4b6" value="/sessions/efe50339-6971-4548-9e7f-dbb0aeca647f" />
         <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="/sessions/ca74c7ae-e88f-48ab-9d08-f40289b4c0b5" />
         <entry key="180cfe9e-30c4-4980-b5b4-ffb6754b0bde" value="/sessions/85f5d38e-d4d3-4832-baae-d19c52c9e98b" />
+        <entry key="1f5d2b87-fd11-4257-a8a8-6a1b1b26b557" value="/sessions/211815c7-9d44-4364-af39-62538d22535d" />
         <entry key="2832bf3c-4337-4c74-bae6-ce91f530cfe3" value="/sessions/2d90cc25-f497-4ccb-b92e-ee522e9d2995" />
         <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="/switch-account" />
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="/sessions/6b71fc4f-339c-4914-ab12-e2f5e40a451f" />
@@ -37,13 +39,13 @@
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="/sessions/131bc0ad-43a1-4009-9c5b-7eceef8a4cd1" />
         <entry key="4aadcd57-680a-44c6-9378-0dc4872b5397" value="/sessions/0e62f636-d144-4f11-a819-084bd4808dc0" />
         <entry key="62998595-0526-4cd5-9985-83a13e515c24" value="/sessions/dfb207d6-eac8-492b-92fe-4e39ca81e0d5" />
+        <entry key="67d859b6-778d-403a-9f2c-0ae37fc36f43" value="/sessions/cf4a541b-54e6-4ed9-897b-d3649bac35af" />
         <entry key="7fbdcff8-ed21-4d8a-b31e-86ba82581aed" value="/sessions/663c2f7b-0f8c-4fa7-8911-3a5625756c8b" />
         <entry key="88f52352-966a-4861-9bfa-78edf3989ba4" value="/sessions/90a94596-a48e-4790-8070-ce8589c258e1" />
         <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="/sessions/new" />
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="/sessions/30341ce3-2e71-4955-b176-e452674ae63f" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="/sessions/b15805d1-dd0f-4966-94e7-a6fcf6249d7d" />
         <entry key="f25356c5-3553-4a42-ac3b-f97c0d4e825c" value="/sessions/0a610214-f369-4d1b-b6fe-a83e859a5e5f" />
-        <entry key="fc801416-1d81-4338-b5d8-aeac4cb64a84" value="/sessions/4ef33cef-4a5d-44ae-9825-351058037565" />
       </map>
     </option>
     <option name="sessionTitles">
@@ -52,6 +54,7 @@
         <entry key="050376ce-e083-4492-a0b8-ec937cfba4b6" value="Auto-Update unter Linux" />
         <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="Das Default UI sieht irgendwie unsauber aus und sc" />
         <entry key="180cfe9e-30c4-4980-b5b4-ffb6754b0bde" value="Talentbäume aller Klassen" />
+        <entry key="1f5d2b87-fd11-4257-a8a8-6a1b1b26b557" value="Change-Zone-Karte mit Überblendung" />
         <entry key="2832bf3c-4337-4c74-bae6-ce91f530cfe3" value="Loottable zeigt nicht alle Items" />
         <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="Claude Code" />
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="Kann ich dir auch einfach eine Frage stellen ohne" />
@@ -59,13 +62,13 @@
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="Warrior-Stances ohne Talentbaum-Skillung" />
         <entry key="4aadcd57-680a-44c6-9378-0dc4872b5397" value="Neue Loottables und Waffen" />
         <entry key="62998595-0526-4cd5-9985-83a13e515c24" value="Debugging trotz sauberem Build" />
+        <entry key="67d859b6-778d-403a-9f2c-0ae37fc36f43" value="EnemySpawner Check-in" />
         <entry key="7fbdcff8-ed21-4d8a-b31e-86ba82581aed" value="Inventar-Taschen und Tooltips überarbeiten" />
         <entry key="88f52352-966a-4861-9bfa-78edf3989ba4" value="Es soll ein Achivement-System eingebaut werden - d" />
         <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="Claude Code" />
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="Warrior-Stance-Icons und Buff-Anzeige" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="Automatisch geöffnete Inventar-Taschen" />
         <entry key="f25356c5-3553-4a42-ac3b-f97c0d4e825c" value="Curse of Agony, Feral Speed" />
-        <entry key="fc801416-1d81-4338-b5d8-aeac4cb64a84" value="Talente für Paladin, Schurke, Jäger, Warlock" />
       </map>
     </option>
   </component>

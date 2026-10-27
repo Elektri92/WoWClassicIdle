@@ -54,4 +54,23 @@ public static partial class StaticHelpers
         if (level > TableMaxLevel) level = TableMaxLevel;
         return EnemyXpReward[level - 1];
     }
+
+    /// <summary>Ab dieser Level-Differenz (Spieler − Gegner) gibt ein Kill keine XP mehr.</summary>
+    public const int NoXpLevelDifference = 6;
+
+    /// <summary>
+    /// Anteil der XP je nach Level-Differenz: bis 2 Level darunter voll, 3/4/5 darunter stark reduziert, ab 6 nichts.
+    /// </summary>
+    public static double GetXpPenaltyFactor(int playerLevel, int enemyLevel) => (playerLevel - enemyLevel) switch
+    {
+        <= 2 => 1.0,
+        3    => 0.5,
+        4    => 0.25,
+        5    => 0.1,
+        _    => 0.0,
+    };
+
+    /// <summary>XP für einen Kill inklusive Abzug für zu niedrige Gegner.</summary>
+    public static int GetKillXp(int playerLevel, int enemyLevel) =>
+        (int)Math.Round(GetEnemyXpReward(enemyLevel) * GetXpPenaltyFactor(playerLevel, enemyLevel));
 }

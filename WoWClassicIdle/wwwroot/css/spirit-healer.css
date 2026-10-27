@@ -1,0 +1,209 @@
+/* ── Tod & Spirit Healer (Components/Pages/IdleFighter.Death.cs) ──
+   Geisterwelt: der ganze Bildschirm wird grau-blau entsättigt, nur der Spirit-Healer-Frame
+   liegt darüber und bleibt farbig. */
+
+/* ── Geisterwelt-Overlay ── */
+.death-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    backdrop-filter: grayscale(.92) brightness(.72) contrast(1.08);
+    -webkit-backdrop-filter: grayscale(.92) brightness(.72) contrast(1.08);
+    background:
+        radial-gradient(ellipse at 50% 45%, rgba(110, 150, 190, .10) 0%, rgba(30, 45, 70, .35) 55%, rgba(4, 8, 18, .82) 100%);
+    animation: deathFadeIn 1.6s ease-out both;
+}
+
+/* Kurzes rotes Aufblitzen im Moment des Todes */
+.death-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(160, 0, 0, .15) 0%, rgba(120, 0, 0, .55) 70%, rgba(60, 0, 0, .85) 100%);
+    animation: deathBlood 1.4s ease-out forwards;
+}
+
+/* Langsam aufsteigende Geisterpartikel */
+.death-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: .55;
+    background-image:
+        radial-gradient(2px 2px at 12% 22%, rgba(200, 230, 255, .9), transparent),
+        radial-gradient(1.5px 1.5px at 38% 68%, rgba(180, 220, 255, .8), transparent),
+        radial-gradient(2.5px 2.5px at 64% 35%, rgba(210, 240, 255, .7), transparent),
+        radial-gradient(1.5px 1.5px at 82% 80%, rgba(190, 225, 255, .8), transparent),
+        radial-gradient(2px 2px at 52% 92%, rgba(200, 235, 255, .6), transparent);
+    background-size: 340px 340px;
+    animation: ghostMotes 14s linear infinite;
+}
+
+@keyframes deathFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes deathBlood {
+    0%   { opacity: 0; }
+    12%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes ghostMotes {
+    from { background-position: 0 0; }
+    to   { background-position: 40px -340px; }
+}
+
+/* ── Wiederbelebung: Farbe kehrt mit einem Lichtblitz zurück ── */
+.resurrect-flash {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    backdrop-filter: grayscale(.92) brightness(.72);
+    -webkit-backdrop-filter: grayscale(.92) brightness(.72);
+    animation: resurrectFade 1.6s ease-out forwards;
+}
+
+.resurrect-flash::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 35%, rgba(255, 250, 225, .95) 0%, rgba(170, 225, 255, .45) 25%, transparent 60%);
+    animation: resurrectLight 1.6s ease-out forwards;
+}
+
+@keyframes resurrectFade {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes resurrectLight {
+    0%   { opacity: 0; transform: scale(.6); }
+    18%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* ── Spirit-Healer-Frame: über dem Overlay, ätherisch pulsierend ── */
+.unit-frame.enemy-frame.spirit-frame {
+    z-index: 31;
+    background: linear-gradient(180deg, #16243a 0%, #0b1322 100%);
+    border-color: #6fb6ea;
+    animation: spiritFramePulse 3s ease-in-out infinite;
+}
+
+@keyframes spiritFramePulse {
+    0%, 100% { box-shadow: 0 0 14px rgba(111, 182, 234, .35), inset 0 0 0 1px #9fd8ff; }
+    50%      { box-shadow: 0 0 30px rgba(140, 205, 255, .7), inset 0 0 0 1px #d4eeff; }
+}
+
+.spirit-healer-name {
+    animation: spiritNameGlow 3s ease-in-out infinite;
+}
+
+@keyframes spiritNameGlow {
+    0%, 100% { text-shadow: 0 0 4px rgba(127, 200, 255, .5), 0 1px 2px #000; }
+    50%      { text-shadow: 0 0 12px rgba(170, 225, 255, .95), 0 1px 2px #000; }
+}
+
+/* Portrait schwebt, rotierender Halo dahinter */
+.spirit-portrait-area::before {
+    content: "";
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(160, 220, 255, .85) 12%, transparent 30%,
+                               rgba(210, 240, 255, .6) 55%, transparent 72%, rgba(140, 200, 255, .7) 88%, transparent 100%);
+    -webkit-mask: radial-gradient(circle, transparent 58%, #000 61%, #000 70%, transparent 73%);
+    mask: radial-gradient(circle, transparent 58%, #000 61%, #000 70%, transparent 73%);
+    animation: spiritHaloSpin 7s linear infinite;
+}
+
+.spirit-portrait-area .spirit-healer-portrait {
+    position: relative;
+    z-index: 1;
+    border-color: #9fd8ff;
+    animation: spiritFloat 3.2s ease-in-out infinite, spiritGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes spiritHaloSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes spiritFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+}
+
+@keyframes spiritGlow {
+    0%, 100% { filter: drop-shadow(0 0 5px #7fc8ff) brightness(1); }
+    50%      { filter: drop-shadow(0 0 14px #bfe6ff) brightness(1.15); }
+}
+
+/* Irrlichter steigen um das Portrait auf */
+.spirit-wisps {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.spirit-wisp {
+    position: absolute;
+    bottom: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #bfe6ff 45%, transparent 75%);
+    box-shadow: 0 0 8px 2px rgba(150, 210, 255, .7);
+    opacity: 0;
+    animation: spiritWisp 3s ease-out infinite;
+}
+
+.spirit-wisp:nth-child(1) { left: 4px;  animation-delay: 0s; }
+.spirit-wisp:nth-child(2) { left: 50px; animation-delay: .5s; }
+.spirit-wisp:nth-child(3) { left: 18px; animation-delay: 1s; }
+.spirit-wisp:nth-child(4) { left: 40px; animation-delay: 1.5s; }
+.spirit-wisp:nth-child(5) { left: 28px; animation-delay: 2s; }
+.spirit-wisp:nth-child(6) { left: 58px; animation-delay: 2.5s; }
+
+@keyframes spiritWisp {
+    0%   { transform: translate(0, 0) scale(.5); opacity: 0; }
+    20%  { opacity: 1; }
+    60%  { transform: translate(6px, -50px) scale(1); opacity: .8; }
+    100% { transform: translate(-4px, -80px) scale(.3); opacity: 0; }
+}
+
+/* Wiederbelebungs-Balken mit wanderndem Lichtschimmer */
+.spirit-bar .spirit-fill {
+    position: relative;
+    overflow: hidden;
+}
+
+.spirit-bar .spirit-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .55) 50%, transparent 100%);
+    animation: spiritSheen 1.8s ease-in-out infinite;
+}
+
+@keyframes spiritSheen {
+    from { transform: translateX(-120%); }
+    to   { transform: translateX(320%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .death-overlay::before,
+    .spirit-portrait-area::before,
+    .spirit-portrait-area .spirit-healer-portrait,
+    .spirit-wisp,
+    .spirit-bar .spirit-fill::after,
+    .unit-frame.enemy-frame.spirit-frame,
+    .spirit-healer-name {
+        animation: none;
+    }
+}

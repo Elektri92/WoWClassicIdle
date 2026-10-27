@@ -91,6 +91,9 @@ namespace Models
                 }
                 case "Fireball":
                     return ability.WithDamageBonus(TalentBonus(TalentEffectType.FireballDamage));
+                case "Wrath":
+                case "Starfire":
+                    return ability.WithDamageBonus(TalentBonus(TalentEffectType.WrathDamage));
                 case "Fire Blast":
                     return ability.WithDamageBonus(TalentBonus(TalentEffectType.FireBlastDamage));
                 case "Mind Blast":

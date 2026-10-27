@@ -5,30 +5,25 @@ using Models;
 public class EnemySpawner
 {
     private readonly Random _rng;
-    private readonly IReadOnlyList<EnemyTemplate> _templates;
+    private readonly IReadOnlyList<EnemyTemplate> _extraTemplates;
 
-    public EnemySpawner()
-        : this(DefaultEnemyTemplates.Default) { }
-
-    public EnemySpawner(IReadOnlyList<EnemyTemplate> templates, Random? rng = null)
+    /// <param name="extraTemplates">Zusätzliche Templates für jede Zone (Debug-Monster), sofern ihr Levelbereich passt.</param>
+    public EnemySpawner(IReadOnlyList<EnemyTemplate>? extraTemplates = null, Random? rng = null)
     {
-        _templates = templates;
+        _extraTemplates = extraTemplates ?? [];
         _rng = rng ?? new Random();
     }
 
-    public Enemy Spawn(int playerLevel, double elapsedSeconds)
+    public Enemy Spawn(int playerLevel, CombatZone zone)
     {
-        // 1) Gegner-Level: Spieler-Level ± 2 (random)
-        var enemyLevel = Math.Max(1, playerLevel + _rng.Next(-2, 3));
+        // 1) Gegner-Level: Spieler-Level ± 2, auf den Levelbereich der Zone begrenzt
+        //    (über dem Maxlevel der Zone spawnen nur noch Gegner der Maximalstufe)
+        var enemyLevel = Math.Clamp(playerLevel + _rng.Next(-2, 3), zone.MinLevel, zone.MaxLevel);
 
-        // 2) Nur Templates, deren LevelRange den enemyLevel abdeckt
-        var candidates = _templates
-            .Where(t => enemyLevel >= t.MinLevel && enemyLevel <= t.MaxLevel)
+        // 2) Gegnerarten der Zone (+ passende Extra-Templates)
+        var candidates = CombatZoneRegistry.TemplatesFor(zone)
+            .Concat(_extraTemplates.Where(t => enemyLevel >= t.MinLevel && enemyLevel <= t.MaxLevel))
             .ToList();
-
-        if (candidates.Count == 0)
-            throw new InvalidOperationException(
-                $"No enemy type configured for level {enemyLevel}.");
 
         // 3) Weighted Random Pick
         var totalWeight = candidates.Sum(c => c.Weight);
@@ -45,9 +40,6 @@ public class EnemySpawner
                 break;
             }
         }
-
-        // 4) Stats skalieren: linear mit Level + leichte Zeit-Bonus
-        var scale = 1; // + (elapsedSeconds / 60.0) * 0.05; // +5 % / Minute
 
         // 10 % Chance auf Rare – nur wenn sowohl Spieler als auch Gegner mind. Level 3
         bool isRare = playerLevel >= 3 && enemyLevel >= 3 && _rng.NextDouble() < 0.10;

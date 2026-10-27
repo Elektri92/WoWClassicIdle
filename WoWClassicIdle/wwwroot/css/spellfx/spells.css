@@ -1,0 +1,50 @@
+/* ── Kampf-Effekte: Zauber-Projektile (js/spellfx/spells.js) ── */
+
+/* Projektil: rotierende Aura mit Schweif + Icon in der Mitte */
+.spellfx-projectile {
+    width: 34px;
+    height: 34px;
+}
+
+.spellfx-aura {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--fx-hi) 0%, var(--fx-glow) 35%, transparent 70%);
+    filter: blur(1px);
+}
+
+/* Kometenschweif entgegen der Flugrichtung */
+.spellfx-aura::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    width: 70px;
+    height: 16px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background: linear-gradient(270deg, var(--fx-glow) 0%, color-mix(in srgb, var(--fx-core) 50%, transparent) 45%, transparent 100%);
+    filter: blur(3px);
+}
+
+.spellfx-icon {
+    position: absolute;
+    inset: 4px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--fx-hi);
+    box-shadow: 0 0 10px 3px var(--fx-glow), 0 0 20px 6px var(--fx-core);
+    object-fit: cover;
+}
+
+/* Nahkampf: eckiges, rotierendes Icon mit kurzem Schweif */
+.spellfx-projectile.melee .spellfx-icon {
+    border-radius: 4px;
+}
+
+.spellfx-projectile.melee .spellfx-aura::after {
+    width: 44px;
+    height: 10px;
+}

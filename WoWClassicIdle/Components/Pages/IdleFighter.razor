@@ -9,10 +9,38 @@
 
 <PageTitle>Idle Fighter</PageTitle>
 
-<div class="wow-page narrow idle-page">
+<div class="wow-page narrow idle-page @(BuildInfo.IsDebug ? "with-debug" : "")">
+@if (_engine.IsAtSpiritHealer)
+{
+    <!-- Geisterwelt: Bildschirm entsättigt, nur der Spirit Healer bleibt farbig (css/spirit-healer.css) -->
+    <div class="death-overlay" aria-hidden="true"></div>
+}
+@if (ShowResurrectFlash)
+{
+    <div @key="_resurrectedAt.Ticks" class="resurrect-flash" aria-hidden="true"></div>
+}
 <h2>Idle Fighter</h2>
-<p class="wow-hint">Your character fights on its own – watch the battle, the damage meter and the action log.</p>
+<p class="wow-hint">Your character fights on its own in the zone you choose.</p>
 
+<CombatZonePanel @bind-Open="_zoneMenuOpen" />
+
+@if (ZoneMenuVisible)
+{
+    @* Zonenkarte offen → Kampf, Reise und Meter ausblenden *@
+}
+else if (_engine.IsTraveling)
+{
+    <ZoneTravelScene Travel="_engine.Travel" />
+}
+else if (!_engine.NeedsCombatZone)
+{
+    var battleTheme = _engine.CurrentCombatZone?.Theme ?? "grassland";
+<!-- Kampf-Hintergrund in den Farben der aktuellen Zone (css/combat-zones.css) -->
+<div class="battle-backdrop zone-theme-@battleTheme @(CombatZoneRegistry.IsNightTheme(battleTheme) ? "night" : "day")">
+<div class="battle-scenery" aria-hidden="true">
+    <div class="battle-mountains zone-theme-@battleTheme"></div>
+    <div class="battle-hills zone-theme-@battleTheme"></div>
+</div>
 <div class="battlefield">
     <!-- ═══════════════════════════════════════════ -->
     <!--  PLAYER FRAME  (links)                     -->
@@ -34,7 +62,7 @@
             @foreach (var f in SnapshotFloats(_playerFloats))
             {
                 <span @key="f.Id" class="combat-text @FloatCssClass(f)"
-                      style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;">@FloatText(f)</span>
+                      style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;@FloatDelayStyle(f)">@FloatText(f)</span>
             }
         </div>
         <div class="frame-header">
@@ -61,6 +89,25 @@
                 <div class="name-line">
                     <span class="char-name">@_engine.Player.Name</span>
                     <span class="level">Lv. @_engine.Player.Stats.Level</span>
+                    <!-- ═══ ACTIVE BUFFS: oben rechts in der Namenszeile, füllt von rechts nach links ═══ -->
+                    @{ var buffs = _engine.Player.Buffs.Snapshot(); }
+                    @if (buffs.Count > 0)
+                    {
+                        <div class="buff-bar player-buff-bar">
+                            @foreach (var buff in buffs)
+                            {
+                                <AbilityTooltip @key="buff.Source.Id" Ability="buff.Source" BuffRemaining="buff.Remaining">
+                                    <span class="buff-icon">
+                                        <img src="@buff.Source.IconUrl" alt="@buff.Source.Name" onerror="this.style.visibility='hidden'" />
+                                        @if (buff.Source.BuffDuration < 9999)
+                                        {
+                                            <span class="buff-time @(buff.Remaining <= 5 ? "expiring" : "")">@FormatBuffTime(buff.Remaining)</span>
+                                        }
+                                    </span>
+                                </AbilityTooltip>
+                            }
+                        </div>
+                    }
                 </div>
                 <div class="bar-row">
                     @{
@@ -120,26 +167,6 @@
                         <div class="hp-fill" style="width: @(CalcPct(pet.CurrentHp, pet.MaxHp))%"></div>
                         <span class="bar-text">@pet.Definition.Name · @pet.CurrentHp / @pet.MaxHp</span>
                     </div>
-                </div>
-            }
-
-            <!-- ═══ ACTIVE BUFFS ═══ -->
-            @{ var buffs = _engine.Player.Buffs.Snapshot(); }
-            @if (buffs.Count > 0)
-            {
-                <div class="buff-bar">
-                    @foreach (var buff in buffs)
-                    {
-                        <AbilityTooltip @key="buff.Source.Id" Ability="buff.Source" BuffRemaining="buff.Remaining">
-                            <span class="buff-icon">
-                                <img src="@buff.Source.IconUrl" alt="@buff.Source.Name" onerror="this.style.visibility='hidden'" />
-                                @if (buff.Source.BuffDuration < 9999)
-                                {
-                                    <span class="buff-time @(buff.Remaining <= 5 ? "expiring" : "")">@FormatBuffTime(buff.Remaining)</span>
-                                }
-                            </span>
-                        </AbilityTooltip>
-                    }
                 </div>
             }
 
@@ -233,22 +260,30 @@
     <!-- ═══════════════════════════════════════════ -->
     <!--  ENEMY FRAME  (rechts)                      -->
     <!-- ═══════════════════════════════════════════ -->
-        <div class="unit-frame enemy-frame @(_engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
+        <div class="unit-frame enemy-frame @(_engine.IsAtSpiritHealer ? "spirit-frame" : _engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
             <div class="combat-text-overlay">
                 @foreach (var f in SnapshotFloats(_enemyFloats))
                 {
+                    <!-- Treffer erscheinen erst beim Einschlag des Effekts (animation-delay) -->
                     <span @key="f.Id" class="combat-text @FloatCssClass(f)"
-                          style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;">@FloatText(f)</span>
+                          style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;@FloatDelayStyle(f)">@FloatText(f)</span>
                 }
             </div>
             <div class="frame-header">
-                <div class="portrait-area @(_engine.CurrentEnemy?.IsRare == true ? "rare-portrait-area" : "")">
+                <div class="portrait-area @(_engine.IsAtSpiritHealer ? "spirit-portrait-area" : _engine.CurrentEnemy?.IsRare == true ? "rare-portrait-area" : "")">
                     @if (_engine.IsAtSpiritHealer)
                     {
                         <img class="race-portrait enemy-portrait spirit-healer-portrait"
                              src="@SpiritHealerIconUrl"
                              alt="Spirit Healer"
                              onerror="this.src='images/enemy_placeholder.png'" />
+                        <!-- Aufsteigende Irrlichter um den Spirit Healer -->
+                        <span class="spirit-wisps" aria-hidden="true">
+                            @for (int i = 0; i < 6; i++)
+                            {
+                                <span class="spirit-wisp"></span>
+                            }
+                        </span>
                     }
                     else if (_engine.CurrentEnemy is { IsAlive: true } en && !string.IsNullOrEmpty(en.ImageUrl))
                     {
@@ -266,33 +301,9 @@
                     }
                     @if (!_engine.IsAtSpiritHealer && _engine.CurrentEnemy?.IsRare == true)
                     {
-                        <!-- Silberner Drachen-Ring (WoW-Classic-Stil für Rare-Gegner) -->
-                        <svg class="rare-dragon-ring" xmlns="http://www.w3.org/2000/svg" viewBox="-12 -16 88 96" aria-hidden="true">
-                            <!-- Dreifacher Silberring -->
-                            <circle cx="32" cy="32" r="37" fill="none" stroke="#7a8e9e" stroke-width="2.5"/>
-                            <circle cx="32" cy="32" r="34" fill="none" stroke="#c4d4e0" stroke-width="2"/>
-                            <circle cx="32" cy="32" r="30" fill="none" stroke="#4e6070" stroke-width="1"/>
-                            <!-- Glanzstreifen oben am Ring -->
-                            <path d="M 5 8 A 30 30 0 0 1 59 8" fill="none" stroke="#e4eff8" stroke-width="1.5" opacity="0.55"/>
-                            <!-- Linker Flügel -->
-                            <path d="M -8 44 C -16 28 -11 6 3 14 C -3 22 -2 34 1 42 Z" fill="#8a9eae" stroke="#b8ccd8" stroke-width="1"/>
-                            <path d="M -7 40 C -12 28 -8 14 3 16" fill="none" stroke="#d4e4ee" stroke-width="0.9" opacity="0.7"/>
-                            <path d="M -5 34 C -8 24 -4 14 3 16" fill="none" stroke="#d4e4ee" stroke-width="0.7" opacity="0.45"/>
-                            <!-- Rechter Flügel -->
-                            <path d="M 72 44 C 80 28 75 6 61 14 C 67 22 66 34 63 42 Z" fill="#8a9eae" stroke="#b8ccd8" stroke-width="1"/>
-                            <path d="M 71 40 C 76 28 72 14 61 16" fill="none" stroke="#d4e4ee" stroke-width="0.9" opacity="0.7"/>
-                            <path d="M 69 34 C 72 24 68 14 61 16" fill="none" stroke="#d4e4ee" stroke-width="0.7" opacity="0.45"/>
-                            <!-- Drachenkopf / Krone oben -->
-                            <path d="M 24 2 L 27 -5 L 32 -3 L 37 -5 L 40 2 L 36 4 L 28 4 Z" fill="#8a9eae" stroke="#b8ccd8" stroke-width="0.9"/>
-                            <!-- Linkes Horn -->
-                            <path d="M 26 -4 L 22 -14 L 29 -6 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
-                            <!-- Rechtes Horn -->
-                            <path d="M 38 -4 L 42 -14 L 35 -6 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
-                            <!-- Untere Klauen -->
-                            <path d="M 22 67 L 16 75 L 26 71 L 24 68 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
-                            <path d="M 30 68 L 29 76 L 35 76 L 34 68 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
-                            <path d="M 42 67 L 48 75 L 38 71 L 40 68 Z" fill="#8a9eae" stroke="#b0c4d0" stroke-width="0.7"/>
-                        </svg>
+                        <!-- Silberner Drachen-Rahmen (WoW-Classic Rare-Elite), gespiegelt: Flügel zeigen nach außen statt über die Leisten -->
+                        <img class="rare-dragon-frame" src="images/rare-dragon-frame.png" alt="" aria-hidden="true" />
+                        <span class="rare-level-badge">@_engine.CurrentEnemy?.Stats.Level</span>
                     }
                 </div>
             <div class="frame-info">
@@ -327,6 +338,30 @@
                             <span class="bar-text">@enemy.CurrentHp / @enemy.Stats.MaxHp</span>
                         </div>
                     </div>
+                    <!-- Gegner-Swing-Timer: füllt sich bis zum nächsten Angriff, glüht kurz davor; Betäubung friert ihn optisch ein -->
+                    double enemySwing = _engine.EnemySwingProgress;
+                    bool enemyStunned = enemy.Debuffs.IsStunned;
+                    double swingLeft = Math.Max(0, (1 - enemySwing) * _engine.EnemySwingInterval);
+                    <WowTooltip Contents="true" Title="Enemy Attack">
+                        <Body>
+                            <span class="zt-line">Attacks every @_engine.EnemySwingInterval.ToString("0.0#")s</span>
+                            <span class="zt-sub">Base speed @enemy.Stats.Speed.ToString("0.0#")s · Attack @enemy.Stats.Attack</span>
+                            @if (enemyStunned)
+                            {
+                                <span class="zt-good">Stunned – can't attack</span>
+                            }
+                        </Body>
+                        <ChildContent>
+                        <div class="enemy-swing @(enemyStunned ? "stunned" : enemySwing >= .85 ? "imminent" : "")">
+                            <img class="enemy-swing-icon" src="@EnemySwingIconUrl()" alt="" onerror="this.style.visibility='hidden'" />
+                            <div class="enemy-swing-track">
+                                <div class="enemy-swing-fill" style="width: @PctStyle(enemySwing)%"></div>
+                                <span class="enemy-swing-tick" style="left: @PctStyle(enemySwing)%"></span>
+                            </div>
+                            <span class="enemy-swing-time">@(enemyStunned ? "Stunned" : $"{swingLeft:0.0}s")</span>
+                        </div>
+                        </ChildContent>
+                    </WowTooltip>
                     @if (enemyDebuffs.Count > 0)
                     {
                         <div class="buff-bar debuff-bar">
@@ -357,6 +392,8 @@
         </div>
     </div>
 </div>
+</div>
+}
 
 @{ var notifications = SnapshotNotifications(); }
 @if (notifications.Length > 0)
@@ -383,20 +420,26 @@
     </div>
 }
 
-@{ var meter = _engine.Meter.GetSnapshot(); }
+@if (!ZoneMenuVisible)
+{
+    var meter = _engine.Meter.GetSnapshot();
 <div class="combat-panel">
     <!-- ═══ DAMAGE METER ═══ -->
-    <div class="meter-box">
+    <div class="meter-box meter-window">
         <div class="meter-header">
-            <span class="meter-title">📊 Damage Meter</span>
-            <button class="wow-btn small" @onclick="ResetMeter" title="Reset meter">⟲ Reset</button>
+            <span class="meter-title">Damage Meter</span>
+            <div class="meter-actions">
+                <button class="meter-tab @(_showHistory ? "active" : "")" @onclick="ToggleHistory"
+                        title="@(_showHistory ? "Hide action history" : "Show action history")">📜 Log</button>
+                <button class="meter-tab" @onclick="ResetMeter" title="Reset meter">⟲ Reset</button>
+            </div>
         </div>
         <div class="meter-summary">
-            <span>DMG <b>@FormatNumber(meter.TotalDamage)</b></span>
-            <span>DPS <b>@meter.Dps.ToString("0.0")</b></span>
-            <span>Heal <b class="heal-text">@FormatNumber(meter.TotalHealing)</b></span>
-            <span>HPS <b class="heal-text">@meter.Hps.ToString("0.0")</b></span>
-            <span>⏱ <b>@FormatElapsed(meter.CombatSeconds)</b></span>
+            <div class="meter-stat"><span>Damage</span><b>@FormatNumber(meter.TotalDamage)</b></div>
+            <div class="meter-stat"><span>DPS</span><b>@meter.Dps.ToString("0.0")</b></div>
+            <div class="meter-stat"><span>Healing</span><b class="heal-text">@FormatNumber(meter.TotalHealing)</b></div>
+            <div class="meter-stat"><span>HPS</span><b class="heal-text">@meter.Hps.ToString("0.0")</b></div>
+            <div class="meter-stat"><span>Combat</span><b>@FormatElapsed(meter.CombatSeconds)</b></div>
         </div>
         @if (meter.Rows.Count == 0)
         {
@@ -405,11 +448,14 @@
         else
         {
             var topTotal = Math.Max(1, meter.Rows.Max(r => r.Total));
+            var rank = 0;
             <div class="meter-rows">
                 @foreach (var row in meter.Rows)
                 {
+                    var rowRank = ++rank;
                     var kindTotal = row.Kind == CombatActionKind.Heal ? meter.TotalHealing : meter.TotalDamage;
                     var share = kindTotal > 0 ? row.Total * 100.0 / kindTotal : 0;
+                    var rowPerSec = meter.CombatSeconds > 0 ? row.Total / meter.CombatSeconds : 0;
                     bool isAutoAttack = row.Name == CombatMeter.AutoAttackName;
                     var rowRaw     = isAutoAttack ? null : ClassAbilityRegistry.FindByName(_engine.Player.ActiveClass, row.Name);
                     var rowAbility = rowRaw is null ? null : _engine.Player.GetEffectiveAbility(rowRaw);
@@ -422,19 +468,23 @@
                         b.AddAttribute(4, "class", "meter-fill");
                         b.AddAttribute(5, "style", $"width: {(row.Total * 100.0 / topTotal).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}%");
                         b.CloseElement();
-                        b.OpenElement(6, "img");
-                        b.AddAttribute(7, "class", "meter-icon");
-                        b.AddAttribute(8, "src", row.IconUrl);
-                        b.AddAttribute(9, "alt", "");
-                        b.AddAttribute(10, "onerror", "this.style.visibility='hidden'");
+                        b.OpenElement(6, "span");
+                        b.AddAttribute(7, "class", "meter-rank");
+                        b.AddContent(8, $"{rowRank}.");
                         b.CloseElement();
-                        b.OpenElement(11, "span");
-                        b.AddAttribute(12, "class", "meter-name");
-                        b.AddContent(13, row.Name);
+                        b.OpenElement(9, "img");
+                        b.AddAttribute(10, "class", "meter-icon");
+                        b.AddAttribute(11, "src", row.IconUrl);
+                        b.AddAttribute(12, "alt", "");
+                        b.AddAttribute(13, "onerror", "this.style.visibility='hidden'");
                         b.CloseElement();
                         b.OpenElement(14, "span");
-                        b.AddAttribute(15, "class", "meter-value");
-                        b.AddMarkupContent(16, $"{FormatNumber(row.Total)} <small>({share.ToString("0.0")}%)</small>");
+                        b.AddAttribute(15, "class", "meter-name");
+                        b.AddContent(16, row.Name);
+                        b.CloseElement();
+                        b.OpenElement(17, "span");
+                        b.AddAttribute(18, "class", "meter-value");
+                        b.AddMarkupContent(19, $"{FormatNumber(row.Total)} <small>({rowPerSec.ToString("0.0")}, {share.ToString("0.0")}%)</small>");
                         b.CloseElement();
                         b.CloseElement();
                     });
@@ -455,10 +505,15 @@
         }
     </div>
 
-    <!-- ═══ ACTION HISTORY ═══ -->
-    <div class="meter-box">
+    <!-- ═══ ACTION HISTORY (standardmäßig ausgeblendet) ═══ -->
+    @if (_showHistory)
+    {
+    <div class="meter-box meter-window">
         <div class="meter-header">
-            <span class="meter-title">📜 Action History</span>
+            <span class="meter-title">Action History</span>
+            <div class="meter-actions">
+                <button class="meter-tab" @onclick="ToggleHistory" title="Hide action history">✕</button>
+            </div>
         </div>
         @if (meter.History.Count == 0)
         {
@@ -484,24 +539,25 @@
             </div>
         }
     </div>
+    }
 </div>
+}
 
     @if (BuildInfo.IsDebug)
     {
-        <!-- Platzhalter, damit das fixierte Debug-Panel keinen Inhalt verdeckt -->
-        <div class="debug-panel-spacer"></div>
+        <!-- Schmale Spalte links, direkt neben der Navigation fixiert -->
         <div class="wow-card debug-panel">
-            <h4 class="debug-title">Debug Info <span class="wow-badge">DEBUG</span></h4>
+            <h4 class="debug-title">Debug <span class="wow-badge">DEBUG</span></h4>
             <div class="debug-status-row">
-                <span>Build: <b>DEBUG</b></span>
-                <span>Engine: <b>@(_running ? "🟢 Running" : "🔴 Paused")</b></span>
-                <span>⏱ Game-Time: <b>@FormatElapsed(_gameElapsedSeconds)</b></span>
-                <span>⚡ Speed: <b>@_speedMultiplier.ToString("0.#")×</b></span>
-                <span>Last: @_engine.LastLog</span>
+                <span>Engine <b>@(_running ? "🟢 Running" : "🔴 Paused")</b></span>
+                <span>⏱ Time <b>@FormatElapsed(_gameElapsedSeconds)</b></span>
+                <span>⚡ Speed <b>@_speedMultiplier.ToString("0.#")×</b></span>
+                <span>🗺 Zone <b>@(_engine.CurrentCombatZone?.Name ?? "–")</b></span>
+                <span class="debug-last" title="@_engine.LastLog">@_engine.LastLog</span>
             </div>
 
+            <div class="debug-speed-label">Speed</div>
             <div class="debug-speed-row">
-                <span class="debug-speed-label">Speed:</span>
                 @foreach (var s in new[] { 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 100, 200, 500, 1000, 5000 })
                 {
                     <button class="wow-tab @(_speedMultiplier == s ? "active" : "")"
@@ -510,14 +566,13 @@
                     </button>
                 }
             </div>
+            <div class="debug-speed-label">Level</div>
             <div class="debug-level-row">
-                <span class="debug-speed-label">Level:</span>
                 <input type="number" min="1" max="60" @bind="_debugTargetLevel" class="debug-level-input" />
-                <button class="wow-btn small" @onclick="SetDebugLevel">Set</button>
-                <span class="wow-muted">Current: <b>@_engine.Player.Level</b></span>
+                <button class="wow-btn small primary" @onclick="SetDebugLevel">Set</button>
+                <span class="wow-muted">now <b>@_engine.Player.Level</b></span>
             </div>
-            <div class="debug-level-row">
-                <span class="debug-speed-label">Quick:</span>
+            <div class="debug-speed-row">
                 @foreach (var lvl in new[] { 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 })
                 {
                     <button class="wow-tab @(_engine.Player.Level == lvl ? "active" : "")"
@@ -648,16 +703,42 @@
         box-shadow: 0 0 12px rgba(100,160,190,0.7);
     }
 
-    /* SVG Drachen-Ring: absolut über dem Portrait positioniert */
-    .rare-dragon-ring {
+    /* Drachen-Rahmen (300 × 300 px Grafik, Portrait-Loch bei 114/138 mit r = 70, Level-Rund bei 169/190):
+       auf 141 px skaliert (Faktor 0,47 → Loch r ≈ 33 = Portrait + Rand) und horizontal gespiegelt,
+       damit Kopf und Flügel links aus dem Frame ragen. Loch-Mitte gespiegelt bei x = 186 → 87,6 px. */
+    .rare-dragon-frame {
         position: absolute;
-        left: -12px;
-        top: -16px;
-        width: 88px;
-        height: 96px;
+        left: -56px;
+        top: -33px;
+        width: 141px;
+        height: 141px;
+        max-width: none;
+        transform: scaleX(-1);
         pointer-events: none;
         z-index: 3;
-        filter: drop-shadow(0 0 4px rgba(140,190,220,.55));
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,.8)) drop-shadow(0 0 6px rgba(160,200,225,.35));
+    }
+
+    /* Gegnerlevel im kleinen goldenen Rund des Rahmens (unten links nach dem Spiegeln) */
+    .rare-level-badge {
+        position: absolute;
+        left: 6px;
+        top: 56px;
+        width: 22px;
+        height: 22px;
+        transform: translate(-50%, -50%);
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: radial-gradient(circle, #2a1f10 0%, #0e0b07 100%);
+        color: #ffd100;
+        font-family: var(--wow-font-title);
+        font-size: .7rem;
+        font-weight: 700;
+        text-shadow: 0 1px 2px #000;
+        pointer-events: none;
     }
 
     /* ── Floating Combat Text (WoW style) ── */
@@ -724,8 +805,10 @@
         100% { transform: translate(-50%, -70px) scale(1); opacity: 0; }
     }
 
+    /* Start bei opacity 0, damit verzögerte Zahlen (animation-delay) bis zum Einschlag unsichtbar bleiben */
     @@keyframes combatTextRise {
-        0%   { transform: translate(-50%, 0) scale(1.15); opacity: 1; }
+        0%   { transform: translate(-50%, 0) scale(1.4); opacity: 0; }
+        6%   { transform: translate(-50%, 0) scale(1.15); opacity: 1; }
         15%  { transform: translate(-50%, -6px) scale(1); opacity: 1; }
         70%  { opacity: 1; }
         100% { transform: translate(-50%, -55px) scale(.9); opacity: 0; }
@@ -985,6 +1068,80 @@
         box-shadow: 0 0 10px rgba(255, 211, 74, .8);
     }
 
+    /* ── Gegner-Swing-Timer: schmale Leiste unter dem Lebensbalken ── */
+    .enemy-swing {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: .68rem;
+    }
+
+    .enemy-swing-icon {
+        width: 18px;
+        height: 18px;
+        border: 1px solid #6a2e22;
+        border-radius: 3px;
+        box-shadow: 0 0 3px rgba(0, 0, 0, .8);
+    }
+
+    .enemy-swing-track {
+        position: relative;
+        flex: 1;
+        height: 8px;
+        background: #120806;
+        border: 1px solid #4a1e16;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, .8);
+    }
+
+    .enemy-swing-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: linear-gradient(180deg, #ff9a3a 0%, #c2410f 55%, #7a1e08 100%);
+        transition: width .1s linear;
+    }
+
+    /* Funke an der Spitze der Füllung */
+    .enemy-swing-tick {
+        position: absolute;
+        top: -1px;
+        bottom: -1px;
+        width: 3px;
+        margin-left: -2px;
+        background: #ffe6a0;
+        box-shadow: 0 0 6px 2px rgba(255, 170, 60, .8);
+        transition: left .1s linear;
+    }
+
+    .enemy-swing-time {
+        min-width: 42px;
+        color: #e8b49a;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 1px 2px #000;
+    }
+
+    /* Kurz vor dem Treffer: Leiste glüht rot */
+    .enemy-swing.imminent .enemy-swing-track {
+        border-color: #ff5a2a;
+        animation: enemySwingWarn .35s ease-in-out infinite alternate;
+    }
+    .enemy-swing.imminent .enemy-swing-time { color: #ff7a4a; font-weight: 700; }
+
+    @@keyframes enemySwingWarn {
+        from { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .8), 0 0 2px rgba(255, 80, 30, .3); }
+        to   { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .8), 0 0 8px rgba(255, 80, 30, .9); }
+    }
+
+    /* Betäubt: eingefroren, kühles Blau */
+    .enemy-swing.stunned .enemy-swing-fill { background: linear-gradient(180deg, #8fc8ff 0%, #3a6aa8 100%); }
+    .enemy-swing.stunned .enemy-swing-tick { display: none; }
+    .enemy-swing.stunned .enemy-swing-time { color: #8fc8ff; }
+
+    .rare-frame .enemy-swing-icon { border-color: #7aaabb; }
+
     .enemy-hp .hp-fill {
         background: linear-gradient(180deg, #e03a2a 0%, #8b1a1a 100%);
     }
@@ -1071,6 +1228,41 @@
 
     .buff-time.expiring {
         color: #ff6b5b;
+    }
+
+    /* ── Spieler-Buffs: kompakt in der Namenszeile, rechtsbündig; row-reverse → erster Buff ganz rechts ── */
+    .player-buff-bar {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-direction: row-reverse;
+        flex-wrap: nowrap;
+        align-self: center;
+        gap: 3px;
+        margin-top: 0;
+    }
+
+    .player-buff-bar .buff-icon {
+        position: relative;
+        width: 22px;
+    }
+
+    .player-buff-bar .buff-icon img {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Restzeit liegt auf dem unteren Icon-Rand statt darunter, damit die Zeile flach bleibt */
+    .player-buff-bar .buff-time {
+        position: absolute;
+        bottom: -3px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: .58rem;
+        line-height: 1;
+        padding: 0 2px;
+        border-radius: 2px;
+        background: rgba(0, 0, 0, .65);
+        pointer-events: none;
     }
 
     /* ── Debuff Bar (on enemy) ── */
@@ -1252,65 +1444,156 @@
         margin-bottom: 1rem;
     }
 
+    /* Fenster im Stil klassischer Meter-AddOns (Recount/Details!): dunkler Rahmen, Titelleiste, Statusbars */
     .meter-box {
         flex: 1;
         min-width: 0;
-        padding: 10px 12px;
-        background: linear-gradient(180deg, #2b2418 0%, #1a150d 100%);
-        border: 2px solid #5a4a28;
-        border-radius: 8px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444;
+        background: rgba(8, 6, 4, .92);
+        border: 2px solid var(--wow-border);
+        border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.6), inset 0 0 0 1px #000, 0 0 0 1px #000;
         font-size: .8rem;
-        color: #c9b88c;
+        color: var(--wow-text);
+        overflow: hidden;
     }
 
     .meter-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 6px;
+        height: 26px;
+        padding: 0 4px 0 10px;
+        background: linear-gradient(180deg, #3a2f1c 0%, #241c10 55%, #17120a 100%);
+        border-bottom: 1px solid var(--wow-border-inner);
+        box-shadow: inset 0 1px 0 rgba(255, 236, 155, .12), 0 1px 0 #000;
     }
 
     .meter-title {
-        font-family: 'Cinzel', serif;
+        font-family: var(--wow-font-title);
         font-weight: 700;
-        font-size: .95rem;
-        color: #ffd100;
-        text-shadow: 0 1px 2px #000;
+        font-size: .85rem;
+        letter-spacing: .03em;
+        color: var(--wow-gold);
+        text-shadow: 0 0 2px #000, 1px 1px 1px #000;
     }
+
+    .meter-actions {
+        display: flex;
+        gap: 3px;
+    }
+
+    /* Kleine Buttons in der Meter-Titelleiste – roter Look mit Goldrand wie die Navigation */
+    .meter-tab {
+        position: relative;
+        height: 20px;
+        padding: 0 8px;
+        font-family: var(--wow-font-title);
+        font-size: .7rem;
+        font-weight: 700;
+        line-height: 16px;
+        letter-spacing: .3px;
+        color: var(--wow-gold);
+        text-shadow: 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, .8);
+        background: linear-gradient(180deg, #8e1a14 0%, #5e0d0a 45%, #3e0606 55%, #2a0404 100%);
+        border: 1px solid #8a7444;
+        border-top-color: #c5a55a;
+        border-bottom-color: #4a3d22;
+        border-radius: 4px;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 190, 120, .35),
+            inset 0 -1px 2px rgba(0, 0, 0, .55),
+            0 1px 3px rgba(0, 0, 0, .7);
+        cursor: pointer;
+        transition: filter .15s ease, box-shadow .15s ease, color .15s ease;
+    }
+
+    /* Glänzende obere Hälfte */
+    .meter-tab::before {
+        content: "";
+        position: absolute;
+        inset: 1px 1px 50% 1px;
+        border-radius: 3px 3px 0 0;
+        background: linear-gradient(180deg, rgba(255, 220, 160, .18) 0%, rgba(255, 220, 160, 0) 100%);
+        pointer-events: none;
+    }
+
+    .meter-tab:hover {
+        color: #fff;
+        filter: brightness(1.2);
+        border-color: #c5a55a;
+        border-top-color: #ffec9b;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 210, 140, .5),
+            inset 0 -1px 2px rgba(0, 0, 0, .55),
+            0 0 8px rgba(255, 209, 0, .35),
+            0 1px 3px rgba(0, 0, 0, .7);
+    }
+
+    .meter-tab:active {
+        filter: brightness(.9);
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, .8);
+    }
+
+    /* Eingeschaltet (Log offen): beleuchtet und eingedrückt wie der aktive Nav-Button */
+    .meter-tab.active {
+        color: #fff;
+        background: linear-gradient(180deg, #4a0808 0%, #6e120d 50%, #8e1a14 100%);
+        border-color: #ffd100;
+        box-shadow:
+            inset 0 2px 5px rgba(0, 0, 0, .75),
+            0 0 8px rgba(255, 209, 0, .45);
+    }
+    .meter-tab.active::before { background: none; }
 
     .meter-summary {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2px 12px;
-        margin-bottom: 8px;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #5a4a28;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1px;
+        background: #000;
+        border-bottom: 1px solid var(--wow-border);
         font-variant-numeric: tabular-nums;
-        color: #9a8a64;
     }
 
-    .meter-summary b {
+    .meter-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 3px 2px;
+        background: linear-gradient(180deg, #1c160d 0%, #110d07 100%);
+    }
+
+    .meter-stat span {
+        font-size: .62rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--wow-muted);
+    }
+
+    .meter-stat b {
         color: #fff;
+        text-shadow: 0 1px 1px #000;
     }
 
     .meter-empty {
-        color: #9a8a64;
+        color: var(--wow-muted);
         font-style: italic;
-        padding: 6px 0;
+        padding: 10px;
+        text-align: center;
     }
 
     .meter-rows,
     .history-list {
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 1px;
+        padding: 4px;
     }
 
     .history-list {
+        gap: 2px;
         max-height: 230px;
         overflow-y: auto;
-        scrollbar-color: #5a4a28 #0e0b07;
+        scrollbar-color: var(--wow-border) var(--wow-bg-deep);
         scrollbar-width: thin;
     }
 
@@ -1318,33 +1601,57 @@
         position: relative;
         display: flex;
         align-items: center;
-        gap: 6px;
-        height: 22px;
-        padding: 0 6px 0 2px;
-        background: #0e0b07;
-        border-radius: 3px;
+        gap: 5px;
+        height: 20px;
+        padding: 0 6px 0 0;
+        background: #15110b;
         overflow: hidden;
     }
 
+    .meter-row:hover {
+        outline: 1px solid var(--wow-gold-soft);
+        outline-offset: -1px;
+    }
+
+    /* Statusbar-Textur: Glanzkante oben, dunklere Unterkante */
     .meter-fill {
         position: absolute;
         inset: 0 auto 0 0;
         transition: width .4s ease;
     }
 
+    .meter-fill::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.05) 45%, rgba(0,0,0,.15) 55%, rgba(0,0,0,.35) 100%);
+    }
+
     .meter-dmg .meter-fill {
-        background: linear-gradient(90deg, #5a1a10 0%, #8b2a1a 100%);
+        background: linear-gradient(90deg, #6e1a0e 0%, #a8321c 100%);
     }
 
     .meter-heal .meter-fill {
-        background: linear-gradient(90deg, #163f12 0%, #2a6e1f 100%);
+        background: linear-gradient(90deg, #1b4d14 0%, #359026 100%);
+    }
+
+    .meter-rank {
+        position: relative;
+        width: 18px;
+        text-align: right;
+        font-size: .7rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--wow-gold-pale);
+        text-shadow: 0 1px 1px #000;
+        flex-shrink: 0;
     }
 
     .meter-icon {
         position: relative;
         width: 18px;
         height: 18px;
-        border-radius: 3px;
+        border: 1px solid #000;
+        box-shadow: 0 0 0 1px var(--wow-border-dark);
         flex-shrink: 0;
     }
 
@@ -1407,38 +1714,52 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Debug panel (am unteren Bildschirmrand fixiert, rechts neben der Sidebar) ── */
+    /* ── Debug panel: schmale, vertikale Spalte links, direkt rechts neben der Sidebar ── */
     .debug-panel {
         position: fixed;
         left: 250px;
-        right: 0;
+        top: 0;
         bottom: 0;
+        width: 176px;
         z-index: 50;
         margin: 0;
-        max-height: 40vh;
+        padding: 10px;
         overflow-y: auto;
         border-radius: 0;
-        font-size: .8rem;
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, .6);
+        border-top: none;
+        border-bottom: none;
+        font-size: .75rem;
+        box-shadow: 4px 0 12px rgba(0, 0, 0, .6);
     }
 
-    .debug-panel-spacer {
-        height: 160px;
+    .debug-panel .debug-title { font-size: .95rem; margin-bottom: 8px; }
+
+    /* Seiteninhalt nur dann nach rechts schieben, wenn neben der zentrierten Seite kein Platz für die Spalte ist */
+    @@media (min-width: 641px) and (max-width: 1640px) {
+        .idle-page.with-debug { margin-left: 168px; }
     }
 
     @@media (max-width: 640.98px) {
         .debug-panel {
-            left: 0;
+            position: static;
+            width: auto;
         }
     }
 
     .debug-status-row {
         display: flex;
-        flex-wrap: wrap;
-        gap: 4px 18px;
+        flex-direction: column;
+        gap: 3px;
         margin-bottom: 10px;
         padding-bottom: 8px;
         border-bottom: 1px solid #5a4a28;
+    }
+
+    .debug-last {
+        overflow: hidden;
+        color: var(--wow-muted);
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     .debug-status-row b,
@@ -1447,18 +1768,24 @@
     }
 
     .debug-speed-row {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 4px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3px;
         margin-bottom: 10px;
         padding-bottom: 8px;
         border-bottom: 1px solid #5a4a28;
     }
 
     .debug-speed-label {
+        margin-bottom: 4px;
         color: #ffd100;
-        margin-right: 4px;
+    }
+
+    .debug-speed-row .wow-tab {
+        margin: 0;
+        padding: 2px 0;
+        font-size: .72rem;
+        text-align: center;
     }
 
     .debug-level-row {
