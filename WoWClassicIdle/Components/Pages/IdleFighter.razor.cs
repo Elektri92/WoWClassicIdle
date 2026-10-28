@@ -318,6 +318,13 @@ public partial class IdleFighter
     private static string PctStyle(double fraction) =>
         (Math.Clamp(fraction, 0, 1) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
+    /// <summary>
+    /// Anteil (0..1) als kulturunabhängiger Faktor für <c>transform: scaleX()</c>. Füllbalken über transform statt
+    /// width animieren: width erzwingt bei jedem Tick Layout + Repaint, was WebKitGTK (Linux) ins Ruckeln bringt.
+    /// </summary>
+    private static string Scale(double fraction) =>
+        Math.Clamp(fraction, 0, 1).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
     public async ValueTask DisposeAsync()
     {
         _engine.TickUpdated -= OnTick;
