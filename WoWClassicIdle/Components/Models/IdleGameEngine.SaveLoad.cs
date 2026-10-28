@@ -34,6 +34,7 @@ public partial class IdleGameEngine
 
             RestoreProfessions(save);
             RestoreFeatureIntros(save);
+            RestoreMerchantStock(save);
 
             // Gemeinsames Inventar befüllen – Rucksack
             foreach (var itemData in save.SharedInventoryItems ?? [])
@@ -195,7 +196,7 @@ public partial class IdleGameEngine
         {
             if (!Enum.TryParse<Profession>(profData.Profession, out var profession)) continue;
             if (Professions.Get(profession).IsPrimary)
-                player.ProfessionState.Restore(profession, profData.Skill, profData.RankIndex);
+                player.ProfessionState.Restore(profession, profData.Skill, profData.RankIndex, profData.KnownRecipes, player.ActiveClass);
             else
                 RestoreSharedProfession(profession, profData.Skill, profData.RankIndex); // Altstand migrieren
         }
@@ -208,10 +209,13 @@ public partial class IdleGameEngine
         if (p.LoadoutAbilityIdsByClass.TryGetValue(p.ActiveClass.ToString(), out var activeIds))
             player.ApplyLoadout(new ClassLoadout { Class = p.ActiveClass, EquippedAbilityIds = activeIds.ToList() });
 
+        player.Name = CharacterNames.Normalize(data.Name);
+
         var characterSlot = new CharacterSlot
         {
             Id      = data.Id,
             Class   = data.Class,
+            Name    = player.Name,
             Faction = data.Faction,
             Race    = data.Race,
             Gender  = data.Gender,

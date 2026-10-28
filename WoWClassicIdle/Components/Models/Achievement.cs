@@ -27,3 +27,8 @@ public class EarnedAchievement
     public string AchievementId { get; init; } = "";
     public DateTime EarnedAt { get; init; }
 }
+
+public record AchievementProgress(long Current, long Target)
+{
+    public double Percent => Target > 0 ? Current * 100.0 / Target : 0;
+}

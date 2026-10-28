@@ -1,0 +1,83 @@
+@using Models
+@inject IdleGameEngine Engine
+@inject NavigationManager Nav
+
+@* Berufsübergreifende Suche: wer stellt ein Item her bzw. wo wird es gesammelt? Styles: wwwroot/css/profession-trainer.css *@
+<div class="al-panel prof-search" style="--i: 0">
+    <input class="trainer-search" type="search" placeholder="Search items, recipes and gathering zones…"
+           @bind="_query" @bind:event="oninput" />
+
+    @if (Query.Length >= MinQueryLength)
+    {
+        var hits = Hits.Take(MaxHits + 1).ToList();
+        <div class="prof-search-results">
+            @if (hits.Count == 0)
+            {
+                <p class="wow-hint trainer-empty">Nothing found for “@Query”.</p>
+            }
+            @foreach (var hit in hits.Take(MaxHits))
+            {
+                var def = Professions.Get(hit.Profession);
+                <div class="prof-search-hit" @onclick="() => Open(def)">
+                    <img class="craft-list-icon" src="@hit.Item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span class="prof-search-name" style="color: @ItemQualityColors.Hex(hit.Item.Quality)">@hit.Item.Name</span>
+                    <span class="prof-search-source">@hit.Source</span>
+                    <span class="prof-search-prof" title="@def.Name">
+                        <img src="@def.IconUrl" alt="" onerror="this.remove()" />
+                        @def.Name (@hit.RequiredSkill)
+                    </span>
+                    <span class="prof-search-status @hit.StatusCss">@hit.Status</span>
+                </div>
+            }
+            @if (hits.Count > MaxHits)
+            {
+                <p class="wow-muted prof-search-more">More results – refine your search.</p>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private const int MinQueryLength = 2;
+    private const int MaxHits = 12;
+
+    private string _query = "";
+    private string Query => _query.Trim();
+
+    private record SearchHit(Item Item, Profession Profession, int RequiredSkill, string Source, string Status, string StatusCss);
+
+    private void Open(ProfessionDefinition def) => Nav.NavigateTo($"/professions/{def.Slug}");
+
+    private bool Matches(string text) => text.Contains(Query, StringComparison.OrdinalIgnoreCase);
+
+    // Rezepte (Ergebnis-Name) und Sammelzonen (Drop-Name); Status aus Sicht des aktiven Charakters bzw. accountweit
+    private IEnumerable<SearchHit> Hits =>
+        ProfessionRegistry.Recipes
+            .Where(r => Matches(r.Result.Name))
+            .Select(r => RecipeHit(r))
+        .Concat(Professions.All.Where(d => d.IsGathering)
+            .SelectMany(d => ProfessionRegistry.GetZones(d.Profession).Select(z => (d, z)))
+            .SelectMany(x => x.z.Drops.Where(drop => Matches(drop.Item.Name)).Select(drop => ZoneHit(x.d, x.z, drop))))
+        .DistinctBy(h => (h.Item.Id, h.Source))
+        .OrderBy(h => h.RequiredSkill);
+
+    private SearchHit RecipeHit(Recipe recipe)
+    {
+        var progress = Engine.GetProfessionProgress(recipe.Profession);
+        var (status, css) = progress switch
+        {
+            null => ("Not learned", "locked"),
+            _ when progress.KnowsRecipe(recipe.Id) => ("Known", "known"),
+            _ when progress.Skill >= recipe.RequiredSkill => ("At trainer", "available"),
+            _ => ("Skill too low", "locked"),
+        };
+        return new SearchHit(recipe.Result, recipe.Profession, recipe.RequiredSkill, "Crafted", status, css);
+    }
+
+    private SearchHit ZoneHit(ProfessionDefinition def, GatheringZone zone, GatherDrop drop)
+    {
+        int required = ProfessionRegistry.ZoneRequiredSkill(zone);
+        var (status, css) = Engine.IsZoneUnlocked(def.Profession, zone.Id) ? ("Unlocked", "known") : ("Skill too low", "locked");
+        return new SearchHit(drop.Item, def.Profession, required, zone.Name, status, css);
+    }
+}

@@ -4,7 +4,7 @@ using Models;
 
 public abstract class Character
 {
-    public string Name { get; init; } = "";
+    public string Name { get; internal set; } = "";
     public Stats Stats { get; set; }
     public int CurrentHp { get; set; }
     public int CurrentMana { get; set; }

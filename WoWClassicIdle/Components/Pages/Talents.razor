@@ -9,22 +9,30 @@
 <div class="wow-page talents-page">
     <h2>Talents</h2>
 
-    <div class="wow-card char-preview">
-        <img src="@(Engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(Engine.Race, Engine.Gender))"
-             alt="@Engine.Race"
-             class="char-preview-icon"
-             onerror="this.style.display='none'" />
-        <div class="char-preview-text">
-            <span class="char-preview-race">@Engine.Race</span>
-            <span class="char-preview-level">Lv. @Engine.Player.Level</span>
+    @* ── Kopf: Charakter auf der Szene seiner aktuellen Zone (Styles aus ability-loadout.css) ── *@
+    <div class="al-header @(Engine.Faction == Faction.Alliance ? "alliance" : "horde") @(CombatZoneRegistry.IsNightTheme(HeaderTheme) ? "night" : "day")">
+        <div class="al-scenery" aria-hidden="true">
+            <div class="al-sky zone-theme-@HeaderTheme"></div>
+            <div class="battle-mountains zone-theme-@HeaderTheme"></div>
+            <div class="battle-hills zone-theme-@HeaderTheme"></div>
+            <img class="al-header-crest" src="@IconUrls.RaceCrestUrl(Engine.Race)" alt="" onerror="this.style.display='none'" />
         </div>
-        <div class="char-preview-class class-@Engine.PlayerClass.ToString().ToLowerInvariant()">
-            @Engine.PlayerClass
+        <div class="al-portrait">
+            <img class="al-race-portrait" src="@(Engine.Player.FormPortraitUrl ?? IconUrls.RaceIconUrl(Engine.Race, Engine.Gender))" alt="@Engine.Race" onerror="this.style.display='none'" />
+            <img class="al-class-badge" src="@IconUrls.ClassIconUrl(Engine.PlayerClass)" alt="@Engine.PlayerClass" onerror="this.style.display='none'" />
         </div>
-        <img src="@IconUrls.ClassIconUrl(Engine.PlayerClass)"
-             alt="@Engine.PlayerClass"
-             class="char-preview-icon"
-             onerror="this.style.display='none'" />
+        <div class="al-header-info">
+            <div class="al-name-line">
+                <span class="al-race">@Engine.ActiveCharacterName</span>
+                <span class="al-level">Lv. @Engine.Player.Level @Engine.Race</span>
+                <span class="al-class class-@Engine.PlayerClass.ToString().ToLowerInvariant()">@Engine.PlayerClass</span>
+            </div>
+            @{ int totalPoints = TotalSpent + AvailablePoints; }
+            <div class="al-slot-meter" title="Spent talent points">
+                <div class="al-slot-meter-fill" style="width: @(totalPoints == 0 ? 0 : TotalSpent * 100 / totalPoints)%"></div>
+                <span>@TotalSpent / @totalPoints talent points spent</span>
+            </div>
+        </div>
         <div class="talent-points-badge">
             <span class="pts-label">Unspent</span>
             <span class="pts-value @(AvailablePoints > 0 ? "pts-available" : "pts-zero")">@AvailablePoints</span>
@@ -46,7 +54,8 @@
                                 .Where(t => t.TreeIndex == treeIndex).ToList();
             int maxRow    = talents.Any() ? talents.Max(t => t.Row) : 0;
 
-            <div class="talent-tree">
+            <div class="talent-tree"
+                 style="--tree-bg: url('@TalentRegistry.GetTreeBackgroundUrl(Engine.PlayerClass, treeIndex)')">
                 <div class="tree-header">
                     <span class="tree-name">@treeName</span>
                     <span class="tree-points">@invested pts</span>
@@ -158,20 +167,15 @@
 <style>
     .talents-page { max-width: 960px; }
 
-    .char-preview { display: flex; align-items: center; gap: 14px; margin-bottom: 1rem; }
-    .char-preview-icon {
-        width: 48px; height: 48px; object-fit: cover; border-radius: 6px;
-        border: 2px solid #c5a55a; background: #0e0b07; box-shadow: 0 0 8px rgba(0,0,0,.7);
+    .talent-points-badge {
+        display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+        padding: 6px 12px; border: 1px solid var(--wow-border); border-radius: 6px;
+        background: rgba(0,0,0,.55); box-shadow: inset 0 0 6px #000;
     }
-    .char-preview-text { display: flex; flex-direction: column; line-height: 1.3; }
-    .char-preview-race { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; color: #fff; }
-    .char-preview-level { font-size: .85rem; color: #ffd100; font-weight: 700; }
-    .char-preview-class { margin-left: auto; font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700; }
-    .talent-points-badge { display: flex; flex-direction: column; align-items: center; margin-left: 10px; }
-    .pts-label { font-size: .7rem; text-transform: uppercase; color: #9a8a64; }
-    .pts-value { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .pts-label { font-size: .7rem; text-transform: uppercase; color: #c8b88a; text-shadow: 0 1px 2px #000; }
+    .pts-value { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; text-shadow: 0 1px 2px #000; }
     .pts-available { color: #ffd100; text-shadow: 0 0 8px rgba(255,209,0,.5); }
-    .pts-zero { color: #5a4a28; }
+    .pts-zero { color: #7a6a48; }
 
     .trees-wrapper {
         display: grid;
@@ -180,11 +184,16 @@
         margin-top: 0.5rem;
     }
 
+    /* Spec-Hintergrund wie im Original; Verlauf dunkelt für Lesbarkeit ab */
     .talent-tree {
-        background: rgba(0,0,0,.5);
+        background:
+            linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.45) 100%),
+            var(--tree-bg, none) center top / cover no-repeat,
+            #0a0806;
         border: 1px solid #3a2e18;
         border-radius: 6px;
         overflow: hidden;
+        box-shadow: inset 0 0 40px rgba(0,0,0,.8);
     }
 
     .tree-header {
@@ -218,7 +227,7 @@
         margin: 4px 2px;
         border-radius: 3px;
         overflow: hidden;
-        background: #120f08;
+        background: rgba(18,15,8,.75);
         border: 1px solid #2a2010;
         display: flex;
         align-items: center;
@@ -345,6 +354,10 @@
     private int AvailablePoints       => Engine.Player.GetAvailableTalentPoints(ActiveClass);
     private int TotalSpent            => Engine.Player.TalentState.TotalInvested(ActiveClass);
     private string[] TreeNames        => TalentRegistry.GetTreeNames(ActiveClass);
+
+    // Hintergrund des Kopfbereichs: aktuelle Zone, sonst Startgebiet der Rasse
+    private string HeaderTheme =>
+        Engine.CurrentCombatZone?.Theme ?? CombatZoneRegistry.StartZoneFor(Engine.Race)?.Theme ?? "grassland";
 
     protected override void OnInitialized()
     {

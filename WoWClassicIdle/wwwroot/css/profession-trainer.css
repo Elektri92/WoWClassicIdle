@@ -1,0 +1,198 @@
+/* ============================================
+   Berufslehrer (NPC im Kopf der Unterseite + Lehrerfenster), Suche, Karten hinter den Berufsblöcken
+   Sprechblase (.inv-speech), NPC-Texte (.inv-npc-*) und Porträt-Wackeln kommen aus inventory.css,
+   Liste/Details (.craft-*) aus professions.css
+   ============================================ */
+
+/* ── Transparente Karte: Hauptstadt (Herstellen) bzw. zufälliges Gebiet (Sammeln) ── */
+.prof-map-bg > :not(.prof-map) { position: relative; z-index: 1; }
+.prof-map {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-size: cover;
+    background-position: center;
+    opacity: .35;
+    filter: sepia(.3) saturate(.85) brightness(.75);
+    pointer-events: none;
+    animation: inv-map-in 1.2s ease-out .3s backwards;
+}
+/* Vignette: Karte läuft zu den Rändern hin ins UI-Braun aus */
+.prof-map::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+        radial-gradient(ellipse at center, rgba(14, 11, 7, .1) 35%, var(--wow-panel-bottom) 100%),
+        linear-gradient(180deg, var(--wow-panel-top) 0%, transparent 20%, transparent 80%, var(--wow-panel-bottom) 100%);
+}
+
+/* Berufskarten halbtransparent, damit die Karte durchscheint */
+.prof-layout .prof-map-bg .prof-card {
+    background:
+        linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 70%),
+        rgba(12, 10, 6, .62);
+}
+.prof-layout .prof-map-bg .prof-card:hover {
+    background:
+        linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 85%),
+        rgba(12, 10, 6, .72);
+}
+
+/* ── Lehrer-NPC rechts im Kopf ── */
+.prof-header .prof-card-body { flex: 1 1 auto; }
+.trainer-npc-col {
+    position: relative;
+    flex: 0 1 46%;
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+}
+.trainer-npc {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 14px;
+    background: rgba(10, 8, 5, .45);
+    border: 1px solid var(--wow-border-inner);
+    border-radius: 6px;
+    color: var(--wow-text);
+    font-family: var(--wow-font-body);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.trainer-npc:hover,
+.trainer-npc.open {
+    border-color: var(--wow-gold-soft);
+    box-shadow: 0 4px 16px rgba(255, 209, 0, .16);
+}
+.trainer-npc:hover { transform: translateY(-1px); }
+.trainer-npc-portrait { width: 72px; height: 72px; }
+.trainer-npc-portrait .al-race-portrait { width: 72px; height: 72px; }
+.trainer-npc-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.trainer-npc-text .inv-npc-cta { margin-top: 4px; }
+
+/* Sprechblase links neben dem Lehrer – der Kopf schneidet wegen des Lichtscheins (overflow: hidden) alles darüber ab */
+.inv-speech.trainer-speech {
+    bottom: auto;
+    left: auto;
+    right: calc(100% + 14px);
+    top: 50%;
+    max-width: 220px;
+    transform: translateY(-50%);
+    transform-origin: 100% 50%;
+}
+.inv-speech.trainer-speech::before,
+.inv-speech.trainer-speech::after { top: 50%; left: auto; transform: translateY(-50%); }
+.inv-speech.trainer-speech::before { left: 100%; border-width: 10px 0 10px 12px; border-color: transparent transparent transparent #6b5426; }
+.inv-speech.trainer-speech::after  { left: calc(100% - 3px); border-width: 8px 0 8px 10px; border-color: transparent transparent transparent #ecdcb0; }
+
+.prof-header .prof-training-capped { margin-top: 4px; }
+
+@media (max-width: 720px) {
+    .prof-header { flex-wrap: wrap; }
+    .trainer-npc-col { flex-basis: 100%; }
+}
+
+/* ── Lehrerfenster: Rahmen/Titelleiste/Geldleiste vom Händlerfenster (.inv-merchant-window, .mw-*) ── */
+.trainer-window { margin: 22px 0 0 12px; padding-bottom: 0; }
+.trainer-window .mw-titlebar { margin-bottom: 10px; }
+
+/* Innenflächen neutral-dunkel statt braun, passend zum Händlerfenster */
+.trainer-window .wow-inset,
+.trainer-window .craft-reagent,
+.trainer-window .trainer-msg {
+    background: linear-gradient(90deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, .25));
+    border-color: #3a3833;
+}
+.trainer-window .craft-list-group { border-bottom-color: #3a3833; }
+.trainer-window .craft-list-group:hover,
+.trainer-window .craft-list-entry:hover { background: rgba(255, 209, 0, .07); }
+.trainer-window .craft-list-entry.selected { background: rgba(255, 209, 0, .12); outline-color: #8a8478; }
+.trainer-window .trainer-search { background: #0d0c0b; border-color: #3a3833; }
+.trainer-window .trainer-search:focus { border-color: #8a8478; box-shadow: 0 0 6px rgba(255, 255, 255, .08); }
+.trainer-window .craft-filter-btn { border-color: #3a3833; }
+
+.trainer-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
+
+/* Suchfeld (Lehrer, Herstellungsfenster, Übersicht) */
+.trainer-search {
+    flex: 1 1 180px;
+    min-width: 0;
+    padding: 4px 8px;
+    background: #0c0a06;
+    border: 1px solid var(--wow-border-inner);
+    border-radius: 3px;
+    color: var(--wow-text);
+    font-family: var(--wow-font-body);
+    font-size: .82rem;
+}
+.trainer-search:focus { outline: none; border-color: var(--wow-gold-soft); box-shadow: 0 0 6px rgba(255, 209, 0, .25); }
+.trainer-search::placeholder { color: var(--wow-muted); }
+.craft-filter .trainer-search { flex-basis: 100%; margin-bottom: 2px; }
+
+/* Einträge: grün = lernbar, rot = Voraussetzungen fehlen (wie im Original) */
+.trainer-entry.available .craft-list-name { color: #40c040; }
+.trainer-entry.unavailable .craft-list-name { color: #e04040; }
+.trainer-entry.unavailable { opacity: .75; }
+.trainer-entry-cost { margin-left: auto; font-size: .7rem; flex-shrink: 0; }
+.trainer-entry-cost .money-frame { gap: 4px; padding: 0; background: none; border: 0; }
+.trainer-entry-cost .coin img { width: 10px; height: 10px; }
+.trainer-empty { margin: 8px; text-align: center; }
+
+.trainer-detail { min-width: 0; }
+.trainer-desc { margin: 0; font-size: .8rem; color: #e8e2c8; }
+.trainer-req { font-size: .8rem; color: var(--wow-text); }
+.trainer-missing { color: #ff4040; }
+.trainer-note { font-size: .72rem; }
+.trainer-cost { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--wow-gold-soft); }
+.trainer-cost.too-expensive .money-frame { color: #ff4040; }
+
+.trainer-msg {
+    padding: 4px 6px;
+    background: #0c0a06;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 3px;
+    font-size: .78rem;
+    color: #40c040;
+    animation: al-toast-in .3s cubic-bezier(.2, .8, .2, 1) both;
+}
+.trainer-msg.failed { color: #ff6060; animation: al-toast-in .3s cubic-bezier(.2, .8, .2, 1) both, al-shake .4s ease-in-out .1s; }
+
+/* Geldleiste wie beim Händler; Buttons rechts, Geld links */
+.trainer-footer { align-items: center; gap: 6px; }
+.trainer-money { margin-right: auto; display: flex; align-items: center; }
+
+/* ── Berufsübergreifende Suche (Übersicht) ── */
+.prof-search { margin-bottom: 12px; padding: 8px 10px; }
+.prof-search .trainer-search { width: 100%; }
+.prof-search-results { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
+.prof-search-hit {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto 90px;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: .8rem;
+    cursor: pointer;
+}
+.prof-search-hit:hover { background: #2a2218; }
+.prof-search-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prof-search-source { color: var(--wow-muted); font-size: .72rem; white-space: nowrap; }
+.prof-search-prof { display: flex; align-items: center; gap: 4px; color: var(--wow-gold-soft); font-size: .72rem; white-space: nowrap; }
+.prof-search-prof img { width: 16px; height: 16px; border-radius: 2px; }
+.prof-search-status { font-size: .72rem; text-align: right; }
+.prof-search-status.known { color: #40c040; }
+.prof-search-status.available { color: var(--wow-gold); }
+.prof-search-status.locked { color: #e04040; }
+.prof-search-more { margin: 4px 0 0; font-size: .72rem; text-align: center; }
+
+@media (max-width: 640px) {
+    .prof-search-hit { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .prof-search-source,
+    .prof-search-prof { display: none; }
+}

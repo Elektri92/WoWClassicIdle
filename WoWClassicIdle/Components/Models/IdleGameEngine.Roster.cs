@@ -41,8 +41,11 @@ public partial class IdleGameEngine
     }
 
     // ─── Roster-Verwaltung ───
-    public CharacterSlot CreateCharacter(Faction faction, Race race, CharacterClass characterClass, Gender gender)
+    public CharacterSlot CreateCharacter(string name, Faction faction, Race race, CharacterClass characterClass, Gender gender)
     {
+        if (CharacterNames.Validate(name) is { } nameError)
+            throw new ArgumentException(nameError);
+        name = CharacterNames.Normalize(name);
         if (!RaceClassInfo.IsRaceValidForFaction(race, faction))
             throw new ArgumentException($"Race '{race}' does not belong to faction '{faction}'.");
         if (!RaceClassInfo.IsClassAvailableForRace(race, characterClass))
@@ -50,13 +53,22 @@ public partial class IdleGameEngine
 
         // One slot per class – update the existing one instead of duplicating
         var existing = _roster.FirstOrDefault(s => s.Class == characterClass);
+
+        // Namen sind im Roster eindeutig (der eigene Slot beim Bearbeiten ausgenommen)
+        if (_roster.Any(s => s != existing && string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException($"The name '{name}' is already taken by another character.");
+
         if (existing is not null)
         {
             lock (_simLock)
             {
+                existing.Name    = name;
+                existing.Player.Name = name;
                 existing.Faction = faction;
                 existing.Race    = race;
                 existing.Gender  = gender;
+                // Bereits gewählte Zone bleibt erhalten; sonst Startgebiet der (neuen) Rasse
+                existing.CombatZoneId ??= CombatZoneRegistry.StartZoneFor(race)?.Id;
                 existing.Player.ChangeCharacter(faction, race);
                 existing.Player.SetActiveClass(characterClass); // recalculates stats for new race
             }
@@ -65,16 +77,18 @@ public partial class IdleGameEngine
         }
 
         var stats = StatsFactory.GetBaseStats(characterClass, race);
-        var newPlayer = new Player(stats, faction, race, characterClass);
+        var newPlayer = new Player(stats, faction, race, characterClass) { Name = name };
         newPlayer.Inventory = _sharedInventory;
         var slot = new CharacterSlot
         {
             Id = _nextSlotId++,
+            Name = name,
             Faction = faction,
             Race = race,
             Gender = gender,
             Class = characterClass,
-            Player = newPlayer
+            Player = newPlayer,
+            CombatZoneId = CombatZoneRegistry.StartZoneFor(race)?.Id
         };
         _roster.Add(slot);
         RosterChanged?.Invoke();

@@ -50,7 +50,7 @@ public partial class IdleGameEngine
             foreach (var slot in eligible.Where(s => s.Player.ProfessionState.Primary is null))
             {
                 if (!freeCrafting.TryDequeue(out var def)) break;
-                if (slot.Player.ProfessionState.Learn(def.Profession, slot.Player.Level) is not null) learned++;
+                if (slot.Player.ProfessionState.Learn(def.Profession, slot.Player.Level, slot.Player.ActiveClass) is not null) learned++;
             }
 
             // Passive Slots in Zone 1 – nur Charaktere, die noch nirgends passiv arbeiten (nicht der gespielte).

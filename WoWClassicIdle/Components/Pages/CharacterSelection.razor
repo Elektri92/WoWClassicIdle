@@ -7,62 +7,114 @@
 
 <PageTitle>Character Selection</PageTitle>
 
+@* Styles: wwwroot/css/character-select.css – gleicher Look wie die Unit-Frames und Kampf-Hintergründe in /idle *@
 <div class="wow-page narrow character-selection">
-    <h2>Character Selection</h2>
+    <h2 class="cs-title">Character Selection</h2>
+    <p class="wow-hint cs-hint">@(showCreation ? "Name your new hero and pick race, gender and class." : "Choose a hero to continue the fight, or create a new one.")</p>
 
-    @* ── Existing characters ── *@
-    @if (Engine.CharacterRoster.Count > 0)
+    @* ── Existing characters (ausgeblendet, solange die Erstellung offen ist) ── *@
+    @if (Engine.CharacterRoster.Count > 0 && !showCreation)
     {
         <div class="char-section-label">Your Characters</div>
 
-        @foreach (var slot in Engine.CharacterRoster)
+        @* Fraktionen nebeneinander: Alliance links, Horde rechts – jeweils auf ihrem Banner *@
+        <div class="cs-factions">
+        @foreach (var side in new[] { Faction.Alliance, Faction.Horde })
         {
-            bool isActive = Engine.HasActiveCharacter && slot.Id == Engine.CharacterRoster
-                .FirstOrDefault(s => s.Faction == Engine.Faction && s.Race == Engine.Race
-                                     && s.Class == Engine.PlayerClass && s.Gender == Engine.Gender)?.Id;
+            var sideSlots = Engine.CharacterRoster.Where(s => s.Faction == side).ToList();
+            string sideCss = side == Faction.Alliance ? "alliance" : "horde";
+            int index = 0;
 
-            <div class="existing-char-card @(slot.Faction == Faction.Alliance ? "alliance-card" : "horde-card") @(isActive ? "active-card" : "")"
-                 @onclick="() => SelectCharacter(slot)">
-                <div class="char-card-portraits">
-                    <img class="char-portrait"
-                         src="@IconUrls.RaceIconUrl(slot.Race, slot.Gender)"
-                         alt="@slot.Race"
-                         onerror="this.remove()" />
-                    <img class="char-portrait class-portrait"
-                         src="@IconUrls.ClassIconUrl(slot.Class)"
-                         alt="@slot.Class"
-                         onerror="this.remove()" />
-                    @if (slot.Player.ProfessionState.Primary is { } primary)
-                    {
-                        <img class="char-portrait profession-portrait"
-                             src="@primary.Definition.IconUrl"
-                             alt="@primary.Definition.Name"
-                             title="@($"{primary.Definition.Name} ({primary.Skill}/{primary.SkillCap})")"
-                             onerror="this.remove()" />
-                    }
-                </div>
-                <div class="char-card-info">
-                    <div class="char-card-name">
-                        <span class="char-race">@slot.Race</span>
-                        <span class="char-class class-@slot.Class.ToString().ToLowerInvariant()">@slot.Class</span>
+            <div class="cs-faction-col @sideCss" style="--col: @(side == Faction.Alliance ? 0 : 1)">
+                <h3 class="cs-faction-title @(sideCss)-color">
+                    <img src="@IconUrls.FactionIconUrl(side)" alt="" aria-hidden="true" onerror="this.remove()" />
+                    @side
+                </h3>
+                <div class="cs-bannered @sideCss">
+            @if (sideSlots.Count == 0)
+            {
+                <div class="cs-banner-empty">No @side heroes yet</div>
+            }
+            @foreach (var slot in sideSlots)
+            {
+                bool isActive = slot.Id == Engine.ActiveCharacter?.Id;
+                var zone = CombatZoneRegistry.Get(slot.CombatZoneId);
+                string theme = zone?.Theme ?? StartZone(slot.Race)?.Theme ?? "grassland";
+                int xpPct = slot.Player.XpToNextLevel > 0
+                    ? Math.Clamp(slot.Player.Xp * 100 / slot.Player.XpToNextLevel, 0, 100)
+                    : 100;
+
+                <div @key="slot.Id"
+                     class="cs-card @(slot.Faction == Faction.Alliance ? "alliance-card" : "horde-card") @(isActive ? "active-card" : "") @(CombatZoneRegistry.IsNightTheme(theme) ? "night" : "day")"
+                     style="--i: @(index++)"
+                     @onclick="() => SelectCharacter(slot)">
+                    <div class="cs-scenery" aria-hidden="true">
+                        <div class="cs-sky zone-theme-@theme"></div>
+                        <div class="battle-mountains zone-theme-@theme"></div>
+                        <div class="battle-hills zone-theme-@theme"></div>
                     </div>
-                    <div class="char-card-sub">
-                        @slot.Gender &nbsp;·&nbsp;
-                        <span class="@(slot.Faction == Faction.Alliance ? "alliance-color" : "horde-color")">@slot.Faction</span>
-                        &nbsp;·&nbsp; Lv. @slot.Player.Level
+                    <div class="cs-sheen" aria-hidden="true"></div>
+
+                    <div class="cs-frame">
+                        <div class="portrait-area">
+                            <img class="race-portrait" src="@IconUrls.RaceIconUrl(slot.Race, slot.Gender)" alt="@slot.Race" onerror="this.style.display='none'" />
+                            <img class="class-badge" src="@IconUrls.ClassIconUrl(slot.Class)" alt="@slot.Class" onerror="this.style.display='none'" />
+                            @if (slot.Player.ProfessionState.Primary is { } primary)
+                            {
+                                <img class="profession-badge"
+                                     src="@primary.Definition.IconUrl"
+                                     alt="@primary.Definition.Name"
+                                     title="@($"{primary.Definition.Name} ({primary.Skill}/{primary.SkillCap})")"
+                                     onerror="this.remove()" />
+                            }
+                        </div>
+                        <div class="cs-frame-info">
+                            <div class="cs-name-line">
+                                <span class="char-name">@IdleGameEngine.CharacterName(slot)</span>
+                                <span class="cs-level">Lv. @slot.Player.Level</span>
+                                @if (isActive)
+                                {
+                                    <span class="cs-active-badge">Active</span>
+                                }
+                            </div>
+                            <div class="cs-xp-bar" title="@($"{slot.Player.Xp} / {slot.Player.XpToNextLevel} XP")">
+                                <div class="cs-xp-fill" style="width: @(xpPct)%"></div>
+                                <span class="cs-bar-text">@xpPct% XP</span>
+                            </div>
+                            <div class="char-card-sub">
+                                @if (!string.IsNullOrWhiteSpace(slot.Name))
+                                {
+                                    <span class="char-race">@slot.Race</span>
+                                    <span class="char-class class-@slot.Class.ToString().ToLowerInvariant()">@slot.Class</span>
+                                    <span>&nbsp;·&nbsp;</span>
+                                }
+                                @slot.Gender &nbsp;·&nbsp;
+                                @if (slot.Travel is { } travel)
+                                {
+                                    <span class="cs-zone traveling">Traveling to @(CombatZoneRegistry.Get(travel.TargetZoneId)?.Name)</span>
+                                }
+                                else
+                                {
+                                    <span class="cs-zone">@(zone?.Name ?? "No zone chosen")</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="char-card-actions">
+                            <button class="wow-btn char-edit-btn"
+                                    title="Edit Character"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => EditCharacter(slot)">
+                                <img class="btn-icon" src="@IconUrls.EditIcon" alt="" aria-hidden="true" onerror="this.remove()" />
+                            </button>
+                            <img class="char-card-arrow" src="@IconUrls.PlayIcon" alt="Play" title="Play" onerror="this.remove()" />
+                        </div>
                     </div>
                 </div>
-                <div class="char-card-actions">
-                    <button class="wow-btn char-edit-btn"
-                            title="Edit Character"
-                            @onclick:stopPropagation="true"
-                            @onclick="() => EditCharacter(slot)">
-                        <img class="btn-icon" src="@IconUrls.EditIcon" alt="" aria-hidden="true" onerror="this.remove()" />
-                    </button>
-                    <img class="char-card-arrow" src="@IconUrls.PlayIcon" alt="Play" title="Play" onerror="this.remove()" />
+            }
                 </div>
             </div>
         }
+        </div>
 
         @if (BuildInfo.IsDebug)
         {
@@ -80,386 +132,164 @@
         }
 
         <div class="new-char-toggle-row">
-            <button class="wow-btn new-char-toggle" @onclick="ToggleCreation">
+            <button class="wow-btn primary new-char-toggle" @onclick="ToggleCreation">
                 <img class="btn-icon" src="@IconUrls.NewCharacterIcon" alt="" aria-hidden="true" onerror="this.remove()" />
-                <span>@(showCreation ? "Hide" : "Create New Character")</span>
+                <span>Create New Character</span>
             </button>
         </div>
     }
 
-    @* ── Creation form ── *@
+    @* ── Creation form: Bühne im Look des Kampf-Hintergrunds, Thema = Startgebiet der gewählten Rasse ── *@
     @if (showCreation)
     {
-        <div class="wow-card">
-            <h4>Gender</h4>
-            <div class="wow-button-group centered">
-                <button class="wow-btn wow-btn-icon @(selectedGender == Gender.Male ? "active" : "")"
-                        @onclick="() => SetGender(Gender.Male)">
-                    <img src="@IconUrls.RaceIconUrl(selectedRace, Gender.Male)" alt="" onerror="this.remove()" />
-                    <span>Male</span>
-                </button>
-                <button class="wow-btn wow-btn-icon @(selectedGender == Gender.Female ? "active" : "")"
-                        @onclick="() => SetGender(Gender.Female)">
-                    <img src="@IconUrls.RaceIconUrl(selectedRace, Gender.Female)" alt="" onerror="this.remove()" />
-                    <span>Female</span>
-                </button>
-            </div>
-        </div>
+        var start = StartZone(selectedRace);
+        string stageTheme = start?.Theme ?? "grassland";
+        var faction = GetFactionForRace(selectedRace);
 
-        <div class="wow-card">
-            <h4>Race</h4>
-            <div class="race-row">
-                <div class="race-column">
-                    <h3 class="race-column-title alliance-title">
-                        <img src="@IconUrls.FactionIconUrl(Faction.Alliance)" alt="" aria-hidden="true" onerror="this.remove()" />
-                        Alliance
-                    </h3>
-                    <div class="race-buttons alliance">
-                        @foreach (var race in AllianceRaces)
+        <div class="cs-stage">
+            @* Vorschau wie eine Charakterkarte: Szene des Startgebiets direkt als Hintergrund *@
+            <div class="cs-preview @(faction == Faction.Alliance ? "alliance-card" : "horde-card") @(CombatZoneRegistry.IsNightTheme(stageTheme) ? "night" : "day")">
+                <div class="cs-scenery" aria-hidden="true">
+                    @* @key: Beim Wechsel des Startgebiets wird die Szene neu aufgebaut und blendet weich ein *@
+                    <div @key="stageTheme" class="cs-scene-layer">
+                        <div class="cs-sky zone-theme-@stageTheme"></div>
+                        <div class="battle-mountains zone-theme-@stageTheme"></div>
+                        <div class="battle-hills zone-theme-@stageTheme"></div>
+                    </div>
+                    <div class="cs-embers">
+                        @for (int i = 0; i < 10; i++)
                         {
-                            <button class="wow-btn wow-btn-icon @(selectedRace == race ? "active" : "")"
-                                    @onclick="() => SetRace(race)">
-                                <img src="@IconUrls.RaceIconUrl(race, selectedGender)" alt="" onerror="this.remove()" />
-                                <span>@race</span>
-                            </button>
+                            <span></span>
                         }
                     </div>
                 </div>
-                <div class="race-column">
-                    <h3 class="race-column-title horde-title">
-                        <img src="@IconUrls.FactionIconUrl(Faction.Horde)" alt="" aria-hidden="true" onerror="this.remove()" />
-                        Horde
-                    </h3>
-                    <div class="race-buttons horde">
-                        @foreach (var race in HordeRaces)
+
+                <div class="portrait-area">
+                    <img @key="(selectedRace, selectedGender)" class="race-portrait cs-pop"
+                         src="@IconUrls.RaceIconUrl(selectedRace, selectedGender)" alt="" onerror="this.style.display='none'" />
+                    <img @key="selectedClass" class="class-badge cs-pop"
+                         src="@IconUrls.ClassIconUrl(selectedClass)" alt="" onerror="this.style.display='none'" />
+                </div>
+                <div class="cs-frame-info">
+                    <div class="cs-name-line">
+                        <span class="char-name @(string.IsNullOrWhiteSpace(characterName) ? "placeholder" : "")">@PreviewName</span>
+                        <span class="char-race">@selectedRace</span>
+                        <span class="char-class class-@selectedClass.ToString().ToLowerInvariant()">@selectedClass</span>
+                        <span class="cs-level">Lv. 1</span>
+                    </div>
+                    <div class="char-card-sub">
+                        <img class="cs-faction-icon" src="@IconUrls.FactionIconUrl(faction)" alt="" aria-hidden="true" onerror="this.remove()" />
+                        <span class="@(faction == Faction.Alliance ? "alliance-color" : "horde-color")">@faction</span>
+                        &nbsp;·&nbsp; @selectedGender
+                        @if (start is not null)
                         {
-                            <button class="wow-btn wow-btn-icon @(selectedRace == race ? "active" : "")"
-                                    @onclick="() => SetRace(race)">
-                                <img src="@IconUrls.RaceIconUrl(race, selectedGender)" alt="" onerror="this.remove()" />
-                                <span>@race</span>
-                            </button>
+                            <span>&nbsp;·&nbsp; Starts in <span class="cs-zone">@start.Name</span></span>
                         }
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="wow-card">
-            <h4>Class</h4>
-            <div class="wow-button-group centered">
-                @foreach (CharacterClass cls in Enum.GetValues(typeof(CharacterClass)))
+            <div class="unit-frame cs-panel" style="--i: 0">
+                <h4>Name</h4>
+                <div class="cs-name-input-row">
+                    <input type="text" class="cs-name-input @(nameError is not null ? "invalid" : "")"
+                           placeholder="Enter a name"
+                           maxlength="@CharacterNames.MaxLength"
+                           autocomplete="off" spellcheck="false"
+                           @bind="characterName" @bind:event="oninput" @bind:after="OnNameChanged"
+                           @onkeydown="OnNameKeyDown" />
+                </div>
+                @if (nameError is not null)
                 {
-                    bool available = RaceClassInfo.GetAvailableClasses(selectedRace).Contains(cls);
-                    <button class="wow-btn wow-btn-icon @(selectedClass == cls && available ? "active" : "") @(available ? "" : "disabled")"
-                            disabled="@(!available)"
-                            @onclick="() => SetClass(cls)">
-                        <img src="@IconUrls.ClassIconUrl(cls)" alt="" onerror="this.remove()" />
-                        <span class="class-@cls.ToString().ToLowerInvariant()">@cls</span>
-                    </button>
+                    <div class="cs-name-error">@nameError</div>
                 }
             </div>
-        </div>
 
-        @if (!string.IsNullOrEmpty(errorMsg))
-        {
-            <div class="wow-alert error">@errorMsg</div>
-        }
+            <div class="unit-frame cs-panel" style="--i: 1">
+                <h4>Race</h4>
+                <div class="race-row">
+                    @foreach (var (side, races) in new[] { (Faction.Alliance, AllianceRaces), (Faction.Horde, HordeRaces) })
+                    {
+                        string sideCss = side == Faction.Alliance ? "alliance" : "horde";
+                        <div class="race-column">
+                            <h3 class="race-column-title @(sideCss)-title">
+                                <img src="@IconUrls.FactionIconUrl(side)" alt="" aria-hidden="true" onerror="this.remove()" />
+                                @side
+                            </h3>
+                            <div class="race-buttons cs-bannered @sideCss">
+                                @foreach (var race in races)
+                                {
+                                    <button class="wow-btn wow-btn-icon @(selectedRace == race ? "active" : "")"
+                                            @onclick="() => SetRace(race)">
+                                        <img src="@IconUrls.RaceIconUrl(race, selectedGender)" alt="" onerror="this.remove()" />
+                                        <span>@race</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
 
-        <div class="creation-confirm-row">
-            <button class="wow-btn primary confirm-btn" @onclick="ConfirmAndPlay">
-                <img class="btn-icon" src="@IconUrls.ClassIconUrl(selectedClass)" alt="" aria-hidden="true" onerror="this.remove()" />
-                <span>Play as @selectedRace @selectedClass</span>
-            </button>
+            <div class="unit-frame cs-panel" style="--i: 2">
+                <h4>Gender</h4>
+                <div class="wow-button-group centered">
+                    @foreach (var gender in new[] { Gender.Male, Gender.Female })
+                    {
+                        <button class="wow-btn wow-btn-icon @(selectedGender == gender ? "active" : "")"
+                                @onclick="() => SetGender(gender)">
+                            <img src="@IconUrls.RaceIconUrl(selectedRace, gender)" alt="" onerror="this.remove()" />
+                            <span>@gender</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="unit-frame cs-panel" style="--i: 3">
+                <h4>Class</h4>
+                <div class="wow-button-group centered">
+                    @foreach (CharacterClass cls in Enum.GetValues(typeof(CharacterClass)))
+                    {
+                        bool available = RaceClassInfo.GetAvailableClasses(selectedRace).Contains(cls);
+                        <button class="wow-btn wow-btn-icon @(selectedClass == cls && available ? "active" : "") @(available ? "" : "disabled")"
+                                disabled="@(!available)"
+                                @onclick="() => SetClass(cls)">
+                            <img src="@IconUrls.ClassIconUrl(cls)" alt="" onerror="this.remove()" />
+                            <span class="class-@cls.ToString().ToLowerInvariant()">@cls</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="wow-alert error cs-error">@errorMsg</div>
+            }
+
+            <div class="creation-confirm-row">
+                @if (Engine.CharacterRoster.Count > 0)
+                {
+                    <button class="wow-btn primary cs-back-btn" @onclick="ToggleCreation">
+                        <span>Back</span>
+                    </button>
+                }
+                <button class="wow-btn primary confirm-btn" disabled="@(CharacterNames.Validate(characterName) is not null)"
+                        title="@(CharacterNames.Validate(characterName) ?? "")"
+                        @onclick="ConfirmAndPlay">
+                    <img class="btn-icon" src="@IconUrls.ClassIconUrl(selectedClass)" alt="" aria-hidden="true" onerror="this.remove()" />
+                    <span>Play as @PreviewName</span>
+                </button>
+            </div>
         </div>
     }
 </div>
-
-<style>
-    .char-section-label {
-        font-family: 'Cinzel', serif;
-        font-size: .78rem;
-        font-weight: 700;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        color: #c5a55a;
-        margin: 8px 0 6px 2px;
-    }
-
-    .existing-char-card {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 14px 18px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: transform .12s, box-shadow .12s, border-color .12s;
-        margin-bottom: 8px;
-        background: linear-gradient(160deg, #1a1510 0%, #0e0b07 100%);
-        border: 2px solid #c5a55a44;
-    }
-
-    .existing-char-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 24px rgba(0,0,0,.6);
-    }
-
-    .existing-char-card.alliance-card {
-        border-color: #2e5a9a;
-        box-shadow: 0 2px 12px rgba(46,90,154,.2);
-    }
-    .existing-char-card.alliance-card:hover,
-    .existing-char-card.alliance-card.active-card {
-        border-color: #4a90d9;
-        box-shadow: 0 6px 24px rgba(74,144,217,.35);
-    }
-
-    .existing-char-card.horde-card {
-        border-color: #9a2e2e;
-        box-shadow: 0 2px 12px rgba(154,46,46,.2);
-    }
-    .existing-char-card.horde-card:hover,
-    .existing-char-card.horde-card.active-card {
-        border-color: #d04a4a;
-        box-shadow: 0 6px 24px rgba(208,74,74,.35);
-    }
-
-    .char-card-portraits {
-        display: flex;
-        gap: 6px;
-        flex-shrink: 0;
-    }
-
-    /* Icons wie Aktionsleisten-Slots rahmen (Goldrand + schwarze Kontur) */
-    .char-portrait {
-        width: 48px;
-        height: 48px;
-        border-radius: 3px;
-        border: 1px solid #c5a55a;
-        box-shadow: 0 0 0 1px #000, 0 2px 6px rgba(0,0,0,.8);
-        object-fit: cover;
-    }
-
-    .active-card .char-portrait {
-        border-color: #ffd100;
-        box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,209,0,.5);
-    }
-
-    .btn-icon {
-        width: 20px;
-        height: 20px;
-        border: 1px solid #c5a55a;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px #000;
-        pointer-events: none;
-    }
-
-    .character-selection .wow-btn-icon img {
-        border: 1px solid #c5a55a88;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px #000;
-    }
-
-    .character-selection .wow-btn-icon.active img {
-        border-color: #ffd100;
-        box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255,209,0,.6);
-    }
-
-    /* Nicht verfügbare Klassen entsättigt wie gesperrte Spells */
-    .character-selection .wow-btn-icon.disabled img {
-        filter: grayscale(1);
-    }
-
-    .profession-portrait {
-        width: 32px;
-        height: 32px;
-        align-self: flex-end;
-        border-color: #ffd10088;
-    }
-
-    .char-card-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-
-    .char-card-name {
-        display: flex;
-        gap: 8px;
-        align-items: baseline;
-        font-family: 'Cinzel', serif;
-        font-size: 1.05rem;
-    }
-
-    .char-race {
-        color: #e8d5a0;
-        font-weight: 700;
-    }
-
-    .char-card-sub {
-        font-size: .8rem;
-        color: #888;
-    }
-
-    .char-card-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
-    .char-card-arrow {
-        width: 32px;
-        height: 32px;
-        border: 1px solid #c5a55a;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px #000;
-        opacity: .7;
-        flex-shrink: 0;
-        transition: opacity .12s, box-shadow .12s;
-    }
-
-    .existing-char-card:hover .char-card-arrow {
-        opacity: 1;
-        box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255,209,0,.6);
-    }
-
-    .char-edit-btn {
-        padding: 4px 6px;
-        opacity: .7;
-        transition: opacity .12s;
-    }
-
-    .char-edit-btn:hover {
-        opacity: 1;
-    }
-
-    .debug-all-level-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 4px;
-        margin: 12px 0 4px;
-    }
-
-    .debug-all-level-label {
-        font-size: .8rem;
-        margin: 0 4px;
-    }
-
-    .new-char-toggle-row {
-        display: flex;
-        justify-content: center;
-        margin: 14px 0 6px;
-    }
-
-    .new-char-toggle {
-        font-size: .85rem;
-        padding: 7px 20px;
-    }
-
-    .creation-confirm-row {
-        display: flex;
-        justify-content: center;
-        margin-top: 12px;
-    }
-
-    .confirm-btn {
-        font-family: 'Cinzel', serif;
-        font-size: 1rem;
-        padding: 10px 28px;
-    }
-
-    .character-selection .wow-button-group.centered {
-        display: flex;
-        justify-content: center;
-    }
-
-    .race-row {
-        display: flex;
-        gap: 16px;
-        align-items: flex-start;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .race-column {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .character-selection .race-column-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: .95rem;
-        font-weight: 700;
-        margin: 0;
-        padding: 4px 16px;
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .character-selection .race-column-title img {
-        width: 24px;
-        height: 24px;
-        border: 1px solid #c5a55a;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px #000;
-    }
-
-    .character-selection .race-column-title.alliance-title {
-        color: #6ab0ff;
-        background: linear-gradient(180deg, #14284a 0%, #0b1628 100%);
-        border: 1px solid #c5a55a;
-    }
-
-    .character-selection .race-column-title.horde-title {
-        color: #ff6a6a;
-        background: linear-gradient(180deg, #4a1414 0%, #280b0b 100%);
-        border: 1px solid #c5a55a;
-    }
-
-    .race-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        padding: 10px;
-        border-radius: 6px;
-        background: #0e0b07;
-        box-shadow: inset 0 0 8px #000;
-    }
-
-    .race-buttons .wow-btn-icon {
-        flex-direction: row;
-        justify-content: flex-start;
-        min-width: 160px;
-        margin: 0;
-    }
-
-    .race-buttons.alliance { border: 1px solid #2e5a9a; }
-    .race-buttons.horde    { border: 1px solid #9a2e2e; }
-
-    .race-buttons.alliance .wow-btn-icon.active {
-        border-color: #4a90d9;
-        box-shadow: 0 0 8px rgba(74, 144, 217, .6);
-        background: linear-gradient(180deg, #1a3050 0%, #0e1a2e 100%);
-    }
-
-    .race-buttons.horde .wow-btn-icon.active {
-        border-color: #d04a4a;
-        box-shadow: 0 0 8px rgba(208, 74, 74, .6);
-        background: linear-gradient(180deg, #501a1a 0%, #2e0e0e 100%);
-    }
-</style>
 
 @code {
     private Race selectedRace = Race.Human;
     private CharacterClass selectedClass = CharacterClass.Warrior;
     private Gender selectedGender = Gender.Male;
+    private string characterName = "";
+    private string? nameError;
     private string? errorMsg;
     private bool showCreation;
 
@@ -489,6 +319,8 @@
         selectedRace = slot.Race;
         selectedClass = slot.Class;
         selectedGender = slot.Gender;
+        characterName = slot.Name;
+        nameError = null;
         errorMsg = null;
         showCreation = true;
     }
@@ -496,7 +328,25 @@
     private void ToggleCreation()
     {
         showCreation = !showCreation;
+        characterName = "";
+        nameError = null;
         errorMsg = null;
+    }
+
+    // Vorschau zeigt den Namen bereits in der endgültigen Schreibweise
+    private string PreviewName =>
+        string.IsNullOrWhiteSpace(characterName) ? "Unnamed" : CharacterNames.Normalize(characterName);
+
+    private void OnNameChanged()
+    {
+        // Fehler erst nach Eingabe anzeigen – ein leeres Feld bei Formularstart ist kein Fehler
+        nameError = string.IsNullOrEmpty(characterName) ? null : CharacterNames.Validate(characterName);
+        errorMsg = null;
+    }
+
+    private void OnNameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") ConfirmAndPlay();
     }
 
     private Race[] AllianceRaces => new[]
@@ -508,6 +358,9 @@
     {
         Race.Orc, Race.Undead, Race.Tauren, Race.Troll
     };
+
+    // Startgebiet je Rasse – liefert Hintergrund-Thema für Vorschau und Charaktere ohne gewählte Zone
+    private static CombatZone? StartZone(Race race) => CombatZoneRegistry.StartZoneFor(race);
 
     private Faction GetFactionForRace(Race race) =>
         RaceClassInfo.RaceToFaction.TryGetValue(race, out var f) ? f : Faction.Alliance;
@@ -531,12 +384,14 @@
 
     private void ConfirmAndPlay()
     {
+        nameError = CharacterNames.Validate(characterName);
+        if (nameError is not null) return;
         try
         {
             var faction = GetFactionForRace(selectedRace);
             if (Engine.IsGameRunning)
                 Engine.Stop();
-            Engine.CreateCharacter(faction, selectedRace, selectedClass, selectedGender);
+            Engine.CreateCharacter(characterName, faction, selectedRace, selectedClass, selectedGender);
             Nav.NavigateTo("/idle");
         }
         catch (ArgumentException ex)

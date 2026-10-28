@@ -1,0 +1,126 @@
+@using Models
+
+@* Ein Zauber im Zauberbuch von /ability-loadout: Kopfzeile (Klick = ausrüsten/entfernen) und darunter
+   die Rangleiste – jeder Rang ein Knoten mit eigenem Tooltip, gesperrte Ränge zeigen ihr Level. *@
+@{
+    var eff = Player.GetEffectiveAbility(Group.Display);
+    bool equipped = Group.Equipped is not null;
+    string? exclusive = ExclusiveGroups.LabelOf(Group.Display);
+    bool blocked = Conflict is not null && !Group.IsLocked;
+}
+<div class="spell-card @(Group.IsLocked ? "locked" : "") @(equipped ? "equipped" : "") @(Group.CanUpgrade ? "upgradable" : "") @(blocked ? "excluded" : "")"
+     style="--i: @Math.Min(Index, 12)">
+    <AbilityTooltip Ability="eff" PlayerLevel="Player.Level" Class="tt-block">
+        <div class="spell-main" @onclick="Toggle">
+            <span class="spell-icon">
+                <img src="@Group.Display.IconUrl" alt="@Group.Name" />
+                @if (equipped)
+                {
+                    <span class="spell-slot-badge" title="@($"Equipped in slot {SlotNumber}")">@SlotNumber</span>
+                }
+            </span>
+            <div class="pool-info">
+                <strong>
+                    @Group.Name
+                    @if (Group.MultiRank)
+                    {
+                        <span class="rank-badge">Rank @Group.Display.Rank</span>
+                    }
+                </strong>
+                @* Exklusiv-Gruppe: nur ein Zauber gleichzeitig; bei Konflikt steht da, was ersetzt würde *@
+                @if (blocked)
+                {
+                    <small class="excl-line conflict" title="@($"Only one {exclusive} can be equipped at a time.")">
+                        ⇄ Replaces @Conflict!.Name (Slot @ConflictSlot)
+                    </small>
+                }
+                else if (exclusive is not null)
+                {
+                    <small class="excl-line" title="@($"Only one {exclusive} can be equipped at a time.")">
+                        ⇄ @exclusive · only one at a time
+                    </small>
+                }
+            </div>
+            @if (Group.IsLocked)
+            {
+                <span class="pool-action locked-badge">Lv. @Group.Display.LevelRequired</span>
+            }
+            else if (equipped)
+            {
+                @* Ruhezustand „Slot N“, beim Hovern „Remove“ *@
+                <span class="pool-action equipped-tag">
+                    <span class="tag-idle">Slot @SlotNumber</span>
+                    <span class="tag-hover">Remove</span>
+                </span>
+            }
+            else if (blocked)
+            {
+                <span class="pool-action swap">Swap</span>
+            }
+            else
+            {
+                <span class="pool-action">Equip</span>
+            }
+        </div>
+    </AbilityTooltip>
+
+    @if (Group.MultiRank)
+    {
+        int bestIndex = Group.Best is { } best ? IndexOf(best) : -1;
+        int n = Group.Ranks.Count;
+        int progress = bestIndex <= 0 ? 0 : bestIndex * 100 / (n - 1);
+
+        <div class="rank-track" style="--n: @n; --progress: @(progress)%">
+            <span class="rank-track-line" aria-hidden="true"><span class="rank-track-fill"></span></span>
+            @foreach (var rank in Group.Ranks)
+            {
+                var r = rank;
+                bool isEquipped = Group.Equipped?.Id == r.Id;
+                bool isUnlocked = Group.Unlocked.Contains(r);
+                string state = isEquipped ? "equipped" : isUnlocked ? "unlocked" : "locked";
+
+                <AbilityTooltip Ability="Player.GetEffectiveAbility(r)" PlayerLevel="Player.Level" Class="rank-tt">
+                    <button class="rank-node @state @(r == Group.Best ? "best" : "")"
+                            aria-disabled="@(!isUnlocked)"
+                            aria-label="@($"Rank {r.Rank}")"
+                            @onclick="() => PickRank(r, isUnlocked)">
+                        <span class="rank-dot">@r.Rank</span>
+                        <span class="rank-lvl">Lv @r.LevelRequired</span>
+                    </button>
+                </AbilityTooltip>
+            }
+        </div>
+
+        @if (Group.CanUpgrade && Group.Best is { } upgrade)
+        {
+            <button class="rank-upgrade" @onclick="() => PickRank(upgrade, true)">
+                ▲ Upgrade to Rank @upgrade.Rank
+            </button>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public SpellRankGroup Group { get; set; } = null!;
+    [Parameter, EditorRequired] public Player Player { get; set; } = null!;
+    /// <summary>Position in der Liste – staffelt die Einblend-Animation.</summary>
+    [Parameter] public int Index { get; set; }
+    /// <summary>1-basierter Aktionsleisten-Slot des ausgerüsteten Rangs, 0 = nicht ausgerüstet.</summary>
+    [Parameter] public int SlotNumber { get; set; }
+    /// <summary>Ausgerüsteter Zauber derselben Exklusiv-Gruppe, den ein Ausrüsten ersetzen würde.</summary>
+    [Parameter] public Ability? Conflict { get; set; }
+    [Parameter] public int ConflictSlot { get; set; }
+    [Parameter] public EventCallback OnToggle { get; set; }
+    [Parameter] public EventCallback<Ability> OnRank { get; set; }
+
+    private int IndexOf(Ability a)
+    {
+        for (int i = 0; i < Group.Ranks.Count; i++)
+            if (Group.Ranks[i].Id == a.Id) return i;
+        return -1;
+    }
+
+    private Task Toggle() => Group.IsLocked ? Task.CompletedTask : OnToggle.InvokeAsync();
+
+    private Task PickRank(Ability rank, bool unlocked) => unlocked ? OnRank.InvokeAsync(rank) : Task.CompletedTask;
+}

@@ -171,6 +171,7 @@ public class SaveGameService : ISaveGameService, IDisposable
             save.LastProfessionTargets[profession.ToString()] = target;
 
         save.SeenFeatureIntros = _engine.SeenFeatureIntros.ToList();
+        save.MerchantStock = _engine.BuildMerchantSaveData();
 
         foreach (var earned in _achievements.EarnedAchievements)
             save.Achievements.Add(new AchievementSaveData { Id = earned.AchievementId, EarnedAt = earned.EarnedAt });
@@ -227,12 +228,14 @@ public class SaveGameService : ISaveGameService, IDisposable
         Profession = progress.Profession.ToString(),
         Skill      = progress.Skill,
         RankIndex  = progress.RankIndex,
+        KnownRecipes = progress.Definition.IsGathering ? null : progress.KnownRecipes.ToList(),
     };
 
     private SlotSaveData BuildSlotSaveData(CharacterSlot slot) => new()
     {
         Id      = slot.Id,
         Class   = slot.Class,
+        Name    = slot.Name,
         Faction = slot.Faction,
         Race    = slot.Race,
         Gender  = slot.Gender,

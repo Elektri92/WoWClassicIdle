@@ -43,8 +43,8 @@ namespace Models
         public string Slug => Profession == Profession.FirstAid ? "first-aid" : Profession.ToString().ToLowerInvariant();
     }
 
-    /// <summary>Ausbildungsstufe: hebt das Skill-Cap an, lernbar ab einem Charakterlevel und Mindest-Skill.</summary>
-    public record ProfessionRank(string Name, int MaxSkill, int RequiredLevel, int RequiredSkill = 1);
+    /// <summary>Ausbildungsstufe: hebt das Skill-Cap an, beim Lehrer lernbar ab Charakterlevel und Mindest-Skill gegen <see cref="Cost"/> Kupfer.</summary>
+    public record ProfessionRank(string Name, int MaxSkill, int RequiredLevel, int RequiredSkill = 1, long Cost = 0);
 
     public static class Professions
     {
@@ -63,13 +63,13 @@ namespace Models
         /// <summary>Chance auf +1 Skill je aktivem Durchlauf.</summary>
         public const double SkillUpChance = 0.01;
 
-        /// <summary>Apprentice wird beim Erlernen automatisch vergeben.</summary>
+        /// <summary>Apprentice wird beim Erlernen automatisch vergeben, höhere Stufen kauft man beim Lehrer.</summary>
         public static readonly IReadOnlyList<ProfessionRank> Ranks =
         [
             new("Apprentice",  75, 5),
-            new("Journeyman", 150, 15, RequiredSkill: 50),
-            new("Expert",     225, 25, RequiredSkill: 125),
-            new("Artisan",    300, 35, RequiredSkill: 200),
+            new("Journeyman", 150, 15, RequiredSkill: 50,  Cost: 100),     // 1 Silber
+            new("Expert",     225, 25, RequiredSkill: 125, Cost: 1_000),   // 10 Silber
+            new("Artisan",    300, 35, RequiredSkill: 200, Cost: 5_000),   // 50 Silber
         ];
 
         public static readonly IReadOnlyList<ProfessionDefinition> All =

@@ -22,9 +22,11 @@ namespace Models
             Profession == profession && Group == group && Index == index;
     }
 
-    /// <summary>Skill-Stand eines erlernten Berufs.</summary>
+    /// <summary>Skill-Stand eines erlernten Berufs inkl. der beim Lehrer gelernten Rezepte.</summary>
     public class ProfessionProgress
     {
+        private readonly HashSet<string> _knownRecipes = new();
+
         public ProfessionDefinition Definition { get; }
         public Profession Profession => Definition.Profession;
         public int Skill { get; private set; } = 1;
@@ -37,7 +39,22 @@ namespace Models
         public ProfessionRank? NextRank =>
             RankIndex + 1 < Professions.Ranks.Count ? Professions.Ranks[RankIndex + 1] : null;
 
-        public ProfessionProgress(Profession profession) => Definition = Professions.Get(profession);
+        /// <summary>Bekannte Rezept-IDs (nur Herstellungsberufe).</summary>
+        public IReadOnlyCollection<string> KnownRecipes => _knownRecipes;
+
+        /// <summary>Herstellungsberufe starten mit einem Basisrezept (<see cref="ProfessionTrainerRegistry.StarterRecipe"/>).</summary>
+        public ProfessionProgress(Profession profession, CharacterClass? learnerClass = null)
+        {
+            Definition = Professions.Get(profession);
+            if (ProfessionTrainerRegistry.StarterRecipe(profession, learnerClass) is { } starter)
+                _knownRecipes.Add(starter.Id);
+        }
+
+        public bool KnowsRecipe(string recipeId) => _knownRecipes.Contains(recipeId);
+
+        /// <summary>Lernt ein Rezept dieses Berufs (Kosten/Voraussetzungen prüft die Engine).</summary>
+        internal bool LearnRecipe(Recipe recipe) =>
+            recipe.Profession == Profession && _knownRecipes.Add(recipe.Id);
 
         /// <summary>+1 Skill, solange das Cap der aktuellen Stufe nicht erreicht ist.</summary>
         public bool TrySkillUp()
@@ -55,10 +72,25 @@ namespace Models
             return true;
         }
 
-        internal void Restore(int skill, int rankIndex)
+        /// <summary>
+        /// Stellt Skill, Stufe und Rezepte wieder her. <paramref name="knownRecipes"/> = <c>null</c> (Altstand ohne Lehrer, Debug):
+        /// alle Rezepte bis zum aktuellen Skill gelten als gelernt.
+        /// </summary>
+        internal void Restore(int skill, int rankIndex, IEnumerable<string>? knownRecipes = null)
         {
             RankIndex = Math.Clamp(rankIndex, 0, Professions.Ranks.Count - 1);
             Skill = Math.Clamp(skill, 1, SkillCap);
+
+            var recipes = ProfessionRegistry.GetRecipes(Profession);
+            if (knownRecipes is null)
+            {
+                foreach (var recipe in recipes.Where(r => r.RequiredSkill <= Skill))
+                    _knownRecipes.Add(recipe.Id);
+                return;
+            }
+            // Unbekannte/entfernte Rezept-IDs ignorieren; das Basisrezept aus dem Konstruktor bleibt erhalten
+            var valid = recipes.Select(r => r.Id).ToHashSet();
+            _knownRecipes.UnionWith(knownRecipes.Where(valid.Contains));
         }
     }
 
@@ -86,11 +118,11 @@ namespace Models
             return null;
         }
 
-        /// <summary>Erlernt den Hauptberuf mit Apprentice (Skill 1).</summary>
-        public ProfessionProgress? Learn(Profession profession, int characterLevel)
+        /// <summary>Erlernt den Hauptberuf mit Apprentice (Skill 1) und dem Basisrezept passend zur Klasse.</summary>
+        public ProfessionProgress? Learn(Profession profession, int characterLevel, CharacterClass? learnerClass = null)
         {
             if (LearnBlocker(profession, characterLevel) is not null) return null;
-            return Primary = new ProfessionProgress(profession);
+            return Primary = new ProfessionProgress(profession, learnerClass);
         }
 
         /// <summary>Verlernt den Hauptberuf – der Skill geht verloren.</summary>
@@ -101,11 +133,11 @@ namespace Models
             return true;
         }
 
-        internal void Restore(Profession profession, int skill, int rankIndex)
+        internal void Restore(Profession profession, int skill, int rankIndex, IEnumerable<string>? knownRecipes, CharacterClass? learnerClass)
         {
             if (!Professions.Get(profession).IsPrimary) return;
-            Primary = new ProfessionProgress(profession);
-            Primary.Restore(skill, rankIndex);
+            Primary = new ProfessionProgress(profession, learnerClass);
+            Primary.Restore(skill, rankIndex, knownRecipes);
         }
     }
 }

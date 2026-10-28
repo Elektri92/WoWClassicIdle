@@ -1,0 +1,271 @@
+@using Models
+@inject IdleGameEngine Engine
+
+@* Lehrerfenster im Classic-Stil: Liste (Stufe + Rezepte) links, Details + Train rechts.
+   Rahmen, Titelleiste und Geldleiste teilt es mit dem Händlerfenster (.inv-merchant-window/.mw-* in inventory.css),
+   Anpassungen in wwwroot/css/profession-trainer.css *@
+<div class="inv-merchant-window trainer-window">
+    <div class="mw-titlebar">
+        <div class="al-portrait mw-portrait">
+            <img class="al-race-portrait" src="@Trainer.PortraitUrl" alt="@Trainer.Name" onerror="this.style.display='none'" />
+        </div>
+        <div class="mw-title">
+            <span class="mw-name">@Trainer.Name</span>
+            <span class="mw-subtitle">&lt;@Trainer.Title&gt;</span>
+        </div>
+        <button class="bag-close" title="Close" @onclick="OnClose">×</button>
+    </div>
+
+    @* Sammelberufe haben keine Rezepte – dort nur die Ausbildungsstufen *@
+    @if (!Definition.IsGathering)
+    {
+        <div class="trainer-tools">
+            <input class="trainer-search" type="search" placeholder="Search recipes…" @bind="_search" @bind:event="oninput" />
+            <button class="craft-filter-btn @(_availableOnly ? "active" : "")" @onclick="() => _availableOnly = !_availableOnly">Available only</button>
+            @if (RecipeClasses.Count > 0)
+            {
+                <button class="craft-filter-btn @(_classFilter is null ? "active" : "")" @onclick="() => _classFilter = null">All</button>
+                @foreach (var cls in RecipeClasses)
+                {
+                    <button class="craft-filter-btn icon @(_classFilter == cls ? "active" : "")" title="@cls" @onclick="() => _classFilter = cls">
+                        <img src="@IconUrls.ClassIconUrl(cls)" alt="@cls" onerror="this.style.visibility='hidden'" />
+                    </button>
+                }
+            }
+        </div>
+    }
+
+    <div class="craft-window">
+        <div class="wow-inset craft-list trainer-list">
+            @if (Progress is null)
+            {
+                <div class="craft-list-group">Profession</div>
+                @Entry(LearnKey, Definition.IconUrl, $"Apprentice {Definition.Name}", Engine.ProfessionLearnBlocker(Definition.Profession) is null, null)
+            }
+            else if (Progress.NextRank is { } nextRank && MatchesSearch(nextRank.Name))
+            {
+                <div class="craft-list-group">Rank</div>
+                @Entry(RankKey, Definition.IconUrl, $"{nextRank.Name} {Definition.Name}", RankRequirementsMet, null)
+            }
+
+            @foreach (var group in VisibleRecipes.GroupBy(r => r.RequiredSkill))
+            {
+                <div class="craft-list-group @(Skill < group.Key ? "locked" : "")">
+                    <span>Skill @group.Key</span>
+                    <span class="craft-list-group-sub">Lv @ItemRequirements.LevelOf(group.First().Result)</span>
+                </div>
+                @foreach (var entry in group)
+                {
+                    @Entry(entry.Id, entry.Result.IconUrl, entry.Result.Name, Skill >= entry.RequiredSkill, entry)
+                }
+            }
+
+            @if (!VisibleRecipes.Any() && Progress is not null && Progress.NextRank is null)
+            {
+                <p class="wow-hint trainer-empty">@(string.IsNullOrWhiteSpace(_search) ? "I have nothing more to teach you." : "No matching recipes.")</p>
+            }
+            else if (!VisibleRecipes.Any() && !string.IsNullOrWhiteSpace(_search))
+            {
+                <p class="wow-hint trainer-empty">No matching recipes.</p>
+            }
+        </div>
+
+        <div class="craft-detail trainer-detail">
+            @if (SelectedRecipe is { } recipe)
+            {
+                @if (recipe.Result is ArmorItem armor)
+                {
+                    <ArmorTooltip Armor="armor" RequirementsMet="@Engine.Player.MeetsItemRequirements(armor)">@ResultLabel(armor)</ArmorTooltip>
+                }
+                else
+                {
+                    <TradeItemTooltip Item="@(recipe.Result as TradeItem)" Count="Engine.Player.Inventory.CountOf(recipe.Result.Id)">@ResultLabel(recipe.Result)</TradeItemTooltip>
+                }
+                <div class="trainer-req">
+                    Requires: <span class="@(Skill >= recipe.RequiredSkill ? "" : "trainer-missing")">@Definition.Name (@recipe.RequiredSkill)</span>
+                </div>
+                <div class="craft-reagents-label">Reagents:</div>
+                @foreach (var reagent in recipe.Reagents)
+                {
+                    <div class="craft-reagent">
+                        <img src="@reagent.Item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                        <span>@reagent.Item.Name</span>
+                        <span class="craft-have">× @reagent.Count</span>
+                    </div>
+                }
+                @CostLine(ProfessionTrainerRegistry.RecipeCost(recipe))
+            }
+            else if (_selected == RankKey && Progress?.NextRank is { } rank)
+            {
+                <div class="craft-result">
+                    <img src="@Definition.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span>@rank.Name @Definition.Name</span>
+                </div>
+                <p class="trainer-desc">Raises your maximum @Definition.Name skill to @rank.MaxSkill.</p>
+                <div class="trainer-req">
+                    Requires:
+                    <span class="@(TrainingLevel >= rank.RequiredLevel ? "" : "trainer-missing")">Level @rank.RequiredLevel</span>,
+                    <span class="@(Skill >= rank.RequiredSkill ? "" : "trainer-missing")">@Definition.Name (@rank.RequiredSkill)</span>
+                </div>
+                @if (!Definition.IsPrimary)
+                {
+                    <div class="wow-muted trainer-note">Shared – uses your highest character level (@TrainingLevel).</div>
+                }
+                @CostLine(rank.Cost)
+            }
+            else if (_selected == LearnKey && Progress is null)
+            {
+                var blocker = Engine.ProfessionLearnBlocker(Definition.Profession);
+                <div class="craft-result">
+                    <img src="@Definition.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span>Apprentice @Definition.Name</span>
+                </div>
+                <p class="trainer-desc">Learn @Definition.Name (max. skill 75). You start with one basic recipe.</p>
+                @if (blocker is not null)
+                {
+                    <div class="trainer-req"><span class="trainer-missing">@blocker</span></div>
+                }
+                @CostLine(0)
+            }
+            else
+            {
+                <p class="wow-hint">Select something to learn.</p>
+            }
+
+            @if (_message is not null)
+            {
+                <div class="trainer-msg @(_messageFailed ? "failed" : "")">@_message</div>
+            }
+        </div>
+    </div>
+
+    <div class="mw-footer trainer-footer">
+        <span class="trainer-money"><MoneyFrame Copper="Engine.Player.Copper" /></span>
+        <button class="wow-btn small primary" disabled="@(_selected is null)" @onclick="Train">Train</button>
+        <button class="wow-btn small" @onclick="OnClose">Exit</button>
+    </div>
+</div>
+
+@code {
+    private const string LearnKey = "learn";
+    private const string RankKey = "rank";
+
+    [Parameter, EditorRequired] public ProfessionDefinition Definition { get; set; } = null!;
+    [Parameter] public ProfessionProgress? Progress { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    /// <summary>Lehrer soll einen Spruch aus der Liste sagen (Sprechblase im Kopf der Unterseite).</summary>
+    [Parameter] public EventCallback<IReadOnlyList<string>> OnSpeech { get; set; }
+
+    private string? _selected;
+    private string _search = "";
+    private bool _availableOnly = true;
+    private CharacterClass? _classFilter;
+    private Profession? _initFor;
+    private string? _message;
+    private bool _messageFailed;
+
+    private ProfessionTrainer Trainer => ProfessionTrainerRegistry.Get(Definition.Profession);
+    private int Skill => Progress?.Skill ?? 0;
+    private int TrainingLevel => Engine.ProfessionTrainingLevel(Definition.Profession);
+
+    private bool RankRequirementsMet => Progress?.NextRank is { } next
+        && TrainingLevel >= next.RequiredLevel && Skill >= next.RequiredSkill;
+
+    private IReadOnlyList<Recipe> Recipes => ProfessionRegistry.GetRecipes(Definition.Profession);
+
+    private IReadOnlyList<CharacterClass> RecipeClasses =>
+        Recipes.Select(r => ItemRequirements.ClassOf(r.Result)).OfType<CharacterClass>().Distinct().ToList();
+
+    /// <summary>Noch nicht gelernte Rezepte nach Suche, Klasse und Verfügbarkeit gefiltert.</summary>
+    private IEnumerable<Recipe> VisibleRecipes => Recipes
+        .Where(r => Progress?.KnowsRecipe(r.Id) != true)
+        .Where(r => !_availableOnly || Skill >= r.RequiredSkill)
+        .Where(r => _classFilter is null || ItemRequirements.ClassOf(r.Result) == _classFilter)
+        .Where(r => MatchesSearch(r.Result.Name))
+        .OrderBy(r => r.RequiredSkill);
+
+    private Recipe? SelectedRecipe =>
+        Recipes.FirstOrDefault(r => r.Id == _selected && Progress?.KnowsRecipe(r.Id) != true);
+
+    private bool MatchesSearch(string text) =>
+        string.IsNullOrWhiteSpace(_search) || text.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnParametersSet()
+    {
+        if (_initFor == Definition.Profession) return;
+        _initFor = Definition.Profession;
+        _classFilter = RecipeClasses.Contains(Engine.PlayerClass) ? Engine.PlayerClass : null;
+        _selected = Progress is null ? LearnKey : DefaultSelection();
+        _message = null;
+    }
+
+    // Eintrag: grün = Voraussetzungen erfüllt, rot = (noch) nicht lernbar
+    private RenderFragment Entry(string key, string iconUrl, string name, bool available, Recipe? recipe) => __builder =>
+    {
+        <div class="craft-list-entry trainer-entry @(available ? "available" : "unavailable") @(key == _selected ? "selected" : "")"
+             @onclick="() => Select(key)">
+            <img class="craft-list-icon" src="@iconUrl" alt="" onerror="this.style.visibility='hidden'" />
+            <span class="craft-list-name">@name</span>
+            @if (recipe is not null)
+            {
+                <span class="trainer-entry-cost"><MoneyFrame Copper="ProfessionTrainerRegistry.RecipeCost(recipe)" /></span>
+            }
+        </div>
+    };
+
+    private RenderFragment CostLine(long copper) => __builder =>
+    {
+        <div class="trainer-cost @(Engine.Player.Copper < copper ? "too-expensive" : "")">
+            Cost: @if (copper > 0) { <MoneyFrame Copper="copper" /> } else { <span>Free</span> }
+        </div>
+    };
+
+    private static RenderFragment ResultLabel(Item item) => __builder =>
+    {
+        <div class="craft-result">
+            <img src="@item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+            <span style="color: @ItemQualityColors.Hex(item.Quality)">@item.Name</span>
+        </div>
+    };
+
+    private void Select(string key)
+    {
+        _selected = key;
+        _message = null;
+    }
+
+    private async Task Train()
+    {
+        string? error;
+        string learned;
+        if (_selected == LearnKey)
+        {
+            error = Engine.LearnProfession(Definition.Profession);
+            learned = $"Apprentice {Definition.Name}";
+        }
+        else if (_selected == RankKey && Progress?.NextRank is { } rank)
+        {
+            error = Engine.TrainProfessionRank(Definition.Profession);
+            learned = $"{rank.Name} {Definition.Name}";
+        }
+        else if (SelectedRecipe is { } recipe)
+        {
+            error = Engine.LearnProfessionRecipe(recipe);
+            learned = recipe.Result.Name;
+        }
+        else return;
+
+        (_message, _messageFailed) = error is null ? ($"You have learned {learned}.", false) : (error, true);
+        await OnSpeech.InvokeAsync(error is null ? Trainer.TrainLines : Trainer.RefuseLines);
+
+        // Nach dem Lernen den nächsten lernbaren Eintrag vorauswählen
+        if (error is null)
+            _selected = DefaultSelection();
+    }
+
+    // Lernbare Stufe zuerst, dann das erste sichtbare Rezept; ohne Rezepte (Sammelberuf) immer die nächste Stufe
+    private string? DefaultSelection() =>
+        Progress?.NextRank is null ? VisibleRecipes.FirstOrDefault()?.Id
+        : RankRequirementsMet || !VisibleRecipes.Any() ? RankKey
+        : VisibleRecipes.First().Id;
+}

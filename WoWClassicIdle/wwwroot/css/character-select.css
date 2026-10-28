@@ -1,0 +1,825 @@
+/* ============================================
+   Charakterauswahl (/character) – Look der Unit-Frames und Kampf-Hintergründe aus /idle
+   Silhouetten (.battle-mountains/.battle-hills) und Zonen-Themes kommen aus combat-zones.css / professions.css
+   ============================================ */
+
+.character-selection .cs-title { animation: cs-fade-down .5s ease-out both; }
+.character-selection .cs-hint  { animation: cs-fade-down .5s ease-out .08s both; }
+
+.char-section-label {
+    font-family: var(--wow-font-title);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--wow-gold-soft);
+    margin: 8px 0 8px 2px;
+    animation: cs-fade-down .5s ease-out .12s both;
+}
+
+/* ── Unit-Frame-Bausteine (in /idle nur im Seiten-<style> definiert) ── */
+.character-selection .unit-frame {
+    position: relative;
+    background: linear-gradient(180deg, rgba(43, 36, 24, .94) 0%, rgba(26, 21, 13, .94) 100%);
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+}
+
+.character-selection .portrait-area {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+.character-selection .race-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--wow-gold-soft);
+    object-fit: cover;
+    background: var(--wow-bg-deep);
+    box-shadow: 0 0 8px rgba(0, 0, 0, .8);
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.character-selection .class-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--wow-gold-soft);
+    background: var(--wow-bg-deep);
+    object-fit: contain;
+}
+
+.cs-frame-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cs-name-line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    font-family: var(--wow-font-title);
+    font-size: 1.05rem;
+}
+
+.char-race {
+    color: var(--wow-gold);
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000;
+}
+
+/* Charaktername: führendes Element der Namenszeile */
+.cs-name-line .char-name {
+    color: var(--wow-gold);
+    font-weight: 700;
+    font-size: 1.15rem;
+    text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, .9);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.cs-name-line .char-name.placeholder {
+    color: var(--wow-gold-pale);
+    font-style: italic;
+    opacity: .6;
+}
+
+/* Rasse/Klasse in der Unterzeile der Roster-Karten etwas kleiner */
+.char-card-sub .char-race,
+.char-card-sub .char-class {
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, .9);
+}
+
+/* Namenseingabe in der Charaktererstellung */
+.cs-name-input-row {
+    display: flex;
+    justify-content: center;
+}
+.character-selection input.cs-name-input {
+    width: min(100%, 260px);
+    font-family: var(--wow-font-title);
+    font-size: 1.1rem;
+    text-align: center;
+    color: var(--wow-gold);
+    padding: 6px 10px;
+}
+.character-selection input.cs-name-input::placeholder {
+    color: var(--wow-gold-soft);
+    opacity: .55;
+    font-style: italic;
+}
+.character-selection input.cs-name-input.invalid {
+    border-color: #c0392b;
+    box-shadow: 0 0 6px rgba(192, 57, 43, .45);
+}
+.cs-name-error {
+    margin-top: 6px;
+    text-align: center;
+    font-size: .8rem;
+    color: #ff6b5a;
+}
+
+/* Klassenfarben auf bunten Zonen-Hintergründen lesbar halten */
+.cs-name-line .char-class {
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, .95), 0 0 2px #000;
+}
+
+.cs-level {
+    font-size: .8rem;
+    color: var(--wow-gold-pale);
+    text-shadow: 0 1px 2px #000;
+}
+
+.cs-active-badge {
+    font-family: var(--wow-font-body);
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--wow-gold);
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    padding: 1px 5px;
+    background: rgba(255, 209, 0, .1);
+    animation: cs-badge-glow 2.4s ease-in-out infinite;
+}
+
+.char-card-sub {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: .8rem;
+    color: #b8a880;
+    text-shadow: 0 1px 2px #000;
+}
+
+.cs-faction-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000;
+}
+
+.cs-zone { color: var(--wow-gold-pale); }
+.cs-zone.traveling { color: #8fd0ff; }
+
+/* XP-Leiste wie in /idle; füllt sich beim Einblenden von links */
+.cs-xp-bar {
+    position: relative;
+    height: 14px;
+    background: var(--wow-bg-deep);
+    border: 1px solid var(--wow-border);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 4px #000;
+}
+
+.cs-xp-fill {
+    height: 100%;
+    background: linear-gradient(180deg, #b15cff 0%, #6a1fb0 100%);
+    transform-origin: left;
+    transition: width .4s ease;
+    animation: cs-bar-grow .9s cubic-bezier(.2, .8, .2, 1) calc(.25s + var(--i, 0) * .08s) both;
+}
+
+.cs-bar-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .66rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px #000;
+}
+
+/* ── Charakter-Karte: kleiner Kampf-Hintergrund mit Unit-Frame davor ── */
+/* ── Fraktionsspalten: Alliance links, Horde rechts ── */
+.cs-factions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+.cs-faction-col {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.character-selection .cs-faction-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wow-gold);
+    text-shadow: 0 2px 3px #000, 0 0 10px rgba(0, 0, 0, .8);
+    animation: cs-fade-down .5s ease-out calc(.1s + var(--col, 0) * .1s) both;
+}
+
+.character-selection .cs-faction-title img {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000;
+}
+
+/* Banner-Stoff hinter dem Inhalt (::before) mit goldener Stange oben (::after).
+   Alliance: blauer Wimpel mit Schwalbenschwanz, Horde: rotes Tuch mit zerfetztem, tropfendem Ende */
+.cs-bannered {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 14px 70px;
+}
+
+.cs-bannered::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    transform-origin: top center;
+    animation: cs-banner-unfurl .8s cubic-bezier(.2, .8, .2, 1) both,
+               cs-banner-sway 7s ease-in-out .8s infinite alternate;
+}
+
+.cs-bannered::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: -10px;
+    right: -10px;
+    height: 10px;
+    z-index: -1;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #ffec9b 0%, #c5a55a 40%, #6a5426 100%);
+    box-shadow: 0 0 0 1px #000, 0 3px 6px rgba(0, 0, 0, .7);
+}
+
+/* Faltenwurf + goldene Seitenborte, darunter die Fraktionsfarbe */
+.cs-bannered.alliance::before {
+    background:
+        linear-gradient(90deg, #c5a55a 0 3px, transparent 3px calc(100% - 3px), #c5a55a calc(100% - 3px)),
+        linear-gradient(90deg, rgba(0, 0, 0, .35), transparent 14%, rgba(255, 255, 255, .07) 30%, transparent 48%, rgba(0, 0, 0, .18) 68%, transparent 84%, rgba(0, 0, 0, .35)),
+        linear-gradient(180deg, #2a5cc4 0%, #1a3f94 45%, #0e2564 100%);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 48px), 0 100%);
+}
+
+.cs-bannered.horde::before {
+    background:
+        linear-gradient(90deg, #c5a55a 0 3px, transparent 3px calc(100% - 3px), #c5a55a calc(100% - 3px)),
+        linear-gradient(90deg, rgba(0, 0, 0, .35), transparent 14%, rgba(255, 255, 255, .06) 30%, transparent 48%, rgba(0, 0, 0, .18) 68%, transparent 84%, rgba(0, 0, 0, .35)),
+        linear-gradient(180deg, #c41a14 0%, #8e0e0a 50%, #5a0606 100%);
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 40px), 95% calc(100% - 20px), 90% calc(100% - 46px),
+                       84% calc(100% - 6px), 78% calc(100% - 38px), 71% calc(100% - 28px), 65% 100%,
+                       58% calc(100% - 42px), 51% calc(100% - 24px), 44% calc(100% - 50px), 37% calc(100% - 10px),
+                       30% calc(100% - 44px), 23% calc(100% - 26px), 16% calc(100% - 2px), 9% calc(100% - 40px),
+                       4% calc(100% - 22px), 0 calc(100% - 34px));
+}
+
+.cs-banner-empty {
+    padding: 28px 8px;
+    text-align: center;
+    font-family: var(--wow-font-title);
+    font-size: .85rem;
+    color: rgba(255, 236, 155, .75);
+    text-shadow: 0 1px 2px #000;
+}
+
+/* Karten auf dem Banner: Einblenden erst nach dem Entrollen */
+.cs-bannered .cs-card {
+    animation-delay: calc(.45s + var(--col, 0) * .1s + var(--i, 0) * .08s);
+}
+
+.cs-card {
+    position: relative;
+    padding: 12px 14px;
+    border: 2px solid var(--wow-border-dark);
+    border-radius: 10px;
+    cursor: pointer;
+    overflow: hidden;
+    background: var(--wow-bg-deep);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .6), 0 4px 14px rgba(0, 0, 0, .5);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    animation: cs-card-in .55s cubic-bezier(.2, .8, .2, 1) calc(.15s + var(--i, 0) * .08s) both;
+}
+
+.cs-card.alliance-card { border-color: #2e5a9a; }
+.cs-card.horde-card    { border-color: #9a2e2e; }
+
+.cs-card:hover {
+    transform: translateY(-3px);
+}
+.cs-card.alliance-card:hover,
+.cs-card.alliance-card.active-card {
+    border-color: #4a90d9;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .6), 0 8px 26px rgba(74, 144, 217, .35);
+}
+.cs-card.horde-card:hover,
+.cs-card.horde-card.active-card {
+    border-color: #d04a4a;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .6), 0 8px 26px rgba(208, 74, 74, .35);
+}
+
+.cs-scenery {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Abdunkeln zum Rand hin, damit der Frame lesbar bleibt */
+.cs-scenery::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, .6) 100%);
+}
+
+.cs-sky,
+.cs-scene-layer {
+    position: absolute;
+    inset: 0;
+}
+
+.night .cs-sky {
+    filter: brightness(.85);
+}
+.night .battle-mountains { filter: brightness(.3) saturate(.6); }
+.night .battle-hills     { filter: brightness(.22) saturate(.6); }
+
+/* Parallaxe beim Hovern: Berge und Hügel wandern unterschiedlich weit */
+.cs-card .battle-mountains,
+.cs-card .battle-hills {
+    left: -4%;
+    right: -4%;
+    transition: transform .6s ease;
+}
+.cs-card .battle-mountains { height: 70%; }
+.cs-card .battle-hills     { height: 42%; }
+.cs-card:hover .battle-mountains { transform: translateX(-1.5%); }
+.cs-card:hover .battle-hills     { transform: translateX(-3%); }
+
+/* Lichtstreif, der beim Hovern über die Karte zieht */
+.cs-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 220, 140, .16) 50%, transparent 65%);
+    background-size: 250% 100%;
+    background-position: 100% 0;
+    opacity: 0;
+}
+.cs-card:hover .cs-sheen { animation: cs-sheen .9s ease-out; }
+
+/* Inhalt liegt direkt auf der Szene – kein zweiter Kasten in der Karte */
+.cs-frame {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Linke Seite leicht abdunkeln, damit Name und Infos auf hellen Themes lesbar bleiben */
+.cs-card .cs-scenery::before,
+.cs-preview .cs-scenery::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .25) 55%, transparent 100%);
+}
+
+.cs-card:hover .race-portrait {
+    border-color: var(--wow-gold);
+    box-shadow: 0 0 12px rgba(255, 209, 0, .45);
+}
+
+.active-card .race-portrait {
+    border-color: var(--wow-gold);
+    animation: cs-portrait-halo 2.4s ease-in-out infinite;
+}
+
+.char-portrait {
+    border-radius: 3px;
+    border: 1px solid var(--wow-gold-soft);
+    box-shadow: 0 0 0 1px #000, 0 2px 6px rgba(0, 0, 0, .8);
+    object-fit: cover;
+}
+
+/* Beruf als kleines Abzeichen oben links am Portrait (Gegenstück zum Klassen-Badge) */
+.profession-badge {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    border: 1px solid var(--wow-gold-soft);
+    box-shadow: 0 0 0 1px #000;
+    object-fit: cover;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000;
+    pointer-events: none;
+}
+
+/* Bearbeiten über Spielen gestapelt, damit die schmalen Fraktionsspalten Platz für die Infos lassen */
+.char-card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.char-card-arrow {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000;
+    opacity: .7;
+    transition: opacity .2s, box-shadow .2s, transform .2s;
+}
+
+.cs-card:hover .char-card-arrow {
+    opacity: 1;
+    transform: scale(1.08);
+    animation: cs-play-pulse 1.2s ease-in-out infinite;
+}
+
+.char-edit-btn {
+    margin: 0;
+    padding: 4px 6px;
+    opacity: .7;
+    transition: opacity .15s, transform .15s;
+}
+
+.char-edit-btn:hover {
+    opacity: 1;
+    transform: rotate(-8deg);
+}
+
+.debug-all-level-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 12px 0 4px;
+}
+
+.debug-all-level-label {
+    font-size: .8rem;
+    margin: 0 4px;
+}
+
+.new-char-toggle-row {
+    display: flex;
+    justify-content: center;
+    margin: 14px 0 6px;
+}
+
+.character-selection .new-char-toggle {
+    font-size: .95rem;
+    padding: 8px 24px;
+    animation: cs-card-in .5s cubic-bezier(.2, .8, .2, 1) .4s both;
+}
+
+.character-selection .cs-back-btn {
+    font-size: .95rem;
+    padding: 10px 22px;
+}
+
+/* ── Erstellungs-Bühne ── */
+/* Kein äußerer Rahmen – nur die Abschnitte untereinander */
+.cs-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 1rem 0;
+    animation: cs-stage-in .5s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+/* Szenenwechsel beim Rassenwechsel */
+.cs-scene-layer { animation: cs-scene-in .6s ease-out both; }
+
+/* Aufsteigende Glutfunken über der Szene */
+.cs-embers span {
+    position: absolute;
+    bottom: -8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #ffd27a;
+    box-shadow: 0 0 6px 2px rgba(255, 180, 80, .7);
+    opacity: 0;
+    animation: cs-ember 7s linear infinite;
+}
+.cs-embers span:nth-child(1)  { left: 6%;  animation-delay: 0s;   animation-duration: 7s; }
+.cs-embers span:nth-child(2)  { left: 17%; animation-delay: 2.1s; animation-duration: 8.5s; }
+.cs-embers span:nth-child(3)  { left: 28%; animation-delay: 4.3s; animation-duration: 6.5s; }
+.cs-embers span:nth-child(4)  { left: 39%; animation-delay: 1.2s; animation-duration: 9s; }
+.cs-embers span:nth-child(5)  { left: 50%; animation-delay: 3.4s; animation-duration: 7.5s; }
+.cs-embers span:nth-child(6)  { left: 61%; animation-delay: 5.6s; animation-duration: 8s; }
+.cs-embers span:nth-child(7)  { left: 72%; animation-delay: .6s;  animation-duration: 6.8s; }
+.cs-embers span:nth-child(8)  { left: 81%; animation-delay: 2.8s; animation-duration: 9.4s; }
+.cs-embers span:nth-child(9)  { left: 90%; animation-delay: 4.9s; animation-duration: 7.2s; }
+.cs-embers span:nth-child(10) { left: 96%; animation-delay: 1.7s; animation-duration: 8.2s; }
+.night .cs-embers span { background: #bfe4ff; box-shadow: 0 0 6px 2px rgba(140, 200, 255, .6); }
+
+/* Vorschau = Charakterkarte mit Szene des Startgebiets, Rahmen in Fraktionsfarbe */
+.cs-preview {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border: 2px solid var(--wow-border-dark);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--wow-bg-deep);
+    transition: border-color .4s ease, box-shadow .4s ease;
+    animation: cs-fade-down .5s ease-out .1s both;
+}
+.cs-preview.alliance-card { border-color: #4a90d9; box-shadow: 0 6px 22px rgba(74, 144, 217, .3); }
+.cs-preview.horde-card    { border-color: #d04a4a; box-shadow: 0 6px 22px rgba(208, 74, 74, .3); }
+
+.cs-preview > :not(.cs-scenery) {
+    position: relative;
+    z-index: 2;
+}
+
+/* Funken steigen nur so hoch wie die Karte */
+.cs-preview .cs-embers span { animation-name: cs-ember-short; }
+
+/* Portrait springt bei jeder Auswahländerung kurz auf (@key erzeugt das Element neu) */
+.cs-pop { animation: cs-pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
+
+.cs-panel {
+    animation: cs-card-in .5s cubic-bezier(.2, .8, .2, 1) calc(.18s + var(--i, 0) * .09s) both;
+}
+
+.character-selection .cs-panel h4 {
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.character-selection .wow-button-group.centered {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.character-selection .wow-btn-icon {
+    transition: all .2s ease, transform .15s ease;
+}
+.character-selection .wow-btn-icon:not(.disabled):hover { transform: translateY(-2px); }
+.character-selection .wow-btn-icon.active { animation: cs-select .35s cubic-bezier(.3, 1.6, .5, 1); }
+
+.character-selection .wow-btn-icon img {
+    border: 1px solid #c5a55a88;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.character-selection .wow-btn-icon.active img {
+    border-color: var(--wow-gold);
+    box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255, 209, 0, .6);
+}
+
+/* Nicht verfügbare Klassen entsättigt wie gesperrte Spells */
+.character-selection .wow-btn-icon.disabled img {
+    filter: grayscale(1);
+}
+
+.race-row {
+    display: flex;
+    gap: 36px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.race-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.character-selection .race-column-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .95rem;
+    font-weight: 700;
+    margin: 0;
+    padding: 4px 16px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid var(--wow-gold-soft);
+}
+
+.character-selection .race-column-title img {
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000;
+}
+
+.character-selection .race-column-title.alliance-title {
+    color: #6ab0ff;
+    background: linear-gradient(180deg, #14284a 0%, #0b1628 100%);
+}
+
+.character-selection .race-column-title.horde-title {
+    color: #ff6a6a;
+    background: linear-gradient(180deg, #4a1414 0%, #280b0b 100%);
+}
+
+/* Rassenauswahl auf dem Fraktionsbanner (.cs-bannered) */
+.race-buttons.cs-bannered {
+    gap: 8px;
+    padding: 18px 14px 64px;
+}
+
+.race-buttons .wow-btn-icon {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-width: 160px;
+    margin: 0;
+}
+
+
+.race-buttons.alliance .wow-btn-icon.active {
+    border-color: #4a90d9;
+    box-shadow: 0 0 8px rgba(74, 144, 217, .6);
+    background: linear-gradient(180deg, #1a3050 0%, #0e1a2e 100%);
+}
+
+.race-buttons.horde .wow-btn-icon.active {
+    border-color: #d04a4a;
+    box-shadow: 0 0 8px rgba(208, 74, 74, .6);
+    background: linear-gradient(180deg, #501a1a 0%, #2e0e0e 100%);
+}
+
+.cs-error { animation: cs-shake .4s ease-in-out; }
+
+.creation-confirm-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 4px;
+    animation: cs-card-in .5s cubic-bezier(.2, .8, .2, 1) .5s both;
+}
+
+.character-selection .confirm-btn {
+    font-family: var(--wow-font-title);
+    font-size: 1rem;
+    padding: 10px 28px;
+    overflow: hidden;
+    animation: cs-confirm-glow 2.2s ease-in-out infinite;
+}
+
+/* Glanz, der regelmäßig über den Bestätigen-Button läuft */
+.character-selection .confirm-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 236, 155, .35) 50%, transparent 65%);
+    background-size: 250% 100%;
+    pointer-events: none;
+    animation: cs-confirm-shine 3.2s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes cs-fade-down {
+    from { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes cs-card-in {
+    from { opacity: 0; transform: translateY(14px) scale(.98); }
+}
+@keyframes cs-stage-in {
+    from { opacity: 0; transform: translateY(-6px) scale(.985); }
+}
+@keyframes cs-scene-in {
+    from { opacity: 0; transform: scale(1.04); }
+}
+@keyframes cs-banner-unfurl {
+    from { scale: 1 0; opacity: .4; }
+}
+@keyframes cs-banner-sway {
+    from { transform: skewX(-.5deg); }
+    to   { transform: skewX(.5deg); }
+}
+@keyframes cs-bar-grow {
+    from { transform: scaleX(0); }
+}
+@keyframes cs-sheen {
+    0%   { background-position: 100% 0; opacity: 1; }
+    100% { background-position: -50% 0; opacity: 0; }
+}
+@keyframes cs-portrait-halo {
+    0%, 100% { box-shadow: 0 0 6px rgba(255, 209, 0, .35); }
+    50%      { box-shadow: 0 0 16px rgba(255, 209, 0, .75); }
+}
+@keyframes cs-badge-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 209, 0, 0); }
+    50%      { box-shadow: 0 0 8px rgba(255, 209, 0, .5); }
+}
+@keyframes cs-play-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px #000, 0 0 4px rgba(255, 209, 0, .4); }
+    50%      { box-shadow: 0 0 0 1px #000, 0 0 12px rgba(255, 209, 0, .9); }
+}
+@keyframes cs-ember {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+    10%  { opacity: .9; }
+    50%  { transform: translate(12px, -160px) scale(.8); }
+    80%  { opacity: .5; }
+    100% { transform: translate(-8px, -340px) scale(.4); opacity: 0; }
+}
+@keyframes cs-ember-short {
+    0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+    15%  { opacity: .9; }
+    100% { transform: translate(10px, -130px) scale(.4); opacity: 0; }
+}
+@keyframes cs-pop {
+    0%   { transform: scale(.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+@keyframes cs-select {
+    0%   { transform: scale(.94); }
+    60%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+@keyframes cs-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+@keyframes cs-confirm-glow {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 190, 120, .35), inset 0 -2px 3px rgba(0, 0, 0, .55), 0 2px 4px rgba(0, 0, 0, .7); }
+    50%      { box-shadow: inset 0 1px 0 rgba(255, 190, 120, .35), inset 0 -2px 3px rgba(0, 0, 0, .55), 0 0 16px rgba(255, 209, 0, .45), 0 2px 4px rgba(0, 0, 0, .7); }
+}
+@keyframes cs-confirm-shine {
+    0%, 55% { background-position: 100% 0; }
+    100%    { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .character-selection *,
+    .character-selection *::before,
+    .character-selection *::after {
+        animation-duration: 1ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+    }
+    .cs-embers { display: none; }
+}
+
+@media (max-width: 760px) {
+    .cs-factions { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+    .race-buttons .wow-btn-icon { min-width: 130px; }
+}

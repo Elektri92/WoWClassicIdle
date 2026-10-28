@@ -10,6 +10,7 @@ public interface IAchievementService
 
     bool IsEarned(string achievementId);
     EarnedAchievement? GetEarned(string achievementId);
+    AchievementProgress? GetProgress(string achievementId);
 
     event Action<AchievementDefinition> AchievementEarned;
 }

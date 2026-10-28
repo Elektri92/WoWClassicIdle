@@ -1,0 +1,243 @@
+/* ============================================
+   Zauberbuch auf /ability-loadout im Stil des Classic-Spellbooks:
+   steinerner Rahmen mit Titelleiste, darin ein Pergament mit angebrannten Rändern.
+   Überschreibt die dunklen Grundstile aus ability-loadout.css nur innerhalb von .spellbook.
+   ============================================ */
+
+.ability-loadout-page .spellbook {
+    --sb-ink: #3a2410;
+    --sb-ink-soft: #6a4a24;
+    --sb-line: rgba(90, 55, 20, .35);
+    padding: 8px 10px 12px;
+    border: 2px solid #5c5850;
+    background: linear-gradient(180deg, #2c2a27 0%, #1a1917 100%);
+    box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0, 0, 0, .65),
+                inset 0 0 0 1px #3a3833, inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+/* Titelleiste */
+.ability-loadout-page .spellbook .spellbook-title {
+    margin: 0 0 8px;
+    padding: 4px 0 3px;
+    border: 1px solid #4e4a42;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #34312c 0%, #191816 55%, #24221f 100%);
+    box-shadow: 0 0 0 1px #000, inset 0 1px 0 rgba(255, 255, 255, .1), inset 0 -2px 4px rgba(0, 0, 0, .6);
+    color: var(--wow-gold);
+    font-size: 1.05rem;
+    text-shadow: 1px 1px 0 #000, 0 0 3px #000;
+}
+
+/* Filter liegen wie der „Rank Filter" auf dem Rahmen über dem Pergament */
+.ability-loadout-page .spellbook .pool-filters { margin-bottom: 8px; }
+
+/* ── Pergament ── */
+.ability-loadout-page .spellbook-parchment {
+    position: relative;
+    padding: 10px 10px 8px;
+    border-radius: 3px;
+    color: var(--sb-ink);
+    background:
+        /* angebrannte Ecken */
+        radial-gradient(circle at 0 0,       rgba(60, 30, 5, .55), transparent 70px),
+        radial-gradient(circle at 100% 0,    rgba(60, 30, 5, .55), transparent 70px),
+        radial-gradient(circle at 0 100%,    rgba(60, 30, 5, .6),  transparent 80px),
+        radial-gradient(circle at 100% 100%, rgba(60, 30, 5, .6),  transparent 80px),
+        /* helle Mitte */
+        radial-gradient(ellipse at 50% 35%, rgba(255, 238, 190, .35) 0%, transparent 70%),
+        /* Flecken */
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='7'/><feColorMatrix values='0 0 0 0 .38  0 0 0 0 .22  0 0 0 0 .06  0 0 0 -1.2 .6'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>"),
+        /* Faser-Körnung */
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3  0 0 0 0 .18  0 0 0 0 .05  0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+        linear-gradient(180deg, #d6b47a 0%, #c9a263 55%, #bf955a 100%);
+    box-shadow:
+        0 0 0 1px #000,
+        inset 0 0 0 2px rgba(40, 20, 4, .55),
+        inset 0 0 14px 4px rgba(70, 35, 8, .75),
+        inset 0 0 40px rgba(110, 60, 15, .45);
+}
+
+/* ── Zauber auf dem Pergament: kompaktes Zwei-Spalten-Raster ── */
+.ability-loadout-page .spellbook .spell-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    align-items: start;
+}
+.ability-loadout-page .spellbook .spell-card {
+    margin: 0;
+    border: 1px solid rgba(70, 40, 10, .45);
+    border-radius: 4px;
+    background: transparent;
+    overflow: visible;             /* Slot-Abzeichen darf über den Rand ragen */
+}
+.ability-loadout-page .spellbook .spell-card:not(.locked):hover {
+    border-color: var(--sb-line);
+    background: rgba(255, 236, 180, .22);
+    box-shadow: none;
+}
+/* Ausgerüstet: kräftiger Goldrahmen mit Schein, deutlich abgesetzt vom Rest */
+.ability-loadout-page .spellbook .spell-card.equipped,
+.ability-loadout-page .spellbook .spell-card.equipped:hover {
+    border-color: #a8740e;
+    background: linear-gradient(90deg, rgba(255, 209, 0, .5) 0%, rgba(255, 209, 0, .18) 100%);
+    box-shadow: inset 4px 0 0 #8a5a10, 0 0 0 1px rgba(255, 220, 90, .6), 0 0 10px rgba(255, 190, 40, .55);
+}
+.ability-loadout-page .spellbook .spell-card.upgradable { border-color: rgba(47, 110, 30, .55); }
+.ability-loadout-page .spellbook .spell-card.locked { opacity: .6; }
+
+/* Icon im dunklen, abgeschrägten Rahmen wie im Original */
+.ability-loadout-page .spellbook .spell-icon {
+    width: 36px;
+    height: 36px;
+    padding: 2px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #4a4640 0%, #1a1816 100%);
+    box-shadow: 0 0 0 1px #000, 1px 2px 4px rgba(40, 20, 4, .6), inset 0 1px 0 rgba(255, 255, 255, .15);
+    box-sizing: border-box;
+}
+.ability-loadout-page .spellbook .spell-icon img {
+    display: block;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px #000;
+}
+.ability-loadout-page .spellbook .spell-card:not(.locked):hover .spell-icon img { box-shadow: 0 0 8px rgba(255, 209, 0, .7); }
+.ability-loadout-page .spellbook .spell-card.equipped .spell-icon { background: linear-gradient(180deg, #ffd96a 0%, #8a5a10 100%); }
+
+/* Goldener Name mit dunkler Kontur, Rang und Details in brauner Tinte */
+.ability-loadout-page .spellbook .pool-info strong {
+    font-family: var(--wow-font-title);
+    font-size: .9rem;
+    color: var(--wow-gold);
+    /* Rundum-Kontur, damit der Name auf dem hellen Pergament klar lesbar ist */
+    text-shadow:
+        -1px -1px 0 #000, 0 -1px 0 #000, 1px -1px 0 #000,
+        -1px  0   0 #000,                1px  0   0 #000,
+        -1px  1px 0 #000, 0  1px 0 #000, 1px  1px 0 #000,
+        1px 2px 2px rgba(0, 0, 0, .8);
+}
+.ability-loadout-page .spellbook .spell-main { gap: 8px; padding: 4px 6px; }
+.ability-loadout-page .spellbook .pool-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ability-loadout-page .spellbook .rank-badge {
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--sb-ink-soft);
+    font-family: var(--wow-font-body);
+    font-size: .74rem;
+    text-shadow: none;
+}
+.ability-loadout-page .spellbook .pool-info small { color: var(--sb-ink); }
+.ability-loadout-page .spellbook .sep { color: rgba(90, 55, 20, .55); }
+.ability-loadout-page .spellbook .wow-dmg  { color: #8a1a0a; }
+.ability-loadout-page .spellbook .wow-heal { color: #1f6a14; }
+
+.ability-loadout-page .spellbook .pool-action {
+    color: var(--sb-ink-soft);
+    border-color: var(--sb-line);
+    background: rgba(255, 240, 200, .2);
+}
+.ability-loadout-page .spellbook .spell-card:not(.locked):hover .pool-action {
+    color: #2a1604;
+    border-color: #8a5a20;
+    background: rgba(255, 220, 140, .45);
+}
+.ability-loadout-page .spellbook .pool-action { padding: 1px 6px; font-size: .64rem; }
+
+/* ── Exklusiv-Gruppen (z. B. Fireball/Frostbolt/Arcane Missiles) ── */
+.ability-loadout-page .spellbook .excl-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #5a3a8a;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+.ability-loadout-page .spellbook .excl-line.conflict { color: #8a3a10; }
+
+/* Konflikt: gestrichelter Rahmen und blasses Icon, bis man drüberfährt */
+.ability-loadout-page .spellbook .spell-card.excluded { border-style: dashed; border-color: rgba(138, 58, 16, .55); }
+.ability-loadout-page .spellbook .spell-card.excluded .spell-icon img { filter: saturate(.35) brightness(.85); transition: filter .2s; }
+.ability-loadout-page .spellbook .spell-card.excluded:hover .spell-icon img { filter: none; }
+.ability-loadout-page .spellbook .pool-action.swap {
+    border-color: rgba(138, 58, 16, .6);
+    background: rgba(230, 140, 60, .25);
+    color: #7a3008;
+    font-weight: 700;
+}
+.ability-loadout-page .spellbook .spell-card.excluded:hover .pool-action.swap {
+    border-color: #7a3008;
+    background: linear-gradient(180deg, #f0a050 0%, #b05a18 100%);
+    color: #fff;
+}
+
+/* „Slot N“-Marke ausgerüsteter Zauber, beim Hovern „Remove“ */
+.ability-loadout-page .spellbook .pool-action.equipped-tag {
+    border-color: #6a4a10;
+    background: linear-gradient(180deg, #ffd96a 0%, #c58a1a 100%);
+    color: #2a1a04;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+}
+.ability-loadout-page .spellbook .spell-card.equipped:hover .pool-action.equipped-tag {
+    border-color: #5a0a06;
+    background: linear-gradient(180deg, #c8402e 0%, #7a1408 100%);
+    color: #fff;
+}
+.ability-loadout-page .equipped-tag .tag-hover { display: none; }
+.ability-loadout-page .spell-card.equipped:hover .equipped-tag .tag-idle  { display: none; }
+.ability-loadout-page .spell-card.equipped:hover .equipped-tag .tag-hover { display: inline; }
+.ability-loadout-page .spellbook .locked-badge { color: #8a2a1a !important; border-color: rgba(138, 42, 26, .5) !important; }
+
+/* ── Rangleiste auf Pergament ── */
+.ability-loadout-page .spellbook .rank-track {
+    padding: 0 6px 4px;
+    border-top: 1px solid var(--sb-line);
+    background: rgba(70, 40, 10, .08);
+}
+.ability-loadout-page .spellbook .rank-track-line {
+    top: 11px;
+    left: calc(6px + (100% - 12px) / var(--n) / 2);
+    right: calc(6px + (100% - 12px) / var(--n) / 2);
+    background: rgba(70, 40, 10, .3);
+    box-shadow: none;
+}
+.ability-loadout-page .spellbook .rank-node { padding-top: 3px; gap: 1px; }
+.ability-loadout-page .spellbook .rank-dot { width: 18px; height: 18px; font-size: .62rem; }
+.ability-loadout-page .spellbook .rank-lvl { font-size: .52rem; }
+.ability-loadout-page .spellbook .rank-lvl { color: var(--sb-ink-soft); }
+.ability-loadout-page .spellbook .rank-node.unlocked .rank-lvl { color: var(--sb-ink); }
+.ability-loadout-page .spellbook .rank-node.equipped .rank-lvl { color: #7a4a00; }
+.ability-loadout-page .spellbook .rank-node.locked .rank-dot {
+    border: 1px dashed rgba(70, 45, 15, .55);
+    background: rgba(70, 40, 10, .12);
+    color: #7a5a32;
+}
+.ability-loadout-page .spellbook .spell-card.upgradable .rank-node.best .rank-dot { color: #c8f5bc; }
+
+.ability-loadout-page .spellbook .rank-upgrade {
+    padding: 2px;
+    font-size: .64rem;
+    border-top-color: rgba(47, 110, 30, .45);
+    background: linear-gradient(90deg, transparent, rgba(63, 138, 47, .3), transparent);
+    background-size: 200% 100%;
+    color: #1f5a14;
+}
+.ability-loadout-page .spellbook .rank-upgrade:hover { color: #0c3006; }
+
+/* ── Coming Up / Leerhinweise ── */
+.ability-loadout-page .spellbook .pool-divider {
+    border-top-color: var(--sb-line);
+    color: var(--sb-ink-soft);
+}
+.ability-loadout-page .spellbook .coming-up-toggle:hover { color: #2a1604; }
+.ability-loadout-page .spellbook .pool-empty { color: var(--sb-ink-soft); }
+
+@media (max-width: 600px) {
+    .ability-loadout-page .spellbook .spell-grid { grid-template-columns: 1fr; }
+}

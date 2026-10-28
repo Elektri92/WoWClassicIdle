@@ -2,7 +2,7 @@ using Models;
 
 namespace Services;
 
-public class AchievementService : IAchievementService
+public partial class AchievementService : IAchievementService
 {
     private readonly IdleGameEngine _engine;
     private readonly List<AchievementDefinition> _all;
@@ -50,6 +50,7 @@ public class AchievementService : IAchievementService
     {
         _engine = engine;
         _all = BuildAchievements();
+        _progress = BuildProgressTrackers();
 
         foreach (var cls in Enum.GetValues<CharacterClass>())
             _lastKnownLevels[cls] = 1;

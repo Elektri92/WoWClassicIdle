@@ -138,6 +138,7 @@ public partial class IdleFighter
         DetectPlayerChange();
         DetectClassChange();
         DetectResurrection();
+        DetectLevelUp();
         FlushProjectiles();
         _ = InvokeAsync(StateHasChanged);
     }

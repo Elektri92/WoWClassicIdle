@@ -1,0 +1,671 @@
+/* ============================================
+   Ability Loadout (/ability-loadout) – Look der Unit-Frames und Zonen-Szenen aus /idle
+   Silhouetten (.battle-mountains/.battle-hills) und Zonen-Themes kommen aus combat-zones.css / professions.css
+   ============================================ */
+
+.ability-loadout-page .al-title { animation: al-fade-down .5s ease-out both; }
+.ability-loadout-page .al-hint  { animation: al-fade-down .5s ease-out .08s both; }
+
+/* ── Kopf: Charakter auf der Szene seiner Zone ── */
+.al-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 16px 20px;
+    border: 2px solid var(--wow-border-dark);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--wow-bg-deep);
+    animation: al-fade-down .5s ease-out .12s both;
+}
+.al-header.alliance { border-color: #4a90d9; box-shadow: 0 6px 22px rgba(74, 144, 217, .25); }
+.al-header.horde    { border-color: #d04a4a; box-shadow: 0 6px 22px rgba(208, 74, 74, .25); }
+
+.al-scenery {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.al-sky { position: absolute; inset: 0; }
+.al-scenery::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(0, 0, 0, .6) 0%, rgba(0, 0, 0, .25) 55%, transparent 100%),
+        radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, .55) 100%);
+}
+.al-header .battle-mountains { height: 70%; }
+.al-header .battle-hills     { height: 42%; }
+.al-header.night .battle-mountains { filter: brightness(.3) saturate(.6); }
+.al-header.night .battle-hills     { filter: brightness(.22) saturate(.6); }
+
+/* Volkswappen transparent im rechten Bereich der Szene (über der Abdunklung, unter dem Inhalt) */
+.al-header-crest {
+    position: absolute;
+    right: 4%;
+    top: 50%;
+    z-index: 1;
+    height: 150%;
+    max-width: 40%;
+    object-fit: contain;
+    transform: translateY(-50%);
+    opacity: .22;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .8));
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 35%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 35%);
+}
+
+.al-header > :not(.al-scenery) { position: relative; z-index: 1; }
+
+.al-portrait {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+.al-race-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--wow-gold);
+    object-fit: cover;
+    background: var(--wow-bg-deep);
+    animation: al-halo 2.6s ease-in-out infinite;
+}
+.al-class-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--wow-gold-soft);
+    background: var(--wow-bg-deep);
+    object-fit: contain;
+}
+
+.al-header-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.al-name-line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    font-family: var(--wow-font-title);
+    font-size: 1.15rem;
+}
+.al-race  { color: var(--wow-gold); font-weight: 700; text-shadow: 0 1px 2px #000; }
+.al-class { font-weight: 700; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, .95); }
+.al-level { font-size: .85rem; color: var(--wow-gold-pale); text-shadow: 0 1px 2px #000; }
+
+/* Belegte Slots als Leiste */
+.al-slot-meter {
+    position: relative;
+    max-width: 320px;
+    height: 16px;
+    background: var(--wow-bg-deep);
+    border: 1px solid var(--wow-border);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 4px #000;
+}
+.al-slot-meter-fill {
+    height: 100%;
+    background: linear-gradient(180deg, #ffd96a 0%, #c58a1a 100%);
+    transform-origin: left;
+    transition: width .4s ease;
+    animation: al-bar-grow .9s cubic-bezier(.2, .8, .2, 1) .35s both;
+}
+.al-slot-meter span {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .68rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px #000;
+}
+
+/* ── Aufbau: Aktionsleiste oben, Zauberbuch darunter ── */
+.ability-loadout-page .loadout-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.al-panel {
+    position: relative;
+    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+    animation: al-card-in .5s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i, 0) * .1s) backwards;
+}
+.ability-loadout-page .al-panel h4 {
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+/* ── Ausgerüstete Slots als steinerne Aktionsleiste ── */
+.ability-loadout-page .action-bar-wrap {
+    --gryphon-overlap: 30px;
+    position: relative;
+    margin-top: 18px;              /* Platz für die über die Leiste ragenden Greifen */
+    padding: 0 130px;
+    animation: al-card-in .5s cubic-bezier(.2, .8, .2, 1) .2s backwards;
+}
+.ability-loadout-page .action-bar {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px 10px;
+    border: 2px solid #5c5850;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #3a3732 0%, #1e1d1b 55%, #2a2824 100%);
+    box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0, 0, 0, .65),
+                inset 0 1px 0 rgba(255, 255, 255, .1), inset 0 -2px 6px rgba(0, 0, 0, .6);
+}
+
+/* Greifen liegen hinter den Leistenenden, damit ihre gerade Schnittkante verdeckt bleibt */
+.ability-loadout-page .al-gryphon {
+    position: absolute;
+    z-index: 0;
+    top: -18px;
+    height: calc(100% + 18px);
+    width: auto;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .75));
+}
+.ability-loadout-page .al-gryphon.left  { right: calc(100% - 130px - var(--gryphon-overlap)); }
+.ability-loadout-page .al-gryphon.right { left:  calc(100% - 130px - var(--gryphon-overlap)); }
+
+.ability-loadout-page .slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+    padding: 6px 4px 5px;
+    box-sizing: border-box;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 6px;
+    background: var(--wow-bg-deep);
+    box-shadow: inset 0 0 8px #000;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color .2s, background .2s, box-shadow .2s, transform .15s;
+    animation: al-slot-in .45s cubic-bezier(.3, 1.4, .5, 1) calc(.3s + var(--i, 0) * .05s) both;
+}
+.ability-loadout-page .action-bar .tt-host { height: 100%; }
+.ability-loadout-page .slot-number {
+    position: absolute;
+    z-index: 1;
+    top: 2px;
+    left: 5px;
+    font-family: var(--wow-font-title);
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--wow-border-inner);
+    text-shadow: 0 1px 1px #000;
+}
+
+.ability-loadout-page .slot-icon {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 4px;
+}
+.ability-loadout-page .slot-icon img {
+    display: block;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 1px solid var(--wow-gold-soft);
+    box-shadow: 0 0 0 1px #000, 0 2px 6px rgba(0, 0, 0, .8);
+}
+.ability-loadout-page .slot-icon.empty-icon {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--wow-border);
+    color: var(--wow-border);
+    font-size: 1.3rem;
+    transition: color .2s, border-color .2s;
+}
+
+/* Rotes Kreuz über dem Icon beim Hovern = Entfernen */
+.ability-loadout-page .slot-remove {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: rgba(120, 10, 10, .65);
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    opacity: 0;
+    transform: scale(.7);
+    transition: opacity .15s, transform .15s;
+}
+
+.ability-loadout-page .slot.filled {
+    border-color: var(--wow-border-inner);
+    background: linear-gradient(180deg, #2b2418 0%, #1a150d 100%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .5);
+}
+.ability-loadout-page .slot.filled .slot-number { color: var(--wow-gold-soft); }
+.ability-loadout-page .slot.filled .slot-icon { animation: al-equip-flash .7s ease-out; }
+.ability-loadout-page .slot.filled:hover { border-color: #b32121; background: linear-gradient(180deg, #3a1612 0%, #1e0b09 100%); box-shadow: 0 0 10px rgba(179, 33, 33, .35); }
+.ability-loadout-page .slot.filled:hover .slot-remove { opacity: 1; transform: scale(1); }
+
+.ability-loadout-page .slot.empty { color: #6a5a38; }
+.ability-loadout-page .slot.empty:hover { border-color: var(--wow-border-inner); }
+.ability-loadout-page .slot.empty:hover .empty-icon { color: var(--wow-gold-soft); border-color: var(--wow-gold-soft); }
+
+.ability-loadout-page .slot-label {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+}
+.ability-loadout-page .slot-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .74rem;
+    font-weight: 600;
+    color: #fff;
+}
+.ability-loadout-page .slot-placeholder { font-style: italic; font-size: .72rem; }
+
+/* Upgrade-Knopf oben rechts am Slot */
+.ability-loadout-page .slot-upgrade {
+    position: absolute;
+    z-index: 1;
+    top: 2px;
+    right: 2px;
+    padding: 0 4px;
+    border: 1px solid #3f8a2f;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #1f4a18 0%, #12300f 100%);
+    color: #b4f0a4;
+    font-size: .6rem;
+    font-weight: 700;
+    cursor: pointer;
+    animation: al-upgrade-glow 1.6s ease-in-out infinite;
+}
+.ability-loadout-page .slot-upgrade:hover { color: #fff; border-color: #6fd05a; }
+
+.ability-loadout-page .rank-badge {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 5px;
+    border: 1px solid var(--wow-border-inner);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .4);
+    color: var(--wow-gold-pale);
+    font-size: .66rem;
+    font-weight: 700;
+    vertical-align: middle;
+    letter-spacing: .3px;
+}
+.ability-loadout-page .slot-label .rank-badge { margin-left: 0; font-size: .6rem; }
+
+/* ── Filter: Suche und Kategorien in einer Zeile ── */
+.ability-loadout-page .pool-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 10px;
+}
+.ability-loadout-page .pool-search {
+    flex: 0 1 200px;
+    min-width: 140px;
+    padding: 6px 10px;
+    font-size: .85rem;
+    background: var(--wow-bg-deep);
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 4px;
+    color: #e0d0a0;
+    outline: none;
+    box-sizing: border-box;
+    box-shadow: inset 0 0 6px #000;
+    transition: border-color .2s, box-shadow .2s;
+}
+.ability-loadout-page .pool-search:focus { border-color: var(--wow-gold-soft); box-shadow: inset 0 0 6px #000, 0 0 8px rgba(197, 165, 90, .3); }
+.ability-loadout-page .pool-search::placeholder { color: #6a5a38; }
+
+.ability-loadout-page .pool-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.ability-loadout-page .pool-tabs .wow-tab { font-size: .72rem; }
+
+/* ── Zauberkarte ── */
+.ability-loadout-page .spell-card {
+    margin-bottom: 7px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 6px;
+    background: var(--wow-bg-deep);
+    overflow: hidden;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    animation: al-card-in .4s cubic-bezier(.2, .8, .2, 1) calc(.35s + var(--i, 0) * .04s) backwards;
+}
+.ability-loadout-page .spell-card:not(.locked):hover {
+    border-color: var(--wow-gold-soft);
+    box-shadow: 0 0 10px rgba(197, 165, 90, .2);
+}
+.ability-loadout-page .spell-card.equipped {
+    border-color: var(--wow-border-inner);
+    background: linear-gradient(90deg, rgba(197, 165, 90, .14) 0%, var(--wow-bg-deep) 60%);
+    box-shadow: inset 3px 0 0 var(--wow-gold-soft);
+    animation: al-card-in .4s cubic-bezier(.2, .8, .2, 1) calc(.35s + var(--i, 0) * .04s) backwards,
+               al-equipped-pulse .8s ease-out;
+}
+.ability-loadout-page .spell-card.upgradable { border-color: #3f8a2f; }
+.ability-loadout-page .spell-card.locked { opacity: .55; }
+
+.ability-loadout-page .spell-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    cursor: pointer;
+    user-select: none;
+}
+.ability-loadout-page .spell-card.locked .spell-main { cursor: default; }
+
+.ability-loadout-page .spell-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+.ability-loadout-page .spell-icon img {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    border: 1px solid #c5a55a88;
+    box-shadow: 0 0 0 1px #000;
+    transition: border-color .2s, box-shadow .2s;
+}
+.ability-loadout-page .spell-card:not(.locked):hover .spell-icon img { border-color: var(--wow-gold); box-shadow: 0 0 0 1px #000, 0 0 8px rgba(255, 209, 0, .5); }
+.ability-loadout-page .spell-card.equipped .spell-icon img { border-color: var(--wow-gold); }
+.ability-loadout-page .spell-card.locked .spell-icon img { filter: grayscale(1); }
+
+/* Slot-Nummer für ausgerüstete Zauber */
+.ability-loadout-page .spell-slot-badge {
+    position: absolute;
+    left: -5px;
+    top: -5px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid #000;
+    background: radial-gradient(circle at 35% 30%, #ffec9b, #c58a1a);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+    color: #2a1a04;
+    font-family: var(--wow-font-body);
+    font-size: .68rem;
+    font-weight: 900;
+    animation: al-pop .4s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+
+.ability-loadout-page .pool-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.ability-loadout-page .pool-info strong { color: #fff; }
+.ability-loadout-page .pool-info small { color: var(--wow-muted); }
+.ability-loadout-page .sep { color: #5a4a28; }
+
+.ability-loadout-page .pool-action {
+    font-size: .7rem;
+    color: var(--wow-muted);
+    white-space: nowrap;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 3px;
+    transition: color .2s, border-color .2s;
+}
+.ability-loadout-page .spell-card:not(.locked):hover .pool-action { color: var(--wow-gold); border-color: var(--wow-gold-soft); }
+.ability-loadout-page .spell-card.equipped:hover .pool-action { color: #ff8a7a; border-color: #b32121; }
+.locked-badge { color: #c06060 !important; border-color: #4a2020 !important; }
+
+/* ── Rangleiste: Knoten auf einer Linie, Gold = nutzbar, leuchtend = ausgerüstet, grau = gesperrt ── */
+.ability-loadout-page .rank-track {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    padding: 2px 8px 8px;
+    border-top: 1px solid rgba(90, 74, 40, .45);
+    background: rgba(0, 0, 0, .25);
+}
+.ability-loadout-page .rank-track-line {
+    position: absolute;
+    top: 15px;
+    left: calc(8px + (100% - 16px) / var(--n) / 2);
+    right: calc(8px + (100% - 16px) / var(--n) / 2);
+    height: 3px;
+    border-radius: 2px;
+    background: #2a2216;
+    box-shadow: inset 0 0 2px #000;
+}
+.ability-loadout-page .rank-track-fill {
+    display: block;
+    height: 100%;
+    width: var(--progress);
+    border-radius: 2px;
+    background: linear-gradient(90deg, #8a7444, #ffd100);
+    box-shadow: 0 0 6px rgba(255, 209, 0, .5);
+    transform-origin: left;
+    animation: al-bar-grow .8s cubic-bezier(.2, .8, .2, 1) calc(.5s + var(--i, 0) * .04s) both;
+}
+
+.ability-loadout-page .rank-tt { display: flex; justify-content: center; }
+
+.ability-loadout-page .rank-node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 0 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+.ability-loadout-page .rank-dot {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-family: var(--wow-font-body);
+    font-size: .74rem;
+    font-weight: 700;
+    transition: transform .15s, box-shadow .2s, background .2s;
+}
+.ability-loadout-page .rank-lvl {
+    font-size: .58rem;
+    color: var(--wow-muted);
+    white-space: nowrap;
+}
+
+.ability-loadout-page .rank-node.unlocked .rank-dot {
+    border: 1px solid var(--wow-gold-soft);
+    background: radial-gradient(circle at 35% 30%, #4a3c22, #1a150d);
+    color: var(--wow-gold-pale);
+    box-shadow: 0 0 0 1px #000;
+}
+.ability-loadout-page .rank-node.unlocked:hover .rank-dot {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 1px #000, 0 0 10px rgba(255, 209, 0, .6);
+}
+.ability-loadout-page .rank-node.unlocked .rank-lvl { color: var(--wow-gold-soft); }
+
+.ability-loadout-page .rank-node.equipped { cursor: default; }
+.ability-loadout-page .rank-node.equipped .rank-dot {
+    border: 1px solid #fff3c0;
+    background: radial-gradient(circle at 35% 30%, #ffec9b, #c58a1a);
+    color: #2a1a04;
+    box-shadow: 0 0 0 1px #000;
+    animation: al-rank-ring 2s ease-out infinite;
+}
+.ability-loadout-page .rank-node.equipped .rank-lvl { color: var(--wow-gold); font-weight: 700; }
+
+.ability-loadout-page .rank-node.locked { cursor: not-allowed; }
+.ability-loadout-page .rank-node.locked .rank-dot {
+    border: 1px dashed #4a3d22;
+    background: #120e09;
+    color: #5a4a28;
+}
+
+/* Höchster nutzbarer, aber nicht ausgerüsteter Rang: grüner Rand als Hinweis */
+.ability-loadout-page .spell-card.upgradable .rank-node.best .rank-dot {
+    border-color: #6fd05a;
+    color: #c8f5bc;
+    animation: al-upgrade-glow 1.6s ease-in-out infinite;
+}
+
+.ability-loadout-page .rank-upgrade {
+    display: block;
+    width: 100%;
+    padding: 4px;
+    border: 0;
+    border-top: 1px solid #2a5a20;
+    background: linear-gradient(90deg, transparent, rgba(63, 138, 47, .35), transparent);
+    background-size: 200% 100%;
+    color: #b4f0a4;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    animation: al-shine 2.4s linear infinite;
+}
+.ability-loadout-page .rank-upgrade:hover { color: #fff; }
+
+/* ── Coming Up ── */
+.ability-loadout-page .pool-divider {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 4px 6px;
+    border: 0;
+    border-top: 1px solid #2a2010;
+    background: none;
+    font-family: var(--wow-font-title);
+    font-size: .72rem;
+    font-weight: 700;
+    color: #7a6a44;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.ability-loadout-page .coming-up-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: color .15s;
+}
+.ability-loadout-page .coming-up-toggle:hover { color: var(--wow-gold-soft); }
+.ability-loadout-page .toggle-arrow { font-size: .65rem; transition: transform .25s ease; }
+.ability-loadout-page .coming-up-toggle.open .toggle-arrow { transform: rotate(180deg); }
+.ability-loadout-page .coming-up-list { animation: al-fade-down .3s ease-out both; }
+
+.ability-loadout-page .pool-empty {
+    padding: 12px 4px;
+    text-align: center;
+    color: #6a5a38;
+    font-style: italic;
+    font-size: .85rem;
+}
+
+/* Statusmeldung fährt ein; Warnungen wackeln kurz */
+.al-status { margin-top: 12px; animation: al-toast-in .35s cubic-bezier(.2, .8, .2, 1) both; }
+.al-status.warning { animation: al-toast-in .35s cubic-bezier(.2, .8, .2, 1) both, al-shake .4s ease-in-out .1s; }
+
+/* ── Keyframes ── */
+@keyframes al-fade-down { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes al-card-in   { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+@keyframes al-slot-in   { from { opacity: 0; transform: translateY(-8px) scale(.95); } }
+@keyframes al-bar-grow  { from { transform: scaleX(0); } }
+@keyframes al-pop {
+    from { transform: scale(.3); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+@keyframes al-halo {
+    0%, 100% { box-shadow: 0 0 6px rgba(255, 209, 0, .3); }
+    50%      { box-shadow: 0 0 16px rgba(255, 209, 0, .7); }
+}
+@keyframes al-equip-flash {
+    0%   { box-shadow: 0 0 0 0 rgba(255, 209, 0, .9); transform: scale(.85); }
+    50%  { box-shadow: 0 0 18px 4px rgba(255, 209, 0, .6); transform: scale(1.06); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 209, 0, 0); transform: scale(1); }
+}
+@keyframes al-equipped-pulse {
+    from { box-shadow: inset 3px 0 0 var(--wow-gold-soft), 0 0 16px rgba(255, 209, 0, .55); }
+}
+@keyframes al-rank-ring {
+    0%   { box-shadow: 0 0 0 1px #000, 0 0 0 0 rgba(255, 209, 0, .7); }
+    70%  { box-shadow: 0 0 0 1px #000, 0 0 0 7px rgba(255, 209, 0, 0); }
+    100% { box-shadow: 0 0 0 1px #000, 0 0 0 0 rgba(255, 209, 0, 0); }
+}
+@keyframes al-upgrade-glow {
+    0%, 100% { box-shadow: 0 0 0 1px #000, 0 0 2px rgba(111, 208, 90, .3); }
+    50%      { box-shadow: 0 0 0 1px #000, 0 0 10px rgba(111, 208, 90, .8); }
+}
+@keyframes al-shine {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+@keyframes al-toast-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes al-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ability-loadout-page *,
+    .ability-loadout-page *::before,
+    .ability-loadout-page *::after {
+        animation-duration: 1ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+    }
+}
+
+@media (max-width: 760px) {
+    .ability-loadout-page .action-bar-wrap { margin-top: 0; padding: 0; }
+    .ability-loadout-page .al-gryphon { display: none; }
+    .ability-loadout-page .action-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

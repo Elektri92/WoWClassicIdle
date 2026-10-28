@@ -7,8 +7,9 @@
 
 <PageTitle>Professions</PageTitle>
 
-<div class="wow-page professions-page">
-    <h2>Professions</h2>
+@* Styles: wwwroot/css/professions.css – Kopf und Panels (.al-header, .al-panel) aus ability-loadout.css *@
+<div class="wow-page professions-page @(BuildInfo.IsDebug ? "with-debug" : "")">
+    <h2 class="prof-title">Professions</h2>
 
     @if (!Engine.HasActiveCharacter)
     {
@@ -20,64 +21,73 @@
     }
     else
     {
-        <p class="wow-hint">
+        <p class="wow-hint prof-hint">
             Each character can learn one crafting profession – unlearning it resets its skill.
             Herbalism, Mining, Skinning and Fishing are shared by all characters and learned automatically at level @Professions.MinCharacterLevel.
         </p>
 
         @if (BuildInfo.IsDebug)
         {
-            <div class="prof-debug-row">
-                <span class="wow-badge">DEBUG</span>
+            @* Debug-Werkzeuge: fest am linken Rand des Inhaltsbereichs, direkt neben der Navigation *@
+            <aside class="al-panel prof-debug" style="--i: 0">
+                <h4><span class="wow-badge">DEBUG</span></h4>
                 <button class="wow-btn small" @onclick="DebugAssignAll">Assign all professions + passive slots (zone 1)</button>
                 @if (_debugResult is not null)
                 {
-                    <span class="wow-muted">@_debugResult</span>
+                    <span class="wow-muted prof-debug-result">@_debugResult</span>
                 }
-            </div>
-            <div class="prof-debug-row">
-                <span class="wow-badge">DEBUG</span>
-                <span class="prof-debug-label">Profession speed:</span>
-                @foreach (var speed in new[] { 1, 5, 10, 50, 100, 500 })
-                {
-                    <button class="wow-tab @(Engine.ProfessionSpeed == speed ? "active" : "")"
-                            @onclick="() => Engine.DebugSetProfessionSpeed(speed)">@(speed)×</button>
-                }
-                <span class="prof-debug-label">Set all skills to:</span>
-                @foreach (var skill in new[] { 75, 150, 225, 300 })
-                {
-                    <button class="wow-tab" @onclick="() => Engine.DebugSetAllProfessionSkills(skill)">@skill</button>
-                }
-            </div>
+                <span class="prof-debug-label">Profession speed</span>
+                <div class="prof-debug-buttons">
+                    @foreach (var speed in new[] { 1, 5, 10, 50, 100, 500 })
+                    {
+                        <button class="wow-tab @(Engine.ProfessionSpeed == speed ? "active" : "")"
+                                @onclick="() => Engine.DebugSetProfessionSpeed(speed)">@(speed)×</button>
+                    }
+                </div>
+                <span class="prof-debug-label">Set all skills to</span>
+                <div class="prof-debug-buttons">
+                    @foreach (var skill in new[] { 75, 150, 225, 300 })
+                    {
+                        <button class="wow-tab" @onclick="() => Engine.DebugSetAllProfessionSkills(skill)">@skill</button>
+                    }
+                </div>
+            </aside>
         }
 
         <div class="prof-layout">
         @* Linke Spalte: Charaktere – Klick wechselt den gespielten Charakter *@
-        <aside class="wow-card prof-roster">
+        <aside class="al-panel prof-roster" style="--i: 0">
             <h4>Characters</h4>
+            @{ int index = 0; }
             @foreach (var character in Engine.CharacterRoster)
             {
-                @RosterEntry(character)
+                @RosterEntry(character, index++)
             }
         </aside>
 
         <div class="prof-main">
-        <div class="wow-card">
+        <ProfessionSearch />
+
+        <div class="al-panel prof-map-bg" style="--i: 1">
+            @* Zufällige Gebietskarte transparent im Hintergrund *@
+            <div class="prof-map" aria-hidden="true" style="background-image: url('@_gatheringMap')"></div>
             <h4>Gathering</h4>
             <div class="prof-grid">
-                @foreach (var def in Professions.All.Where(d => d.IsGathering))
+                @foreach (var (def, i) in Professions.All.Where(d => d.IsGathering).Select((d, i) => (d, i)))
                 {
-                    @Card(def)
+                    @Card(def, i)
                 }
             </div>
         </div>
 
-        <div class="wow-card">
+        <div class="al-panel prof-map-bg" style="--i: 2">
+            @* Hauptstadt-Karte der Fraktion transparent im Hintergrund (wie im Inventar) *@
+            <div class="prof-map" aria-hidden="true" style="background-image: url('@IconUrls.CapitalMapUrl(Engine.Faction)')"></div>
             <h4>Crafting</h4>
             <div class="prof-grid">
-                @foreach (var def in Professions.All.Where(d => !d.IsGathering))
+                @foreach (var (def, i) in Professions.All.Where(d => !d.IsGathering).Select((d, i) => (d, i)))
                 {
-                    @Card(def)
+                    @Card(def, i + 4)
                 }
             </div>
         </div>
@@ -88,11 +98,13 @@
 
 @code {
     private Profession? _confirmUnlearn;
+    // Einmal je Seitenaufruf gewählt, damit die Karte beim Neuzeichnen nicht wechselt
+    private readonly string _gatheringMap = IconUrls.RandomGatheringMapUrl();
     private string? _debugResult;
 
     private void DebugAssignAll() => _debugResult = Engine.DebugAssignAllProfessions();
 
-    private RenderFragment Card(ProfessionDefinition def) => __builder =>
+    private RenderFragment Card(ProfessionDefinition def, int index) => __builder =>
     {
         var progress = Engine.GetProfessionProgress(def.Profession);
         var blocker  = Engine.ProfessionLearnBlocker(def.Profession);
@@ -105,7 +117,7 @@
             .OfType<CharacterSlot>()
             .ToList();
         bool hasAction = def.IsPrimary && (progress is not null || owner is null);
-        <div class="prof-card @(shown is not null ? "learned" : "") @(hasAction ? "has-action" : "")" @onclick="() => Open(def)">
+        <div class="prof-card prof-bg-@def.Slug @(shown is not null ? "learned" : "") @(hasAction ? "has-action" : "")" style="--i: @index" @onclick="() => Open(def)">
             <img class="prof-icon" src="@def.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
             <div class="prof-card-body">
                 <div class="prof-card-name">
@@ -117,9 +129,12 @@
                              title="@($"{IdleGameEngine.CharacterName(owner)} (Lv. {owner.Player.Level})")"
                              onerror="this.remove()" />
                     }
-                    @if (!def.IsPrimary)
+                    @* Passive Sammler: Klassen-Icons direkt neben dem Namen *@
+                    @foreach (var worker in workers)
                     {
-                        <span class="prof-tag">Shared</span>
+                        <img class="prof-owner-icon prof-worker-icon" src="@IconUrls.ClassIconUrl(worker.Class)" alt=""
+                             title="@($"Passive: {IdleGameEngine.CharacterName(worker)} (Lv. {worker.Player.Level})")"
+                             onerror="this.remove()" />
                     }
                 </div>
                 @if (shown is not null)
@@ -129,18 +144,6 @@
                 else
                 {
                     <div class="prof-card-sub">@(blocker ?? "Not learned")</div>
-                }
-                @if (workers.Count > 0)
-                {
-                    <div class="prof-card-sub prof-workers">
-                        @workers.Count passive @(workers.Count == 1 ? "worker" : "workers")
-                        @foreach (var worker in workers)
-                        {
-                            <img class="prof-owner-icon" src="@IconUrls.ClassIconUrl(worker.Class)" alt=""
-                                 title="@($"{IdleGameEngine.CharacterName(worker)} (Lv. {worker.Player.Level})")"
-                                 onerror="this.remove()" />
-                        }
-                    </div>
                 }
             </div>
             <div class="prof-card-actions" @onclick:stopPropagation="true">
@@ -169,24 +172,23 @@
         </div>
     };
 
-    // Eintrag der Charakterliste: Klassen-Icon, Name, Level
-    private RenderFragment RosterEntry(CharacterSlot character) => __builder =>
+    // Schnellauswahl: rundes Volksporträt mit Klassen-Badge, Name, Level und Berufs-Icons
+    private RenderFragment RosterEntry(CharacterSlot character, int index) => __builder =>
     {
         bool isActive = character.Id == Engine.ActiveCharacter?.Id;
         var primary = character.Player.ProfessionState.Primary;
         var passive = Engine.PassiveAssignmentOf(character.Id);
-        <div class="roster-entry @(isActive ? "current" : "selectable")"
-             title="@(isActive ? null : "Click to play this character")"
+        <div class="roster-entry @(isActive ? "current" : "selectable")" style="--i: @index"
+             title="@(isActive ? "Currently playing" : "Click to play this character")"
              @onclick="() => Play(character)">
-            <img src="@IconUrls.ClassIconUrl(character.Class)" alt="" onerror="this.style.visibility='hidden'" />
+            <div class="al-portrait roster-portrait">
+                <img class="al-race-portrait" src="@IconUrls.RaceIconUrl(character.Race, character.Gender)" alt="@character.Race" onerror="this.style.visibility='hidden'" />
+                <img class="al-class-badge" src="@IconUrls.ClassIconUrl(character.Class)" alt="@character.Class" onerror="this.style.display='none'" />
+            </div>
             <div class="roster-entry-body">
                 <span class="roster-entry-name class-@character.Class.ToString().ToLowerInvariant()">@IdleGameEngine.CharacterName(character)</span>
                 <span class="wow-muted roster-entry-sub">
-                    Lv. @character.Player.Level
-                    @if (isActive)
-                    {
-                        <span class="prof-tag">Playing</span>
-                    }
+                    Lv. @character.Player.Level @character.Race @character.Class
                 </span>
             </div>
             @* Berufe des Charakters: Herstellungsberuf + passiv ausgeübter Sammelberuf *@

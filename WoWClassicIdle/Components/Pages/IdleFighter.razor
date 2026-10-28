@@ -45,7 +45,20 @@ else if (!_engine.NeedsCombatZone)
     <!-- ═══════════════════════════════════════════ -->
     <!--  PLAYER FRAME  (links)                     -->
     <!-- ═══════════════════════════════════════════ -->
-    <div class="unit-frame player-frame">
+    <div class="unit-frame player-frame @(ShowLevelUp ? "leveling-up" : "")">
+        @if (ShowLevelUp)
+        {
+            <!-- Level-Up: Lichtsäule, Ringwelle und aufsteigende Funken (css/level-up.css) -->
+            <div @key="_levelUpAt.Ticks" class="levelup-fx" aria-hidden="true">
+                <div class="levelup-beam"></div>
+                <div class="levelup-ring"></div>
+                <div class="levelup-ring second"></div>
+                @foreach (var sp in LevelUpSparks)
+                {
+                    <span class="levelup-spark" style="left: @(sp.X)%; width: @(sp.Size)px; height: @(sp.Size)px; animation-delay: @(sp.Delay)ms"></span>
+                }
+            </div>
+        }
         <!-- ═══ CONSUMABLES: Spalte links neben dem Spieler, füllt von oben nach unten ═══ -->
         <div class="consumable-dock">
             <ConsumableBar />
@@ -87,8 +100,8 @@ else if (!_engine.NeedsCombatZone)
             </div>
             <div class="frame-info">
                 <div class="name-line">
-                    <span class="char-name">@_engine.Player.Name</span>
-                    <span class="level">Lv. @_engine.Player.Stats.Level</span>
+                    <span class="char-name">@_engine.ActiveCharacterName</span>
+                    <span @key="_levelUpAt.Ticks" class="level @(ShowLevelUp ? "level-pop" : "")">Lv. @_engine.Player.Stats.Level</span>
                     <!-- ═══ ACTIVE BUFFS: oben rechts in der Namenszeile, füllt von rechts nach links ═══ -->
                     @{ var buffs = _engine.Player.Buffs.Snapshot(); }
                     @if (buffs.Count > 0)
@@ -392,6 +405,16 @@ else if (!_engine.NeedsCombatZone)
         </div>
     </div>
 </div>
+@if (ShowLevelUp)
+{
+    <!-- Level-Up-Banner im Stil des Classic-Hinweises "You have reached level X" -->
+    <div @key="_levelUpAt.Ticks" class="levelup-banner" role="status">
+        <span class="levelup-banner-glow" aria-hidden="true"></span>
+        <span class="levelup-banner-title">Level Up!</span>
+        <span class="levelup-banner-rule" aria-hidden="true"></span>
+        <span class="levelup-banner-sub">You have reached <b>Level @_levelUpLevel</b></span>
+    </div>
+}
 </div>
 }
 
@@ -666,6 +689,14 @@ else if (!_engine.NeedsCombatZone)
         box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444;
         position: relative;
         overflow: visible;
+    }
+
+    /* Azeroth-Karte sehr schwach hinter dem braunen Verlauf durchscheinen lassen */
+    .player-frame {
+        background:
+            linear-gradient(180deg, rgba(43,36,24,.9) 0%, rgba(26,21,13,.93) 100%),
+            url('images/azeroth-map.png') center / cover no-repeat,
+            #1a150d;
     }
 
     .enemy-frame {
@@ -1445,14 +1476,15 @@ else if (!_engine.NeedsCombatZone)
     }
 
     /* Fenster im Stil klassischer Meter-AddOns (Recount/Details!): dunkler Rahmen, Titelleiste, Statusbars */
+    /* Kompaktes Fenster: feste Maximalbreite statt volle Panelbreite */
     .meter-box {
-        flex: 1;
+        flex: 0 1 340px;
         min-width: 0;
         background: rgba(8, 6, 4, .92);
         border: 2px solid var(--wow-border);
         border-radius: 6px;
         box-shadow: 0 4px 14px rgba(0,0,0,.6), inset 0 0 0 1px #000, 0 0 0 1px #000;
-        font-size: .8rem;
+        font-size: .72rem;
         color: var(--wow-text);
         overflow: hidden;
     }
@@ -1461,8 +1493,8 @@ else if (!_engine.NeedsCombatZone)
         display: flex;
         align-items: center;
         justify-content: space-between;
-        height: 26px;
-        padding: 0 4px 0 10px;
+        height: 22px;
+        padding: 0 3px 0 8px;
         background: linear-gradient(180deg, #3a2f1c 0%, #241c10 55%, #17120a 100%);
         border-bottom: 1px solid var(--wow-border-inner);
         box-shadow: inset 0 1px 0 rgba(255, 236, 155, .12), 0 1px 0 #000;
@@ -1471,7 +1503,7 @@ else if (!_engine.NeedsCombatZone)
     .meter-title {
         font-family: var(--wow-font-title);
         font-weight: 700;
-        font-size: .85rem;
+        font-size: .78rem;
         letter-spacing: .03em;
         color: var(--wow-gold);
         text-shadow: 0 0 2px #000, 1px 1px 1px #000;
@@ -1485,12 +1517,12 @@ else if (!_engine.NeedsCombatZone)
     /* Kleine Buttons in der Meter-Titelleiste – roter Look mit Goldrand wie die Navigation */
     .meter-tab {
         position: relative;
-        height: 20px;
-        padding: 0 8px;
+        height: 17px;
+        padding: 0 6px;
         font-family: var(--wow-font-title);
-        font-size: .7rem;
+        font-size: .64rem;
         font-weight: 700;
-        line-height: 16px;
+        line-height: 13px;
         letter-spacing: .3px;
         color: var(--wow-gold);
         text-shadow: 1px 1px 0 #000, 0 0 3px rgba(0, 0, 0, .8);
@@ -1558,12 +1590,12 @@ else if (!_engine.NeedsCombatZone)
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 3px 2px;
+        padding: 2px 1px;
         background: linear-gradient(180deg, #1c160d 0%, #110d07 100%);
     }
 
     .meter-stat span {
-        font-size: .62rem;
+        font-size: .56rem;
         text-transform: uppercase;
         letter-spacing: .06em;
         color: var(--wow-muted);
@@ -1586,7 +1618,7 @@ else if (!_engine.NeedsCombatZone)
         display: flex;
         flex-direction: column;
         gap: 1px;
-        padding: 4px;
+        padding: 3px;
     }
 
     .history-list {
@@ -1601,9 +1633,9 @@ else if (!_engine.NeedsCombatZone)
         position: relative;
         display: flex;
         align-items: center;
-        gap: 5px;
-        height: 20px;
-        padding: 0 6px 0 0;
+        gap: 4px;
+        height: 16px;
+        padding: 0 5px 0 0;
         background: #15110b;
         overflow: hidden;
     }
@@ -1637,9 +1669,9 @@ else if (!_engine.NeedsCombatZone)
 
     .meter-rank {
         position: relative;
-        width: 18px;
+        width: 14px;
         text-align: right;
-        font-size: .7rem;
+        font-size: .62rem;
         font-variant-numeric: tabular-nums;
         color: var(--wow-gold-pale);
         text-shadow: 0 1px 1px #000;
@@ -1648,8 +1680,8 @@ else if (!_engine.NeedsCombatZone)
 
     .meter-icon {
         position: relative;
-        width: 18px;
-        height: 18px;
+        width: 14px;
+        height: 14px;
         border: 1px solid #000;
         box-shadow: 0 0 0 1px var(--wow-border-dark);
         flex-shrink: 0;

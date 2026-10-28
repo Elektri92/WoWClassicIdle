@@ -25,12 +25,23 @@ public class SaveData
     public Dictionary<string, string> LastProfessionTargets { get; set; } = new();
     // Bereits gezeigte Feature-Intros; null = Altstand ohne dieses Feld
     public List<string>? SeenFeatureIntros { get; set; }
+    // Händlervorrat mit Auffüllzeitpunkt (Echtzeit); null = Altstand, Vorrat voll
+    public List<MerchantStockSaveData>? MerchantStock { get; set; }
+}
+
+public class MerchantStockSaveData
+{
+    public int ItemId { get; set; }
+    public int Count { get; set; }
+    public DateTime? RestockAtUtc { get; set; }
 }
 
 public class SlotSaveData
 {
     public int Id { get; set; }
     public CharacterClass Class { get; set; }
+    // Fehlt in Altständen → leer, Anzeige fällt auf Rasse + Klasse zurück
+    public string? Name { get; set; }
     public Faction Faction { get; set; }
     public Race Race { get; set; }
     public Gender Gender { get; set; }
@@ -64,6 +75,8 @@ public class ProfessionSaveData
     public string Profession { get; set; } = "";
     public int Skill { get; set; } = 1;
     public int RankIndex { get; set; }
+    // Beim Lehrer gelernte Rezept-IDs; null = Altstand (alle Rezepte bis zum Skill gelten als gelernt)
+    public List<string>? KnownRecipes { get; set; }
 }
 
 /// <summary>Ein mit einem Charakter belegter passiver Berufs-Slot.</summary>

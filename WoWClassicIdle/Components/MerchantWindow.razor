@@ -1,0 +1,202 @@
+@using Models
+@using WoWClassicIdle.Components.Pages
+@inject IdleGameEngine Engine
+
+@* Handelsfenster im Stil des Classic-Händlerfensters (Raster, Tabs „Merchant“/„Buyback“).
+   Kauf/Verkauf/Rückkauf-Logik liegt in Pages/Inventory.Merchant.cs; hier nur Darstellung und Effekte. *@
+@{ var buyback = Engine.MerchantBuyback; }
+<div class="inv-merchant-window">
+    @* ── Titelleiste mit überlappendem Porträt ── *@
+    <div class="mw-titlebar">
+        <div @key="SpeechKey" class="al-portrait mw-portrait @(SpeechKey > 0 ? "talking" : "")">
+            <img class="al-race-portrait" src="@MerchantRegistry.PortraitUrl" alt="@MerchantRegistry.Name" onerror="this.style.display='none'" />
+        </div>
+        <div class="mw-title">
+            <span class="mw-name">@MerchantRegistry.Name</span>
+            <span class="mw-subtitle">@MerchantRegistry.Title</span>
+        </div>
+        <button class="bag-close" title="Close" @onclick="OnClose">×</button>
+    </div>
+
+    @if (_tab == Tab.Merchant)
+    {
+        <div class="mw-grid">
+            @foreach (var offer in MerchantRegistry.Offers)
+            {
+                var o = offer;
+                int stock = Engine.MerchantStockOf(o);
+                bool affordable = Engine.Player.Copper >= o.Price;
+                <div class="mw-cell @(stock == 0 ? "sold-out" : "") @(affordable ? "" : "too-expensive")"
+                     @onclick="() => OnBuy.InvokeAsync(o)"
+                     @oncontextmenu="() => OnBuy.InvokeAsync(o)" @oncontextmenu:preventDefault>
+                    <TradeItemTooltip Item="@(o.Item as TradeItem)" Class="tt-contents" Hint="@(stock > 0 ? "Click to buy" : "Sold out")">
+                        <div class="bag-slot mw-icon" style="--quality: @ItemQualityColors.Hex(o.Item.Quality)">
+                            <img src="@o.Item.IconUrl" alt="@o.Item.Name" onerror="this.style.display='none'" />
+                            <span class="stack-count">@stock</span>
+                        </div>
+                    </TradeItemTooltip>
+                    <div class="mw-cell-info">
+                        <span class="mw-cell-name" style="color: @ItemQualityColors.Hex(o.Item.Quality)">@o.Item.Name</span>
+                        <span class="mw-cell-price"><MoneyFrame Copper="o.Price" /></span>
+                        @if (Engine.MerchantRestockRemaining(o) is { } left)
+                        {
+                            <span class="mw-cell-note" title="Stock refills completely">Restock @FormatCountdown(left)</span>
+                        }
+                    </div>
+                    @if (Fx is { Kind: MerchantFxKind.Buy } fx && fx.ItemId == o.ItemId)
+                    {
+                        @BuyFx(fx)
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="mw-bottom">
+            <div class="merchant-sell-zone @(DragActive ? "drag-active" : "")"
+                 @ondragover:preventDefault @ondrop="OnDrop">
+                <img src="@Money.GoldIconUrl" alt="" class="sell-coin-icon" />
+                <span class="sell-zone-label">Right-click or drag items here to sell</span>
+                @if (Fx is { Kind: MerchantFxKind.Sell } sellFx)
+                {
+                    @* Verkauf: Item wird „geschluckt“, Münzen sprudeln heraus, Erlös schwebt golden nach oben *@
+                    <div @key="FxKey" class="inv-fx inv-fx-sell" aria-hidden="true">
+                        <span class="inv-fx-flash"></span>
+                        <img class="inv-fx-item" src="@sellFx.IconUrl" alt="" />
+                        @for (int c = 0; c < CoinBurst.Length; c++)
+                        {
+                            var (dx, dy) = CoinBurst[c];
+                            <img class="inv-fx-coin" src="@(c % 3 == 0 ? Money.GoldIconUrl : c % 3 == 1 ? Money.SilverIconUrl : Money.CopperIconUrl)" alt=""
+                                 style="--dx: @(dx)px; --dy: @(dy)px; --d: @(c * 40)ms" />
+                        }
+                        <span class="inv-fx-amount">+<MoneyFrame Copper="sellFx.Copper" /></span>
+                    </div>
+                }
+            </div>
+            @* Zuletzt verkauftes Item – Klick kauft es direkt zurück (wie im Original) *@
+            @if (buyback.Count > 0)
+            {
+                @BuybackCell(buyback[0], 0, true)
+            }
+            else
+            {
+                <div class="mw-cell mw-last empty" title="Last item sold">
+                    <div class="bag-slot mw-icon empty"></div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="mw-grid buyback">
+            @for (int i = 0; i < IdleGameEngine.MerchantBuybackSlots; i++)
+            {
+                if (i < buyback.Count)
+                {
+                    @BuybackCell(buyback[i], i, false)
+                }
+                else
+                {
+                    <div class="mw-cell empty"><div class="bag-slot mw-icon empty"></div></div>
+                }
+            }
+            @if (Fx is { Kind: MerchantFxKind.Buyback } backFx)
+            {
+                @BuyFx(backFx)
+            }
+        </div>
+        @if (buyback.Count == 0)
+        {
+            <div class="mw-empty-note">Items you sell can be bought back here.</div>
+        }
+    }
+
+    @if (Message is not null)
+    {
+        <div @key="Message" class="inv-merchant-msg @(MessageFailed ? "failed" : "")">@Message</div>
+    }
+
+    <div class="mw-footer">
+        <MoneyFrame Copper="Engine.Player.Copper" />
+    </div>
+
+    <div class="mw-tabs">
+        <button class="mw-tab @(_tab == Tab.Merchant ? "active" : "")" @onclick="() => _tab = Tab.Merchant">Merchant</button>
+        <button class="mw-tab @(_tab == Tab.Buyback ? "active" : "")" @onclick="() => _tab = Tab.Buyback">
+            Buyback @if (buyback.Count > 0) { <span class="mw-tab-count">@buyback.Count</span> }
+        </button>
+    </div>
+</div>
+
+@code {
+    private enum Tab { Merchant, Buyback }
+    private Tab _tab = Tab.Merchant;
+
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDrop { get; set; }
+    [Parameter] public EventCallback<MerchantOffer> OnBuy { get; set; }
+    [Parameter] public EventCallback<int> OnBuyback { get; set; }
+    [Parameter] public bool DragActive { get; set; }
+    // Letzte Kauf-/Verkaufsmeldung – gemeinsam mit der Seite, damit Verkäufe per Rechtsklick hier erscheinen
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public bool MessageFailed { get; set; }
+    [Parameter] public MerchantFx? Fx { get; set; }
+    [Parameter] public int FxKey { get; set; }
+    [Parameter] public int SpeechKey { get; set; }
+
+    // Flugbahnen der Münzen beim Verkauf (Ziel relativ zur Mitte der Verkaufsfläche)
+    private static readonly (int Dx, int Dy)[] CoinBurst =
+        [(-60, -38), (-32, -58), (0, -66), (32, -58), (60, -38), (-46, -12), (46, -12)];
+
+    private static string FormatCountdown(TimeSpan left) =>
+        left <= TimeSpan.Zero ? "0:00" : $"{(int)left.TotalMinutes}:{left.Seconds:00}";
+
+    // Kauf/Rückkauf: Zelle leuchtet auf, Item fliegt Richtung Taschen, Preis schwebt rot nach oben
+    private RenderFragment BuyFx(MerchantFx fx) =>
+        @<div @key="FxKey" class="inv-fx inv-fx-buy" aria-hidden="true">
+            <span class="inv-fx-flash"></span>
+            <img class="inv-fx-item" src="@fx.IconUrl" alt="" />
+            <span class="inv-fx-amount">−<MoneyFrame Copper="fx.Copper" /></span>
+        </div>;
+
+    // Rückkauf-Zelle; der neueste Eintrag ploppt nach einem Verkauf kurz auf
+    private RenderFragment BuybackCell(MerchantBuybackEntry entry, int index, bool isLastSold)
+    {
+        var item = entry.Stack.Item;
+        bool affordable = Engine.Player.Copper >= entry.Price;
+        bool fresh = index == 0 && Fx is { Kind: MerchantFxKind.Sell };
+        const string hint = "Click to buy back";
+        RenderFragment icon =
+            @<div class="bag-slot mw-icon" style="--quality: @ItemQualityColors.Hex(item.Quality)">
+                <img src="@item.IconUrl" alt="@item.Name" onerror="this.style.display='none'" />
+                @if (entry.Stack.Count > 1)
+                {
+                    <span class="stack-count">@entry.Stack.Count</span>
+                }
+            </div>;
+
+        return @<div @key="@(fresh ? $"bb-{FxKey}" : $"bb-{index}")"
+                     class="mw-cell @(isLastSold ? "mw-last" : "") @(affordable ? "" : "too-expensive") @(fresh ? "fresh" : "")"
+                     @onclick="() => OnBuyback.InvokeAsync(index)"
+                     @oncontextmenu="() => OnBuyback.InvokeAsync(index)" @oncontextmenu:preventDefault>
+                    @switch (item)
+                    {
+                        case ArmorItem armor:
+                            <ArmorTooltip Armor="armor" Class="tt-contents" Hint="@hint">@icon</ArmorTooltip>
+                            break;
+                        case WeaponItem weapon:
+                            <WeaponTooltip Weapon="weapon" Class="tt-contents" Hint="@hint">@icon</WeaponTooltip>
+                            break;
+                        case TradeItem trade:
+                            <TradeItemTooltip Item="trade" Class="tt-contents" Count="entry.Stack.Count" Hint="@hint">@icon</TradeItemTooltip>
+                            break;
+                        default:
+                            <span title="@item.Name">@icon</span>
+                            break;
+                    }
+                    <div class="mw-cell-info">
+                        <span class="mw-cell-name" style="color: @ItemQualityColors.Hex(item.Quality)">@item.Name</span>
+                        <span class="mw-cell-price"><MoneyFrame Copper="entry.Price" /></span>
+                    </div>
+                </div>;
+    }
+}

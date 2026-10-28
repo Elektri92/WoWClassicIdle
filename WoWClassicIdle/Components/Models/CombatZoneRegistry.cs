@@ -34,6 +34,18 @@ public static partial class CombatZoneRegistry
 
     public static bool IsNightTheme(string theme) => NightThemes.Contains(theme);
 
+    /// <summary>Startgebiet der Rasse wie in WoW Classic – neue Charaktere beginnen dort.</summary>
+    public static CombatZone? StartZoneFor(Race race) => Get(race switch
+    {
+        Race.Human               => "elwynn_forest",
+        Race.Dwarf or Race.Gnome => "dun_morogh",
+        Race.NightElf            => "teldrassil",
+        Race.Orc or Race.Troll   => "durotar",
+        Race.Undead              => "tirisfal_glades",
+        Race.Tauren              => "mulgore",
+        _                        => null
+    });
+
     /// <summary>
     /// Zone ohne Spielerwahl (Headless-Simulation): die erste Zone, deren Levelbereich das Level enthält –
     /// bevorzugt mit dem niedrigsten Maxlevel, damit die Gegner möglichst nah am Spielerlevel liegen.

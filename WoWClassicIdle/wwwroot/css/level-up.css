@@ -1,0 +1,204 @@
+/* ── Level-Up (Components/Pages/IdleFighter.LevelUp.cs) ──
+   Wie in Classic: goldene Lichtsäule steigt um den Charakter auf, dazu Ringwelle,
+   aufsteigende Funken und das Banner "You have reached Level X". Gesamtdauer 3,4 s. */
+
+/* ── Spieler-Frame: goldener Rahmenpuls ── */
+.player-frame.leveling-up {
+    animation: levelupFrameGlow 3.4s ease-out both;
+}
+
+@keyframes levelupFrameGlow {
+    0%   { box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444; border-color: #5a4a28; }
+    12%  { box-shadow: 0 0 34px rgba(255, 209, 0, .75), 0 0 80px rgba(255, 180, 40, .35), inset 0 0 22px rgba(255, 220, 120, .45); border-color: #ffe27a; }
+    55%  { box-shadow: 0 0 22px rgba(255, 209, 0, .45), inset 0 0 12px rgba(255, 220, 120, .25); border-color: #e8c25a; }
+    100% { box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444; border-color: #5a4a28; }
+}
+
+/* Porträt leuchtet kurz golden auf */
+.player-frame.leveling-up .race-portrait {
+    animation: levelupPortrait 2.2s ease-out both;
+}
+
+@keyframes levelupPortrait {
+    0%   { box-shadow: 0 0 8px rgba(0,0,0,.8); }
+    15%  { box-shadow: 0 0 0 3px rgba(255, 236, 155, .9), 0 0 26px 6px rgba(255, 209, 0, .85); filter: brightness(1.5) saturate(1.2); }
+    100% { box-shadow: 0 0 8px rgba(0,0,0,.8); filter: none; }
+}
+
+/* ── Effekt-Ebene über dem Frame ── */
+.levelup-fx {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+/* Lichtsäule: wächst vom Boden nach oben über den Frame hinaus und verblasst */
+.levelup-beam {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: -6px;
+    height: 190%;
+    transform-origin: 50% 100%;
+    border-radius: 50% 50% 8px 8px / 30% 30% 8px 8px;
+    background:
+        linear-gradient(90deg, transparent 0%, rgba(255, 210, 90, .55) 18%, rgba(255, 248, 210, .95) 50%, rgba(255, 210, 90, .55) 82%, transparent 100%);
+    -webkit-mask-image: linear-gradient(0deg, #000 0%, #000 45%, transparent 100%);
+            mask-image: linear-gradient(0deg, #000 0%, #000 45%, transparent 100%);
+    filter: blur(3px);
+    animation: levelupBeam 2.6s cubic-bezier(.2, .7, .3, 1) backwards;
+    opacity: 0;
+}
+
+@keyframes levelupBeam {
+    0%   { opacity: 0;   transform: scaleY(.05) scaleX(.6); }
+    14%  { opacity: 1;   transform: scaleY(1)   scaleX(1); }
+    45%  { opacity: .85; transform: scaleY(1)   scaleX(.82); }
+    100% { opacity: 0;   transform: scaleY(1.08) scaleX(.35); }
+}
+
+/* Ringwelle am Boden des Frames */
+.levelup-ring {
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 110%;
+    aspect-ratio: 4 / 1;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 226, 122, .95);
+    box-shadow: 0 0 18px rgba(255, 209, 0, .9), inset 0 0 14px rgba(255, 209, 0, .6);
+    transform: translateX(-50%) scale(.2);
+    opacity: 0;
+    animation: levelupRing 1.3s ease-out backwards;
+}
+
+.levelup-ring.second {
+    animation-delay: .35s;
+    border-width: 2px;
+}
+
+@keyframes levelupRing {
+    0%   { opacity: 0;  transform: translateX(-50%) scale(.2); }
+    15%  { opacity: 1; }
+    100% { opacity: 0;  transform: translateX(-50%) scale(1.25); }
+}
+
+/* Aufsteigende Funken (Position, Größe und Verzögerung kommen inline aus LevelUpSparks) */
+.levelup-spark {
+    position: absolute;
+    bottom: 4px;
+    border-radius: 50%;
+    background: #fff6cf;
+    box-shadow: 0 0 6px 2px rgba(255, 209, 0, .9);
+    opacity: 0;
+    animation: levelupSpark 1.9s ease-out backwards;
+}
+
+@keyframes levelupSpark {
+    0%   { opacity: 0; transform: translate(0, 0) scale(.6); }
+    12%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(6px, -210px) scale(.2); }
+}
+
+/* Level-Anzeige im Frame: kurz groß und golden */
+.level.level-pop {
+    display: inline-block;
+    animation: levelupNumber 1.6s ease-out both;
+}
+
+@keyframes levelupNumber {
+    0%   { color: #9a8a64; transform: scale(1); }
+    18%  { color: var(--wow-gold-pale); transform: scale(1.45); text-shadow: 0 0 10px rgba(255, 209, 0, .95), 0 0 2px #000; }
+    100% { color: #9a8a64; transform: scale(1); text-shadow: none; }
+}
+
+/* ── Banner über dem Schlachtfeld ── */
+.levelup-banner {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 48px 8px;
+    pointer-events: none;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    animation: levelupBanner 3.4s ease-out both;
+}
+
+/* Dunkler, weich auslaufender Hintergrund wie bei den Classic-Bildschirmmeldungen */
+.levelup-banner-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .55) 45%, transparent 72%);
+}
+
+.levelup-banner-title {
+    font-family: var(--wow-font-title);
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    line-height: 1.1;
+    background: linear-gradient(180deg, #fff8d6 0%, #ffd100 48%, #c88a12 100%);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 1px #000) drop-shadow(0 2px 2px #000) drop-shadow(0 0 10px rgba(255, 190, 40, .55));
+}
+
+/* Goldene Zierlinie mit Raute in der Mitte */
+.levelup-banner-rule {
+    position: relative;
+    width: 220px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--wow-gold-soft) 25%, var(--wow-gold-pale) 50%, var(--wow-gold-soft) 75%, transparent);
+    animation: levelupRule 1s .25s ease-out backwards;
+}
+
+.levelup-banner-rule::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--wow-gold-pale);
+    box-shadow: 0 0 6px var(--wow-gold);
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.levelup-banner-sub {
+    font-size: .85rem;
+    color: #f2e6c4;
+    text-shadow: 0 1px 2px #000, 0 0 4px #000;
+}
+
+.levelup-banner-sub b {
+    color: var(--wow-gold);
+}
+
+@keyframes levelupBanner {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(10px) scale(.85); }
+    10%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.06); }
+    18%  { transform: translateX(-50%) scale(1); }
+    78%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+}
+
+@keyframes levelupRule {
+    from { transform: scaleX(0); opacity: 0; }
+    to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* Reduzierte Bewegung: nur Banner und Rahmenglühen, keine Säule/Funken */
+@media (prefers-reduced-motion: reduce) {
+    .levelup-fx { display: none; }
+    .levelup-banner,
+    .level.level-pop { animation-duration: .01s; animation-fill-mode: none; }
+}

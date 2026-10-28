@@ -36,6 +36,13 @@ public static partial class TalentRegistry
         _ => new[] { "Tree 1", "Tree 2", "Tree 3" },
     };
 
+    // Thematischer Hintergrund je Spec (wwwroot/images/talents/{klasse}-{baum}.jpg)
+    public static string GetTreeBackgroundUrl(CharacterClass cls, int treeIndex)
+    {
+        var tree = GetTreeNames(cls)[treeIndex].ToLowerInvariant().Replace(' ', '-');
+        return $"images/talents/{cls.ToString().ToLowerInvariant()}-{tree}.jpg";
+    }
+
     private static List<TalentDefinition> BuildTalents(CharacterClass cls) => cls switch
     {
         CharacterClass.Mage     => BuildMageTalents(),

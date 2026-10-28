@@ -2,19 +2,20 @@
 @inject IdleGameEngine Engine
 
 @* Herstellungsfenster wie in WoW: Rezeptliste links, Details + Create rechts. Aktiver Slot, 3 s pro Herstellung. *@
-<div class="wow-card">
+<div class="al-panel">
     <h4>Active Slot</h4>
 
     @if (Recipes.Count == 0)
     {
-        <p class="wow-hint">No recipes known yet.</p>
+        <p class="wow-hint">No recipes known yet. Visit your trainer to learn some.</p>
     }
     else
     {
-        @if (RecipeClasses.Count > 0)
-        {
-            @* Klassen-Filter für Rüstungsrezepte *@
-            <div class="craft-filter">
+        <div class="craft-filter">
+            <input class="trainer-search" type="search" placeholder="Search recipes…" @bind="_search" @bind:event="oninput" />
+            @if (RecipeClasses.Count > 0)
+            {
+                @* Klassen-Filter für Rüstungsrezepte *@
                 <button class="craft-filter-btn @(_classFilter is null ? "active" : "")" @onclick="() => _classFilter = null">All</button>
                 @foreach (var cls in RecipeClasses)
                 {
@@ -22,11 +23,15 @@
                         <img src="@IconUrls.ClassIconUrl(cls)" alt="@cls" onerror="this.style.visibility='hidden'" />
                     </button>
                 }
-            </div>
-        }
+            }
+        </div>
 
         <div class="craft-window">
             <div class="wow-inset craft-list">
+                @if (FilteredRecipes.Count == 0)
+                {
+                    <p class="wow-hint trainer-empty">No matching recipes.</p>
+                }
                 @{ bool grouped = FilteredRecipes.Select(r => r.RequiredSkill).Distinct().Count() > 1; }
                 @foreach (var group in FilteredRecipes.GroupBy(r => r.RequiredSkill))
                 {
@@ -184,7 +189,11 @@
     private void ToggleGroup(int skill) => _collapsedOverride[skill] = !IsCollapsed(skill);
     private Profession? _filterInitFor;
 
-    private IReadOnlyList<Recipe> Recipes => ProfessionRegistry.GetRecipes(Progress.Profession);
+    private string _search = "";
+
+    // Nur beim Lehrer gelernte Rezepte (Herstellungsberufe starten mit einem Basisrezept)
+    private IReadOnlyList<Recipe> Recipes =>
+        ProfessionRegistry.GetRecipes(Progress.Profession).Where(r => Progress.KnowsRecipe(r.Id)).ToList();
 
     /// <summary>Klassen, für die dieser Beruf Rüstung herstellt (leer bei Verbrauchsgütern).</summary>
     private IReadOnlyList<CharacterClass> RecipeClasses =>
@@ -192,6 +201,7 @@
 
     private IReadOnlyList<Recipe> FilteredRecipes =>
         Recipes.Where(r => _classFilter is null || ItemRequirements.ClassOf(r.Result) == _classFilter)
+               .Where(r => string.IsNullOrWhiteSpace(_search) || r.Result.Name.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase))
                .OrderBy(r => r.RequiredSkill)
                .ToList();
 
@@ -229,7 +239,7 @@
         if (SelectedRecipe is null || SelectedRecipe.Profession != Progress.Profession)
         {
             var remembered = ProfessionRegistry.GetRecipe(Engine.GetLastProfessionTarget(Progress.Profession));
-            _recipeId = Run?.Target ?? (remembered?.Profession == Progress.Profession ? remembered.Id : Recipes.FirstOrDefault()?.Id);
+            _recipeId = Run?.Target ?? (remembered?.Profession == Progress.Profession && Progress.KnowsRecipe(remembered.Id) ? remembered.Id : Recipes.FirstOrDefault()?.Id);
         }
     }
 

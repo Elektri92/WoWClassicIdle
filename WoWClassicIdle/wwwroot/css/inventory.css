@@ -1,0 +1,964 @@
+/* ============================================
+   Inventory (/inventory) – gleicher Look wie /ability-loadout
+   Kopf (.al-header, .al-portrait, .al-slot-meter) und Panels (.al-panel) kommen aus ability-loadout.css
+   ============================================ */
+
+.inventory-page { max-width: 1400px; }
+.inventory-page .inv-title { animation: al-fade-down .5s ease-out both; }
+.inventory-page .inv-hint  { animation: al-fade-down .5s ease-out .08s both; }
+.inv-status { margin-bottom: 10px; animation: al-toast-in .35s cubic-bezier(.2, .8, .2, 1) both; }
+
+/* ── Kopf ── */
+.inv-faction {
+    font-size: .8rem;
+    color: var(--wow-muted);
+    text-shadow: 0 1px 2px #000;
+}
+
+/* ── Spalten: Charakter | Taschen | Händler (rechts) ── */
+.inv-layout {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr) 330px;
+    gap: 14px;
+    align-items: start;
+    margin-bottom: 2rem;
+}
+.inventory-page .al-panel h4 {
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+.inv-char { font-size: .9rem; }
+
+/* ── Paperdoll ── */
+.paperdoll {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+}
+.paperdoll .slot-column {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.model-area {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 50% 45%, rgba(255, 209, 0, .10) 0%, transparent 55%),
+        radial-gradient(ellipse at center, #2e261a 0%, #120e08 78%);
+    border: 1px solid #3d321c;
+    border-radius: 6px;
+    box-shadow: inset 0 0 18px #000;
+}
+/* Fraktionsfarbener Schimmer hinter dem Wappen */
+.model-area::before {
+    content: "";
+    position: absolute;
+    inset: 12% 8%;
+    border-radius: 50%;
+    filter: blur(28px);
+    opacity: .45;
+    animation: inv-crest-glow 4s ease-in-out infinite;
+}
+.model-area.alliance::before { background: radial-gradient(circle, rgba(74, 144, 217, .8), transparent 70%); }
+.model-area.horde::before    { background: radial-gradient(circle, rgba(208, 74, 74, .8), transparent 70%); }
+
+/* Volkswappen (freigestelltes PNG): weicher Schatten und Ausblenden nach unten ins Panel */
+.model-crest {
+    position: relative;
+    width: 88%;
+    max-height: 92%;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .9)) drop-shadow(0 0 10px rgba(255, 209, 0, .12));
+    -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+    animation: inv-crest-in .7s cubic-bezier(.2, .8, .2, 1) .3s backwards;
+}
+@keyframes inv-crest-in   { from { opacity: 0; transform: scale(.92); } }
+@keyframes inv-crest-glow { 50% { opacity: .7; } }
+
+.equip-slot {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    background: #0c0a06;
+    border: 2px solid var(--wow-border-dark);
+    border-radius: 4px;
+    box-shadow: inset 0 0 6px #000;
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.equip-slot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    object-fit: cover;
+    opacity: .45;
+    filter: grayscale(.6);
+}
+.equip-slot:hover { border-color: var(--wow-gold-soft); }
+
+/* Ausgerüstete Rüstung / Waffe */
+.equip-slot.equipped-item,
+.equip-slot.equipped-weapon {
+    border-color: var(--quality, var(--wow-gold-soft));
+    cursor: context-menu;
+}
+.equip-slot.equipped-item img,
+.equip-slot.equipped-weapon img {
+    opacity: 1;
+    filter: none;
+}
+.equip-slot.equipped-item:hover,
+.equip-slot.equipped-weapon:hover {
+    border-color: var(--wow-gold);
+    box-shadow: 0 0 8px rgba(255, 209, 0, .45);
+    transform: scale(1.06);
+}
+
+/* ── Gear-Wechsel ── */
+/* Anlegen: neues Icon springt in den Slot, Rahmen leuchtet in Qualitätsfarbe */
+.equip-slot.swap-in { animation: inv-slot-glow 1s ease-out; z-index: 2; }
+.equip-slot.swap-in > img:not(.swap-ghost) { animation: inv-gear-pop .5s cubic-bezier(.3, 1.6, .5, 1); }
+/* Ablegen: Slot zuckt kurz, Platzhalter blendet ein */
+.equip-slot.swap-out { animation: inv-slot-shake .35s ease-in-out; z-index: 2; }
+.equip-slot.swap-out > img:not(.swap-ghost) { animation: inv-fade-in .5s ease-out; }
+
+/* Lichtring, der sich vom Slot ausbreitet */
+.swap-ring {
+    position: absolute;
+    inset: -2px;
+    border-radius: 6px;
+    border: 2px solid var(--quality, var(--wow-gold));
+    pointer-events: none;
+    animation: inv-ring .7s ease-out forwards;
+}
+.swap-out .swap-ring { border-color: var(--wow-muted); }
+/* Altes Icon löst sich auf */
+.swap-ghost {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    pointer-events: none;
+    animation: inv-ghost .6s ease-in forwards;
+}
+
+/* Stat-Änderung schwebt neben dem Wert hoch */
+.stats-area .wow-stat-row { position: relative; }
+.stat-delta {
+    position: absolute;
+    right: 0;
+    top: -6px;
+    z-index: 3;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: .75rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+    animation: inv-delta 1.8s ease-out forwards;
+}
+.stat-delta.up   { color: #3fdc3f; background: rgba(20, 70, 20, .85); }
+.stat-delta.down { color: #ff5050; background: rgba(80, 15, 15, .85); }
+
+@keyframes inv-gear-pop {
+    0%   { transform: scale(.3) rotate(-12deg); filter: brightness(2.2); }
+    60%  { transform: scale(1.18) rotate(3deg); filter: brightness(1.5); }
+    100% { transform: scale(1) rotate(0); filter: none; }
+}
+@keyframes inv-slot-glow {
+    0%   { box-shadow: 0 0 0 0 var(--quality, var(--wow-gold)), inset 0 0 6px #000; }
+    35%  { box-shadow: 0 0 16px 4px var(--quality, var(--wow-gold)), inset 0 0 6px #000; }
+    100% { box-shadow: inset 0 0 6px #000; }
+}
+@keyframes inv-slot-shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); }
+    75%      { transform: translateX(3px); }
+}
+@keyframes inv-fade-in { from { opacity: 0; } }
+@keyframes inv-ring {
+    from { transform: scale(1); opacity: 1; }
+    to   { transform: scale(1.9); opacity: 0; }
+}
+@keyframes inv-ghost {
+    0%   { transform: scale(1); opacity: 1; filter: none; }
+    100% { transform: scale(1.7) translateY(-6px); opacity: 0; filter: blur(3px) brightness(1.8); }
+}
+@keyframes inv-delta {
+    0%   { transform: translateY(6px) scale(.7); opacity: 0; }
+    15%  { transform: translateY(0) scale(1.1); opacity: 1; }
+    25%  { transform: translateY(0) scale(1); }
+    75%  { transform: translateY(-8px); opacity: 1; }
+    100% { transform: translateY(-16px); opacity: 0; }
+}
+
+.weapon-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+/* ── Werte ── */
+.stats-area {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+.stat-box {
+    flex: 1;
+    padding: 4px 8px;
+}
+
+/* ── Geld (klassischer Rucksack-Geldrahmen) ── */
+.money-frame {
+    display: inline-flex;
+    gap: 8px;
+    padding: 1px 8px;
+    background: #0c0a06;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 3px;
+    box-shadow: inset 0 0 4px #000;
+}
+.coin {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 2px #000;
+}
+.coin img {
+    width: 13px;
+    height: 13px;
+}
+
+/* ── Taschen-Panel: Karte der Hauptstadt als Hintergrund ── */
+.inv-bags { overflow: hidden; }
+.inv-bags > :not(.inv-bags-map) { position: relative; z-index: 1; }
+.inv-bags-map {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: .6;
+    filter: sepia(.25) saturate(.9) brightness(.8);
+    pointer-events: none;
+    animation: inv-map-in 1.2s ease-out .3s backwards;
+}
+/* Vignette: Karte läuft zu den Panelrändern hin ins UI-Braun aus */
+.inv-bags-map::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center, rgba(14, 11, 7, .15) 40%, var(--wow-panel-bottom) 100%),
+        linear-gradient(180deg, var(--wow-panel-top) 0%, transparent 18%, transparent 82%, var(--wow-panel-bottom) 100%);
+}
+@keyframes inv-map-in { from { opacity: 0; } }
+
+/* ── Taschenleiste ── */
+.bag-bar {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 4px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(90, 74, 40, .6);
+}
+.bar-slot {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: #0c0a06;
+    border: 2px solid var(--wow-border-dark);
+    border-radius: 4px;
+    box-shadow: inset 0 0 6px #000;
+    overflow: hidden;
+    transition: border-color .15s, transform .15s;
+}
+.bar-slot.backpack {
+    width: 40px;
+    height: 40px;
+}
+button.bar-slot { cursor: pointer; }
+button.bar-slot:hover { transform: translateY(-2px); }
+button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
+.bar-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.bar-slot.empty img {
+    opacity: .45;
+    filter: grayscale(.6);
+}
+/* Gesperrter Taschenplatz (Level nicht erreicht) */
+.bar-slot.bag-locked img {
+    opacity: .25;
+    filter: grayscale(.9) brightness(.6);
+}
+
+/* ── Taschenfenster ── */
+.bags-area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 14px;
+}
+/* Weitere Taschen rechts vom Rucksack: zwei je Reihe */
+.bags-side {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    align-items: start;
+    gap: 10px;
+}
+.bag-frame {
+    padding: 6px 8px 8px;
+    background: linear-gradient(180deg, #2b2418 0%, #15110a 100%);
+    border: 2px solid var(--wow-border-inner);
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .6), inset 0 0 0 1px #3d321c;
+    animation: al-card-in .35s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+.bag-frame-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.bag-portrait {
+    width: 32px;
+    height: 32px;
+    margin: -14px 0 0 -14px;
+    border-radius: 50%;
+    border: 2px solid var(--wow-gold-soft);
+    background: var(--wow-bg-deep);
+    object-fit: cover;
+    box-shadow: 0 2px 6px #000;
+}
+.bag-title {
+    flex: 1;
+    font-size: .85rem;
+    color: var(--wow-gold);
+    text-shadow: 0 1px 2px #000;
+}
+.bag-slot-count {
+    font-size: .75rem;
+    color: var(--wow-muted);
+    font-weight: normal;
+    margin-left: 2px;
+}
+.bag-close {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    line-height: 14px;
+    font-size: 14px;
+    color: var(--wow-gold);
+    background: #5a1a10;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 3px;
+    cursor: pointer;
+}
+.bag-close:hover { background: #8a2a18; }
+
+.bag-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 37px);
+    gap: 3px;
+}
+.bag-slot, .bag-slot-pad {
+    width: 37px;
+    height: 37px;
+}
+.bag-slot {
+    position: relative;
+    background: #0c0a06;
+    border: 1px solid var(--quality, #3a3020);
+    border-radius: 3px;
+    box-shadow: inset 0 0 6px #000;
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s;
+}
+.bag-slot.empty {
+    background: radial-gradient(ellipse at center, #1c1810 0%, #070604 80%);
+    border-color: #3a3020;
+}
+.bag-slot:hover { border-color: var(--wow-gold); }
+.bag-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.bag-slot.weapon-item,
+.bag-slot.armor-item,
+.bag-slot.sellable-item { cursor: grab; }
+
+/* Levelvoraussetzung nicht erfüllt – Icon abgedunkelt */
+.bag-slot.level-locked,
+.bag-slot.level-locked:hover {
+    cursor: not-allowed;
+    border-color: #6b1f1f;
+}
+.bag-slot.level-locked img {
+    opacity: .4;
+    filter: grayscale(.7);
+}
+
+/* Händler offen: Rechtsklick verkauft – Münz-Cursor und goldener Schimmer */
+.bag-slot.sell-mode,
+.bag-slot.sell-mode.level-locked { cursor: pointer; }
+.bag-slot.sell-mode:hover {
+    border-color: var(--wow-gold);
+    box-shadow: inset 0 0 10px rgba(255, 209, 0, .35);
+}
+.inv-bags.selling { border-color: var(--wow-gold-soft); }
+
+.stack-count {
+    position: absolute;
+    right: 2px;
+    bottom: 0;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+.bag-money {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+    font-size: .85rem;
+}
+
+/* ── Händler (rechte Spalte) ── */
+.inv-merchant-col {
+    position: sticky;
+    top: 16px;
+    animation: al-card-in .5s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i, 0) * .1s) backwards;
+}
+
+/* Geschlossen: NPC zum Anklicken (Links- oder Rechtsklick) */
+.inv-merchant-npc {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 12px 14px;
+    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+    color: var(--wow-text);
+    font-family: var(--wow-font-body);
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.inv-merchant-npc:hover {
+    border-color: var(--wow-gold-soft);
+    box-shadow: 0 6px 20px rgba(255, 209, 0, .18), inset 0 0 0 1px var(--wow-border-inner);
+    transform: translateY(-2px);
+}
+.inv-npc-portrait { width: 80px; height: 80px; margin-bottom: 6px; }
+.inv-npc-portrait .al-race-portrait { width: 80px; height: 80px; }
+.inv-npc-name {
+    font-family: var(--wow-font-title);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--wow-gold);
+    text-shadow: 0 1px 2px #000;
+}
+.inv-npc-title { font-size: .8rem; color: var(--wow-muted); }
+.inv-npc-greeting { font-size: .78rem; color: #7a9a6a; font-style: italic; }
+.inv-npc-cta {
+    margin-top: 8px;
+    padding: 3px 12px;
+    border: 1px solid var(--wow-border-inner);
+    border-radius: 3px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--wow-gold-pale);
+    background: linear-gradient(90deg, transparent, rgba(255, 209, 0, .18), transparent);
+    background-size: 200% 100%;
+    animation: al-shine 2.4s linear infinite;
+}
+
+/* Geöffnet: Handelsfenster im Stil des Classic-Händlerfensters */
+.inv-merchant-window {
+    position: relative;
+    padding: 0 10px 0;
+    background: linear-gradient(180deg, #1c1a17 0%, #111010 100%);
+    border: 2px solid #6e6a62;
+    border-radius: 8px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .7), inset 0 0 0 1px #2a2724;
+    animation: al-card-in .3s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+
+/* Titelleiste; Porträt ragt oben links über den Rahmen */
+.mw-titlebar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    margin: 0 -10px 8px;
+    padding: 6px 8px 6px 68px;
+    background: linear-gradient(180deg, #2c2a27 0%, #191816 100%);
+    border-bottom: 2px solid #6e6a62;
+    border-radius: 6px 6px 0 0;
+}
+.mw-portrait {
+    position: absolute;
+    left: -12px;
+    top: -14px;
+    width: 70px;
+    height: 70px;
+}
+.mw-portrait .al-race-portrait {
+    width: 70px;
+    height: 70px;
+    border: 3px solid #8a8478;
+    box-shadow: 0 3px 10px #000;
+    animation: none;
+}
+.mw-title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+}
+.mw-name {
+    font-family: var(--wow-font-title);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wow-gold);
+    text-shadow: 0 1px 2px #000;
+}
+.mw-subtitle { font-size: .7rem; color: var(--wow-muted); }
+.mw-titlebar .bag-close { align-self: flex-start; }
+
+/* Raster: 2 Spalten, je Zelle Icon + Name + Preis */
+.mw-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding-top: 10px;
+}
+.mw-cell {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 0;
+    padding: 3px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+}
+.mw-cell:hover { background: rgba(255, 209, 0, .07); }
+.mw-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border: 2px solid #4d4a44;
+    box-shadow: 0 0 0 1px #000, inset 0 0 6px #000;
+}
+.mw-icon:not(.empty) { border-color: var(--quality, #4d4a44); }
+.mw-icon.empty {
+    background: radial-gradient(ellipse at center, #22201c 0%, #0b0a09 80%);
+    border-color: #3a3833;
+}
+.mw-cell-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2px 4px;
+    background: linear-gradient(90deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, .15));
+    border-radius: 3px;
+}
+.mw-cell-name {
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-shadow: 0 1px 2px #000;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.mw-cell-price { font-size: .75rem; }
+.mw-cell-price .money-frame { background: none; border: 0; box-shadow: none; padding: 0; }
+.mw-cell-note { font-size: .64rem; color: #7a9a6a; }
+.mw-cell.empty { cursor: default; }
+.mw-cell.empty:hover { background: none; }
+
+/* Nicht bezahlbar: rot getönt wie im Original */
+.mw-cell.too-expensive .mw-cell-info { background: linear-gradient(90deg, rgba(110, 10, 10, .55), rgba(60, 5, 5, .25)); }
+.mw-cell.too-expensive .mw-icon img { filter: sepia(1) saturate(4) hue-rotate(-50deg) brightness(.7); }
+.mw-cell.too-expensive .coin { color: #ff5050; }
+.mw-cell.sold-out { cursor: not-allowed; }
+.mw-cell.sold-out .mw-icon img { opacity: .35; filter: grayscale(1); }
+.mw-cell.sold-out .mw-cell-name { opacity: .5; }
+/* Gerade verkauft: neuester Rückkauf-Eintrag ploppt auf */
+.mw-cell.fresh .mw-icon { animation: inv-gear-pop .5s cubic-bezier(.3, 1.6, .5, 1); }
+.mw-cell.fresh .mw-cell-info { animation: inv-flash-gold 1s ease-out; }
+
+/* Unterer Bereich: Verkaufsfläche + zuletzt verkauftes Item */
+.mw-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 2px solid #3a3833;
+}
+.mw-bottom .merchant-sell-zone { min-height: 46px; padding: 4px 6px; font-size: .7rem; }
+.mw-empty-note {
+    padding: 8px 4px 0;
+    text-align: center;
+    font-size: .75rem;
+    font-style: italic;
+    color: #6a6660;
+}
+
+/* Geldleiste unten rechts */
+.mw-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px -10px 0;
+    padding: 6px 10px;
+    background: #0d0c0b;
+    border-top: 2px solid #3a3833;
+    border-radius: 0 0 6px 6px;
+    font-size: .85rem;
+}
+
+/* Reiter unter dem Fenster */
+.mw-tabs {
+    position: absolute;
+    top: 100%;
+    left: 12px;
+    display: flex;
+    gap: 4px;
+}
+.mw-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 14px 6px;
+    background: linear-gradient(180deg, #191816 0%, #2a2825 100%);
+    border: 2px solid #4d4a44;
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+    color: var(--wow-gold);
+    font-size: .78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color .15s, background .15s;
+}
+.mw-tab:hover { color: var(--wow-gold-pale); }
+.mw-tab.active {
+    margin-top: -2px;
+    padding-top: 6px;
+    background: linear-gradient(180deg, #111010 0%, #24221f 100%);
+    border-color: #6e6a62;
+    color: #fff;
+}
+.mw-tab-count {
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #6b1f1f;
+    color: #fff;
+    font-size: .65rem;
+    line-height: 16px;
+    text-align: center;
+}
+.inv-merchant-col.trading { padding-bottom: 32px; }
+@keyframes inv-flash-gold { from { box-shadow: inset 0 0 0 2px var(--wow-gold), 0 0 12px rgba(255, 209, 0, .6); } }
+
+.merchant-sell-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 8px;
+    background: radial-gradient(ellipse at center, #1c1810 0%, #070604 80%);
+    border: 2px dashed var(--wow-border);
+    border-radius: 4px;
+    color: #7a6a44;
+    font-size: .78rem;
+    transition: border-color .15s, background .15s, color .15s;
+}
+.merchant-sell-zone:hover { border-color: var(--wow-border-inner); }
+.merchant-sell-zone.drag-active {
+    border-color: var(--wow-gold);
+    background: radial-gradient(ellipse at center, #2a2010 0%, #0e0b06 80%);
+    color: var(--wow-gold);
+    box-shadow: inset 0 0 8px rgba(255, 209, 0, .15);
+}
+.sell-coin-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.sell-zone-label { text-align: center; line-height: 1.25; }
+
+.inv-merchant-msg {
+    margin-top: 8px;
+    padding: 4px 6px;
+    background: #0c0a06;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 3px;
+    font-size: .78rem;
+    color: var(--wow-gold);
+    text-align: center;
+    text-shadow: 0 1px 2px #000;
+    animation: al-toast-in .3s cubic-bezier(.2, .8, .2, 1) both;
+}
+.inv-merchant-msg.failed {
+    color: #ff6060;
+    border-color: #6b1f1f;
+    animation: al-toast-in .3s cubic-bezier(.2, .8, .2, 1) both, al-shake .4s ease-in-out .1s;
+}
+
+/* ── Sprechblase des Händlers ── */
+.inv-speech {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    z-index: 5;
+    width: max-content;
+    max-width: 260px;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, #fdf6e0 0%, #ecdcb0 100%);
+    border: 2px solid #6b5426;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .65);
+    color: #2b1d08;
+    font-family: var(--wow-font-title);
+    font-size: .82rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    pointer-events: none;
+    transform: translateX(-50%);
+    transform-origin: 50% 100%;
+    animation: inv-speech 4.6s cubic-bezier(.2, .8, .2, 1) forwards;
+}
+/* Schwänzchen zeigt auf das Porträt */
+.inv-speech::before,
+.inv-speech::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-style: solid;
+}
+.inv-speech::before { top: 100%; border-width: 12px 10px 0; border-color: #6b5426 transparent transparent; }
+.inv-speech::after  { top: calc(100% - 3px); border-width: 10px 8px 0; border-color: #ecdcb0 transparent transparent; }
+/* Im Handelsfenster sitzt das Porträt links → Blase links ausrichten */
+.inv-merchant-col.trading .inv-speech { left: 0; transform: none; transform-origin: 30px 100%; }
+.inv-merchant-col.trading .inv-speech::before,
+.inv-merchant-col.trading .inv-speech::after { left: 38px; }
+.inv-speech-text { display: inline-block; animation: inv-speech-text .5s ease-out .12s backwards; }
+
+/* Porträt wackelt beim Sprechen */
+.al-portrait.talking { animation: inv-talk .9s ease-in-out 2; }
+
+/* ── Kauf-/Verkaufseffekte ── */
+.merchant-sell-zone { position: relative; }
+.inv-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+.inv-fx-flash {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    animation: inv-flash .8s ease-out forwards;
+}
+.inv-fx-buy .inv-fx-flash  { background: radial-gradient(ellipse at 20% 50%, rgba(111, 208, 90, .45), transparent 70%); }
+.inv-fx-sell .inv-fx-flash { background: radial-gradient(ellipse at center, rgba(255, 209, 0, .45), transparent 70%); }
+
+.inv-fx-item {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--wow-gold-soft);
+    border-radius: 4px;
+    box-shadow: 0 0 12px rgba(255, 209, 0, .7);
+}
+/* Kauf: Item springt aus dem Slot und fliegt nach links zu den Taschen */
+.inv-fx-buy .inv-fx-item {
+    left: 11px;
+    top: calc(50% - 16px);
+    animation: inv-buy-fly .9s cubic-bezier(.5, -0.3, .7, 1) forwards;
+}
+/* Verkauf: Item wird in der Mitte der Verkaufsfläche „geschluckt“ */
+.inv-fx-sell .inv-fx-item {
+    left: calc(50% - 16px);
+    top: calc(50% - 16px);
+    animation: inv-sell-swallow .55s ease-in forwards;
+}
+.inv-fx-coin {
+    position: absolute;
+    left: calc(50% - 8px);
+    top: calc(50% - 8px);
+    width: 16px;
+    height: 16px;
+    opacity: 0;
+    filter: drop-shadow(0 1px 2px #000);
+    animation: inv-coin-burst .9s cubic-bezier(.2, .8, .3, 1) calc(.35s + var(--d, 0ms)) forwards;
+}
+.inv-fx-amount {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: 700;
+    font-size: .9rem;
+    text-shadow: 0 1px 2px #000;
+    white-space: nowrap;
+}
+.inv-fx-amount .money-frame { background: none; border: 0; box-shadow: none; padding: 0; }
+.inv-fx-buy .inv-fx-amount {
+    right: 10px;
+    top: 6px;
+    color: #ff6b6b;
+    animation: inv-float-up 1.3s ease-out forwards;
+}
+.inv-fx-sell .inv-fx-amount {
+    left: 50%;
+    top: -4px;
+    color: var(--wow-gold);
+    transform: translateX(-50%);
+    animation: inv-float-up-center 1.5s ease-out .3s both;
+}
+
+@keyframes inv-speech {
+    0%   { opacity: 0; scale: .5; translate: 0 10px; }
+    9%   { opacity: 1; scale: 1.06; translate: 0 0; }
+    14%  { scale: 1; }
+    86%  { opacity: 1; translate: 0 0; }
+    100% { opacity: 0; translate: 0 -8px; }
+}
+@keyframes inv-speech-text { from { opacity: 0; letter-spacing: -1px; } }
+@keyframes inv-talk {
+    0%, 100% { transform: rotate(0) translateY(0); }
+    20%      { transform: rotate(-6deg) translateY(-2px); }
+    45%      { transform: rotate(5deg) translateY(0); }
+    70%      { transform: rotate(-3deg) translateY(-1px); }
+}
+@keyframes inv-flash { from { opacity: 1; } to { opacity: 0; } }
+@keyframes inv-buy-fly {
+    0%   { transform: scale(1); opacity: 1; }
+    25%  { transform: translate(6px, -14px) scale(1.25); opacity: 1; }
+    100% { transform: translate(-150px, -10px) scale(.5); opacity: 0; }
+}
+@keyframes inv-sell-swallow {
+    0%   { transform: scale(1.4); opacity: 0; }
+    30%  { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0) rotate(200deg); opacity: 0; }
+}
+@keyframes inv-coin-burst {
+    0%   { transform: translate(0, 0) scale(.4); opacity: 1; }
+    65%  { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 1; }
+    100% { transform: translate(var(--dx), calc(var(--dy) + 18px)) scale(.9); opacity: 0; }
+}
+@keyframes inv-float-up {
+    0%   { transform: translateY(6px); opacity: 0; }
+    20%  { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-22px); opacity: 0; }
+}
+@keyframes inv-float-up-center {
+    0%   { transform: translate(-50%, 6px) scale(.8); opacity: 0; }
+    20%  { transform: translate(-50%, -8px) scale(1.15); opacity: 1; }
+    70%  { opacity: 1; }
+    100% { transform: translate(-50%, -30px) scale(1); opacity: 0; }
+}
+
+/* ── Stapel teilen (Shift-Linksklick) ── */
+.split-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    background: rgba(0, 0, 0, .35);
+}
+.split-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1501;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, #2b2418 0%, #1a150d 100%);
+    border: 2px solid var(--wow-gold-soft);
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .8);
+    color: var(--wow-text);
+}
+.split-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.split-title img { width: 32px; height: 32px; border-radius: 4px; }
+.split-row { display: flex; align-items: center; gap: 6px; }
+.split-row input {
+    width: 80px;
+    background: var(--wow-bg-deep);
+    color: #fff;
+    border: 1px solid var(--wow-border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    text-align: center;
+}
+.split-arrow {
+    background: #1a1410;
+    color: var(--wow-gold);
+    border: 1px solid var(--wow-border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+.split-arrow:disabled { opacity: .35; cursor: default; }
+.split-of { color: var(--wow-muted); font-size: .85rem; }
+.split-error { color: #ff4040; font-size: .8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .inventory-page *,
+    .inventory-page *::before,
+    .inventory-page *::after {
+        animation-duration: 1ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+    }
+}
+
+@media (max-width: 1100px) {
+    .inv-layout { grid-template-columns: 380px minmax(0, 1fr); }
+    .inv-merchant-col { grid-column: 1 / -1; position: static; max-width: 420px; justify-self: end; }
+}
+@media (max-width: 760px) {
+    .inv-layout { grid-template-columns: 1fr; }
+    .inv-merchant-col { justify-self: stretch; max-width: none; }
+}

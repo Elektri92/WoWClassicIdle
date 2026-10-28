@@ -1,0 +1,19 @@
+@using Models
+
+@* Klassischer Geldrahmen (Gold/Silber/Kupfer); Styles in wwwroot/css/inventory.css *@
+@{ var (gold, silver, copper) = Money.Split(Copper); }
+<span class="money-frame" title="@Money.Format(Copper)">
+    @if (gold > 0)
+    {
+        <span class="coin">@gold<img src="@Money.GoldIconUrl" alt="Gold" /></span>
+    }
+    @if (gold > 0 || silver > 0)
+    {
+        <span class="coin">@silver<img src="@Money.SilverIconUrl" alt="Silver" /></span>
+    }
+    <span class="coin">@copper<img src="@Money.CopperIconUrl" alt="Copper" /></span>
+</span>
+
+@code {
+    [Parameter] public long Copper { get; set; }
+}

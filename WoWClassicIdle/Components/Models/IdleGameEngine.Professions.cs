@@ -27,7 +27,7 @@ public record ProfessionLogEntry(
     Item? Item = null, int Count = 0, string? Source = null);
 
 // Berufe: eigener Echtzeit-Timer (unabhängig von Kampf-Pause und Spielgeschwindigkeit)
-// Passive Slots (Charakter-Belegung) → IdleGameEngine.ProfessionPassive.cs
+// Passive Slots (Charakter-Belegung) → IdleGameEngine.ProfessionPassive.cs, Lehrer → IdleGameEngine.ProfessionTrainer.cs
 public partial class IdleGameEngine
 {
     private const int ProfessionLogSize = 12;
@@ -155,7 +155,7 @@ public partial class IdleGameEngine
         {
             var blocker = ProfessionLearnBlocker(profession);
             if (blocker is not null) return blocker;
-            Player.ProfessionState.Learn(profession, Player.Level);
+            Player.ProfessionState.Learn(profession, Player.Level, Player.ActiveClass);
         }
         ProfessionUpdated?.Invoke();
         return null;
@@ -172,15 +172,6 @@ public partial class IdleGameEngine
                 _passiveAssignments.RemoveAll(a => a.CharacterId == id && a.Profession == profession);
         }
         ProfessionUpdated?.Invoke();
-    }
-
-    public bool TrainProfessionRank(Profession profession)
-    {
-        bool trained;
-        lock (_simLock)
-            trained = GetProfessionProgress(profession)?.TrainNextRank(ProfessionTrainingLevel(profession)) ?? false;
-        ProfessionUpdated?.Invoke();
-        return trained;
     }
 
     // ─── Aktiver Slot ───
@@ -305,7 +296,8 @@ public partial class IdleGameEngine
     {
         if (ProfessionRegistry.GetRecipe(recipeId) is not { } recipe
             || recipe.Profession != progress.Profession
-            || progress.Skill < recipe.RequiredSkill)
+            || progress.Skill < recipe.RequiredSkill
+            || !progress.KnowsRecipe(recipe.Id))
             return false;
 
         if (recipe.Reagents.Any(r => _sharedInventory.CountOf(r.Item.Id) < r.Count))

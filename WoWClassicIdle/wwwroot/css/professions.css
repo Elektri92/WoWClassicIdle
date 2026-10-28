@@ -707,66 +707,268 @@
     pointer-events: none;
 }
 
-.prof-tag {
-    margin-left: 6px;
-    padding: 0 6px;
-    border-radius: 3px;
-    background: #3a3022;
-    border: 1px solid var(--wow-border-inner);
-    color: var(--wow-gold-soft);
-    font-family: var(--wow-font-body);
-    font-size: .65rem;
-    font-weight: 400;
-    vertical-align: middle;
-}
-
 .prof-owner-icon { width: 18px; height: 18px; border-radius: 3px; vertical-align: middle; margin-left: 6px; }
-.prof-workers .prof-owner-icon { width: 16px; height: 16px; margin-left: 4px; }
+/* Passive Sammler neben dem Berufsnamen: grüner Rand, ploppen versetzt auf */
+.prof-card-name .prof-worker-icon {
+    margin-left: 3px;
+    border: 1px solid #4fa83a;
+    box-shadow: 0 0 4px rgba(79, 168, 58, .5);
+    animation: al-pop .35s cubic-bezier(.3, 1.6, .5, 1) calc(.6s + var(--i, 0) * .04s) backwards;
+}
 
 /* ----- Layout: Charakterliste links, Berufe rechts ----- */
 .professions-page { max-width: 1200px; }
 
 .prof-layout {
     display: grid;
-    grid-template-columns: 230px 1fr;
+    grid-template-columns: 250px 1fr;
     gap: 12px;
     margin-top: 1rem;
     align-items: start;
 }
+.prof-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 
-.prof-main { min-width: 0; }
-.prof-layout .prof-main > .wow-card:first-child { margin-top: 0; }
+/* Gleicher Look wie /inventory: Titel/Hinweis fahren ein, Panel-Überschriften zentriert */
+.professions-page .prof-title { animation: al-fade-down .5s ease-out both; }
+.professions-page .prof-hint  { animation: al-fade-down .5s ease-out .08s both; }
+.prof-layout .al-panel h4 { text-align: center; letter-spacing: 1px; margin-bottom: 10px; }
 
-.prof-layout .prof-roster { position: sticky; top: 12px; margin-top: 0; display: flex; flex-direction: column; gap: 3px; }
+.prof-layout .prof-roster { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 3px; padding: 10px 8px; }
 
+/* ----- Charakter-Schnellauswahl: rundes Porträt mit Goldring + Klassen-Badge -----
+   Selektoren mit .roster-entry davor, weil ability-loadout.css später geladen wird */
 .roster-entry {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 7px;
-    border-radius: 4px;
-    background: var(--wow-bg-deep);
+    padding: 3px 6px 3px 4px;
     border: 1px solid transparent;
+    border-radius: 20px 5px 5px 20px;
+    overflow: hidden;
+    transition: border-color .15s, background-color .15s, transform .15s;
+    animation: al-slot-in .45s cubic-bezier(.3, 1.4, .5, 1) calc(.3s + var(--i, 0) * .05s) backwards;
 }
 
-.roster-entry img { width: 30px; height: 30px; border-radius: 4px; flex-shrink: 0; }
-.roster-entry-body { display: flex; flex-direction: column; min-width: 0; }
-.roster-entry-name { font-size: .86rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.roster-entry-sub { font-size: .72rem; }
-.roster-entry .prof-tag { margin-left: 4px; }
+.roster-entry .roster-portrait { width: 34px; height: 34px; flex-shrink: 0; }
+.roster-entry .roster-portrait .al-race-portrait {
+    display: block;
+    width: 34px;
+    height: 34px;
+    border-width: 2px;
+    transition: filter .2s, border-color .2s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
+}
+.roster-entry .roster-portrait .al-class-badge {
+    width: 16px;
+    height: 16px;
+    right: -3px;
+    bottom: -3px;
+    border-width: 1px;
+    transition: transform .25s cubic-bezier(.3, 1.6, .5, 1);
+}
 
-.roster-entry-profs { margin-left: auto; display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-.roster-entry .roster-prof { width: 22px; height: 22px; border-radius: 3px; border: 1px solid #c5a55a88; }
-.roster-entry .roster-prof.passive { width: 18px; height: 18px; border-color: #4fa83a; }
+/* Nur der gespielte Charakter pulsiert; die anderen sind gedämpft */
+.roster-entry.selectable .roster-portrait .al-race-portrait {
+    animation: none;
+    border-color: var(--wow-gold-soft);
+    filter: saturate(.6) brightness(.75);
+}
 
-.roster-entry.current { border-color: var(--wow-gold-soft); }
+.roster-entry-body { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.roster-entry-name { font-family: var(--wow-font-title); font-size: .8rem; font-weight: 700; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.roster-entry-sub { font-size: .68rem; }
+
+.roster-entry-profs { margin-left: auto; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.roster-entry .roster-prof { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #c5a55a88; transition: transform .2s; }
+.roster-entry .roster-prof.passive { width: 15px; height: 15px; border-color: #4fa83a; }
+
 .roster-entry.selectable { cursor: pointer; }
-.roster-entry.selectable:hover { border-color: var(--wow-border-inner); filter: brightness(1.15); }
+.roster-entry.selectable:hover { background-color: rgba(255, 209, 0, .06); border-color: var(--wow-border-dark); transform: translateX(3px); }
+.roster-entry.selectable:hover .al-race-portrait { filter: none; border-color: var(--wow-gold); transform: scale(1.08); }
+.roster-entry.selectable:hover .al-class-badge { transform: scale(1.15) rotate(-8deg); }
+.roster-entry.selectable:hover .roster-prof { transform: translateY(-1px); }
+.roster-entry.selectable:active { transform: translateX(3px) scale(.97); }
+
+/* Gespielter Charakter: Goldverlauf, Goldstreifen und Lichtschein, der beim Wechsel einmal durchläuft */
+.roster-entry.current {
+    border-color: var(--wow-gold-soft);
+    background: linear-gradient(90deg, rgba(255, 209, 0, .16), rgba(255, 209, 0, .03) 70%);
+    box-shadow: inset -3px 0 0 var(--wow-gold);
+}
+.roster-entry.current::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255, 236, 155, .35) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: prof-sweep .8s ease-out .1s;
+    pointer-events: none;
+}
+/* Ring, der beim Wechsel vom Porträt ausstrahlt */
+.roster-entry.current .roster-portrait::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    animation: prof-ring .7s ease-out;
+    pointer-events: none;
+}
+.roster-entry.current .al-class-badge { animation: al-pop .35s cubic-bezier(.3, 1.6, .5, 1); }
+
+/* ----- Berufskarten: versetztes Einfahren, Anheben + Lichtschein beim Hover ----- */
+.prof-layout .prof-card {
+    overflow: hidden;
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+    animation: al-card-in .45s cubic-bezier(.2, .8, .2, 1) calc(.3s + var(--i, 0) * .04s) backwards;
+}
+.prof-layout .prof-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 35%, rgba(255, 236, 155, .12) 50%, transparent 65%);
+    transform: translateX(-100%);
+    pointer-events: none;
+}
+.prof-layout .prof-card:hover { transform: translateY(-2px); }
+.prof-layout .prof-card:hover::before { transition: transform .6s ease-out; transform: translateX(100%); }
+.prof-layout .prof-card:active { transform: translateY(0) scale(.99); }
+.prof-layout .prof-card .prof-icon { transition: transform .25s cubic-bezier(.3, 1.6, .5, 1), box-shadow .25s; }
+.prof-layout .prof-card:hover .prof-icon { transform: scale(1.1) rotate(-4deg); box-shadow: 0 0 10px rgba(255, 209, 0, .4); }
+.prof-layout .prof-card.learned .prof-skill-bar .bar { transform-origin: left; animation: al-bar-grow .8s cubic-bezier(.2, .8, .2, 1) calc(.5s + var(--i, 0) * .04s) both; }
+
+@keyframes prof-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes prof-ring {
+    from { box-shadow: 0 0 0 0 rgba(255, 209, 0, .8); }
+    to   { box-shadow: 0 0 0 10px rgba(255, 209, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .roster-entry, .roster-entry *, .roster-entry::after, .prof-layout .prof-card, .prof-layout .prof-card * { animation: none !important; transition: none !important; }
+}
 
 @media (max-width: 760px) {
     .prof-layout { grid-template-columns: 1fr; }
     .prof-layout .prof-roster { position: static; }
 }
 
-.prof-debug-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
-.prof-debug-label { color: var(--wow-gold-soft); font-size: .8rem; margin-left: 6px; }
+/* ----- Debug-Spalte (nur Debug-Build): links neben der Charakterliste, vertikal ----- */
+.professions-page .prof-debug {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 8px;
+    margin-bottom: 12px;
+}
+.professions-page .prof-debug h4 { margin-bottom: 2px; text-align: center; }
+.prof-debug .wow-btn { white-space: normal; line-height: 1.2; }
+.prof-debug-result { font-size: .7rem; }
+.prof-debug-label { margin-top: 4px; color: var(--wow-gold-soft); font-size: .72rem; text-align: center; }
+.prof-debug-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.prof-debug-buttons .wow-tab { margin: 0; padding: 2px 4px; font-size: .75rem; text-align: center; }
+
+/* Mit Seitenleiste (≥ 641px, Nav 250px breit): Debug fest an den linken Rand des Inhaltsbereichs.
+   Symmetrischer Innenabstand der Seite hält den Inhalt zentriert und frei von Überlappung. */
+@media (min-width: 641px) {
+    .professions-page .prof-debug {
+        position: fixed;
+        top: 12px;
+        left: calc(250px + 8px);
+        z-index: 5;
+        width: 150px;
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+        margin-bottom: 0;
+    }
+    .wow-page.professions-page.with-debug { max-width: calc(1200px + 2 * 170px); padding: 0 170px; }
+}
+
+@media (max-width: 640px) {
+    .prof-debug-buttons { grid-template-columns: repeat(6, auto); justify-content: start; }
+}
+
+/* ----- Dezenter, leicht transparenter Farbverlauf je Beruf (--prof-tint) – Karten und Unterseiten-Kopf ----- */
+.prof-layout .prof-card {
+    background:
+        linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 70%),
+        var(--wow-bg-deep);
+}
+.prof-detail-page .prof-header {
+    background:
+        linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 75%),
+        linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
+}
+.prof-layout .prof-card:hover {
+    background:
+        linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 85%),
+        var(--wow-bg-deep);
+}
+
+.prof-bg-mining         { --prof-tint: rgba(140, 150, 165, .22); }  /* Stein/Eisen */
+.prof-bg-herbalism      { --prof-tint: rgba(80, 170, 70, .22); }    /* Kräutergrün */
+.prof-bg-skinning       { --prof-tint: rgba(150, 100, 55, .24); }   /* Fell/Leder */
+.prof-bg-fishing        { --prof-tint: rgba(50, 120, 190, .24); }   /* Wasser */
+.prof-bg-first-aid      { --prof-tint: rgba(190, 50, 50, .22); }    /* Verband/Blut */
+.prof-bg-cooking        { --prof-tint: rgba(215, 120, 40, .22); }   /* Herdfeuer */
+.prof-bg-alchemy        { --prof-tint: rgba(150, 70, 200, .22); }   /* Tränke */
+.prof-bg-engineering    { --prof-tint: rgba(200, 160, 60, .2); }    /* Messing */
+.prof-bg-leatherworking { --prof-tint: rgba(130, 80, 40, .26); }    /* Gegerbtes Leder */
+.prof-bg-blacksmithing  { --prof-tint: rgba(220, 90, 30, .2); }     /* Glühende Esse */
+.prof-bg-tailoring      { --prof-tint: rgba(200, 80, 140, .2); }    /* Stoff */
+.prof-bg-enchanting     { --prof-tint: rgba(110, 90, 230, .24); }   /* Arkan */
+
+/* ----- Unterseiten (/professions/{slug}): gleicher Look wie die Übersicht ----- */
+.prof-detail-page .prof-back { display: inline-block; animation: al-fade-down .5s ease-out both; transition: transform .15s, color .15s; }
+.prof-detail-page .prof-back:hover { transform: translateX(-3px); }
+
+/* Panels untereinander, versetzt einfahrend (--i je Position) */
+.prof-detail-main { display: flex; flex-direction: column; gap: 14px; margin-top: 1rem; }
+.prof-detail-main > .al-panel:nth-child(1) { --i: 0; }
+.prof-detail-main > .al-panel:nth-child(2) { --i: 1; }
+.prof-detail-main > .al-panel:nth-child(3) { --i: 2; }
+.prof-detail-main > .al-panel:nth-child(4) { --i: 3; }
+.prof-detail-main > .al-panel:nth-child(n+5) { --i: 4; }
+.prof-detail-main > .wow-hint { animation: al-fade-down .5s ease-out .6s both; }
+
+/* Kopf: großes Icon ploppt auf, Skill-Leiste wächst, Lichtschein läuft einmal durch */
+.prof-detail-page .prof-header { overflow: hidden; padding: 14px 16px; }
+.prof-detail-page .prof-header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255, 236, 155, .14) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: prof-sweep 1.1s ease-out .45s;
+    pointer-events: none;
+}
+.prof-detail-page .prof-header .prof-icon.large {
+    border: 2px solid var(--wow-gold-soft);
+    animation: al-pop .45s cubic-bezier(.3, 1.6, .5, 1) .25s backwards, al-halo 2.6s ease-in-out .8s infinite;
+}
+.prof-detail-page .prof-header .prof-skill-bar .bar { transform-origin: left; animation: al-bar-grow .9s cubic-bezier(.2, .8, .2, 1) .45s both; }
+
+/* Ausbildungsstufen fahren nacheinander ein, die trainierbare pulsiert */
+.prof-detail-page .prof-rank { animation: al-card-in .4s cubic-bezier(.2, .8, .2, 1) backwards; transition: transform .15s; }
+.prof-detail-page .prof-rank:nth-child(1) { animation-delay: .35s; }
+.prof-detail-page .prof-rank:nth-child(2) { animation-delay: .4s; }
+.prof-detail-page .prof-rank:nth-child(3) { animation-delay: .45s; }
+.prof-detail-page .prof-rank:nth-child(4) { animation-delay: .5s; }
+.prof-detail-page .prof-rank.trainable { animation: al-card-in .4s cubic-bezier(.2, .8, .2, 1) .45s backwards, prof-train-glow 1.8s ease-in-out 1s infinite; }
+.prof-detail-page .prof-rank:hover { transform: translateY(-1px); }
+
+/* Quick-Select links: Icons rutschen versetzt herein, Hover hebt an */
+.prof-detail-page .prof-quick { animation: al-slot-in .45s cubic-bezier(.3, 1.4, .5, 1) .1s backwards; }
+.prof-detail-page .prof-quick-item { animation: al-pop .35s cubic-bezier(.3, 1.6, .5, 1) calc(.2s + var(--i, 0) * .03s) backwards; }
+.prof-detail-page .prof-quick-item > img:first-child { transition: filter .15s, border-color .15s, box-shadow .15s, transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+.prof-detail-page .prof-quick-item:hover > img:first-child { transform: scale(1.1); box-shadow: 0 0 8px rgba(255, 209, 0, .35); }
+.prof-detail-page .prof-quick-item.current > img:first-child { animation: al-halo 2.6s ease-in-out infinite; }
+
+@keyframes prof-train-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(255, 209, 0, 0); }
+    50%      { box-shadow: 0 0 10px rgba(255, 209, 0, .45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .prof-detail-page .prof-back, .prof-detail-main > *, .prof-detail-page .prof-header *, .prof-detail-page .prof-header::after,
+    .prof-detail-page .prof-rank, .prof-detail-page .prof-quick, .prof-detail-page .prof-quick-item,
+    .prof-detail-page .prof-quick-item > img { animation: none !important; transition: none !important; }
+}

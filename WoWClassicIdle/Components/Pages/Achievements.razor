@@ -2,540 +2,171 @@
 @rendermode InteractiveServer
 @using Models
 @using Services
-@inject IAchievementService _achievements
 
 <PageTitle>Achievements</PageTitle>
 
-<div class="achiev-frame">
+<div class="ach-window">
 
-    <!-- ══ TITLE BAR ══ -->
-    <div class="achiev-titlebar">
-        <span class="achiev-titlebar-text">Achievement Points</span>
-        <span class="achiev-titlebar-pts">@_achievements.TotalPoints</span>
+    <!-- ══ KOPFLEISTE: Filter · Punkte-Plakette · Suche ══ -->
+    <div class="ach-header">
+        <select class="ach-filter" @bind="_filter">
+            @foreach (var f in Enum.GetValues<AchievementFilter>())
+            {
+                <option value="@f">@f</option>
+            }
+        </select>
+
+        <div class="ach-plaque">
+            <span class="ach-plaque-label">Achievement Points</span>
+            <div class="ach-plaque-box">
+                <span>@Num(_achievements.TotalPoints)</span>
+                <span class="ach-mini-shield"></span>
+            </div>
+        </div>
+
+        <div class="ach-search">
+            <span class="ach-search-icon">⚲</span>
+            <input type="text" placeholder="Search" @bind="_search" @bind:event="oninput" />
+        </div>
     </div>
 
-    <!-- ══ BODY: sidebar + content ══ -->
-    <div class="achiev-body">
+    <div class="ach-body">
 
-        <!-- ── LEFT SIDEBAR ── -->
-        <div class="achiev-sidebar">
-            <button class="sidebar-btn @(_activeView == "summary" ? "active" : "")"
-                    @onclick='() => _activeView = "summary"'>
+        <!-- ── KATEGORIEN ── -->
+        <nav class="ach-cats">
+            <button class="ach-cat @(_category is null && !IsSearching ? "active" : "")" @onclick="ShowSummary">
                 Summary
             </button>
             @foreach (var cat in Enum.GetValues<AchievementCategory>())
             {
-                var key = cat.ToString().ToLower();
-                var earnedCnt = _achievements.AllAchievements.Count(a => a.Category == cat && _achievements.IsEarned(a.Id));
-                var totalCnt  = _achievements.AllAchievements.Count(a => a.Category == cat);
-                <button class="sidebar-btn @(_activeView == key ? "active" : "")"
-                        @onclick="() => _activeView = key">
-                    <span class="sb-label">@cat</span>
-                    <span class="sb-count">@earnedCnt/@totalCnt</span>
+                var c = cat;
+                bool catActive = _category == c && _classFilter is null && !IsSearching;
+                <button class="ach-cat @(catActive ? "active" : "")" @onclick="() => ShowCategory(c)">
+                    @c
                 </button>
-            }
-        </div>
 
-        <!-- ── RIGHT CONTENT ── -->
-        <div class="achiev-content">
-
-            @if (_activeView == "summary")
-            {
-                <div class="summary-section-title">Overview</div>
-
-                <div class="summary-grid">
-                    @foreach (var cat in Enum.GetValues<AchievementCategory>())
-                    {
-                        var earnedCnt = _achievements.AllAchievements.Count(a => a.Category == cat && _achievements.IsEarned(a.Id));
-                        var totalCnt  = _achievements.AllAchievements.Count(a => a.Category == cat);
-                        var pct       = totalCnt > 0 ? earnedCnt * 100.0 / totalCnt : 0;
-                        <div class="summary-cat-row" @onclick="() => _activeView = cat.ToString().ToLower()">
-                            <span class="sumcat-name">@cat</span>
-                            <div class="sumcat-bar-wrap">
-                                <div class="sumcat-bar">
-                                    <div class="sumcat-fill" style="width: @pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                                </div>
-                            </div>
-                            <span class="sumcat-count">@earnedCnt/@totalCnt</span>
-                        </div>
-                    }
-                </div>
-
-                var recentEarned = GetRecentEarned();
-                @if (recentEarned.Count > 0)
+                @if (c == AchievementCategory.Classes && _category == AchievementCategory.Classes && !IsSearching)
                 {
-                    <div class="summary-section-title" style="margin-top: 16px;">Recent Achievements</div>
-                    <div class="achiev-list">
-                        @foreach (var (def, earned) in recentEarned)
+                    @foreach (var cls in Enum.GetValues<CharacterClass>())
+                    {
+                        var k = cls;
+                        <button class="ach-cat ach-subcat @(_classFilter == k ? "active" : "")" @onclick="() => ShowClass(k)">
+                            @k
+                        </button>
+                    }
+                }
+            }
+        </nav>
+
+        <!-- ── INHALT ── -->
+        <div class="ach-pane">
+            @if (_category is null && !IsSearching)
+            {
+                var recent = GetRecentEarned();
+                <div class="ach-section-title">Recent Achievements</div>
+                @if (recent.Count > 0)
+                {
+                    <div class="ach-list">
+                        @foreach (var (def, earned) in recent)
                         {
-                            <div class="achiev-item earned">
-                                @AchievementItemContent(def, earned, true)
-                            </div>
+                            @AchievementRow(def, earned)
                         }
                     </div>
                 }
                 else
                 {
-                    <div class="summary-empty">No achievements earned yet. Start fighting!</div>
+                    <div class="ach-empty">No achievements earned yet. Start fighting!</div>
                 }
+
+                var total = CountFor(_ => true);
+                <div class="ach-section-title">Progress Overview</div>
+                <div class="ach-overview-total">
+                    @ProgressBar("Achievements Earned", total.Earned, total.Total)
+                </div>
+                <div class="ach-overview-grid">
+                    @foreach (var cat in Enum.GetValues<AchievementCategory>())
+                    {
+                        var c = cat;
+                        var (earnedCnt, totalCnt) = CountFor(a => a.Category == c);
+                        <div class="ach-overview-cell" @onclick="() => ShowCategory(c)">
+                            @ProgressBar(c.ToString(), earnedCnt, totalCnt)
+                        </div>
+                    }
+                </div>
             }
             else
             {
-                var activeCat = ParseCategory(_activeView);
-                <div class="achiev-list">
-                    @foreach (var group in GetGroupedAchievements(activeCat))
+                var groups = GetVisibleGroups();
+                @if (groups.Count == 0)
+                {
+                    <div class="ach-empty">@(IsSearching ? "No achievements match your search." : "No achievements to show.")</div>
+                }
+                <div class="ach-list">
+                    @foreach (var group in groups)
                     {
-                        @if (group.Key is not null)
+                        @if (group.Key is CharacterClass cls)
                         {
-                            <div class="achiev-class-header">
-                                <img src="@IconUrls.ClassIconUrl(group.Key.Value)" alt="@group.Key"
-                                     class="achiev-class-icon" onerror="this.style.display='none'" />
-                                <span>@group.Key</span>
-                                <span class="achiev-class-count">
-                                    @group.Count(a => _achievements.IsEarned(a.Id))/@group.Count()
-                                </span>
+                            <div class="ach-group-header">
+                                <img src="@IconUrls.ClassIconUrl(cls)" alt="" onerror="this.style.display='none'" />
+                                <span>@cls</span>
+                                <span class="ach-group-count">@group.Count(a => _achievements.IsEarned(a.Id)) / @group.Count()</span>
                             </div>
                         }
-
                         @foreach (var def in group)
                         {
-                            var earned  = _achievements.GetEarned(def.Id);
-                            var isEarned = earned is not null;
-                            <div class="achiev-item @(isEarned ? "earned" : "locked")">
-                                @AchievementItemContent(def, earned, isEarned)
-                            </div>
+                            @AchievementRow(def, _achievements.GetEarned(def.Id))
                         }
                     }
                 </div>
             }
-
         </div>
     </div>
 </div>
 
-@* Shared render fragment for an achievement row *@
-@functions {
-    RenderFragment AchievementItemContent(AchievementDefinition def, EarnedAchievement? earned, bool isEarned) =>
-        @<text>
-            <div class="achiev-icon-wrap @(isEarned ? "" : "icon-grayscale")">
-                <img src="@def.IconUrl" alt=""
-                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23444%22 width=%2248%22 height=%2248%22 rx=%226%22/></svg>'" />
-                @if (isEarned)
-                {
-                    <span class="achiev-checkmark">✓</span>
-                }
-            </div>
-            <div class="achiev-info">
-                <span class="achiev-name @(isEarned ? "name-earned" : "name-locked")">@def.Title</span>
-                <span class="achiev-desc">@def.Description</span>
-                @if (isEarned && earned is not null)
-                {
-                    <span class="achiev-date">@earned.EarnedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
-                }
-            </div>
-            <div class="achiev-pts-badge @(isEarned ? "pts-earned" : "pts-locked")">
-                <span class="pts-value">@def.Points</span>
-            </div>
-        </text>;
-}
-
-<style>
-    /* ══ OUTER FRAME ══ */
-    .achiev-frame {
-        max-width: 820px;
-        margin: 1rem auto 2rem;
-        background: linear-gradient(180deg, #1c1409 0%, #110e06 100%);
-        border: 2px solid #6a5830;
-        border-radius: 8px;
-        box-shadow: 0 8px 32px rgba(0,0,0,.8), inset 0 0 0 1px #3a2e14;
-        overflow: hidden;
-    }
-
-    /* ══ TITLE BAR ══ */
-    .achiev-titlebar {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 8px 16px;
-        background: linear-gradient(180deg, #2c2010 0%, #1c1509 100%);
-        border-bottom: 2px solid #6a5830;
-        box-shadow: 0 2px 8px rgba(0,0,0,.5);
-    }
-
-    .achiev-titlebar-text {
-        font-family: 'Cinzel', serif;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #ffd100;
-        text-shadow: 0 0 10px rgba(255,209,0,.35);
-        letter-spacing: 0.05em;
-    }
-
-    .achiev-titlebar-pts {
-        font-family: 'Cinzel', serif;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #fff;
-        background: linear-gradient(180deg, #3a2e08 0%, #2a2006 100%);
-        border: 1px solid #c5a55a;
-        border-radius: 4px;
-        padding: 1px 8px;
-        box-shadow: 0 0 6px rgba(197,165,90,.25);
-    }
-
-    /* ══ BODY LAYOUT ══ */
-    .achiev-body {
-        display: flex;
-        min-height: 500px;
-    }
-
-    /* ── SIDEBAR ── */
-    .achiev-sidebar {
-        width: 150px;
-        flex-shrink: 0;
-        border-right: 2px solid #3a2e14;
-        background: linear-gradient(180deg, #161008 0%, #0e0b06 100%);
-        display: flex;
-        flex-direction: column;
-        padding: 6px 0;
-        gap: 1px;
-    }
-
-    .sidebar-btn {
-        width: 100%;
-        text-align: left;
-        padding: 7px 12px;
-        background: transparent;
-        border: none;
-        border-left: 3px solid transparent;
-        color: #c9b88c;
-        font-size: 0.82rem;
-        font-family: inherit;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 4px;
-        transition: background 0.15s, color 0.15s;
-        line-height: 1.3;
-    }
-
-    .sidebar-btn:hover {
-        background: rgba(197,165,90,.1);
-        color: #fff;
-    }
-
-    .sidebar-btn.active {
-        background: linear-gradient(90deg, rgba(197,165,90,.22) 0%, rgba(197,165,90,.06) 100%);
-        border-left-color: #c5a55a;
-        color: #ffd100;
-        font-weight: 700;
-        text-shadow: 0 0 6px rgba(255,209,0,.3);
-    }
-
-    .sb-label { flex: 1; }
-
-    .sb-count {
-        font-size: 0.7rem;
-        color: #6a5a3a;
-        white-space: nowrap;
-    }
-
-    .sidebar-btn.active .sb-count { color: #a08848; }
-
-    /* ── RIGHT CONTENT ── */
-    .achiev-content {
-        flex: 1;
-        min-width: 0;
-        padding: 12px 14px;
-        overflow-y: auto;
-        max-height: 620px;
-        scrollbar-color: #5a4a28 #0e0b07;
-        scrollbar-width: thin;
-    }
-
-    /* ── ACHIEVEMENT LIST ── */
-    .achiev-list {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-
-    .achiev-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 7px 10px;
-        border-radius: 4px;
-        border: 1px solid transparent;
-        transition: border-color 0.15s;
-    }
-
-    .achiev-item.earned {
-        background: linear-gradient(90deg, #201808 0%, #281e08 40%, #201808 100%);
-        border-color: #4a3a18;
-    }
-
-    .achiev-item.earned:hover {
-        border-color: #c5a55a;
-        box-shadow: 0 0 8px rgba(197,165,90,.15);
-    }
-
-    .achiev-item.locked {
-        background: #0e0b06;
-        opacity: 0.55;
-    }
-
-    /* ── ICON ── */
-    .achiev-icon-wrap {
-        position: relative;
-        width: 44px;
-        height: 44px;
-        flex-shrink: 0;
-    }
-
-    .achiev-icon-wrap img {
-        width: 44px;
-        height: 44px;
-        border-radius: 5px;
-        border: 2px solid #5a4a28;
-        display: block;
-    }
-
-    .achiev-item.earned .achiev-icon-wrap img {
-        border-color: #c5a55a;
-        box-shadow: 0 0 6px rgba(197,165,90,.35);
-    }
-
-    .icon-grayscale img { filter: grayscale(1) brightness(0.45); }
-
-    .achiev-checkmark {
-        position: absolute;
-        bottom: -3px;
-        right: -3px;
-        width: 16px;
-        height: 16px;
-        background: #236b14;
-        border: 1px solid #c5a55a;
-        border-radius: 50%;
-        font-size: 0.55rem;
-        font-weight: 900;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* ── INFO ── */
-    .achiev-info {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-    }
-
-    .achiev-name {
-        font-family: 'Cinzel', serif;
-        font-weight: 700;
-        font-size: 0.85rem;
-        line-height: 1.2;
-    }
-
-    .name-earned { color: #ffd100; text-shadow: 0 1px 2px #000; }
-    .name-locked { color: #5a4a2a; }
-
-    .achiev-desc {
-        font-size: 0.75rem;
-        color: #9a8a64;
-        line-height: 1.3;
-    }
-
-    .achiev-date {
-        font-size: 0.67rem;
-        color: #6a9a4a;
-        margin-top: 1px;
-    }
-
-    /* ── POINTS BADGE (circle like WoW) ── */
-    .achiev-pts-badge {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .pts-earned {
-        background: radial-gradient(circle, #3a2e08 0%, #1e1804 100%);
-        border: 2px solid #c5a55a;
-        box-shadow: 0 0 8px rgba(197,165,90,.3), inset 0 0 4px rgba(0,0,0,.5);
-    }
-
-    .pts-locked {
-        background: radial-gradient(circle, #1e1a10 0%, #100e08 100%);
-        border: 2px solid #3a2e1a;
-    }
-
-    .pts-value {
-        font-family: 'Cinzel', serif;
-        font-weight: 700;
-        font-size: 0.78rem;
-        line-height: 1;
-    }
-
-    .pts-earned .pts-value { color: #ffd100; }
-    .pts-locked .pts-value { color: #4a3a1a; }
-
-    /* ── CLASS GROUP HEADER ── */
-    .achiev-class-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 5px 8px;
-        background: linear-gradient(90deg, #2a1e08 0%, #1a1506 100%);
-        border: 1px solid #4a3a18;
-        border-radius: 4px;
-        margin-top: 8px;
-        font-family: 'Cinzel', serif;
-        font-weight: 700;
-        color: #ffd100;
-        font-size: 0.82rem;
-    }
-
-    .achiev-class-header:first-child { margin-top: 0; }
-
-    .achiev-class-icon {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        border: 1px solid #c5a55a;
-    }
-
-    .achiev-class-count {
-        margin-left: auto;
-        font-size: 0.7rem;
-        color: #8a7844;
-        font-family: sans-serif;
-        font-weight: 400;
-    }
-
-    /* ── SUMMARY VIEW ── */
-    .summary-section-title {
-        font-family: 'Cinzel', serif;
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #ffd100;
-        text-shadow: 0 0 6px rgba(255,209,0,.25);
-        letter-spacing: 0.05em;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #3a2e14;
-        margin-bottom: 8px;
-    }
-
-    .summary-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        margin-bottom: 6px;
-    }
-
-    .summary-cat-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 5px 8px;
-        border-radius: 4px;
-        background: #0e0b06;
-        border: 1px solid #2a2010;
-        cursor: pointer;
-        transition: border-color 0.15s;
-    }
-
-    .summary-cat-row:hover {
-        border-color: #c5a55a;
-        background: #161008;
-    }
-
-    .sumcat-name {
-        font-family: 'Cinzel', serif;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #c9b88c;
-        width: 80px;
-        flex-shrink: 0;
-    }
-
-    .sumcat-bar-wrap { flex: 1; }
-
-    .sumcat-bar {
-        height: 12px;
-        background: #0a0806;
-        border-radius: 3px;
-        border: 1px solid #3a2e14;
-        overflow: hidden;
-    }
-
-    .sumcat-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #5a8a14 0%, #7ab81e 100%);
-        border-radius: 3px;
-        transition: width 0.4s ease;
-    }
-
-    .sumcat-count {
-        font-size: 0.75rem;
-        color: #9a8a64;
-        width: 44px;
-        text-align: right;
-        flex-shrink: 0;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .summary-empty {
-        color: #6a5a3a;
-        font-style: italic;
-        font-size: 0.85rem;
-        padding: 20px 0;
-        text-align: center;
-    }
-
-    @@media (max-width: 600px) {
-        .achiev-sidebar { width: 110px; }
-        .sb-count { display: none; }
-    }
-</style>
-
 @code {
-    private string _activeView = "summary";
-
-    private AchievementCategory? ParseCategory(string view) =>
-        Enum.TryParse<AchievementCategory>(view, true, out var cat) ? cat : (AchievementCategory?)null;
-
-    private IEnumerable<IGrouping<CharacterClass?, AchievementDefinition>> GetGroupedAchievements(AchievementCategory? cat)
+    // Eine Erfolgszeile im WoW-Stil: Icon · Titel/Beschreibung/Fortschritt · Punkte-Schild + Datum
+    private RenderFragment AchievementRow(AchievementDefinition def, EarnedAchievement? earned)
     {
-        if (cat is null) return Enumerable.Empty<AchievementDefinition>().GroupBy(a => (CharacterClass?)null);
-
-        var filtered = _achievements.AllAchievements.Where(a => a.Category == cat.Value);
-
-        if (cat == AchievementCategory.Classes)
-            return filtered.GroupBy(a => a.Class).OrderBy(g => g.Key.ToString());
-
-        return filtered.GroupBy(a => (CharacterClass?)null);
+        bool isEarned = earned is not null;
+        var progress = isEarned ? null : _achievements.GetProgress(def.Id);
+        return @<div class="ach-row @(isEarned ? "earned" : "locked")">
+            <div class="ach-row-icon">
+                <img src="@def.IconUrl" alt=""
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23444%22 width=%2248%22 height=%2248%22/></svg>'" />
+            </div>
+            <div class="ach-row-text">
+                <div class="ach-row-title">@def.Title</div>
+                <div class="ach-row-desc">@def.Description</div>
+                @if (progress is not null)
+                {
+                    <div class="ach-progress">
+                        <div class="ach-progress-fill" style="width: @Pct(progress.Percent)"></div>
+                        <span class="ach-progress-text">@Num(progress.Current) / @Num(progress.Target)</span>
+                    </div>
+                }
+            </div>
+            <div class="ach-row-reward">
+                <div class="ach-shield"><span>@def.Points</span></div>
+                @if (earned is not null)
+                {
+                    <span class="ach-row-date" title="@earned.EarnedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm", System.Globalization.CultureInfo.InvariantCulture)">
+                        @earned.EarnedAt.ToLocalTime().ToString("dd/MM/yy", System.Globalization.CultureInfo.InvariantCulture)
+                    </span>
+                }
+            </div>
+        </div>;
     }
 
-    private List<(AchievementDefinition Def, EarnedAchievement Earned)> GetRecentEarned()
+    // Beschrifteter Fortschrittsbalken für die Übersicht
+    private RenderFragment ProgressBar(string label, int earnedCnt, int totalCnt)
     {
-        return _achievements.EarnedAchievements
-            .OrderByDescending(e => e.EarnedAt)
-            .Take(5)
-            .Select(e => (
-                Def:    _achievements.AllAchievements.First(a => a.Id == e.AchievementId),
-                Earned: e
-            ))
-            .ToList();
+        double pct = totalCnt > 0 ? earnedCnt * 100.0 / totalCnt : 0;
+        return @<div class="ach-ov">
+            <span class="ach-ov-label">@label</span>
+            <div class="ach-progress">
+                <div class="ach-progress-fill" style="width: @Pct(pct)"></div>
+                <span class="ach-progress-text">@earnedCnt / @totalCnt</span>
+            </div>
+        </div>;
     }
 }

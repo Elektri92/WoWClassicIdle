@@ -4,6 +4,8 @@ namespace Models
     {
         public int Id             { get; init; }
         public CharacterClass Class { get; init; }   // never changes – one slot per class
+        /// <summary>Vom Spieler vergebener Name (leer bei Altständen ohne Namen).</summary>
+        public string Name        { get; internal set; } = "";
         public Faction Faction    { get; internal set; }
         public Race Race          { get; internal set; }
         public Gender Gender      { get; internal set; }

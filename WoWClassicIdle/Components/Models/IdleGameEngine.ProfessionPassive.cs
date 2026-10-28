@@ -8,8 +8,12 @@ public partial class IdleGameEngine
 
     public IReadOnlyList<PassiveAssignment> PassiveAssignments => _passiveAssignments;
 
-    /// <summary>Anzeigename eines Charakters (Rasse + Klasse) für Slots und Protokoll.</summary>
-    public static string CharacterName(CharacterSlot slot) => $"{slot.Race} {slot.Class}";
+    /// <summary>Anzeigename eines Charakters für Slots und Protokoll (Altstände ohne Namen: Rasse + Klasse).</summary>
+    public static string CharacterName(CharacterSlot slot) =>
+        string.IsNullOrWhiteSpace(slot.Name) ? $"{slot.Race} {slot.Class}" : slot.Name;
+
+    /// <summary>Anzeigename des aktiven Charakters (Kopfzeilen von Kampf, Inventar, Talenten, Loadout).</summary>
+    public string ActiveCharacterName => ActiveCharacter is { } slot ? CharacterName(slot) : "Character";
 
     public CharacterSlot? GetCharacter(int id) => _roster.FirstOrDefault(s => s.Id == id);
 
