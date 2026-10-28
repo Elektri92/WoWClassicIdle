@@ -1,3 +1,6 @@
+/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
+   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
+   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
 /* ============================================
    Charakterauswahl (/character) – Look der Unit-Frames und Kampf-Hintergründe aus /idle
    Silhouetten (.battle-mountains/.battle-hills) und Zonen-Themes kommen aus combat-zones.css / professions.css
@@ -732,29 +735,29 @@
 
 /* ── Keyframes ── */
 @keyframes cs-fade-down {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { visibility: visible; opacity: 0; transform: translateY(-8px); }
 }
 @keyframes cs-card-in {
-    from { opacity: 0; transform: translateY(14px) scale(.98); }
+    from { visibility: visible; opacity: 0; transform: translateY(14px) scale(.98); }
 }
 @keyframes cs-stage-in {
-    from { opacity: 0; transform: translateY(-6px) scale(.985); }
+    from { visibility: visible; opacity: 0; transform: translateY(-6px) scale(.985); }
 }
 @keyframes cs-scene-in {
-    from { opacity: 0; transform: scale(1.04); }
+    from { visibility: visible; opacity: 0; transform: scale(1.04); }
 }
 @keyframes cs-banner-unfurl {
-    from { scale: 1 0; opacity: .4; }
+    from { visibility: visible; scale: 1 0; opacity: .4; }
 }
 @keyframes cs-banner-sway {
     from { transform: skewX(-.5deg); }
     to   { transform: skewX(.5deg); }
 }
 @keyframes cs-bar-grow {
-    from { transform: scaleX(0); }
+    from { visibility: visible; transform: scaleX(0); }
 }
 @keyframes cs-sheen {
-    0%   { background-position: 100% 0; opacity: 1; }
+    0%   { visibility: visible; background-position: 100% 0; opacity: 1; }
     100% { background-position: -50% 0; opacity: 0; }
 }
 @keyframes cs-portrait-halo {
@@ -777,21 +780,21 @@
     100% { transform: translate(-8px, -340px) scale(.4); opacity: 0; }
 }
 @keyframes cs-ember-short {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0; }
+    0%   { visibility: visible; transform: translate(0, 0) scale(1); opacity: 0; }
     15%  { opacity: .9; }
     100% { transform: translate(10px, -130px) scale(.4); opacity: 0; }
 }
 @keyframes cs-pop {
-    0%   { transform: scale(.6); opacity: 0; }
+    0%   { visibility: visible; transform: scale(.6); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
 }
 @keyframes cs-select {
-    0%   { transform: scale(.94); }
+    0%   { visibility: visible; transform: scale(.94); }
     60%  { transform: scale(1.06); }
     100% { transform: scale(1); }
 }
 @keyframes cs-shake {
-    0%, 100% { transform: translateX(0); }
+    0%, 100% { visibility: visible; transform: translateX(0); }
     20%, 60% { transform: translateX(-6px); }
     40%, 80% { transform: translateX(6px); }
 }

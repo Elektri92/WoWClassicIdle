@@ -1,3 +1,6 @@
+/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
+   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
+   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
 /* ── Tod & Spirit Healer (Components/Pages/IdleFighter.Death.cs) ──
    Geisterwelt: der ganze Bildschirm wird grau-blau entsättigt, nur der Spirit-Healer-Frame
    liegt darüber und bleibt farbig. */
@@ -41,12 +44,12 @@
 }
 
 @keyframes deathFadeIn {
-    from { opacity: 0; }
+    from { visibility: visible; opacity: 0; }
     to   { opacity: 1; }
 }
 
 @keyframes deathBlood {
-    0%   { opacity: 0; }
+    0%   { visibility: visible; opacity: 0; }
     12%  { opacity: 1; }
     100% { opacity: 0; }
 }
@@ -76,12 +79,12 @@
 }
 
 @keyframes resurrectFade {
-    0%   { opacity: 1; }
+    0%   { visibility: visible; opacity: 1; }
     100% { opacity: 0; }
 }
 
 @keyframes resurrectLight {
-    0%   { opacity: 0; transform: scale(.6); }
+    0%   { visibility: visible; opacity: 0; transform: scale(.6); }
     18%  { opacity: 1; transform: scale(1); }
     100% { opacity: 0; transform: scale(1.3); }
 }

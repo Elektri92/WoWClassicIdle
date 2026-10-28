@@ -1,3 +1,6 @@
+/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
+   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
+   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
 /* ============================================
    Inventory (/inventory) – gleicher Look wie /ability-loadout
    Kopf (.al-header, .al-portrait, .al-slot-meter) und Panels (.al-panel) kommen aus ability-loadout.css
@@ -79,7 +82,7 @@
     mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
     animation: inv-crest-in .7s cubic-bezier(.2, .8, .2, 1) .3s backwards;
 }
-@keyframes inv-crest-in   { from { opacity: 0; transform: scale(.92); } }
+@keyframes inv-crest-in   { from { visibility: visible; opacity: 0; transform: scale(.92); } }
 @keyframes inv-crest-glow { 50% { opacity: .7; } }
 
 .equip-slot {
@@ -169,31 +172,31 @@
 .stat-delta.down { color: #ff5050; background: rgba(80, 15, 15, .85); }
 
 @keyframes inv-gear-pop {
-    0%   { transform: scale(.3) rotate(-12deg); filter: brightness(2.2); }
+    0%   { visibility: visible; transform: scale(.3) rotate(-12deg); filter: brightness(2.2); }
     60%  { transform: scale(1.18) rotate(3deg); filter: brightness(1.5); }
     100% { transform: scale(1) rotate(0); filter: none; }
 }
 @keyframes inv-slot-glow {
-    0%   { box-shadow: 0 0 0 0 var(--quality, var(--wow-gold)), inset 0 0 6px #000; }
+    0%   { visibility: visible; box-shadow: 0 0 0 0 var(--quality, var(--wow-gold)), inset 0 0 6px #000; }
     35%  { box-shadow: 0 0 16px 4px var(--quality, var(--wow-gold)), inset 0 0 6px #000; }
     100% { box-shadow: inset 0 0 6px #000; }
 }
 @keyframes inv-slot-shake {
-    0%, 100% { transform: translateX(0); }
+    0%, 100% { visibility: visible; transform: translateX(0); }
     25%      { transform: translateX(-3px); }
     75%      { transform: translateX(3px); }
 }
-@keyframes inv-fade-in { from { opacity: 0; } }
+@keyframes inv-fade-in { from { visibility: visible; opacity: 0; } }
 @keyframes inv-ring {
-    from { transform: scale(1); opacity: 1; }
+    from { visibility: visible; transform: scale(1); opacity: 1; }
     to   { transform: scale(1.9); opacity: 0; }
 }
 @keyframes inv-ghost {
-    0%   { transform: scale(1); opacity: 1; filter: none; }
+    0%   { visibility: visible; transform: scale(1); opacity: 1; filter: none; }
     100% { transform: scale(1.7) translateY(-6px); opacity: 0; filter: blur(3px) brightness(1.8); }
 }
 @keyframes inv-delta {
-    0%   { transform: translateY(6px) scale(.7); opacity: 0; }
+    0%   { visibility: visible; transform: translateY(6px) scale(.7); opacity: 0; }
     15%  { transform: translateY(0) scale(1.1); opacity: 1; }
     25%  { transform: translateY(0) scale(1); }
     75%  { transform: translateY(-8px); opacity: 1; }
@@ -263,7 +266,7 @@
         radial-gradient(ellipse at center, rgba(14, 11, 7, .15) 40%, var(--wow-panel-bottom) 100%),
         linear-gradient(180deg, var(--wow-panel-top) 0%, transparent 18%, transparent 82%, var(--wow-panel-bottom) 100%);
 }
-@keyframes inv-map-in { from { opacity: 0; } }
+@keyframes inv-map-in { from { visibility: visible; opacity: 0; } }
 
 /* ── Taschenleiste ── */
 .bag-bar {
@@ -693,7 +696,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     text-align: center;
 }
 .inv-merchant-col.trading { padding-bottom: 32px; }
-@keyframes inv-flash-gold { from { box-shadow: inset 0 0 0 2px var(--wow-gold), 0 0 12px rgba(255, 209, 0, .6); } }
+@keyframes inv-flash-gold { from { visibility: visible; box-shadow: inset 0 0 0 2px var(--wow-gold), 0 0 12px rgba(255, 209, 0, .6); } }
 
 .merchant-sell-zone {
     display: flex;
@@ -854,42 +857,42 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 }
 
 @keyframes inv-speech {
-    0%   { opacity: 0; scale: .5; translate: 0 10px; }
+    0%   { visibility: visible; opacity: 0; scale: .5; translate: 0 10px; }
     9%   { opacity: 1; scale: 1.06; translate: 0 0; }
     14%  { scale: 1; }
     86%  { opacity: 1; translate: 0 0; }
     100% { opacity: 0; translate: 0 -8px; }
 }
-@keyframes inv-speech-text { from { opacity: 0; letter-spacing: -1px; } }
+@keyframes inv-speech-text { from { visibility: visible; opacity: 0; letter-spacing: -1px; } }
 @keyframes inv-talk {
-    0%, 100% { transform: rotate(0) translateY(0); }
+    0%, 100% { visibility: visible; transform: rotate(0) translateY(0); }
     20%      { transform: rotate(-6deg) translateY(-2px); }
     45%      { transform: rotate(5deg) translateY(0); }
     70%      { transform: rotate(-3deg) translateY(-1px); }
 }
-@keyframes inv-flash { from { opacity: 1; } to { opacity: 0; } }
+@keyframes inv-flash { from { visibility: visible; opacity: 1; } to { opacity: 0; } }
 @keyframes inv-buy-fly {
-    0%   { transform: scale(1); opacity: 1; }
+    0%   { visibility: visible; transform: scale(1); opacity: 1; }
     25%  { transform: translate(6px, -14px) scale(1.25); opacity: 1; }
     100% { transform: translate(-150px, -10px) scale(.5); opacity: 0; }
 }
 @keyframes inv-sell-swallow {
-    0%   { transform: scale(1.4); opacity: 0; }
+    0%   { visibility: visible; transform: scale(1.4); opacity: 0; }
     30%  { transform: scale(1.2); opacity: 1; }
     100% { transform: scale(0) rotate(200deg); opacity: 0; }
 }
 @keyframes inv-coin-burst {
-    0%   { transform: translate(0, 0) scale(.4); opacity: 1; }
+    0%   { visibility: visible; transform: translate(0, 0) scale(.4); opacity: 1; }
     65%  { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 1; }
     100% { transform: translate(var(--dx), calc(var(--dy) + 18px)) scale(.9); opacity: 0; }
 }
 @keyframes inv-float-up {
-    0%   { transform: translateY(6px); opacity: 0; }
+    0%   { visibility: visible; transform: translateY(6px); opacity: 0; }
     20%  { transform: translateY(0); opacity: 1; }
     100% { transform: translateY(-22px); opacity: 0; }
 }
 @keyframes inv-float-up-center {
-    0%   { transform: translate(-50%, 6px) scale(.8); opacity: 0; }
+    0%   { visibility: visible; transform: translate(-50%, 6px) scale(.8); opacity: 0; }
     20%  { transform: translate(-50%, -8px) scale(1.15); opacity: 1; }
     70%  { opacity: 1; }
     100% { transform: translate(-50%, -30px) scale(1); opacity: 0; }

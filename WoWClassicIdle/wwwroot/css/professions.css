@@ -1,3 +1,6 @@
+/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
+   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
+   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
 /* ============================================
    Professions – Übersicht und Unterseiten
    ============================================ */
@@ -644,12 +647,12 @@
 .prof-float-source  { font-family: var(--wow-font-body); font-size: .72rem; font-weight: 400; color: var(--wow-gold-soft); }
 
 @keyframes profFloatX {
-    from { transform: translateX(0); }
+    from { visibility: visible; transform: translateX(0); }
     to   { transform: translateX(min(55vw, 420px)); }
 }
 
 @keyframes profFloatY {
-    0%   { transform: translateY(0) scale(.6); opacity: 0; }
+    0%   { visibility: visible; transform: translateY(0) scale(.6); opacity: 0; }
     12%  { transform: translateY(-4px) scale(1.1); opacity: 1; }
     25%  { transform: translateY(-12px) scale(1); }
     75%  { opacity: 1; }
@@ -836,9 +839,9 @@
 .prof-layout .prof-card:hover .prof-icon { transform: scale(1.1) rotate(-4deg); box-shadow: 0 0 10px rgba(255, 209, 0, .4); }
 .prof-layout .prof-card.learned .prof-skill-bar .bar { transform-origin: left; animation: al-bar-grow .8s cubic-bezier(.2, .8, .2, 1) calc(.5s + var(--i, 0) * .04s) both; }
 
-@keyframes prof-sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes prof-sweep { from { visibility: visible; transform: translateX(-100%); } to { transform: translateX(100%); } }
 @keyframes prof-ring {
-    from { box-shadow: 0 0 0 0 rgba(255, 209, 0, .8); }
+    from { visibility: visible; box-shadow: 0 0 0 0 rgba(255, 209, 0, .8); }
     to   { box-shadow: 0 0 0 10px rgba(255, 209, 0, 0); }
 }
 

@@ -1,3 +1,6 @@
+/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
+   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
+   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
 /* ── Level-Up (Components/Pages/IdleFighter.LevelUp.cs) ──
    Wie in Classic: goldene Lichtsäule steigt um den Charakter auf, dazu Ringwelle,
    aufsteigende Funken und das Banner "You have reached Level X". Gesamtdauer 3,4 s. */
@@ -8,7 +11,7 @@
 }
 
 @keyframes levelupFrameGlow {
-    0%   { box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444; border-color: #5a4a28; }
+    0%   { visibility: visible; box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444; border-color: #5a4a28; }
     12%  { box-shadow: 0 0 34px rgba(255, 209, 0, .75), 0 0 80px rgba(255, 180, 40, .35), inset 0 0 22px rgba(255, 220, 120, .45); border-color: #ffe27a; }
     55%  { box-shadow: 0 0 22px rgba(255, 209, 0, .45), inset 0 0 12px rgba(255, 220, 120, .25); border-color: #e8c25a; }
     100% { box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444; border-color: #5a4a28; }
@@ -20,7 +23,7 @@
 }
 
 @keyframes levelupPortrait {
-    0%   { box-shadow: 0 0 8px rgba(0,0,0,.8); }
+    0%   { visibility: visible; box-shadow: 0 0 8px rgba(0,0,0,.8); }
     15%  { box-shadow: 0 0 0 3px rgba(255, 236, 155, .9), 0 0 26px 6px rgba(255, 209, 0, .85); filter: brightness(1.5) saturate(1.2); }
     100% { box-shadow: 0 0 8px rgba(0,0,0,.8); filter: none; }
 }
@@ -53,7 +56,7 @@
 }
 
 @keyframes levelupBeam {
-    0%   { opacity: 0;   transform: scaleY(.05) scaleX(.6); }
+    0%   { visibility: visible; opacity: 0;   transform: scaleY(.05) scaleX(.6); }
     14%  { opacity: 1;   transform: scaleY(1)   scaleX(1); }
     45%  { opacity: .85; transform: scaleY(1)   scaleX(.82); }
     100% { opacity: 0;   transform: scaleY(1.08) scaleX(.35); }
@@ -80,7 +83,7 @@
 }
 
 @keyframes levelupRing {
-    0%   { opacity: 0;  transform: translateX(-50%) scale(.2); }
+    0%   { visibility: visible; opacity: 0;  transform: translateX(-50%) scale(.2); }
     15%  { opacity: 1; }
     100% { opacity: 0;  transform: translateX(-50%) scale(1.25); }
 }
@@ -97,7 +100,7 @@
 }
 
 @keyframes levelupSpark {
-    0%   { opacity: 0; transform: translate(0, 0) scale(.6); }
+    0%   { visibility: visible; opacity: 0; transform: translate(0, 0) scale(.6); }
     12%  { opacity: 1; }
     100% { opacity: 0; transform: translate(6px, -210px) scale(.2); }
 }
@@ -109,7 +112,7 @@
 }
 
 @keyframes levelupNumber {
-    0%   { color: #9a8a64; transform: scale(1); }
+    0%   { visibility: visible; color: #9a8a64; transform: scale(1); }
     18%  { color: var(--wow-gold-pale); transform: scale(1.45); text-shadow: 0 0 10px rgba(255, 209, 0, .95), 0 0 2px #000; }
     100% { color: #9a8a64; transform: scale(1); text-shadow: none; }
 }
@@ -184,7 +187,7 @@
 }
 
 @keyframes levelupBanner {
-    0%   { opacity: 0; transform: translateX(-50%) translateY(10px) scale(.85); }
+    0%   { visibility: visible; opacity: 0; transform: translateX(-50%) translateY(10px) scale(.85); }
     10%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.06); }
     18%  { transform: translateX(-50%) scale(1); }
     78%  { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -192,7 +195,7 @@
 }
 
 @keyframes levelupRule {
-    from { transform: scaleX(0); opacity: 0; }
+    from { visibility: visible; transform: scaleX(0); opacity: 0; }
     to   { transform: scaleX(1); opacity: 1; }
 }
 

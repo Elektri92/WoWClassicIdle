@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -30,11 +30,11 @@
     <link rel="stylesheet" href="@Assets["css/achievements.css"]"/>
     <ImportMap/>
     <link rel="icon" type="image/png" href="images/wow_idle_game_logo.png"/>
-    <HeadOutlet/>
+    <HeadOutlet @rendermode="PageRenderMode"/>
 </head>
 
 <body>
-<Routes/>
+<Routes @rendermode="PageRenderMode"/>
 <ReconnectModal/>
 <script src="@Assets["_framework/blazor.web.js"]"></script>
 <script src="@Assets["js/visibility.js"]"></script>
@@ -47,3 +47,14 @@
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    // Globale Interaktivität ohne Vorrendern: Seitenwechsel laufen komplett im bestehenden Circuit.
+    // Mit Render-Mode je Seite wurde jede Seite erst vorgerendert eingefügt und Millisekunden später
+    // interaktiv ersetzt – die Einblend-Animationen starteten doppelt und flackerten (v. a. WebKitGTK).
+    // Seiten mit [ExcludeFromInteractiveRouting] (Error) bleiben statisch.
+    private IComponentRenderMode? PageRenderMode =>
+        HttpContext.AcceptsInteractiveRouting() ? new InteractiveServerRenderMode(prerender: false) : null;
+}

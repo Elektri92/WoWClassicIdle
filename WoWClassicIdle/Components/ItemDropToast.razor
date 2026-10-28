@@ -1,4 +1,3 @@
-@rendermode InteractiveServer
 @using Models
 @inject IdleGameEngine _engine
 @implements IDisposable
@@ -166,7 +165,7 @@
     }
 
     @@keyframes itemToastSlideIn {
-        from {
+        from { visibility: visible;
             opacity: 0;
             transform: translateX(60px) scale(0.95);
         }

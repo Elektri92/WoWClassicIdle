@@ -1,3 +1,6 @@
+/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
+   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
+   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
 /* ============================================
    Kampfgebiete in /idle (CombatZonePanel.razor)
    Zonen-Farbverläufe: zone-theme-* (Basis-Themes in professions.css, weitere hier)
@@ -207,26 +210,26 @@
 }
 
 @keyframes czone-map-open {
-    from { opacity: 0; top: -10px; }
+    from { visibility: visible; opacity: 0; top: -10px; }
 }
-@keyframes czone-map-close {
+@keyframes czone-map-close { from { visibility: visible; }
     to { opacity: 0; top: -10px; }
 }
 @keyframes czone-fade-down {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { visibility: visible; opacity: 0; transform: translateY(-8px); }
 }
 /* Kontinentrahmen sind bereits position: relative → left verschiebt sie ohne transform */
 @keyframes czone-slide-left {
-    from { opacity: 0; left: -28px; }
+    from { visibility: visible; opacity: 0; left: -28px; }
 }
 @keyframes czone-slide-right {
-    from { opacity: 0; left: 28px; }
+    from { visibility: visible; opacity: 0; left: 28px; }
 }
 @keyframes czone-tile-in {
-    from { opacity: 0; transform: translateY(8px) scale(.96); }
+    from { visibility: visible; opacity: 0; transform: translateY(8px) scale(.96); }
 }
 @keyframes czone-sheen {
-    from { background-position: 100% 0; opacity: 1; }
+    from { visibility: visible; background-position: 100% 0; opacity: 1; }
     to   { background-position: -50% 0; opacity: 0; }
 }
 
@@ -235,7 +238,7 @@
 .travel-scene { animation: czone-scene-in .45s ease-out backwards; }
 
 @keyframes czone-scene-in {
-    from { opacity: 0; }
+    from { visibility: visible; opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
