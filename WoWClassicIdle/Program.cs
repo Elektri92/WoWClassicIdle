@@ -25,7 +25,17 @@ if (OperatingSystem.IsLinux()
     return;
 }
 
-var builder = WebApplication.CreateBuilder(args);
+// Publish bündelt wwwroot in die Single-File-Binary und entpackt sie nach AppContext.BaseDirectory.
+// Dort liegt dann das aktuelle wwwroot – nicht das veraltete neben der Binary (Auto-Update ersetzt nur die Binary).
+var bundledWebRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot");
+var builder = Directory.Exists(bundledWebRoot)
+    ? WebApplication.CreateBuilder(new WebApplicationOptions
+    {
+        Args            = args,
+        ContentRootPath = AppContext.BaseDirectory,
+        WebRootPath     = bundledWebRoot
+    })
+    : WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

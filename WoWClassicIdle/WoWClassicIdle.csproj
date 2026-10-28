@@ -26,5 +26,22 @@
       <PackageReference Include="Photino.NET" Version="4.0.16" />
     </ItemGroup>
 
+    <!-- Static Web Assets kopiert das SDK lose neben die Binary, am Single-File-Bundle vorbei. Das Auto-Update
+         ersetzt nur die Binary – ohne Bündelung bekämen bestehende Installationen nie neue CSS/Bilder.
+         Daher vor dem Bundling berechnen, ins Bundle aufnehmen und das lose Kopieren unterbinden. -->
+    <Target Name="BundleWwwrootIntoSingleFile"
+            BeforeTargets="_ComputeFilesToBundle"
+            DependsOnTargets="$(CopyStaticWebAssetsToPublishDirectoryDependsOn);_SplitPublishStaticWebAssetsByCopyOptions"
+            Condition="'$(PublishSingleFile)' == 'true'">
+      <ItemGroup>
+        <ResolvedFileToPublish Include="@(_PublishStaticWebAssetsTargetPath)"
+                               RelativePath="%(_PublishStaticWebAssetsTargetPath.TargetPath)"
+                               CopyToPublishDirectory="PreserveNewest"
+                               ExcludeFromSingleFile="false" />
+        <_PublishStaticWebAssetsCopyAlways Remove="@(_PublishStaticWebAssetsCopyAlways)" />
+        <_PublishStaticWebAssetsPreserveNewest Remove="@(_PublishStaticWebAssetsPreserveNewest)" />
+      </ItemGroup>
+    </Target>
+
 
 </Project>
