@@ -192,7 +192,9 @@ else if (!_engine.NeedsCombatZone)
                 <div class="cast-bar @(casting is null ? "idle" : "active")">
                     @if (casting is not null)
                     {
-                        <div class="cast-fill" style="transform: scaleX(@Scale(_engine.CastProgress))"></div>
+                        _castClock.Update(_engine.CastProgress, _engine.CastDuration, SimRate, !_running);
+                        <div @key="_castClock.Key" class="cast-fill @(_castClock.Animating ? "bar-anim-x" : "")"
+                             style="@BarStyle(_castClock, $"scaleX({Scale(_castClock.Progress)})")"></div>
                         <img class="cast-icon" src="@casting.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
                         <span class="cast-name">@casting.Name</span>
                         <span class="cast-time">@((_engine.CastDuration - _engine.CastElapsed).ToString("0.0"))s</span>
@@ -216,7 +218,9 @@ else if (!_engine.NeedsCombatZone)
                           title="@(swingHeld ? "Auto Attack – waiting for spell" : "Auto Attack")">
                         <img src="@(_engine.Player.EquippedWeapon?.IconUrl ?? AutoAttackFallbackIcon)" alt="Auto Attack"
                              onerror="this.style.visibility='hidden'" />
-                        <span class="swing-fill" style="transform: translateY(@PctStyle(1 - _engine.SwingProgress)%)"></span>
+                        @{ _swingClock.Update(_engine.SwingProgress, _engine.SwingInterval, SimRate, swingHeld || CombatFrozen); }
+                        <span @key="_swingClock.Key" class="swing-fill @(_swingClock.Animating ? "bar-anim-up" : "")"
+                              style="@BarStyle(_swingClock, $"translateY({PctStyle(1 - _swingClock.Progress)}%)")"></span>
                         @if (swingHeld)
                         {
                             <span class="swing-held-mark">❚❚</span>
@@ -368,8 +372,11 @@ else if (!_engine.NeedsCombatZone)
                         <div class="enemy-swing @(enemyStunned ? "stunned" : enemySwing >= .85 ? "imminent" : "")">
                             <img class="enemy-swing-icon" src="@EnemySwingIconUrl()" alt="" onerror="this.style.visibility='hidden'" />
                             <div class="enemy-swing-track">
-                                <div class="enemy-swing-fill" style="transform: scaleX(@Scale(enemySwing))"></div>
-                                <span class="enemy-swing-tick" style="transform: translateX(@PctStyle(enemySwing)%)"></span>
+@{ _enemySwingClock.Update(enemySwing, _engine.EnemySwingInterval, SimRate, enemyStunned || CombatFrozen); }
+                                <div @key="_enemySwingClock.Key" class="enemy-swing-fill @(_enemySwingClock.Animating ? "bar-anim-x" : "")"
+                                     style="@BarStyle(_enemySwingClock, $"scaleX({Scale(enemySwing)})")"></div>
+                                <span @key="-_enemySwingClock.Key - 1" class="enemy-swing-tick @(_enemySwingClock.Animating ? "bar-anim-tick" : "")"
+                                      style="@BarStyle(_enemySwingClock, $"translateX({PctStyle(enemySwing)}%)")"></span>
                             </div>
                             <span class="enemy-swing-time">@(enemyStunned ? "Stunned" : $"{swingLeft:0.0}s")</span>
                         </div>
@@ -1050,7 +1057,6 @@ else if (!_engine.NeedsCombatZone)
         inset: 0;
         background: linear-gradient(180deg, #ffd34a 0%, #c98a10 100%);
         transform-origin: left;
-        transition: transform .1s linear;
     }
 
     .cast-icon {
@@ -1136,7 +1142,6 @@ else if (!_engine.NeedsCombatZone)
         inset: 0;
         background: linear-gradient(180deg, #ff9a3a 0%, #c2410f 55%, #7a1e08 100%);
         transform-origin: left;
-        transition: transform .1s linear;
     }
 
     /* Funke an der Spitze der Füllung: spurbreiter Träger, per translateX verschoben (% = Spurbreite) */
@@ -1144,7 +1149,6 @@ else if (!_engine.NeedsCombatZone)
         position: absolute;
         inset: -1px 0;
         pointer-events: none;
-        transition: transform .1s linear;
     }
 
     .enemy-swing-tick::after {
@@ -1345,7 +1349,26 @@ else if (!_engine.NeedsCombatZone)
         background: linear-gradient(0deg, rgba(255, 209, 0, .45) 0%, rgba(255, 209, 0, .15) 100%);
         border-top: 1px solid rgba(255, 230, 120, .9);
         pointer-events: none;
-        transition: transform .1s linear;
+    }
+
+    /* Zeitbasierte Balken (IdleFighter.Bars.cs): Dauer und negativer Startversatz kommen inline */
+    .bar-anim-x { animation: bar-anim-x 1s linear both; }
+    .bar-anim-tick { animation: bar-anim-tick 1s linear both; }
+    .bar-anim-up { animation: bar-anim-up 1s linear both; }
+
+    @@keyframes bar-anim-x {
+        from { transform: scaleX(0); }
+        to   { transform: scaleX(1); }
+    }
+
+    @@keyframes bar-anim-tick {
+        from { transform: translateX(0); }
+        to   { transform: translateX(100%); }
+    }
+
+    @@keyframes bar-anim-up {
+        from { transform: translateY(100%); }
+        to   { transform: translateY(0); }
     }
 
     .auto-attack-slot.held img {
