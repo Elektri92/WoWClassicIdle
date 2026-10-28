@@ -20,7 +20,10 @@ if (OperatingSystem.IsLinux()
     foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
         psi.Environment[(string)entry.Key] = entry.Value as string ?? "";
     psi.Environment["GDK_BACKEND"]                 = "x11";
-    psi.Environment["WEBKIT_DISABLE_DMABUF_RENDERER"] = "1";
+    // DMA-BUF-Puffer zeigen unter NVIDIA/XWayland ein leeres Fenster. FORCE_SHM rendert weiter auf der GPU und
+    // überträgt nur das fertige Bild per Shared Memory – DISABLE_DMABUF_RENDERER fiel auf Software-Rendering
+    // zurück (gemessen: ~12 statt ~58 FPS im Kampf).
+    psi.Environment["WEBKIT_DMABUF_RENDERER_FORCE_SHM"] = "1";
     System.Diagnostics.Process.Start(psi);
     return;
 }
