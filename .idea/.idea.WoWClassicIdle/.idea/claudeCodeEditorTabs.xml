@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="423bf80a-833b-4403-8687-6fea3a91d9ec" />
+    <option name="activeSessionId" value="93d80f3a-b392-4ae1-99c3-e8fb09fda019" />
     <option name="openSessionIds">
       <list>
         <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
@@ -29,6 +29,8 @@
         <option value="0c458c2d-469a-4ad8-8466-bd843bfe17a8" />
         <option value="904197ec-50c8-485c-962c-cf4b7229b9c6" />
         <option value="423bf80a-833b-4403-8687-6fea3a91d9ec" />
+        <option value="a3ae068a-78a3-450c-bde2-93f87dc3bfc6" />
+        <option value="93d80f3a-b392-4ae1-99c3-e8fb09fda019" />
       </list>
     </option>
     <option name="sessionPaths">
@@ -54,6 +56,8 @@
         <entry key="8c757922-ee98-44ec-9a8c-c8508a8e8256" value="/sessions/cee02c1b-632a-40cf-ace7-1c34c5b08d3d" />
         <entry key="904197ec-50c8-485c-962c-cf4b7229b9c6" value="/sessions/05fc7367-ff3a-463a-847a-c0b7ca01abdc" />
         <entry key="9259eca7-c898-4dde-a8e8-f70c55973c28" value="/sessions/d97d7c6e-ad7d-4651-bf2f-6748cbac7616" />
+        <entry key="93d80f3a-b392-4ae1-99c3-e8fb09fda019" value="/sessions/987903eb-3ffd-4989-b337-bb12b9992bbb" />
+        <entry key="a3ae068a-78a3-450c-bde2-93f87dc3bfc6" value="/sessions/ba13cfb2-5a09-44b3-b25b-7a75f8061839" />
         <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="/sessions/new" />
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="/sessions/30341ce3-2e71-4955-b176-e452674ae63f" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="/sessions/b15805d1-dd0f-4966-94e7-a6fcf6249d7d" />
@@ -83,6 +87,8 @@
         <entry key="8c757922-ee98-44ec-9a8c-c8508a8e8256" value="Spellbook-Slots und Silberdrachen" />
         <entry key="904197ec-50c8-485c-962c-cf4b7229b9c6" value="Stilanpassung Bild 1 an Hädler-Menü" />
         <entry key="9259eca7-c898-4dde-a8e8-f70c55973c28" value="Pergament-Design in /ability-loadout" />
+        <entry key="93d80f3a-b392-4ae1-99c3-e8fb09fda019" value="Traveln als Spielmechanik in /idle" />
+        <entry key="a3ae068a-78a3-450c-bde2-93f87dc3bfc6" value="Commit all changes" />
         <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="Claude Code" />
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="Warrior-Stance-Icons und Buff-Anzeige" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="Automatisch geöffnete Inventar-Taschen" />
