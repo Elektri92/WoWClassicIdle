@@ -1,16 +1,16 @@
 /* ============================================
-   Fraktionswappen hinter den Bannern in /character
-   Je Spalte ein ruhiger Fraktions-Schein (::before) und das freigestellte Wappen (::after),
-   mittig hinter der Flagge und gedämpft, damit es im durchscheinenden Tuch nur leicht durchschimmert.
+   Faction crests behind the banners in /character
+   Per column a calm faction glow (::before) and the cut-out crest (::after),
+   centered behind the flag and muted so it only shimmers faintly through the translucent cloth.
    ============================================ */
 
-/* Wappen ragen über den Seitenrand hinaus: kein horizontaler Scrollbalken im Hauptbereich */
+/* Crests stick out beyond the page edge: no horizontal scrollbar in the main area */
 main:has(.character-selection .cs-factions) { overflow-x: hidden; }
 
 .wow-page.narrow.character-selection:has(.cs-factions) { max-width: 1040px; }
 .character-selection .cs-factions { gap: 96px; }
 
-/* Spalten sind positioniert und würden sonst über Überschrift, Hinweistext und Knöpfe gemalt */
+/* Columns are positioned and would otherwise be painted over the heading, hint text and buttons */
 .character-selection > .cs-title,
 .character-selection > .cs-hint,
 .character-selection .debug-all-level-row,
@@ -33,11 +33,11 @@ main:has(.character-selection .cs-factions) { overflow-x: hidden; }
     --crest-url: url("../images/factions/crest_horde.png");
     --crest-ratio: 512 / 640;
     --crest-glow: 208, 58, 42;
-    /* Das Horde-Wappen ist schmaler und höher: gleich breit wirken lassen */
+    /* The Horde crest is narrower and taller: make it look equally wide */
     --crest-width: 110%;
 }
 
-/* ── Ruhiger Schein in Fraktionsfarbe hinter dem Wappen ── */
+/* ── Calm glow in the faction color behind the crest ── */
 .cs-faction-col::before {
     content: "";
     position: absolute;
@@ -52,7 +52,7 @@ main:has(.character-selection .cs-factions) { overflow-x: hidden; }
     animation: cs-crest-in 1.2s ease-out both;
 }
 
-/* ── Wappen: vollständig, gedämpft, mit schmalem Leuchtsaum ── */
+/* ── Crest: complete, muted, with a narrow glowing edge ── */
 .cs-faction-col::after {
     content: "";
     position: absolute;
@@ -70,7 +70,7 @@ main:has(.character-selection .cs-factions) { overflow-x: hidden; }
     animation: cs-crest-in 1.2s cubic-bezier(.2, .8, .2, 1) calc(var(--col, 0) * .12s) both;
 }
 
-/* Titel über dem Wappen lesbar halten */
+/* Keep the title above the crest readable */
 .cs-faction-col .cs-faction-title {
     text-shadow: 0 2px 3px #000, 0 0 12px #000;
 }
@@ -79,7 +79,7 @@ main:has(.character-selection .cs-factions) { overflow-x: hidden; }
     from { visibility: visible; opacity: 0; scale: .92; }
 }
 
-/* Schmalere Fenster: weniger Spaltenabstand, Wappen kaum breiter als die Flagge */
+/* Narrower windows: less column gap, crest barely wider than the flag */
 @media (max-width: 1500px) {
     .character-selection .cs-factions { gap: 56px; }
     .cs-faction-col          { --crest-width: 106%; }

@@ -1,4 +1,4 @@
-// Logik der Seite /achievements (Markup in Achievements.razor, Styles in wwwroot/css/achievements.css)
+// Logic of the /achievements page (markup in Achievements.razor, styles in wwwroot/css/achievements.css)
 using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Models;
@@ -12,9 +12,9 @@ public partial class Achievements : IDisposable
 
     [Inject] private IAchievementService _achievements { get; set; } = default!;
 
-    // null = Übersicht (Summary)
+    // null = overview (summary)
     private AchievementCategory? _category;
-    // Unterkategorie innerhalb von "Classes"
+    // Subcategory within "Classes"
     private CharacterClass? _classFilter;
     private AchievementFilter _filter = AchievementFilter.All;
     private string _search = "";
@@ -25,7 +25,7 @@ public partial class Achievements : IDisposable
     protected override void OnInitialized()
     {
         _achievements.AchievementEarned += OnAchievementEarned;
-        // Fortschrittsbalken laufen mit, ohne jeden 100-ms-Tick neu zu rendern
+        // Progress bars keep up without re-rendering on every 100 ms tick
         _refreshTimer = new Timer(_ => InvokeAsync(StateHasChanged), null, 1000, 1000);
     }
 
@@ -65,7 +65,7 @@ public partial class Achievements : IDisposable
         _                            => true,
     };
 
-    // Liste der aktuellen Ansicht; bei Klassen nach Klasse gruppiert (Key null = keine Überschrift)
+    // List of the current view; for classes grouped by class (key null = no heading)
     private List<IGrouping<CharacterClass?, AchievementDefinition>> GetVisibleGroups()
     {
         IEnumerable<AchievementDefinition> defs = _achievements.AllAchievements;

@@ -1,20 +1,20 @@
-// Händler auf /inventory: Öffnen per Klick, Verkaufen per Rechtsklick oder Drag-and-Drop
+// Merchant on /inventory: open by click, sell by right-click or drag and drop
 using Models;
 
 namespace WoWClassicIdle.Components.Pages;
 
 public partial class Inventory
 {
-    // Solange das Handelsfenster offen ist, verkauft Rechtsklick auf ein Taschen-Item
+    // While the trade window is open, right-clicking a bag item sells it
     private bool _merchantOpen;
     private string? _merchantMessage;
     private bool _merchantMessageFailed;
 
-    // Sprechblase des Händlers; Zähler als @key, damit die Animation bei jedem Spruch neu startet
+    // Speech bubble of the merchant; counter as @key so the animation restarts on every line
     private string? _speech;
     private int _speechKey;
 
-    // Kauf-/Verkaufseffekt (fliegende Münzen bzw. Item); Zähler als @key wie oben
+    // Buy/sell effect (flying coins or item); counter as @key as above
     private MerchantFx? _merchantFx;
     private int _fxKey;
 
@@ -34,7 +34,7 @@ public partial class Inventory
 
     private void Say(IReadOnlyList<string> lines)
     {
-        // Nie zweimal hintereinander denselben Spruch
+        // Never the same line twice in a row
         var options = lines.Where(l => l != _speech).ToList();
         _speech = options[Random.Shared.Next(options.Count)];
         _speechKey++;
@@ -100,5 +100,5 @@ public partial class Inventory
 
 public enum MerchantFxKind { Buy, Sell, Buyback }
 
-/// <summary>Einmaliger Handelseffekt im Händlerfenster: Item-Icon und Betrag.</summary>
+/// <summary>One-time trade effect in the merchant window: item icon and amount.</summary>
 public record MerchantFx(MerchantFxKind Kind, int ItemId, string IconUrl, long Copper);

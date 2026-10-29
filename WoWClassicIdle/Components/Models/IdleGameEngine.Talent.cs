@@ -1,12 +1,12 @@
 using Models;
 
-// Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+// Create new systems as their own partial file; keep files below 300 lines where possible.
 public partial class IdleGameEngine
 {
     // ─── Debug-Helfer ───
 
     /// <summary>
-    /// Legt ein Rüstungsteil direkt am aktiven Charakter an und feuert das ItemDropped-Event (Debug-Seiten).
+    /// Equips an armor piece directly on the active character and fires the ItemDropped event (debug pages).
     /// </summary>
     public void DebugGiveArmor(ArmorItem item)
     {
@@ -19,7 +19,7 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Legt eine Waffe direkt am aktiven Charakter an und feuert das ItemDropped-Event (Debug-Seiten).
+    /// Equips a weapon directly on the active character and fires the ItemDropped event (debug pages).
     /// </summary>
     public void DebugGiveWeapon(WeaponItem weapon)
     {
@@ -33,7 +33,7 @@ public partial class IdleGameEngine
 
     // ─── Talente ───
 
-    /// <summary>Investiert einen Talent-Punkt für den aktiven Charakter. Gibt true zurück wenn erfolgreich.</summary>
+    /// <summary>Invests a talent point for the active character. Returns true if successful.</summary>
     public bool InvestTalentPoint(string talentId)
     {
         var talent = TalentRegistry.GetTalents(Player.ActiveClass)
@@ -47,7 +47,7 @@ public partial class IdleGameEngine
         if (ok)
         {
             TickUpdated?.Invoke();
-            // Talent-freigeschaltete Abilities (z. B. Warrior-Stances, Druiden-Gestalten) dem Spieler mitteilen
+            // Notify the player of talent-unlocked abilities (e.g. Warrior stances, Druid forms)
             foreach (var abilityId in talent.GrantedAbilityIds)
             {
                 var granted = ClassAbilityRegistry.FindById(abilityId);
@@ -59,8 +59,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Übernimmt ein geändertes Loadout in den laufenden Kampf (thread-sicher).
-    /// Druiden-Gestalten wechseln dabei Ressource und Stats.
+    /// Applies a changed loadout to the running fight (thread-safe).
+    /// Druid forms switch resource and stats in the process.
     /// </summary>
     public void ApplyLoadout(ClassLoadout loadout)
     {
@@ -70,7 +70,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Setzt alle Talente der aktiven Klasse zurück (Respek).</summary>
+    /// <summary>Resets all talents of the active class (respec).</summary>
     public void ResetTalents(CharacterClass cls)
     {
         lock (_simLock)

@@ -1,9 +1,9 @@
 using Models;
 
-// Debug-Hilfen für Berufe (UI nur über BuildInfo.IsDebug erreichbar)
+// Debug helpers for professions (UI only reachable via BuildInfo.IsDebug)
 public partial class IdleGameEngine
 {
-    /// <summary>Zeitfaktor des Berufs-Timers (aktive und passive Slots); 1 = Echtzeit. Nur Debug-UI ändert ihn.</summary>
+    /// <summary>Time factor of the profession timer (active and passive slots); 1 = real time. Only the debug UI changes it.</summary>
     public double ProfessionSpeed { get; private set; } = 1.0;
 
     public void DebugSetProfessionSpeed(double speed)
@@ -13,8 +13,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Setzt alle erlernten Berufe (geteilte + Hauptberufe aller Charaktere) auf <paramref name="skill"/>
-    /// und die Ausbildungsstufe, deren Cap diesen Skill erlaubt.
+    /// Sets all learned professions (shared + main professions of all characters) to <paramref name="skill"/>
+    /// and the training tier whose cap allows this skill.
     /// </summary>
     public void DebugSetAllProfessionSkills(int skill)
     {
@@ -33,8 +33,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Verteilt alle noch freien Herstellungsberufe auf Charaktere ohne Hauptberuf (ab Level 5)
-    /// und belegt die passiven Slots jedes Sammelberufs in dessen erster Zone. Gibt eine Zusammenfassung zurück.
+    /// Distributes all still free crafting professions to characters without a main profession (from level 5)
+    /// and fills the passive slots of each gathering profession in its first zone. Returns a summary.
     /// </summary>
     public string DebugAssignAllProfessions()
     {
@@ -44,7 +44,7 @@ public partial class IdleGameEngine
             UnlockSharedProfessions();
             var eligible = _roster.Where(s => s.Player.Level >= Professions.MinCharacterLevel).ToList();
 
-            // Hauptberufe: jeder Beruf nur einmal, jeder Charakter max. einen
+            // Main professions: each profession only once, each character at most one
             var freeCrafting = new Queue<ProfessionDefinition>(
                 Professions.All.Where(d => d.IsPrimary && ProfessionOwner(d.Profession) is null));
             foreach (var slot in eligible.Where(s => s.Player.ProfessionState.Primary is null))
@@ -53,8 +53,8 @@ public partial class IdleGameEngine
                 if (slot.Player.ProfessionState.Learn(def.Profession, slot.Player.Level, slot.Player.ActiveClass) is not null) learned++;
             }
 
-            // Passive Slots in Zone 1 – nur Charaktere, die noch nirgends passiv arbeiten (nicht der gespielte).
-            // Gleichmäßig verteilen: reihum je Beruf ein Charakter, immer zuerst der Beruf mit den wenigsten Workern.
+            // Passive slots in zone 1 – only characters not working passively anywhere yet (not the one being played).
+            // Distribute evenly: round robin one character per profession, always the profession with the fewest workers first.
             var idle = new Queue<CharacterSlot>(
                 eligible.Where(s => s.Id != _activeSlotId && PassiveAssignmentOf(s.Id) is null));
             var targets = Professions.All

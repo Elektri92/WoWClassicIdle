@@ -1,13 +1,13 @@
 // Models/AbilityText.Special.cs
 namespace Models;
 
-// Tooltip-Texte für Mechaniken ab Talent-Reihe 2: Pets, Treffer-Ladungen, garantierter Crit, Verstärkungen, Schaden + Schild.
+// Tooltip texts for mechanics from talent row 2: pets, hit charges, guaranteed crit, empowerments, damage + shield.
 public static partial class AbilityText
 {
-    /// <summary>Gelber Effekttext für Sonder-Mechaniken; null = Standardtext verwenden.</summary>
+    /// <summary>Yellow effect text for special mechanics; null = use default text.</summary>
     private static string? SpecialDescription(Ability ability)
     {
-        // Spezialisierungs-Fähigkeiten (Reihe 3) – siehe AbilityText.SpecAbilities.cs
+        // Specialization abilities (row 3) – see AbilityText.SpecAbilities.cs
         if (SpecDescription(ability) is { } spec)
             return spec;
 
@@ -27,7 +27,7 @@ public static partial class AbilityText
             return s + $". Lasts {Num(ability.BuffDuration)} sec.";
         }
 
-        // Verstärkungs-Buff selbst (Mongoose Bite, Incinerating Shadow) – erscheint in der Buff-Leiste
+        // Empower buff itself (Mongoose Bite, Incinerating Shadow) – appears in the buff bar
         if (ability.IsBuff && ability.IsEmpowering)
             return $"Your next {ability.EmpowersAbilityName} deals {Num(ability.EmpowerDamageBonus * 100)}% more damage."
                  + $" Lasts {Num(ability.BuffDuration)} sec.";
@@ -46,14 +46,14 @@ public static partial class AbilityText
                  + $" a {Num(ability.BuffExtraAttackChance * 100)}% chance to strike an additional time for {Num(ability.BuffDuration)} sec."
                  + " Recast automatically when it expires.";
 
-        // Blade Flurry: jede Auto-Attack trifft mehrfach
+        // Blade Flurry: every auto-attack hits multiple times
         if (ability.IsBuff && ability.BuffExtraAttackChance >= 1.0)
             return $"Your auto attacks strike {1 + ability.BuffExtraAttacks} times for {Num(ability.BuffDuration)} sec.";
 
         return null;
     }
 
-    /// <summary>Einzeiler für Sonder-Mechaniken; null = Standardtext verwenden.</summary>
+    /// <summary>One-liner for special mechanics; null = use default text.</summary>
     private static string? SpecialShortSummary(Ability ability)
     {
         if (SpecShortSummary(ability) is { } spec)

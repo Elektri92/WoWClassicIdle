@@ -1,4 +1,4 @@
-// Debug/SimAiExport.cs – wird nur im DEBUG-Build kompiliert (siehe .csproj)
+// Debug/SimAiExport.cs – only compiled in the DEBUG build (see .csproj)
 namespace DebugTools;
 
 using System.Globalization;
@@ -6,8 +6,8 @@ using System.Text;
 using Models;
 
 /// <summary>
-/// Markdown-Export der Simulationsergebnisse für KI-Chats: echte Pipe-Tabellen, Zahlen invariant formatiert,
-/// Builds (Talente mit gemessenem Impact, Loadout) und Schadensverteilung pro Lauf.
+/// Markdown export of the simulation results for AI chats: real pipe tables, numbers formatted invariantly,
+/// builds (talents with measured impact, loadout) and damage breakdown per run.
 /// </summary>
 public static class SimAiExport
 {
@@ -48,7 +48,7 @@ public static class SimAiExport
         foreach (var line in outlierLines) sb.AppendLine($"- {line}");
         sb.AppendLine();
 
-        // Builds nur auf dem höchsten Level je Spec – darunter sind es Teilmengen desselben Baums
+        // Builds only at the highest level per spec – below that they are subsets of the same tree
         sb.AppendLine("## Builds (highest simulated level per spec, best XP/h first)");
         var builds = BestBuilds(results);
         for (int i = 0; i < builds.Count; i++)
@@ -119,22 +119,22 @@ public static class SimAiExport
         return sb.ToString();
     }
 
-    // ─── Hilfen (auch von der Seite genutzt) ─────────────────────────────────
+    // ─── Helpers (also used by the page) ─────────────────────────────────
 
-    /// <summary>Pro Klasse/Spec der Lauf auf dem höchsten Level, sortiert nach XP/h (bester zuerst).</summary>
+    /// <summary>Per class/spec the run at the highest level, sorted by XP/h (best first).</summary>
     public static List<SimulationResult> BestBuilds(IEnumerable<SimulationResult> results) =>
         results.GroupBy(r => (r.Class, r.SpecIndex))
             .Select(g => g.OrderByDescending(r => r.Level).First())
             .OrderByDescending(r => r.XpPerHour)
             .ToList();
 
-    /// <summary>Zusammengefasste Talentwahl: aufeinanderfolgende Ränge desselben Talents mit Ø gemessenem Impact (NaN = nicht gemessen).</summary>
+    /// <summary>Condensed talent choice: consecutive ranks of the same talent with avg. measured impact (NaN = not measured).</summary>
     public sealed record PickGroup(string Text, double AvgGain)
     {
         public string GainText => double.IsNaN(AvgGain) ? "only option" : AvgGain.ToString("+0.0%;-0.0%;0.0%", Inv);
     }
 
-    /// <summary>Gewählte Talente in Reihenfolge; aufeinanderfolgende Ränge desselben Talents werden zusammengefasst.</summary>
+    /// <summary>Chosen talents in order; consecutive ranks of the same talent are merged.</summary>
     public static List<PickGroup> GroupPicks(IReadOnlyList<TalentPick> picks, bool withLevels)
     {
         var groups = new List<PickGroup>();

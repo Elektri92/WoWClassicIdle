@@ -1,9 +1,9 @@
 using Models;
 
-// Effekt-Auflösung einzelner Fähigkeiten (Ressource, Cooldown und GCD regelt IdleGameEngine.Casting.cs).
+// Effect resolution of individual abilities (resource, cooldown and GCD are handled by IdleGameEngine.Casting.cs).
 public partial class IdleGameEngine
 {
-    /// <summary>Löst den Effekt einer Fähigkeit aus. Gibt den am Gegner verursachten Schaden zurück.</summary>
+    /// <summary>Triggers the effect of an ability. Returns the damage dealt to the enemy.</summary>
     private int ExecuteAbility(Ability ability)
     {
         var enemy = CurrentEnemy!;
@@ -13,7 +13,7 @@ public partial class IdleGameEngine
         // Life Tap: HP in Mana umwandeln
         if (ability.IsLifeTap)
         {
-            Player.TakeDamage(ability.LifeTapHpCost); // Absorb-Rückgabe ignoriert (kein Schild-Meter für Life Tap)
+            Player.TakeDamage(ability.LifeTapHpCost); // Absorb return value ignored (no shield meter for Life Tap)
             Player.RegenMana(ability.LifeTapManaGain);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, ability.LifeTapHpCost));
             LastLog = $"✦ {ability.Name} → -{ability.LifeTapHpCost} HP, +{ability.LifeTapManaGain} Mana";
@@ -21,7 +21,7 @@ public partial class IdleGameEngine
             return 0;
         }
 
-        // Begleittier beschwören bzw. wiederbeleben (Hunter-Pets, Warlock-Dämonen)
+        // Summon or revive a pet (Hunter pets, Warlock demons)
         if (ability.IsPetSummon)
         {
             SummonPet(ability);
@@ -29,10 +29,10 @@ public partial class IdleGameEngine
             return 0;
         }
 
-        // Talent- und Gestalt-Boni (z. B. Improved Moonfire, Moonkin Form)
+        // Talent and form bonuses (e.g. Improved Moonfire, Moonkin Form)
         var effective = Player.GetEffectiveAbility(ability);
 
-        // Schadensfähigkeiten mit Buff (Ghostly Strike) laufen über den Schadenszweig
+        // Damaging abilities with a buff (Ghostly Strike) go through the damage branch
         if (ability.IsBuff && !ability.IsDamage)
         {
             Player.Buffs.Apply(effective, Player.Stats.MaxMana, Player.Stats.MaxHp);
@@ -46,15 +46,15 @@ public partial class IdleGameEngine
                 * (ability.AddsWeaponDamage ? Player.Buffs.WeaponDamageMultiplier : 1.0)
                 * enemy.Debuffs.DamageTakenMultiplier
                 * Player.Buffs.ConsumeEmpower(ability.Name);   // z. B. Mongoose Bite → Raptor Strike
-            // Cold Blood: garantierter Crit für alle Treffer dieser Fähigkeit
+            // Cold Blood: guaranteed crit for all hits of this ability
             double extraCrit = Player.GetAbilityCritBonus(ability) + (Player.Buffs.ConsumeGuaranteedCrit() ? 1.0 : 0.0);
-            // Synergie mit einem Debuff auf dem Ziel (Lava Burst → Flame Shock, Mutilate → Deadly Poison, Shatter)
+            // Synergy with a debuff on the target (Lava Burst → Flame Shock, Mutilate → Deadly Poison, Shatter)
             if (IsSynergyActive(ability))
             {
                 abilityMult *= 1.0 + ability.SynergyDamageBonus;
                 extraCrit   += ability.SynergyCritBonus;
             }
-            // Mehrfachtreffer (Chain Lightning): jeder Treffer würfelt eigenen Crit
+            // Multiple hits (Chain Lightning): each hit rolls its own crit
             int  abilityDmg  = 0;
             bool abilityCrit = false;
             for (int hit = 0; hit < ability.HitCount && enemy.IsAlive; hit++)
@@ -72,10 +72,10 @@ public partial class IdleGameEngine
                 ? $"⚔ {ability.Name} → {abilityDmg} DMG ({ability.HitCount} hits)!"
                 : $"⚔ {ability.Name} → {abilityDmg} DMG!";
 
-            if (ability.IsDebuff)   // e.g. Moonfire: direkter Treffer + DoT
+            if (ability.IsDebuff)   // e.g. Moonfire: direct hit + DoT
                 enemy.Debuffs.Apply(effective);
 
-            if (ability.IsHeal)     // z. B. Holy Nova: Schaden + Heilung gleichzeitig
+            if (ability.IsHeal)     // e.g. Holy Nova: damage + healing at the same time
                 ApplyDirectHeal(ability, effective.Heal);
 
             if (ability.IsBuff)     // z. B. Ghostly Strike: Schaden + Schild
@@ -98,7 +98,7 @@ public partial class IdleGameEngine
         return dealt;
     }
 
-    /// <summary>Direktheilung inkl. Heilungs-Multiplikator und Crit.</summary>
+    /// <summary>Direct heal incl. healing multiplier and crit.</summary>
     private void ApplyDirectHeal(Ability ability, int baseHeal)
     {
         int scaledHeal = (int)Math.Round(baseHeal * HealingMultiplier);
@@ -111,12 +111,12 @@ public partial class IdleGameEngine
         LastLog = $"✚ {ability.Name} → +{healed} HP";
     }
 
-    /// <summary>Talent-Effekte, die an bestimmten Schadenszaubern hängen (Smite-Heal, Periodic Fire, Ignite).</summary>
+    /// <summary>Talent effects attached to specific damage spells (Smite heal, Periodic Fire, Ignite).</summary>
     private void ApplyDamageTalentProcs(Ability ability, int abilityDmg, bool abilityCrit)
     {
         var enemy = CurrentEnemy!;
 
-        // SmiteHeal: Smite heilt den Priester
+        // SmiteHeal: Smite heals the Priest
         if (ability.Id.StartsWith("Smite"))
         {
             double smiteHealBonus = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.SmiteHeal);
@@ -130,7 +130,7 @@ public partial class IdleGameEngine
             }
         }
 
-        // Periodic Fire: Fireball-DoT durch Talent (Anteil des Fireball-Treffers)
+        // Periodic Fire: Fireball DoT from a talent (share of the Fireball hit)
         double dotPct = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FireballDot);
         if (dotPct > 0 && ability.Id.StartsWith("Fireball"))
         {
@@ -145,7 +145,7 @@ public partial class IdleGameEngine
             enemy.Debuffs.Apply(periodicFire);
         }
 
-        // Ignite: Feuerzauber-Crit (Fireball, Fire Blast, Flamestrike) löst DoT aus (40 % des Schadens über 3 Ticks)
+        // Ignite: fire spell crit (Fireball, Fire Blast, Flamestrike) triggers a DoT (40 % of the damage over 3 ticks)
         if (abilityCrit
             && (ability.Id.StartsWith("Fireball") || ability.Id.StartsWith("Fire_Blast") || ability.Id.StartsWith("Flamestrike"))
             && Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.GrantIgnite) > 0

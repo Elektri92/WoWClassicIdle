@@ -1,4 +1,4 @@
-// Logik der Seite /ability-loadout (Markup in AbilityLoadout.razor, Zauberkarte in Components/SpellCard.razor)
+// Logic of the /ability-loadout page (markup in AbilityLoadout.razor, spell card in Components/SpellCard.razor)
 using Models;
 
 namespace WoWClassicIdle.Components.Pages;
@@ -12,7 +12,7 @@ public partial class AbilityLoadout
     private HashSet<string> _multiRankNames = new();
     private string _statusMessage = "";
     private bool _statusPositive;
-    // Zähler als @key, damit die Statusmeldung auch bei gleichem Text neu einblendet
+    // Counter as @key so the status message fades in again even with the same text
     private int _statusVersion;
     private string _search = "";
     private AbilityCategory _categoryFilter = AbilityCategory.All;
@@ -20,21 +20,21 @@ public partial class AbilityLoadout
 
     private CharacterClass SelectedClass => Engine.PlayerClass;
 
-    // Hintergrund des Kopfbereichs: aktuelle Zone, sonst Startgebiet der Rasse
+    // Background of the header: current zone, otherwise the starting zone of the race
     private string HeaderTheme =>
         Engine.CurrentCombatZone?.Theme ?? CombatZoneRegistry.StartZoneFor(Engine.Race)?.Theme ?? "grassland";
 
-    // Abilities, die per Talent freigeschaltet wurden
+    // Abilities unlocked by talent
     private HashSet<string> TalentGrantedAbilityIds =>
         TalentRegistry.GetTalents(Engine.PlayerClass)
             .Where(t => Engine.Player.TalentState.GetRanks(t.Id) > 0)
             .SelectMany(t => t.GrantedAbilityIds)
             .ToHashSet();
 
-    // Gestalt laut Loadout (nicht Engine), damit der Pool sofort nach dem Wechsel stimmt
+    // Form according to the loadout (not the engine) so the pool is correct right after switching
     private DruidForm CurrentForm => ShapeshiftForms.FormOf(CurrentLoadout);
 
-    // Nur in der aktuellen Gestalt nutzbare Fähigkeiten zeigen; Gestalten selbst bleiben zum Wechseln sichtbar
+    // Only show abilities usable in the current form; forms themselves stay visible for switching
     private bool IsUsableNow(Ability a) => a.IsForm || ShapeshiftForms.IsUsableIn(a, CurrentForm);
 
     private bool IsUnlocked(Ability a, HashSet<string> granted) =>
@@ -49,7 +49,7 @@ public partial class AbilityLoadout
         }
     }
 
-    // Anzahl freigeschalteter Fähigkeiten, die nur wegen der Gestalt ausgeblendet sind (Namen, nicht Ränge)
+    // Number of unlocked abilities hidden only because of the form (names, not ranks)
     private int HiddenByFormCount => AllUnlockedAbilities
         .Where(a => !IsUsableNow(a))
         .Select(a => a.Name)
@@ -57,8 +57,8 @@ public partial class AbilityLoadout
         .Count();
 
     /// <summary>
-    /// Ränge je Zauber gruppieren. Sichtbar sind nutzbare Ränge und level-gesperrte Ränge
-    /// (talent-exklusive erst nach Freischaltung). Reihenfolge = erstes Auftreten im Pool.
+    /// Group ranks per spell. Visible are usable ranks and level-locked ranks
+    /// (talent-exclusive ones only after unlocking). Order = first occurrence in the pool.
     /// </summary>
     private IReadOnlyList<SpellRankGroup> BuildGroups()
     {
@@ -91,17 +91,17 @@ public partial class AbilityLoadout
     private IEnumerable<SpellRankGroup> FilteredGroups =>
         BuildGroups().Where(g => MatchesCategory(g.Display) && MatchesSearch(g.Display));
 
-    // Zauber mit mindestens einem nutzbaren Rang
+    // Spells with at least one usable rank
     private IReadOnlyList<SpellRankGroup> FilteredKnown => FilteredGroups.Where(g => !g.IsLocked).ToList();
 
-    // "Coming Up": Zauber, von denen noch kein Rang nutzbar ist (höhere Ränge bekannter Zauber stehen auf deren Rangleiste)
+    // "Coming Up": spells of which no rank is usable yet (higher ranks of known spells are on their rank bar)
     private IReadOnlyList<SpellRankGroup> FilteredComingUp => FilteredGroups.Where(g => g.IsLocked).ToList();
 
-    /// <summary>1-basierte Slot-Nummer des ausgerüsteten Rangs, 0 = nicht ausgerüstet.</summary>
+    /// <summary>1-based slot number of the equipped rank, 0 = not equipped.</summary>
     private int SlotNumberOf(Ability? a) =>
         a is null ? 0 : CurrentLoadout.EquippedAbilityIds.IndexOf(a.Id) + 1;
 
-    /// <summary>Ausgerüsteter Zauber derselben ExclusiveGroup, den das Ausrüsten von <paramref name="g"/> ersetzen würde.</summary>
+    /// <summary>Equipped spell of the same ExclusiveGroup that equipping <paramref name="g"/> would replace.</summary>
     private Ability? ConflictOf(SpellRankGroup g)
     {
         var group = g.Display.ExclusiveGroup;
@@ -110,7 +110,7 @@ public partial class AbilityLoadout
                                             && CurrentLoadout.IsEquipped(a.Id));
     }
 
-    /// <summary>Höherer nutzbarer Rang für einen ausgerüsteten Zauber, sonst null.</summary>
+    /// <summary>Higher usable rank for an equipped spell, otherwise null.</summary>
     private Ability? UpgradeFor(Ability equipped)
     {
         var granted = TalentGrantedAbilityIds;
@@ -162,7 +162,7 @@ public partial class AbilityLoadout
         CommitLoadout();
     }
 
-    /// <summary>Klick auf die Zauberkarte: ausgerüsteten Rang entfernen, sonst besten Rang ausrüsten.</summary>
+    /// <summary>Click on the spell card: remove the equipped rank, otherwise equip the best rank.</summary>
     private void OnSpellClicked(SpellRankGroup group)
     {
         if (group.Equipped is { } equipped)
@@ -171,7 +171,7 @@ public partial class AbilityLoadout
             OnPoolClicked(best);
     }
 
-    /// <summary>Klick auf einen Rang der Rangleiste: genau diesen Rang ausrüsten (ersetzt einen anderen Rang an Ort und Stelle).</summary>
+    /// <summary>Click on a rank of the rank bar: equip exactly this rank (replaces another rank in place).</summary>
     private void OnRankClicked(Ability rank)
     {
         if (CurrentLoadout.IsEquipped(rank.Id)) return;
@@ -179,8 +179,8 @@ public partial class AbilityLoadout
     }
 
     /// <summary>
-    /// Entfernt in der ausgerüsteten Gestalt unbrauchbare Fähigkeiten, speichert das Loadout
-    /// und übernimmt es direkt in die Engine (Ressource/Portrait wechseln sofort).
+    /// Removes abilities unusable in the equipped form, saves the loadout
+    /// and applies it directly to the engine (resource/portrait switch immediately).
     /// </summary>
     private void CommitLoadout()
     {
@@ -213,7 +213,7 @@ public partial class AbilityLoadout
         }
         else
         {
-            // Gestalt-Regeln: Formen ersetzen sich gegenseitig, alles andere muss zur aktuellen Form passen
+            // Form rules: forms replace each other, everything else must fit the current form
             var form = ShapeshiftForms.FormOf(CurrentLoadout);
             if (!ability.IsForm && !ShapeshiftForms.IsUsableIn(ability, form))
             {
@@ -223,7 +223,7 @@ public partial class AbilityLoadout
                 return;
             }
 
-            // Gleicher Spell-Name (anderer Rank): vorhandenen Rank in-place ersetzen
+            // Same spell name (different rank): replace the existing rank in place
             var sameSpell = CurrentPool
                 .FirstOrDefault(a => a.Name == ability.Name
                                   && a.Id != ability.Id
@@ -237,7 +237,7 @@ public partial class AbilityLoadout
                 return;
             }
 
-            // Exklusiv-Gruppe: vorhandene Ability derselben Gruppe ersetzen
+            // Exclusive group: replace the existing ability of the same group
             if (!string.IsNullOrEmpty(ability.ExclusiveGroup))
             {
                 var conflict = CurrentPool

@@ -2,15 +2,15 @@
 namespace Models
 {
     /// <summary>
-    /// Ein Container mit fester Slot-Anzahl (Rucksack oder ausgerüstete Tasche).
-    /// Leere Slots sind <c>null</c>.
+    /// A container with a fixed slot count (backpack or equipped bag).
+    /// Empty slots are <c>null</c>.
     /// </summary>
     public class Bag
     {
         public string Name { get; }
         public string IconUrl { get; }
 
-        /// <summary>Das Taschen-Item, aus dem dieser Container stammt (<c>null</c> beim Rucksack).</summary>
+        /// <summary>The bag item this container comes from (<c>null</c> for the backpack).</summary>
         public BagItem? Source { get; }
 
         private readonly ItemStack?[] _slots;
@@ -33,8 +33,8 @@ namespace Models
         public ItemStack? this[int index] => _slots[index];
 
         /// <summary>
-        /// Fügt Items hinzu: zuerst auf bestehende Stacks, dann in freie Slots.
-        /// Gibt die Menge zurück, die NICHT mehr hineingepasst hat.
+        /// Adds items: first onto existing stacks, then into free slots.
+        /// Returns the amount that did NOT fit anymore.
         /// </summary>
         public int TryAdd(Item item, int count)
         {
@@ -59,7 +59,7 @@ namespace Models
             return count;
         }
 
-        /// <summary>Entfernt den kompletten Stack aus einem Slot und gibt ihn zurück.</summary>
+        /// <summary>Removes the complete stack from a slot and returns it.</summary>
         public ItemStack? Take(int index)
         {
             var stack = _slots[index];
@@ -67,7 +67,7 @@ namespace Models
             return stack;
         }
 
-        /// <summary>Legt einen Stack in einen leeren Slot. Gibt <c>false</c> zurück, wenn der Slot belegt ist.</summary>
+        /// <summary>Puts a stack into an empty slot. Returns <c>false</c> if the slot is occupied.</summary>
         public bool Put(int index, ItemStack stack)
         {
             if (_slots[index] is not null) return false;
@@ -77,7 +77,7 @@ namespace Models
 
         public void Swap(int a, int b) => (_slots[a], _slots[b]) = (_slots[b], _slots[a]);
 
-        /// <summary>Entfernt bis zu <paramref name="count"/> Items mit der ID und gibt die entfernte Menge zurück.</summary>
+        /// <summary>Removes up to <paramref name="count"/> items with the ID and returns the removed amount.</summary>
         public int Remove(int itemId, int count)
         {
             int removed = 0;

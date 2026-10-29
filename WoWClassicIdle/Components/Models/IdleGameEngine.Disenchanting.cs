@@ -1,18 +1,18 @@
 using Models;
 
-/// <summary>Entzauberbares Item in einem Taschenplatz des geteilten Inventars.</summary>
+/// <summary>Disenchantable item in a bag slot of the shared inventory.</summary>
 public record DisenchantCandidate(Bag Bag, int Index, Item Item);
 
-// Verzauberkunst: grüne Items aus dem Inventar zerstören → Staub/Essenz nach Item-Level (EnchantingRegistry).
-// Läuft als aktiver Slot mit Warteschlange, 1 s Zauberzeit je Item.
+// Enchanting: destroy green items from the inventory → dust/essence by item level (EnchantingRegistry).
+// Runs as an active slot with a queue, 1 s cast time per item.
 public partial class IdleGameEngine
 {
-    /// <summary>Ziel-Kennung des aktiven Slots beim Entzaubern (kein Rezept).</summary>
+    /// <summary>Target identifier of the active slot when disenchanting (no recipe).</summary>
     public const string DisenchantTarget = "disenchant";
 
     public const double DisenchantCastSeconds = 1.0;
 
-    /// <summary>Alle grünen Rüstungsteile und Waffen in den Taschen (ausgerüstete Items zählen nicht).</summary>
+    /// <summary>All green armor pieces and weapons in the bags (equipped items don't count).</summary>
     public IReadOnlyList<DisenchantCandidate> DisenchantCandidates()
     {
         lock (_simLock)
@@ -26,7 +26,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Grund, warum der aktive Charakter das Item nicht entzaubern kann (UI-Text) – <c>null</c> wenn erlaubt.</summary>
+    /// <summary>Reason why the active character cannot disenchant the item (UI text) – <c>null</c> if allowed.</summary>
     public string? DisenchantBlocker(Item item)
     {
         if (Player.ProfessionState.Get(Profession.Enchanting) is not { } progress) return "You have not learned Enchanting";
@@ -35,15 +35,15 @@ public partial class IdleGameEngine
         return progress.Skill < required ? $"Requires Enchanting ({required})" : null;
     }
 
-    /// <summary>Laufende Entzauber-Warteschlange (leer, wenn nicht entzaubert wird).</summary>
+    /// <summary>Running disenchant queue (empty if nothing is being disenchanted).</summary>
     public IReadOnlyList<Item> DisenchantQueue
     {
         get { lock (_simLock) return ActiveProfessionRun?.DisenchantQueue?.ToList() ?? []; }
     }
 
     /// <summary>
-    /// Reiht Items zum Entzaubern ein; läuft bereits eine Entzauber-Warteschlange, wird angehängt,
-    /// sonst ersetzt sie einen laufenden Durchlauf (wie Herstellen).
+    /// Queues items for disenchanting; if a disenchant queue is already running, they are appended,
+    /// otherwise it replaces a running pass (like crafting).
     /// </summary>
     public void QueueDisenchant(IEnumerable<Item> items)
     {
@@ -71,8 +71,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Entzaubert das nächste noch vorhandene Item der Warteschlange (verschwundene/gesperrte werden übersprungen).
-    /// Nur unter <c>_simLock</c> aus dem Berufs-Tick.
+    /// Disenchants the next still existing item of the queue (vanished/locked ones are skipped).
+    /// Only under <c>_simLock</c> from the profession tick.
     /// </summary>
     private void ExecuteNextDisenchant(ProfessionProgress progress, Queue<Item> queue)
     {
@@ -83,7 +83,7 @@ public partial class IdleGameEngine
             var (bag, index) = slot;
             var (material, count) = EnchantingRegistry.RollDisenchant(item, _professionRng);
 
-            // Erst entfernen – der frei gewordene Platz reicht immer für das Material
+            // Remove first – the freed slot is always enough for the material
             bag.Take(index);
             int leftover = _sharedInventory.TryAdd(material, count);
             if (leftover == count)

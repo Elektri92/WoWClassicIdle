@@ -1,11 +1,11 @@
 /* ============================================
    Charakterauswahl in /character
-   Karte per Klick wählen (Doppelklick spielt direkt); darunter erscheint eine Aktionsleiste mit
-   Edit und Play in den Wappenfarben der Rasse (Palette in inventory-crest.css).
-   Volkswappen als Wasserzeichen auf jeder Karte und groß in der Aktionsleiste.
+   Pick a card by click (double-click plays directly); below it an action bar appears with
+   Edit and Play in the crest colors of the race (palette in inventory-crest.css).
+   Race crest as a watermark on every card and large in the action bar.
    ============================================ */
 
-/* ── Volkswappen auf der Karte: rechts, nach links auslaufend ── */
+/* ── Race crest on the card: on the right, tapering off to the left ── */
 .cs-card-crest {
     position: absolute;
     top: 50%;
@@ -26,7 +26,7 @@
     filter: drop-shadow(0 0 4px rgba(0, 0, 0, .9));
 }
 
-/* ── Gewählte Karte: goldener Rahmen und Schein; die übrigen treten etwas zurück ── */
+/* ── Selected card: golden border and glow; the others recede a little ── */
 .cs-card {
     transition: transform .2s ease, box-shadow .3s ease, border-color .3s ease, filter .3s ease;
 }

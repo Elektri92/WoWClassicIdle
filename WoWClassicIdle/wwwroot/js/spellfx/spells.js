@@ -1,4 +1,4 @@
-// Kampf-Effekte – Zauber/Fähigkeiten: Projektil vom Spieler-Portrait zum Gegner-Portrait + Einschlag.
+// Combat effects – spells/abilities: projectile from the player portrait to the enemy portrait + impact.
 (() => {
     const { PLAYER, ENEMY, TRAIL_INTERVAL, canLaunch, colorsFor, centerOf, spawn,
             trailParticle, flash, ring, sparks, slash, hitReact, frameShake, fly, direction } = window.spellFx.fx;
@@ -46,7 +46,7 @@
                 }
             },
             onArrive: () => {
-                // Reiner Debuff (Curse of Agony): kein Schadens-Einschlag, nur der Debuff-Effekt
+                // Pure debuff (Curse of Agony): no damage impact, only the debuff effect
                 if (!opts.debuffOnly) spellImpact(to, dir, colors, !!opts.crit, melee);
                 if (opts.debuff) window.spellFx.fx.debuffFx?.(to, opts);   // auras.js
             },
@@ -57,7 +57,7 @@
         const { x, y } = target;
         flash(x, y, colors, crit ? 1.8 : 1.3, crit ? 380 : 260);
         ring(x, y, colors, crit ? 2.6 : 1.9, crit ? 560 : 440);
-        if (melee)   // Zwei gekreuzte Schnitte
+        if (melee)   // Two crossed slashes
             for (const angle of crit ? [-35, 35, 0] : [-35, 35])
                 slash(x, y, colors, angle);
         sparks(x, y, colors, crit ? 18 : 10, crit ? 50 : 30, crit ? 60 : 35);

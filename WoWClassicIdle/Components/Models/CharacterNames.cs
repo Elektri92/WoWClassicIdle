@@ -1,15 +1,15 @@
 namespace Models
 {
     /// <summary>
-    /// Regeln für Charakternamen (angelehnt an WoW Classic): nur Buchstaben, 2–12 Zeichen,
-    /// erster Buchstabe groß, Rest klein.
+    /// Rules for character names (based on WoW Classic): letters only, 2–12 characters,
+    /// first letter uppercase, rest lowercase.
     /// </summary>
     public static class CharacterNames
     {
         public const int MinLength = 2;
         public const int MaxLength = 12;
 
-        /// <summary>Bringt einen Namen in die Schreibweise „Thrall“ (getrimmt, erster Buchstabe groß).</summary>
+        /// <summary>Normalizes a name to the spelling "Thrall" (trimmed, first letter uppercase).</summary>
         public static string Normalize(string? name)
         {
             var trimmed = (name ?? "").Trim();
@@ -17,7 +17,7 @@ namespace Models
             return char.ToUpperInvariant(trimmed[0]) + trimmed[1..].ToLowerInvariant();
         }
 
-        /// <summary>Liefert eine Fehlermeldung (Englisch, für die UI) oder null, wenn der Name gültig ist.</summary>
+        /// <summary>Returns an error message (English, for the UI) or null if the name is valid.</summary>
         public static string? Validate(string? name)
         {
             var normalized = Normalize(name);

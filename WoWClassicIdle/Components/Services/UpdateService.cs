@@ -8,8 +8,8 @@ namespace Services;
 
 public enum UpdateStatus { Idle, Checking, UpToDate, Downloading, Restarting, Error }
 
-// Singleton – prüft beim App-Start auf eine neue Version und ersetzt die Binary automatisch.
-// Fortschritt wird per Changed-Event an die UI gemeldet.
+// Singleton – checks for a new version on app start and replaces the binary automatically.
+// Progress is reported to the UI via the Changed event.
 public class UpdateService
 {
     private const string ManifestUrl = "https://raw.githubusercontent.com/Elektri92/WoWClassicIdle/master/version.json";
@@ -22,7 +22,7 @@ public class UpdateService
     public string? RemoteVersion    { get; private set; }
     public string? ErrorMessage     { get; private set; }
 
-    // Gibt die eingebettete Assembly-Version zurück (z.B. "0.0.15")
+    // Returns the embedded assembly version (e.g. "0.0.15")
     public static string AppVersion
     {
         get
@@ -32,23 +32,23 @@ public class UpdateService
         }
     }
 
-    // Feuert bei jedem Zustandswechsel – UI-Komponenten abonnieren und rufen StateHasChanged auf
+    // Fires on every state change – UI components subscribe and call StateHasChanged
     public event Action? Changed;
 
-    // Startet den Update-Check einmalig im Hintergrund
+    // Starts the update check once in the background
     public void StartCheckInBackground()
     {
         if (_hasStarted) return;
         _hasStarted = true;
 
-        // Im Debug/Development nie nach Updates suchen – würde sonst die Dev-Binary ersetzen
+        // Never check for updates in Debug/Development – it would replace the dev binary otherwise
         if (WoWClassicIdle.Components.BuildInfo.IsDebug) return;
 
         CleanupStagingDir();
         _ = Task.Run(CheckAndApplyAsync);
     }
 
-    // Löscht übrig gebliebene Staging-Dateien vom letzten Update
+    // Deletes leftover staging files from the last update
     private static void CleanupStagingDir()
     {
         try
@@ -73,7 +73,7 @@ public class UpdateService
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             http.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true, NoStore = true };
 
-            // Timestamp-Parameter verhindert CDN-Caching auf raw.githubusercontent.com
+            // Timestamp parameter prevents CDN caching on raw.githubusercontent.com
             var bust = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var json = await http.GetStringAsync($"{ManifestUrl}?_={bust}");
             var manifest = JsonSerializer.Deserialize<VersionManifest>(json);

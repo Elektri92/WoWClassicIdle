@@ -3,7 +3,7 @@ namespace Models;
 
 public static partial class StaticHelpers
 {
-    // Tabellen reichen bis Level 60; im Release ist das Spiel vorerst auf ReleaseLevelCap begrenzt.
+    // Tables go up to level 60; in Release the game is capped at ReleaseLevelCap for now.
     private const int TableMaxLevel   = 60;
     public  const int ReleaseLevelCap = 10;
 
@@ -11,7 +11,7 @@ public static partial class StaticHelpers
         WoWClassicIdle.Components.BuildInfo.IsDebug ? TableMaxLevel : ReleaseLevelCap;
 
     // XP needed to go from level N to level N+1 (index 0 = level 1 → 2)
-    // Classic-Werte × 1,1 (auf 100 gerundet) – gleicht Entdeckungs-XP und Zonen-Ziele aus (≈ +10 % XP je Levelbereich)
+    // Classic values × 1.1 (rounded to 100) – compensates for discovery XP and zone objectives (≈ +10 % XP per level range)
     private static readonly int[] XpTable =
     {
          400,  1000,  1500,  2300,  3100,  4000,  5000,  5900,  7200,  8400,
@@ -36,8 +36,8 @@ public static partial class StaticHelpers
     public static bool IsMaxLevel(int level) => level >= MaxLevel;
 
     /// <summary>
-    /// XP, die man ab <paramref name="level"/> für das *nächste* Level braucht.
-    /// Auf Max-Level wird 0 zurückgegeben.
+    /// XP needed at <paramref name="level"/> for the *next* level.
+    /// Returns 0 at max level.
     /// </summary>
     public static int GetXpForLevel(int level)
     {
@@ -47,7 +47,7 @@ public static partial class StaticHelpers
     }
 
     /// <summary>
-    /// XP-Belohnung, die ein besiegter Gegner auf <paramref name="level"/> gibt.
+    /// XP reward a defeated enemy at <paramref name="level"/> grants.
     /// </summary>
     public static int GetEnemyXpReward(int level)
     {
@@ -56,11 +56,11 @@ public static partial class StaticHelpers
         return EnemyXpReward[level - 1];
     }
 
-    /// <summary>Ab dieser Level-Differenz (Spieler − Gegner) gibt ein Kill keine XP mehr.</summary>
+    /// <summary>From this level difference (player − enemy) a kill no longer grants XP.</summary>
     public const int NoXpLevelDifference = 6;
 
     /// <summary>
-    /// Anteil der XP je nach Level-Differenz: bis 2 Level darunter voll, 3/4/5 darunter stark reduziert, ab 6 nichts.
+    /// Share of XP by level difference: full up to 2 levels below, heavily reduced at 3/4/5 below, nothing from 6.
     /// </summary>
     public static double GetXpPenaltyFactor(int playerLevel, int enemyLevel) => (playerLevel - enemyLevel) switch
     {
@@ -71,7 +71,7 @@ public static partial class StaticHelpers
         _    => 0.0,
     };
 
-    /// <summary>XP für einen Kill inklusive Abzug für zu niedrige Gegner.</summary>
+    /// <summary>XP for a kill including the reduction for enemies that are too low.</summary>
     public static int GetKillXp(int playerLevel, int enemyLevel) =>
         (int)Math.Round(GetEnemyXpReward(enemyLevel) * GetXpPenaltyFactor(playerLevel, enemyLevel));
 }

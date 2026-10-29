@@ -12,7 +12,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 15,
-            Damage = 14,        // +4 Buff gesamt
+            Damage = 14,        // +4 buff total
             LevelRequired = 1,
             Rank = 1,
         },
@@ -24,7 +24,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             CastTime = 2.5,     // 2,5 s Cast-Zeit
             ManaCost = 15,
-            Damage = 15,        // +4 Buff gesamt
+            Damage = 15,        // +4 buff total
             LevelRequired = 10,
             Rank = 2,
         },
@@ -37,7 +37,7 @@ public static partial class ClassAbilityRegistry
             ManaCost = 10,
             BuffDuration = 60,
             BuffWeaponDamageBonus = 0.08, // +8% auto-attack damage
-            ExclusiveGroup = "shaman_weapon_enchant",   // nur eine Waffenverzauberung gleichzeitig
+            ExclusiveGroup = "shaman_weapon_enchant",   // only one weapon enchant at a time
             LevelRequired = 2,
             Rank = 1,
         },
@@ -47,9 +47,9 @@ public static partial class ClassAbilityRegistry
             Name = "Rockbiter Weapon",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_rockbiter.jpg",
             Cooldown = 0,
-            ManaCost = 13,                // ×1,25 gegenüber Rank 1
+            ManaCost = 13,                // ×1.25 compared to Rank 1
             BuffDuration = 60,
-            BuffWeaponDamageBonus = 0.10, // ×1,3 gegenüber Rank 1
+            BuffWeaponDamageBonus = 0.10, // ×1.3 compared to Rank 1
             ExclusiveGroup = "shaman_weapon_enchant",
             LevelRequired = 12,
             Rank = 2,
@@ -72,9 +72,9 @@ public static partial class ClassAbilityRegistry
             Name = "Earthbind Totem",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_earthbindtotem.jpg",
             Cooldown = 30,
-            ManaCost = 6,                       // ×1,25 gegenüber Rank 1
+            ManaCost = 6,                       // ×1.25 compared to Rank 1
             DebuffDuration = 10,
-            DebuffAttackSpeedReduction = 0.26,  // ×1,3 gegenüber Rank 1
+            DebuffAttackSpeedReduction = 0.26,  // ×1.3 compared to Rank 1
             LevelRequired = 14,
             Rank = 2,
         },
@@ -85,8 +85,8 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_lightningshield.jpg",
             Cooldown = 0,
             ManaCost = 10,
-            BuffDuration = 30,              // Buff läuft 30 s
-            BuffRetaliationDamage = 4,      // 4 DMG wenn der Spieler getroffen wird (war 5 – Shaman Lv 7–10 ~12 % zu schnell)
+            BuffDuration = 30,              // Buff lasts 30 s
+            BuffRetaliationDamage = 4,      // 4 damage when the player is hit (was 5 – Shaman Lv 7–10 ~12 % too fast)
             LevelRequired = 7,
             Rank = 1,
         },
@@ -96,9 +96,9 @@ public static partial class ClassAbilityRegistry
             Name = "Lightning Shield",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_lightningshield.jpg",
             Cooldown = 0,
-            ManaCost = 13,                  // ×1,25 gegenüber Rank 1
+            ManaCost = 13,                  // ×1.25 compared to Rank 1
             BuffDuration = 30,
-            BuffRetaliationDamage = 6,      // ×1,5 gegenüber Rank 1
+            BuffRetaliationDamage = 6,      // ×1.5 compared to Rank 1
             LevelRequired = 17,
             Rank = 2,
         },
@@ -110,8 +110,8 @@ public static partial class ClassAbilityRegistry
             Cooldown = 20,
             ManaCost = 20,
             Damage = 10,                        // Sofortschaden
-            DebuffDuration = 15,                // Feuer-DoT über 15 s
-            DebuffDotDamage = 8,                // 5 Ticks à 8 = 40 DMG gesamt
+            DebuffDuration = 15,                // Fire DoT over 15 s
+            DebuffDotDamage = 8,                // 5 ticks of 8 = 40 damage total
             DebuffDotTickInterval = 3,
             LevelRequired = 14,
             Rank = 1,
@@ -121,7 +121,7 @@ public static partial class ClassAbilityRegistry
             Id = "Healing_Wave_r1",
             Name = "Healing Wave",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_magicimmunity.jpg",
-            Cooldown = 0,       // kein Cooldown – Tempo kommt aus Cast-Zeit
+            Cooldown = 0,       // no cooldown – pacing comes from cast time
             CastTime = 3.0,     // 3,0 s Cast-Zeit
             ManaCost = 30,
             Heal = 30,
@@ -136,16 +136,16 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 10,
             BuffDuration = 60,
-            BuffExtraAttackChance = 0.20,       // 20 % Chance pro Auto-Attack …
-            BuffExtraAttacks = 2,               // … auf 2 Zusatzschläge (3 statt 1)
-            ExclusiveGroup = "shaman_weapon_enchant",   // ersetzt Rockbiter Weapon
+            BuffExtraAttackChance = 0.20,       // 20 % chance per auto-attack …
+            BuffExtraAttacks = 2,               // … for 2 extra swings (3 instead of 1)
+            ExclusiveGroup = "shaman_weapon_enchant",   // replaces Rockbiter Weapon
             TalentUnlockOnly = true,
             SpecHint = 1,
             LevelRequired = 1,
             Rank = 1,
         },
 
-        // ── Talent-Fähigkeiten (Reihe 2) ──
+        // ── Talent abilities (row 2) ──
         new Ability
         {
             Id = "Chain_Lightning_r1",
@@ -169,17 +169,17 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_frost_summonwaterelemental.jpg",
             Cooldown = 60,
             ManaCost = 0,
-            BuffDuration = 12,                  // MoT über 12 s
-            MotManaRestorePct = 0.24,           // 4 Ticks à 6 % maximales Mana
+            BuffDuration = 12,                  // MoT over 12 s
+            MotManaRestorePct = 0.24,           // 4 ticks of 6 % max mana
             MotTickInterval = 3.0,
-            CastWhenManaBelowPct = 0.5,         // erst unter 50 % Mana
+            CastWhenManaBelowPct = 0.5,         // only below 50 % mana
             TalentUnlockOnly = true,
             SpecHint = 2,
             LevelRequired = 1,
             Rank = 1,
         },
 
-        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ──
+        // ── Specialization abilities (talent row 3, from Lv 20) ──
         new Ability
         {
             Id = "Lava_Burst_r1",
@@ -190,7 +190,7 @@ public static partial class ClassAbilityRegistry
             ManaCost = 25,
             Damage = 26,
             SynergyDebuffName = "Flame Shock",
-            SynergyCritBonus = 1.0,             // garantierter Crit, wenn Flame Shock auf dem Ziel liegt
+            SynergyCritBonus = 1.0,             // guaranteed crit if Flame Shock is on the target
             TalentUnlockOnly = true,
             SpecHint = 0,
             LevelRequired = 20,
@@ -205,9 +205,9 @@ public static partial class ClassAbilityRegistry
             ManaCost = 20,
             Damage = 3,
             AddsWeaponDamage = true,
-            HitCount = 2,                       // zwei Waffenschläge
+            HitCount = 2,                       // two weapon strikes
             DebuffDuration = 10,
-            DebuffDamageTakenBonus = 0.05,      // Ziel erleidet 10 s lang +5 % Schaden (10 % ergab +13,7 % XP/h)
+            DebuffDamageTakenBonus = 0.05,      // target takes +5 % damage for 10 s (10 % gave +13.7 % XP/h)
             TalentUnlockOnly = true,
             SpecHint = 1,
             LevelRequired = 20,
@@ -222,7 +222,7 @@ public static partial class ClassAbilityRegistry
             ManaCost = 25,
             BuffDuration = 60,
             BuffHitCharges = 6,                 // 6 Ladungen
-            BuffHealOnHit = 12,                 // heilt bei jedem erlittenen Treffer
+            BuffHealOnHit = 12,                 // heals on every hit taken
             TalentUnlockOnly = true,
             SpecHint = 2,
             LevelRequired = 20,

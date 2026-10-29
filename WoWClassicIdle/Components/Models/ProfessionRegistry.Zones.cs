@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 
 namespace Models
 {
-    // Farmgebiete: jede Zone gibt es für alle Sammelberufe + Angeln, mit eigener Drop-Tabelle je Beruf.
-    // Chancen sind Gewichte – RollDrop normiert über alle Drops der Zone.
+    // Farming zones: every zone exists for all gathering professions + fishing, with its own drop table per profession.
+    // Chances are weights – RollDrop normalizes across all drops of the zone.
     public static partial class ProfessionRegistry
     {
         private record ZoneInfo(string Id, string Name, string Theme, string Description);
@@ -40,7 +40,7 @@ namespace Models
             [Profession.Mining] =
             [
                 Zone(Mulgore,       new(CopperOre, 60), new(RoughStone, 40)),
-                // Bronze-Zone: Kupfer/Zinn/Grobstein grob im Rezeptverhältnis 2:1:1 (Grobstein etwas mehr für Dynamit)
+                // Bronze zone: copper/tin/coarse stone roughly in the recipe ratio 2:1:1 (slightly more coarse stone for dynamite)
                 Zone(Barrens,       new(CopperOre, 40), new(TinOre, 20), new(CoarseStone, 35), new(SilverOre, 5)),
                 Zone(Duskwood,      new(TinOre, 30), new(IronOre, 30), new(HeavyStone, 35), new(SilverOre, 5)),
                 Zone(Stranglethorn, new(IronOre, 50), new(MithrilOre, 15), new(SolidStone, 10), new(HeavyStone, 25)),
@@ -73,14 +73,14 @@ namespace Models
             ],
         };
 
-        /// <summary>Ab diesem Anteil prägt ein Drop die Zone – seltene Beigaben (Silbererz, Black Lotus) zählen nicht.</summary>
+        /// <summary>From this share a drop defines the zone – rare extras (silver ore, Black Lotus) don't count.</summary>
         public const double ZoneGateMinShare = 0.15;
 
         private static readonly ConcurrentDictionary<GatheringZone, int> _zoneSkill = new(ReferenceEqualityComparer.Instance);
 
         /// <summary>
-        /// Benötigter Sammel-Skill einer Zone, abgeleitet aus den Rezepten: für jeden prägenden Drop der
-        /// niedrigste Rezept-Skill, der ihn verarbeitet – die Zone verlangt den höchsten dieser Werte.
+        /// Required gathering skill of a zone, derived from the recipes: for each defining drop the
+        /// lowest recipe skill that processes it – the zone requires the highest of these values.
         /// </summary>
         public static int ZoneRequiredSkill(GatheringZone zone) => _zoneSkill.GetOrAdd(zone, ComputeZoneSkill);
 
@@ -102,7 +102,7 @@ namespace Models
         public static GatheringZone? GetZone(Profession profession, string? zoneId) =>
             GetZones(profession).FirstOrDefault(z => z.Id == zoneId);
 
-        /// <summary>Zieht einen Drop gewichtet nach Chance – es droppt immer etwas.</summary>
+        /// <summary>Draws a drop weighted by chance – something always drops.</summary>
         public static GatherDrop RollDrop(GatheringZone zone, Random rng)
         {
             double roll = rng.NextDouble() * zone.Drops.Sum(d => d.Chance);

@@ -2,8 +2,8 @@
 @inject IdleGameEngine Engine
 @implements IDisposable
 
-@* Scrolling-Text der Berufsereignisse: Item-Icons fliegen im Bogen von links nach oben und verblassen.
-   Außen bewegt sich X (ease-out), innen Y (ease-in) → gekrümmte Flugbahn. *@
+@* Scrolling text of the profession events: item icons fly in an arc from the left upwards and fade.
+   X moves on the outside (ease-out), Y on the inside (ease-in) → curved trajectory. *@
 <div class="prof-float-layer" aria-hidden="true">
     @foreach (var f in _floats)
     {
@@ -42,18 +42,18 @@
 
     protected override void OnInitialized()
     {
-        // Bereits vorhandene Einträge nicht nachträglich animieren
+        // Don't animate already existing entries retroactively
         _lastSeenId = Engine.ProfessionLog.Select(e => e.Id).DefaultIfEmpty().Max();
         Engine.ProfessionUpdated += OnProfessionUpdated;
     }
 
-    // Timer-Thread → Auswertung auf dem Renderer-Thread
+    // Timer thread → evaluate on the renderer thread
     private void OnProfessionUpdated() => _ = InvokeAsync(() =>
     {
         var now = DateTime.UtcNow;
         bool changed = _floats.RemoveAll(f => (now - f.Created).TotalSeconds > LifetimeSeconds) > 0;
 
-        // Log ist neueste zuerst → für die Animationsreihenfolge umdrehen
+        // Log is newest first → reverse for the animation order
         foreach (var entry in Engine.ProfessionLog.Where(e => e.Id > _lastSeenId).Reverse())
         {
             _lastSeenId = Math.Max(_lastSeenId, entry.Id);

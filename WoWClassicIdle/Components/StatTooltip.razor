@@ -1,6 +1,6 @@
 @using Models
 
-@* Umhüllt eine Stat-Zeile und zeigt beim Hovern einen WoW-Tooltip.
+@* Wraps a stat row and shows a WoW tooltip on hover.
    Positionierung per js/tooltip.js (position: fixed). *@
 <span class="tt-host tt-block" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
     @ChildContent

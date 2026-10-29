@@ -2,43 +2,43 @@
 namespace Models
 {
     /// <summary>
-    /// Inventar wie in WoW Classic: fester Rucksack (32 Slots) + 4 Taschenplätze.
-    /// Die Taschenplätze werden automatisch per Level freigeschaltet und wachsen mit dem Charakter.
+    /// Inventory like in WoW Classic: fixed backpack (32 slots) + 4 bag slots.
+    /// The bag slots are unlocked automatically by level and grow with the character.
     /// </summary>
     public class Inventory
     {
         public const int BackpackSlotCount = 32;
         public const int BagSlotCount = 4;
 
-        /// <summary>Level-Schwellen, bei denen die einzelnen Taschenplätze freigeschaltet werden (Platz 0-3).
-        /// Bewusst nicht auf Levels anderer Features (siehe GameFeatureRegistry) – ein Freischalt-Popup pro Level.</summary>
+        /// <summary>Level thresholds at which the individual bag slots are unlocked (slot 0-3).
+        /// Deliberately not on the levels of other features (see GameFeatureRegistry) – one unlock popup per level.</summary>
         public static readonly int[] BagUnlockLevels = { 2, 4, 8, 12 };
 
-        /// <summary>Basisgröße einer neu freigeschalteten Tasche.</summary>
+        /// <summary>Base size of a newly unlocked bag.</summary>
         public const int BaseBagSlotSize = 12;
 
         public const string BackpackIconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_08.jpg";
         private const string VirtualBagIconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_07.jpg";
 
-        /// <summary>Anzahl freigeschalteter Taschenplätze für das gegebene Level.</summary>
+        /// <summary>Number of unlocked bag slots for the given level.</summary>
         public static int BagUnlockedCount(int level) =>
             BagUnlockLevels.Count(l => level >= l);
 
-        /// <summary>Slot-Anzahl je Tasche für das gegebene Level (12 + 1 je angefangene 5 Level).</summary>
+        /// <summary>Slot count per bag for the given level (12 + 1 per started 5 levels).</summary>
         public static int BagSlotSize(int level) =>
             BaseBagSlotSize + level / 5;
 
-        /// <summary>Level, bei dem alle Taschen das nächste Mal wachsen.</summary>
+        /// <summary>Level at which all bags grow next.</summary>
         public static int NextBagGrowthLevel(int level) => (level / 5 + 1) * 5;
 
         public Bag Backpack { get; } = new("Backpack", BackpackIconUrl, BackpackSlotCount);
 
         private readonly Bag?[] _bags = new Bag?[BagSlotCount];
 
-        /// <summary>Die 4 Taschenplätze (gesperrt = <c>null</c>).</summary>
+        /// <summary>The 4 bag slots (locked = <c>null</c>).</summary>
         public IReadOnlyList<Bag?> Bags => _bags;
 
-        /// <summary>Rucksack + alle freigeschalteten Taschen, in Füll-Reihenfolge.</summary>
+        /// <summary>Backpack + all unlocked bags, in fill order.</summary>
         public IEnumerable<Bag> AllContainers
         {
             get
@@ -52,7 +52,7 @@ namespace Models
         public int TotalSlots => AllContainers.Sum(b => b.SlotCount);
         public int FreeSlots  => AllContainers.Sum(b => b.FreeSlots);
 
-        /// <summary>Fügt Items hinzu (Rucksack zuerst). Gibt die Menge zurück, die nicht gepasst hat.</summary>
+        /// <summary>Adds items (backpack first). Returns the amount that didn't fit.</summary>
         public int TryAdd(Item item, int count = 1)
         {
             foreach (var bag in AllContainers)
@@ -77,8 +77,8 @@ namespace Models
         public int CountOf(int itemId) => AllContainers.Sum(b => b.CountOf(itemId));
 
         /// <summary>
-        /// Teilt <paramref name="amount"/> Items von einem Stapel ab und legt sie in den nächsten freien Slot
-        /// (gleiche Tasche zuerst, dann übrige Container). <c>false</c> wenn kein Platz oder ungültige Menge.
+        /// Splits <paramref name="amount"/> items off a stack and puts them into the next free slot
+        /// (same bag first, then the other containers). <c>false</c> if there is no space or the amount is invalid.
         /// </summary>
         public bool SplitStack(Bag bag, int index, int amount)
         {
@@ -94,8 +94,8 @@ namespace Models
         }
 
         /// <summary>
-        /// Erstellt oder vergrößert virtuelle Taschen basierend auf dem Spielerlevel.
-        /// Taschenplätze mit einem manuell ausgerüsteten BagItem (Source != null) werden nicht verändert.
+        /// Creates or enlarges virtual bags based on the player level.
+        /// Bag slots with a manually equipped BagItem (Source != null) are not changed.
         /// </summary>
         public void UpdateBagsForLevel(int level)
         {
@@ -125,7 +125,7 @@ namespace Models
             return bag;
         }
 
-        /// <summary>Rüstet eine Tasche in einen freien Taschenplatz aus.</summary>
+        /// <summary>Equips a bag into a free bag slot.</summary>
         public bool EquipBag(int slot, BagItem item)
         {
             if (_bags[slot] is not null) return false;
@@ -133,7 +133,7 @@ namespace Models
             return true;
         }
 
-        /// <summary>Nimmt eine Tasche ab – nur möglich, wenn sie leer ist (wie im Original).</summary>
+        /// <summary>Removes a bag – only possible if it is empty (like in the original).</summary>
         public BagItem? UnequipBag(int slot)
         {
             var bag = _bags[slot];

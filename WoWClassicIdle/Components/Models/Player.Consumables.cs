@@ -1,15 +1,15 @@
 // Models/Player.Consumables.cs
 namespace Models
 {
-    // Aktive Verbrauchsgut-Buffs (Elixiere, Fläschchen, Essen): je BuffKey ein Slot, stärkere überschreiben schwächere.
+    // Active consumable buffs (elixirs, flasks, food): one slot per BuffKey, stronger ones overwrite weaker ones.
     public partial class Player
     {
         private readonly Dictionary<string, ActiveConsumable> _consumables = new();
 
-        /// <summary>Aktive Verkleidung (Savory Deviate Delight) – rein optisch.</summary>
+        /// <summary>Active disguise (Savory Deviate Delight) – purely cosmetic.</summary>
         public Costume Costume { get; private set; }
 
-        /// <summary>Restlaufzeit der Verkleidung (Kampfsekunden).</summary>
+        /// <summary>Remaining duration of the disguise (combat seconds).</summary>
         public double CostumeRemaining { get; private set; }
 
         public void SetCostume(Costume costume, double duration)
@@ -18,7 +18,7 @@ namespace Models
             CostumeRemaining = costume == Costume.None ? 0 : duration;
         }
 
-        /// <summary>Läuft die Verkleidung ab; true = gerade abgelaufen (Engine erneuert ggf.).</summary>
+        /// <summary>Advances the disguise; true = just expired (the engine renews it if applicable).</summary>
         public bool TickCostume(double dt)
         {
             if (Costume == Costume.None) return false;
@@ -29,19 +29,19 @@ namespace Models
         }
 
         /// <summary>
-        /// Kann der Charakter mit dem Stat-Buff etwas anfangen? (siehe <see cref="StatScaling.IsUsefulStat"/>)
-        /// Druiden in Gestalt zählen zusätzlich wie ihre Nahkampf-Klasse (Katze → Schurke: Beweglichkeit).
-        /// Verbrauchsgüter ohne Stat-Boni (Tränke, Verbände, Dynamit) sind immer nützlich.
+        /// Can the character make use of the stat buff? (see <see cref="StatScaling.IsUsefulStat"/>)
+        /// Druids in a form additionally count as their melee class (Cat → Rogue: Agility).
+        /// Consumables without stat bonuses (potions, bandages, dynamite) are always useful.
         /// </summary>
         public bool CanUseConsumable(ConsumableItem item) =>
             item.Bonuses is not { } bonus
             || StatScaling.IsUsefulStat(ActiveClass, bonus)
             || StatScaling.IsUsefulStat(MeleeScalingClass, bonus);
 
-        /// <summary>Summe der Stat-Boni aller aktiven Verbrauchsgüter – fließt in RecalculateStats ein.</summary>
+        /// <summary>Sum of the stat bonuses of all active consumables – flows into RecalculateStats.</summary>
         public PrimaryStats ConsumableBonus { get; private set; } = PrimaryStats.Zero;
 
-        /// <summary>Aktive Verbrauchsgut-Buffs (Kopie für die UI).</summary>
+        /// <summary>Active consumable buffs (copy for the UI).</summary>
         public IReadOnlyList<ActiveConsumable> ActiveConsumables
         {
             get { lock (_consumables) return _consumables.Values.OrderBy(c => c.Item.Kind).ToList(); }
@@ -52,14 +52,14 @@ namespace Models
             lock (_consumables) return _consumables.GetValueOrDefault(buffKey);
         }
 
-        /// <summary>Aktiviert einen Buff (ersetzt den Slot derselben Art) und berechnet die Stats neu.</summary>
+        /// <summary>Activates a buff (replaces the slot of the same kind) and recalculates the stats.</summary>
         public void ApplyConsumable(ConsumableItem item)
         {
             lock (_consumables) _consumables[item.BuffKey] = new ActiveConsumable(item, item.DurationSeconds);
             RefreshConsumableStats();
         }
 
-        /// <summary>Läuft die Buffs um <paramref name="dt"/> Kampfsekunden ab; abgelaufene entfallen.</summary>
+        /// <summary>Advances the buffs by <paramref name="dt"/> combat seconds; expired ones are removed.</summary>
         public void TickConsumables(double dt)
         {
             bool expired = false;
@@ -81,7 +81,7 @@ namespace Models
             if (expired) RefreshConsumableStats();
         }
 
-        /// <summary>Tod entfernt Elixiere und Essen – Fläschchen bleiben wie in WoW erhalten.</summary>
+        /// <summary>Death removes elixirs and food – flasks persist like in WoW.</summary>
         public void ClearConsumablesOnDeath()
         {
             lock (_consumables)
@@ -92,7 +92,7 @@ namespace Models
             RefreshConsumableStats();
         }
 
-        // Stats neu berechnen, ohne Leben/Mana aufzufüllen (RecalculateStats setzt beides auf Maximum)
+        // Recalculate stats without refilling health/mana (RecalculateStats sets both to maximum)
         private void RefreshConsumableStats()
         {
             PrimaryStats bonus;
@@ -100,11 +100,8 @@ namespace Models
                 bonus = _consumables.Values.Aggregate(PrimaryStats.Zero, (sum, c) => sum + (c.Item.Bonuses ?? PrimaryStats.Zero));
             if (bonus == ConsumableBonus) return;
 
-            int hp = CurrentHp, mana = CurrentMana;
             ConsumableBonus = bonus;
-            RecalculateStats();
-            CurrentHp = Math.Clamp(hp, 1, Stats.MaxHp);
-            CurrentMana = Math.Clamp(mana, 0, Stats.MaxMana);
+            RecalculateStatsKeepResources();
         }
     }
 }

@@ -1,7 +1,7 @@
 // Models/ProfessionTrainerRegistry.Trainers.cs
 namespace Models
 {
-    // Statische Lehrer-Daten: ein NPC je Beruf, Sprüche passend zum Handwerk
+    // Static trainer data: one NPC per profession, quotes matching the craft
     public static partial class ProfessionTrainerRegistry
     {
         public static readonly IReadOnlyList<ProfessionTrainer> Trainers =

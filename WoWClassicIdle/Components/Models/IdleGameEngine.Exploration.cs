@@ -1,17 +1,17 @@
 using System.Collections.Immutable;
 using Models;
 
-// Erkundung: Entdeckungs-XP beim ersten Betreten einer Zone, bekannte Flugpunkte und Zonen-Ziele („Zone Mastery“).
+// Exploration: discovery XP when entering a zone for the first time, known flight points and zone objectives ("Zone Mastery").
 public partial class IdleGameEngine
 {
-    /// <summary>Zone schon betreten (= Flugpunkt bekannt). Ohne Roster-Charakter gilt alles als entdeckt.</summary>
+    /// <summary>Zone already visited (= flight point known). Without a roster character everything counts as discovered.</summary>
     public bool IsZoneDiscovered(CombatZone zone) =>
         ActiveCharacter is not { } slot || slot.DiscoveredZoneIds.Contains(zone.Id);
 
-    /// <summary>Entdeckungs-XP, die der aktive Charakter beim ersten Betreten bekäme.</summary>
+    /// <summary>Discovery XP the active character would get on the first visit.</summary>
     public int DiscoveryXpFor(CombatZone zone) => ZoneObjectiveRegistry.DiscoveryXp(zone, Player.Level);
 
-    /// <summary>Fortschritt eines Zonen-Ziels für den aktiven Charakter (auf das Soll begrenzt).</summary>
+    /// <summary>Progress of a zone objective for the active character (clamped to the target).</summary>
     public int ObjectiveProgress(ZoneObjective objective) =>
         ActiveCharacter?.ZoneObjectiveProgress.GetValueOrDefault(objective.Id) is { } count
             ? Math.Min(count, objective.Required)
@@ -19,12 +19,12 @@ public partial class IdleGameEngine
 
     public bool IsObjectiveDone(ZoneObjective objective) => ObjectiveProgress(objective) >= objective.Required;
 
-    /// <summary>Anzahl erledigter Ziele der Zone.</summary>
+    /// <summary>Number of completed objectives of the zone.</summary>
     public int CompletedObjectives(CombatZone zone) => ZoneObjectiveRegistry.For(zone).Count(IsObjectiveDone);
 
     public bool IsZoneMastered(CombatZone zone) => CompletedObjectives(zone) == ZoneObjectiveRegistry.For(zone).Count;
 
-    /// <summary>Zone als entdeckt markieren; mit <paramref name="grantXp"/> gibt es beim ersten Mal Entdeckungs-XP.</summary>
+    /// <summary>Mark the zone as discovered; with <paramref name="grantXp"/> there is discovery XP the first time.</summary>
     private void DiscoverZone(CharacterSlot slot, CombatZone zone, bool grantXp)
     {
         if (slot.DiscoveredZoneIds.Contains(zone.Id)) return;
@@ -37,7 +37,7 @@ public partial class IdleGameEngine
                   + (levelUp ? $" – ⬆ Lv. {Player.Level}" : "");
     }
 
-    /// <summary>Kill für die Ziele der aktuellen Zone zählen und erledigte Ziele belohnen.</summary>
+    /// <summary>Count a kill for the objectives of the current zone and reward completed objectives.</summary>
     private void TrackZoneObjectives(Enemy dead)
     {
         if (ActiveCharacter is not { } slot || IsTraveling || CurrentCombatZone is not { } zone) return;
@@ -59,7 +59,7 @@ public partial class IdleGameEngine
         }
     }
 
-    // Ziel erledigt: XP + Kupfer; letztes Ziel der Zone → Mastery-Item
+    // Objective completed: XP + copper; last objective of the zone → mastery item
     private void CompleteObjective(CombatZone zone, ZoneObjective objective)
     {
         int xp = ZoneObjectiveRegistry.ObjectiveXp(zone, Player.Level);
@@ -74,7 +74,7 @@ public partial class IdleGameEngine
             GrantMasteryReward(zone);
     }
 
-    // Garantiertes klassenpassendes Item auf Belohnungsstufe – mit etwas Glück blau
+    // Guaranteed class-appropriate item at reward tier – blue with a bit of luck
     private void GrantMasteryReward(CombatZone zone)
     {
         int level = ZoneObjectiveRegistry.RewardLevel(zone, Player.Level);
@@ -92,7 +92,7 @@ public partial class IdleGameEngine
         bool Useful(ArmorItem i) => RareLootRegistry.IsUsefulForClass(i.Bonuses, Player.ActiveClass);
     }
 
-    /// <summary>Entdeckte Zonen und Ziel-Fortschritt aus dem Spielstand (Altstand: aktuelle Zone + Reise-Start).</summary>
+    /// <summary>Discovered zones and objective progress from the save game (legacy: current zone + travel start).</summary>
     private static void RestoreExploration(CharacterSlot slot, SlotSaveData data)
     {
         var discovered = data.DiscoveredZones ?? [data.CombatZone ?? ""];

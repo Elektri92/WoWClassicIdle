@@ -51,7 +51,7 @@
 
 <style>
     .feature-unlock-backdrop {
-        /* Nur den Inhaltsbereich abdecken – Navigation bleibt frei (Maße aus MainLayout/NavMenu) */
+        /* Only cover the content area – navigation stays free (dimensions from MainLayout/NavMenu) */
         position: fixed;
         inset: 3.5rem 0 0 0;
         z-index: 10000;
@@ -77,7 +77,7 @@
         background: linear-gradient(180deg, #2c1f0a 0%, #1a1205 45%, #0e0b07 100%);
         border: 2px solid #c5a55a;
         border-radius: 8px;
-        /* Eigener Stacking-Context: .fu-bg (z-index -1) liegt über dem Verlauf, aber unter dem Inhalt */
+        /* Own stacking context: .fu-bg (z-index -1) sits above the gradient but below the content */
         isolation: isolate;
         box-shadow:
             0 0 0 1px #8a7444,
@@ -94,7 +94,7 @@
         background: linear-gradient(90deg, transparent, #ffd100, #c5a55a, #ffd100, transparent);
     }
 
-    /* Thematisches Artwork, transparent hinterlegt und nach unten ausgeblendet (Lesbarkeit der Texte) */
+    /* Themed artwork, translucent and faded out towards the bottom (text readability) */
     .fu-bg {
         position: absolute;
         inset: 0;
@@ -108,7 +108,7 @@
         pointer-events: none;
     }
 
-    /* Rotierender Lichtkranz hinter dem Icon */
+    /* Rotating halo behind the icon */
     .fu-rays {
         position: absolute;
         top: -70px;
@@ -276,7 +276,7 @@
 @code {
     private readonly Queue<GameFeature> _queue = new();
 
-    // Zuletzt gesehener Charakter/Klasse/Level – Wechsel setzt die Basis neu, ohne Popups auszulösen
+    // Last seen character/class/level – a change resets the baseline without triggering popups
     private Player? _trackedPlayer;
     private CharacterClass _trackedClass;
     private int _trackedLevel;
@@ -293,7 +293,7 @@
         Engine.TickUpdated           += OnTickUpdated;
         Engine.RosterChanged         += OnRosterChanged;
         Engine.FeatureIntroRequested += OnFeatureIntroRequested;
-        // Intros, die vor dieser Komponente angefordert wurden, sofort übernehmen
+        // Take over intros requested before this component immediately
         EnqueuePendingIntros();
     }
 
@@ -345,7 +345,7 @@
             return;
         }
 
-        var unlocked = GameFeatureRegistry.UnlockedBetween(_trackedLevel, level).ToList();
+        var unlocked = GameFeatureRegistry.UnlockedBetween(_trackedLevel, level).Where(Engine.ShouldShowUnlock).ToList();
         _trackedLevel = level;
         if (unlocked.Count == 0) return;
 

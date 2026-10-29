@@ -1,9 +1,9 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Reise-Animation (css/zone-travel.css): Parallax-Landschaft in den Farben der Zielzone, der Charakter zu Fuß,
-   in Klassen-Gestalt, auf seinem Rassen-Reittier, auf Greif/Windreiter, Schiff oder Zeppelin.
-   Travel als Parameter (Referenztyp) → Komponente zeichnet bei jedem Render der Seite mit. *@
+@* Travel animation (css/zone-travel.css): parallax landscape in the colors of the target zone, the character on foot,
+   in class form, on its racial mount, on a gryphon/wind rider, ship or zeppelin.
+   Travel as a parameter (reference type) → the component re-renders with every render of the page. *@
 @if (Travel is { } travel && travel.CurrentLeg is { } current)
 {
     var leg = current.Leg;
@@ -151,7 +151,7 @@
 
     private string FactionColor => Engine.Faction == Faction.Horde ? "#b3261e" : "#1f4fa8";
 
-    /// <summary>Animationsdauer-Faktor: je schneller die Fortbewegung, desto schneller zieht die Landschaft vorbei.</summary>
+    /// <summary>Animation duration factor: the faster the movement, the faster the landscape scrolls by.</summary>
     private static double Pace(TravelMode mode, GroundTravel ground) => mode switch
     {
         TravelMode.Flight   => 0.35,

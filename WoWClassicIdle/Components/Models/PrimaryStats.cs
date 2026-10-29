@@ -2,7 +2,7 @@
 namespace Models
 {
     /// <summary>
-    /// Die fünf Primärattribute wie in WoW Classic.
+    /// The five primary attributes like in WoW Classic.
     /// </summary>
     public record PrimaryStats
     {
@@ -23,7 +23,7 @@ namespace Models
             Spirit       = a.Spirit       + b.Spirit,
         };
 
-        /// <summary>Lesbare Boni-Zeilen für Tooltips (nur nicht-leere Werte).</summary>
+        /// <summary>Readable bonus lines for tooltips (non-empty values only).</summary>
         public IEnumerable<string> DescribeBonuses()
         {
             if (Strength     > 0) yield return $"+{Strength} Strength";
@@ -35,13 +35,13 @@ namespace Models
     }
 
     /// <summary>
-    /// Zuwachs der Primärattribute pro Level (Kommawerte, damit auch
-    /// „langsame" Attribute über mehrere Level hinweg wachsen).
+    /// Growth of the primary attributes per level (decimal values so that
+    /// "slow" attributes also grow over several levels).
     /// </summary>
     public record StatGrowth(double Strength, double Agility, double Stamina, double Intelligence, double Spirit);
 
     /// <summary>
-    /// Startwerte (Level 1) und Wachstum pro Level einer Klasse.
+    /// Starting values (level 1) and growth per level of a class.
     /// </summary>
     public record ClassStatProfile(PrimaryStats Base, StatGrowth PerLevel);
 }

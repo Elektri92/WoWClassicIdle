@@ -1,5 +1,5 @@
-/* ── Kampf-Effekte (js/spellfx/*) – Effekt-Layer und gemeinsame Partikel/Einschläge ──
-   Farben kommen pro Element über --fx-glow / --fx-core / --fx-hi (Zauberschule). */
+/* ── Combat effects (js/spellfx/*) – effect layer and shared particles/impacts ──
+   Colors come per element via --fx-glow / --fx-core / --fx-hi (school of magic). */
 .spellfx-layer {
     position: fixed;
     inset: 0;

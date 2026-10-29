@@ -1,11 +1,11 @@
 // Models/TalentRegistry.SpecAbilities.cs
 namespace Models;
 
-// Talent-Reihe 3 (Row = 2, ab Lv 20, 10 Punkte im Baum): je Baum ein Punkt für die Spezialisierungs-Fähigkeit
-// bzw. – bei reinen Passiven (Flurry, Spirit of Redemption, Nightfall, Eclipse) – für den Talent-Effekt.
+// Talent row 3 (Row = 2, from Lv 20, 10 points in the tree): one point per tree for the specialization ability
+// or – for pure passives (Flurry, Spirit of Redemption, Nightfall, Eclipse) – for the talent effect.
 public static partial class TalentRegistry
 {
-    /// <summary>Mindestlevel aller Spezialisierungs-Talente.</summary>
+    /// <summary>Minimum level of all specialization talents.</summary>
     public const int SpecAbilityLevel = 20;
 
     private static IEnumerable<TalentDefinition> BuildSpecAbilityTalents(CharacterClass cls) => cls switch
@@ -103,7 +103,7 @@ public static partial class TalentRegistry
         _ => [],
     };
 
-    /// <summary>Ein Punkt in Reihe 3 mit reinem Passiv-Effekt ohne Fähigkeit/Slot (wie Schamanen-Flurry).</summary>
+    /// <summary>One point in row 3 with a pure passive effect without ability/slot (like Shaman Flurry).</summary>
     private static TalentDefinition Passive(
         CharacterClass cls, int tree, string id, string name, TalentEffectType effect, double effectPerRank,
         string icon, string description, string? requires = null) => new()
@@ -123,7 +123,7 @@ public static partial class TalentRegistry
         IconUrl          = $"https://wow.zamimg.com/images/wow/icons/medium/{icon}.jpg",
     };
 
-    /// <summary>Ein Punkt in Reihe 3, schaltet <paramref name="abilityId"/> frei; Icon = Fähigkeits-Icon.</summary>
+    /// <summary>One point in row 3, unlocks <paramref name="abilityId"/>; icon = ability icon.</summary>
     private static TalentDefinition Spec(
         CharacterClass cls, int tree, string id, string name, string abilityId, string description,
         string? requires = null, int column = 1) => new()

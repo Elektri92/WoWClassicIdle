@@ -12,7 +12,7 @@
     <h2 class="al-title">Ability Loadout</h2>
     <p class="wow-hint al-hint">Click a spell to equip or remove it. Pick a specific rank on its rank track.</p>
 
-    @* ── Kopf: Charakter auf der Szene seiner aktuellen Zone ── *@
+    @* ── Header: character on the scene of its current zone ── *@
     <div class="al-header @(Engine.Faction == Faction.Alliance ? "alliance" : "horde") @(CombatZoneRegistry.IsNightTheme(HeaderTheme) ? "night" : "day")">
         <div class="al-scenery" aria-hidden="true">
             <div class="al-sky zone-theme-@HeaderTheme"></div>
@@ -45,7 +45,7 @@
     {
         <div class="loadout-grid">
 
-            @* ── Ausgerüstete Slots als Aktionsleiste, links und rechts von Greifen eingerahmt ── *@
+            @* ── Equipped slots as an action bar, framed by gryphons left and right ── *@
             <div class="action-bar-wrap" style="--i: 0">
                 <img class="al-gryphon left" src="images/gryphon-left.png" alt="" aria-hidden="true" />
                 <img class="al-gryphon right" src="images/gryphon-right.png" alt="" aria-hidden="true" />
@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            @* ── Zauberbuch: ein Eintrag je Zauber, Ränge auf einer Leiste ── *@
+            @* ── Spellbook: one entry per spell, ranks on a bar ── *@
             @* Pergament-Look: wwwroot/css/spellbook.css *@
             <div class="al-panel pool-column spellbook" style="--i: 1">
                 <h4 class="spellbook-title">Spellbook</h4>

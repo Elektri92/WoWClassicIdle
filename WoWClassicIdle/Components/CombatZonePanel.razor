@@ -2,8 +2,8 @@
 @inject IdleGameEngine Engine
 @implements IDisposable
 
-@* Kampfgebiete in /idle: Banner der aktuellen Zone + Kachel-Karte aller Zonen (Farbverlauf je Zone, css/combat-zones.css).
-   Erste Wahl je Charakter ist sofort aktiv, danach wird gereist – beim Hovern zeigt jede Kachel die Reisezeit. *@
+@* Combat zones in /idle: banner of the current zone + tile map of all zones (gradient per zone, css/combat-zones.css).
+   The first pick per character is active immediately, afterwards the character travels – on hover each tile shows the travel time. *@
 @{
     var current = Engine.CurrentCombatZone;
     bool needsZone = Engine.NeedsCombatZone;
@@ -50,9 +50,9 @@
 
     @if (needsZone || Open)
     {
-        @* Karte entfaltet sich beim Öffnen und blendet beim Schließen aus (css/combat-zones.css, czone-mapview) *@
+        @* Map unfolds when opened and fades out when closed (css/combat-zones.css, czone-mapview) *@
         <div class="czone-mapview @(_closing ? "closing" : "")">
-        @* Kurze Legende statt Fließtext: Regeln als Chips + Bedeutung der Levelfarben *@
+        @* Short legend instead of prose: rules as chips + meaning of the level colors *@
         <div class="czone-legend">
             <span class="czone-legend-title">@(needsZone ? "Choose your hunting grounds" : "Choose a new zone")</span>
             <span class="czone-chip">⚔ Enemies near your level</span>
@@ -66,7 +66,7 @@
             </span>
         </div>
 
-        @* Weltkarte: Kalimdor links, Östliche Königreiche rechts – wie auf der WoW-Karte *@
+        @* World map: Kalimdor left, Eastern Kingdoms right – like on the WoW map *@
         <div class="czone-map">
         @foreach (var continent in Continents)
         {
@@ -85,7 +85,7 @@
                 @{ int tileIndex = 0; }
                 @foreach (var zone in continent.Zones)
                 {
-                    int delayIndex = tileIndex++; // gestaffeltes Einblenden der Kacheln
+                    int delayIndex = tileIndex++; // staggered fade-in of the tiles
                     bool isHere = zone.Id == current?.Id && !needsZone;
                     bool isTarget = zone.Id == Engine.Travel?.TargetZoneId;
                     bool locked = !CombatZoneRegistry.CanEnter(zone, level);
@@ -141,7 +141,7 @@
 
                         @if (!locked && !isHere && !isTarget)
                         {
-                            @* Erscheint beim Hovern (CSS) *@
+                            @* Appears on hover (CSS) *@
                             <div class="czone-travel">
                                 @if (route is null)
                                 {
@@ -175,7 +175,7 @@
 </div>
 
 @code {
-    /// <summary>Zonenkarte geöffnet (Two-Way-Binding, damit /idle Kampf und Meter ausblenden kann).</summary>
+    /// <summary>Zone map open (two-way binding so /idle can hide combat and meter).</summary>
     [Parameter] public bool Open { get; set; }
     [Parameter] public EventCallback<bool> OpenChanged { get; set; }
 
@@ -185,13 +185,13 @@
         return OpenChanged.InvokeAsync(open);
     }
 
-    // Dauer der Schließen-Animation – muss zu czone-map-close in combat-zones.css passen
+    // Duration of the close animation – must match czone-map-close in combat-zones.css
     private const int CloseAnimationMs = 320;
     private bool _closing;
 
     private Task ToggleMap() => Open && !_closing ? CloseAnimated() : SetOpen(true);
 
-    /// <summary>Spielt erst die Ausblend-Animation ab und schließt dann die Karte.</summary>
+    /// <summary>Plays the fade-out animation first, then closes the map.</summary>
     private async Task CloseAnimated()
     {
         if (_closing) return;
@@ -206,7 +206,7 @@
 
     private record Continent(string Key, string Title, string IconUrl, IReadOnlyList<CombatZone> Zones);
 
-    // Kalimdor links, Östliche Königreiche rechts (wie auf der Weltkarte); Teldrassil gehört zu Kalimdor
+    // Kalimdor left, Eastern Kingdoms right (like on the world map); Teldrassil belongs to Kalimdor
     private static readonly Continent[] Continents =
     [
         new("kalimdor", "Kalimdor", "https://wow.zamimg.com/images/wow/icons/large/inv_misc_map_01.jpg",
@@ -221,7 +221,7 @@
         Engine.TickUpdated += OnTick;
     }
 
-    // Nur neu zeichnen, wenn sich Charakter, Zone, Reise oder Level ändern (TickUpdated kommt 10× pro Sekunde)
+    // Only re-render when character, zone, travel or level change (TickUpdated fires 10× per second)
     private string Signature() =>
         $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}"
         + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}";
@@ -233,7 +233,7 @@
         _signature = signature;
         _ = InvokeAsync(() =>
         {
-            _routes.Clear(); // Startzone/Level geändert → Reisezeiten neu berechnen
+            _routes.Clear(); // Start zone/level changed → recalculate travel times
             StateHasChanged();
         });
     }
@@ -249,12 +249,12 @@
     private async Task Select(CombatZone zone)
     {
         if (_closing) return;
-        // Erste Wahl (needsZone): Karte verschwindet sofort, der Kampf blendet selbst ein
+        // First pick (needsZone): map disappears immediately, combat fades in on its own
         if (Engine.SelectCombatZone(zone.Id))
             await (Open ? CloseAnimated() : SetOpen(false));
     }
 
-    /// <summary>Levelbadge wie die Quest-Farben in WoW: rot = gesperrt, gelb = volle XP, grün = reduziert, grau = keine XP.</summary>
+    /// <summary>Level badge like the quest colors in WoW: red = locked, yellow = full XP, green = reduced, grey = no XP.</summary>
     private static string LevelClass(CombatZone zone, int level) =>
         level < zone.MinLevel                   ? "lvl-red"
         : level - zone.MaxLevel <= 2            ? "lvl-yellow"
@@ -266,7 +266,7 @@
         : level - zone.MaxLevel >= 3   ? "Reduced XP – enemies are low level"
         : null;
 
-    // WoW-Tooltip einer Zonen-Kachel: Level, Kontinent, Gegner, Status und Reiseroute
+    // WoW tooltip of a zone tile: level, continent, enemies, status and travel route
     private RenderFragment ZoneTooltip(CombatZone zone, int level, string? blocker, TravelRoute? route, bool needsZone) => @<text>
         <span class="zt-line @LevelClass(zone, level)">Level @zone.LevelRange</span>
         <span class="zt-sub">@(zone.Landmass == Landmass.EasternKingdoms ? "Eastern Kingdoms" : "Kalimdor")</span>
@@ -327,7 +327,7 @@
     private string ObjectivesTitle(CombatZone zone) =>
         $"Zone objectives ({Engine.CompletedObjectives(zone)}/{ZoneObjectiveRegistry.For(zone).Count})";
 
-    // Ziele mit Fortschritt + Belohnung je Ziel und für die Mastery
+    // Objectives with progress + reward per objective and for the mastery
     private RenderFragment ObjectivesBody(CombatZone zone) => @<text>
         @foreach (var objective in ZoneObjectiveRegistry.For(zone))
         {

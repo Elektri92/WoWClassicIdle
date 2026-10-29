@@ -2,11 +2,11 @@ using Services;
 using WoWClassicIdle.Components;
 using Photino.NET;
 
-// Muss vor jeder WebKit-Initialisierung gesetzt werden
-// Auf Linux müssen GDK/WebKit-Env-Vars gesetzt sein BEVOR GTK durch die nativen Bibliotheken
-// initialisiert wird. Da der Single-File-Bootstrapper native Libs vor managed Code lädt,
-// starten wir den Prozess bei Bedarf mit den korrekten Vars neu.
-// Nicht in Development (dort kein Photino) und nicht mit Debugger – sonst hängt der Debugger am beendeten Elternprozess.
+// Must be set before any WebKit initialization
+// On Linux the GDK/WebKit env vars must be set BEFORE GTK is initialized by the native
+// libraries. Since the single-file bootstrapper loads native libs before managed code,
+// we restart the process with the correct vars if needed.
+// Not in Development (no Photino there) and not with a debugger – otherwise the debugger hangs on the exited parent process.
 bool isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
 if (OperatingSystem.IsLinux()
     && !isDevelopment
@@ -20,16 +20,16 @@ if (OperatingSystem.IsLinux()
     foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
         psi.Environment[(string)entry.Key] = entry.Value as string ?? "";
     psi.Environment["GDK_BACKEND"]                 = "x11";
-    // DMA-BUF-Puffer zeigen unter NVIDIA/XWayland ein leeres Fenster. FORCE_SHM rendert weiter auf der GPU und
-    // überträgt nur das fertige Bild per Shared Memory – DISABLE_DMABUF_RENDERER fiel auf Software-Rendering
-    // zurück (gemessen: ~12 statt ~58 FPS im Kampf).
+    // DMA-BUF buffers show an empty window under NVIDIA/XWayland. FORCE_SHM keeps rendering on the GPU and
+    // only transfers the finished image via shared memory – DISABLE_DMABUF_RENDERER fell back to software rendering
+    // (measured: ~12 instead of ~58 FPS in combat).
     psi.Environment["WEBKIT_DMABUF_RENDERER_FORCE_SHM"] = "1";
     System.Diagnostics.Process.Start(psi);
     return;
 }
 
-// Publish bündelt wwwroot in die Single-File-Binary und entpackt sie nach AppContext.BaseDirectory.
-// Dort liegt dann das aktuelle wwwroot – nicht das veraltete neben der Binary (Auto-Update ersetzt nur die Binary).
+// Publish bundles wwwroot into the single-file binary and extracts it to AppContext.BaseDirectory.
+// The current wwwroot lives there – not the outdated one next to the binary (auto-update only replaces the binary).
 var bundledWebRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot");
 var builder = Directory.Exists(bundledWebRoot)
     ? WebApplication.CreateBuilder(new WebApplicationOptions
@@ -54,11 +54,11 @@ var app = builder.Build();
 
 BuildInfo.Initialize(app.Environment);
 
-// Berufe laufen in Echtzeit unabhängig vom Kampf-Timer
+// Professions run in real time independent of the combat timer
 app.Services.GetRequiredService<IdleGameEngine>().StartProfessionTimer();
 
 #if DEBUG
-// Debug-Start: Preset-Charaktere für alle Klassen anlegen
+// Debug start: create preset characters for all classes
 if (app.Environment.IsDevelopment())
     DebugTools.DebugCharacterPresets.Apply(app.Services.GetRequiredService<IdleGameEngine>());
 #endif
@@ -78,8 +78,8 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 
 app.UseAntiforgery();
 
-// Statische Dateien haben keine Fingerprint-URLs (kein MapStaticAssets) – ohne no-cache zeigt
-// WebKit/Photino nach einem Update/Rebuild alte CSS/JS aus dem Cache. Revalidierung per ETag (304).
+// Static files have no fingerprinted URLs (no MapStaticAssets) – without no-cache
+// WebKit/Photino shows old CSS/JS from the cache after an update/rebuild. Revalidation via ETag (304).
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "no-cache"
@@ -93,7 +93,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {   
-    // Auf Linux prüfen ob libwebkit2gtk-4.1 vorhanden ist (Photino-Abhängigkeit)
+    // On Linux check whether libwebkit2gtk-4.1 is present (Photino dependency)
     if (OperatingSystem.IsLinux())
     {
         bool hasWebkit =
@@ -108,7 +108,7 @@ else
                 + "  Debian/Ubuntu:  sudo apt install libwebkit2gtk-4.1-0\n"
                 + "  Fedora:         sudo dnf install webkit2gtk4.1";
 
-            // Versuche nativen Dialog (zenity → kdialog → xmessage → Konsole)
+            // Try a native dialog (zenity → kdialog → xmessage → console)
             bool shown = false;
             foreach (var (bin, arguments) in new (string, string)[]
             {
@@ -132,17 +132,17 @@ else
         }
     }
 
-    // Bewusst synchron: Ein await würde Main in einen async-Main verwandeln und die Fortsetzung auf einen
-    // Thread-Pool-Thread verlagern – Photino braucht aber auf macOS den Main-Thread und auf Windows einen STA-Thread.
+    // Deliberately synchronous: an await would turn Main into an async Main and move the continuation to a
+    // thread pool thread – but Photino needs the main thread on macOS and an STA thread on Windows.
     app.Start();
 
-    // Tatsächlich gebundene URL lesen — app.Urls enthält noch Port 0, IServerAddressesFeature den echten Port
+    // Read the actually bound URL — app.Urls still contains port 0, IServerAddressesFeature the real port
     var serverUrl = app.Services
         .GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
         .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()!
         .Addresses.First();
 
-    // Spielstand beim Start laden, falls vorhanden
+    // Load the save game on startup, if present
     app.Services.GetRequiredService<ISaveGameService>().TryAutoLoad();
 
     var iconPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "wow_idle_game_logo.png");
@@ -156,17 +156,17 @@ else
             .SetResizable(true)
             .RegisterWindowClosingHandler((_, _) =>
             {
-                // Spielstand beim Schließen speichern
+                // Save the game on close
                 app.Services.GetRequiredService<ISaveGameService>().Save();
-                return false; // false = Schließen erlauben
+                return false; // false = allow closing
             })
             .Load(new Uri(serverUrl));
 
         window.WaitForClose();
     }
 
-    // WebView2 (Windows) läuft nur in einem STA-Thread – im MTA-Main-Thread bleibt das Fenster weiß.
-    // [STAThread] ist bei Top-Level-Statements nicht möglich, daher eigener Thread.
+    // WebView2 (Windows) only runs on an STA thread – on the MTA main thread the window stays white.
+    // [STAThread] is not possible with top-level statements, hence a dedicated thread.
     if (OperatingSystem.IsWindows())
     {
         var uiThread = new Thread(RunWindow);

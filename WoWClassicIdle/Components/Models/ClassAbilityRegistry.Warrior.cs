@@ -9,12 +9,12 @@ public static partial class ClassAbilityRegistry
             Id = "Heroic_Strike_r1",
             Name = "Heroic Strike",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_ambush.jpg",
-            Cooldown = 0,       // Classic: kein CD – ersetzt die nächste Auto-Attack
+            Cooldown = 0,       // Classic: no CD – replaces the next auto-attack
             ManaCost = 15,      // 15 Rage
             Damage = 10,        // +10 Waffenschaden (-10% nerf)
             AddsWeaponDamage = true,
             ReplacesAutoAttack = true,
-            MinResourceToCast = 60, // erst ab 60 Rage, damit Rage für andere Fähigkeiten bleibt
+            MinResourceToCast = 60, // only from 60 rage, so rage remains for other abilities
             LevelRequired = 1,
             Rank = 1,
         },
@@ -25,7 +25,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_ambush.jpg",
             Cooldown = 0,
             ManaCost = 15,
-            Damage = 11,        // +10 % gegenüber Rank 1
+            Damage = 11,        // +10 % compared to Rank 1
             AddsWeaponDamage = true,
             ReplacesAutoAttack = true,
             MinResourceToCast = 60,
@@ -41,7 +41,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 1.0,
             ManaCost = 10,          // 10 Rage
             BuffDuration = 30,      // 30 s
-            BuffDamageBonus = 0.05, // +5 % verursachter Schaden
+            BuffDamageBonus = 0.05, // +5 % damage dealt
             LevelRequired = 2,
             Rank = 1,
         },
@@ -54,7 +54,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 1.0,
             ManaCost = 10,
             BuffDuration = 30,
-            BuffDamageBonus = 0.07, // ×1,3 gegenüber Rank 1
+            BuffDamageBonus = 0.07, // ×1.3 compared to Rank 1
             LevelRequired = 12,
             Rank = 2,
         },
@@ -78,7 +78,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 30,
             ManaCost = 20,
             DebuffDuration = 10,
-            DebuffAttackSpeedReduction = 0.26,  // ×1,3 gegenüber Rank 1
+            DebuffAttackSpeedReduction = 0.26,  // ×1.3 compared to Rank 1
             LevelRequired = 14,
             Rank = 2,
         },
@@ -90,7 +90,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 120,
             ManaCost = 20,                          // 20 Rage
             Damage = 50,
-            RequiresEnemyBelowHpPct = 0.20,         // nur unter 20 % Gegner-HP
+            RequiresEnemyBelowHpPct = 0.20,         // only below 20 % enemy HP
             LevelRequired = 8,
             Rank = 1,
         },
@@ -101,7 +101,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_sword_48.jpg",
             Cooldown = 120,
             ManaCost = 20,
-            Damage = 75,                            // ×1,5 gegenüber Rank 1
+            Damage = 75,                            // ×1.5 compared to Rank 1
             RequiresEnemyBelowHpPct = 0.20,
             LevelRequired = 18,
             Rank = 2,
@@ -113,8 +113,8 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_gouge.jpg",
             Cooldown = 30,
             ManaCost = 10,                      // 10 Rage
-            DebuffDuration = 12,                // Blutungs-DoT über 12 s
-            DebuffDotDamage = 18,               // 4 Ticks à 18 = 72 DMG gesamt
+            DebuffDuration = 12,                // Bleed DoT over 12 s
+            DebuffDotDamage = 18,               // 4 ticks of 18 = 72 damage total
             DebuffDotTickInterval = 3,
             LevelRequired = 14,
             Rank = 1,
@@ -122,8 +122,8 @@ public static partial class ClassAbilityRegistry
         new Ability
         {
             Id = "Battle_Stance",
-            Form = DruidForm.BattleStance,   // Haltung: Voraussetzung für Haltungs-Fähigkeiten (Overpower, Flurry …)
-            IsPassive = true,          // Aura – liegt an, solange ausgerüstet
+            Form = DruidForm.BattleStance,   // Stance: prerequisite for stance abilities (Overpower, Flurry …)
+            IsPassive = true,          // Aura – applied while equipped
             Name = "Battle Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_offensivestance.jpg",
             Cooldown = 0,
@@ -138,8 +138,8 @@ public static partial class ClassAbilityRegistry
         new Ability
         {
             Id = "Berserker_Stance",
-            Form = DruidForm.BerserkerStance,   // Haltung: Voraussetzung für Haltungs-Fähigkeiten (Overpower, Flurry …)
-            IsPassive = true,          // Aura – liegt an, solange ausgerüstet
+            Form = DruidForm.BerserkerStance,   // Stance: prerequisite for stance abilities (Overpower, Flurry …)
+            IsPassive = true,          // Aura – applied while equipped
             Name = "Berserker Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_racial_avatar.jpg",
             Cooldown = 0,
@@ -155,8 +155,8 @@ public static partial class ClassAbilityRegistry
         new Ability
         {
             Id = "Defensive_Stance",
-            Form = DruidForm.DefensiveStance,   // Haltung: Voraussetzung für Haltungs-Fähigkeiten (Overpower, Flurry …)
-            IsPassive = true,          // Aura – liegt an, solange ausgerüstet
+            Form = DruidForm.DefensiveStance,   // Stance: prerequisite for stance abilities (Overpower, Flurry …)
+            IsPassive = true,          // Aura – applied while equipped
             Name = "Defensive Stance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_defensivestance.jpg",
             Cooldown = 0,
@@ -169,7 +169,7 @@ public static partial class ClassAbilityRegistry
             Rank = 1,
         },
 
-        // ─── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───
+        // ─── Specialization abilities (talent row 3, from Lv 20) ───
         new Ability
         {
             Id = "Overpower_r1",
@@ -177,7 +177,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
             Cooldown = 12,
             ManaCost = 10,                      // 10 Rage
-            Damage = 4,          // war regulär Lv 18 (+5) – als Arms-Talent mit +8 / CD 8 brachte es +26 % XP/h
+            Damage = 4,          // was regular Lv 18 (+5) – as an Arms talent with +8 / CD 8 it gave +26 % XP/h
             AddsWeaponDamage = true,
             BonusCritChance = 0.25,             // Improved Overpower
             RequiredForm = DruidForm.BattleStance,
@@ -193,7 +193,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_golemstormbolt.jpg",
             Cooldown = 40,
             ManaCost = 10,                      // 10 Rage
-            DebuffDuration = 6,                 // Gegner flieht: keine Angriffe für 6 s
+            DebuffDuration = 6,                 // Enemy flees: no attacks for 6 s
             DebuffIsStun = true,
             RequiredForm = DruidForm.DefensiveStance,
             TalentUnlockOnly = true,

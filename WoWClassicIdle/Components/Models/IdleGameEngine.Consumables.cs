@@ -1,39 +1,39 @@
 using Models;
 
-// Verbrauchsgüter im Kampf: automatischer Verbrauch aus dem Inventar (Buffs, Tränke) und Verbände beim Tod
+// Consumables in combat: automatic use from the inventory (buffs, potions) and bandages on death
 public partial class IdleGameEngine
 {
-    private const double ConsumableCheckInterval = 1.0;   // Kampfsekunden zwischen den Buff-Prüfungen
-    private const double PotionCooldownSeconds   = 60;    // gemeinsame Abklingzeit für Heil- und Manatränke
+    private const double ConsumableCheckInterval = 1.0;   // Combat seconds between buff checks
+    private const double PotionCooldownSeconds   = 60;    // shared cooldown for healing and mana potions
     private const double HealthPotionThreshold   = 0.35;
     private const double ManaPotionThreshold     = 0.25;
-    public  const double ExplosiveCooldownSeconds = 60;   // eigene Abklingzeit für Dynamit
+    public  const double ExplosiveCooldownSeconds = 60;   // own cooldown for dynamite
 
     private double _consumableCheckAcc = ConsumableCheckInterval;
     private double _potionCooldown;
     private double _explosiveCooldown;
 
-    /// <summary>Ein Verbrauchsgut wurde automatisch benutzt (Sim-Thread!).</summary>
+    /// <summary>A consumable was used automatically (sim thread!).</summary>
     public event Action<ConsumableItem>? ConsumableUsed;
 
     public double PotionCooldownRemaining => _potionCooldown;
     public double ExplosiveCooldownRemaining => _explosiveCooldown;
     public const double PotionCooldownTotal = PotionCooldownSeconds;
 
-    // Eigener RNG für die Verkleidung, damit die Kampf-Zufallsfolge (Simulator-Seed) unverändert bleibt
+    // Own RNG for the disguise so the combat random sequence (simulator seed) stays unchanged
     private readonly Random _costumeRng = new();
 
-    /// <summary>Je Kampfschritt: Buffs ablaufen lassen, bei Bedarf Tränke trinken, leere/schwächere Buff-Slots auffüllen.</summary>
+    /// <summary>Per combat step: let buffs expire, drink potions if needed, fill empty/weaker buff slots.</summary>
     private void UpdateConsumables(double dt)
     {
         Player.TickConsumables(dt);
-        // Abgelaufene Verkleidung erneuert sich automatisch, solange noch welche im Inventar sind
+        // An expired disguise renews itself automatically as long as some are left in the inventory
         if (Player.TickCostume(dt) && UsableConsumables().FirstOrDefault(c => c.Kind == ConsumableKind.Costume) is { } next)
             ApplyCostume(next);
         _potionCooldown = Math.Max(0, _potionCooldown - dt);
         _explosiveCooldown = Math.Max(0, _explosiveCooldown - dt);
 
-        // Tränke reagieren sofort, Buffs werden im Sekundentakt geprüft (Inventar-Scan)
+        // Potions react immediately, buffs are checked every second (inventory scan)
         TryDrinkPotion();
         TryThrowExplosive();
         _consumableCheckAcc += dt;
@@ -42,7 +42,7 @@ public partial class IdleGameEngine
         RefreshConsumableBuffs();
     }
 
-    /// <summary>Verbrauchsgüter im Inventar, deren Levelanforderung der aktive Charakter erfüllt.</summary>
+    /// <summary>Consumables in the inventory whose level requirement the active character meets.</summary>
     private IEnumerable<ConsumableItem> UsableConsumables() =>
         Player.Inventory.AllContainers
             .SelectMany(b => b.Slots)
@@ -53,11 +53,11 @@ public partial class IdleGameEngine
 
     private void RefreshConsumableBuffs()
     {
-        // Nur Stats, die der Charakter auch nutzt (kein Intellekt für Schurken, keine Stärke für Magier)
+        // Only stats the character actually uses (no Intellect for Rogues, no Strength for Mages)
         foreach (var group in UsableConsumables().Where(c => c.IsBuff && Player.CanUseConsumable(c)).GroupBy(c => c.BuffKey))
         {
             var best = group.MaxBy(c => c.Potency)!;
-            // Leerer Slot → benutzen; schwächerer aktiv → stärkerer überschreibt; gleich stark → erst nach Ablauf
+            // Empty slot → use; weaker one active → stronger one overwrites; equally strong → only after expiry
             if (Player.GetActiveConsumable(group.Key) is { } active && active.Item.Potency >= best.Potency) continue;
             Consume(best);
             Player.ApplyConsumable(best);
@@ -87,7 +87,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Dynamit: sobald die Abklingzeit bereit ist, das stärkste nutzbare auf den Gegner werfen.</summary>
+    /// <summary>Dynamite: as soon as the cooldown is ready, throw the strongest usable one at the enemy.</summary>
     private void TryThrowExplosive()
     {
         if (_explosiveCooldown > 0 || CurrentEnemy is not { IsAlive: true } enemy) return;
@@ -101,7 +101,7 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Manuelle Benutzung (Inventar/Kampfleiste) – bisher nur Verkleidungen. Gibt einen Fehlertext zurück oder <c>null</c>.
+    /// Manual use (inventory/combat bar) – so far only disguises. Returns an error text or <c>null</c>.
     /// </summary>
     public string? UseConsumableManually(ConsumableItem item)
     {
@@ -134,8 +134,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Beim Tod: Elixiere/Essen fallen weg (Fläschchen bleiben), der beste Verband im Inventar
-    /// verkürzt die Wartezeit beim Geistheiler um seinen Prozentwert.
+    /// On death: elixirs/food are removed (flasks stay), the best bandage in the inventory
+    /// shortens the wait at the spirit healer by its percentage.
     /// </summary>
     private void HandleConsumablesOnDeath()
     {

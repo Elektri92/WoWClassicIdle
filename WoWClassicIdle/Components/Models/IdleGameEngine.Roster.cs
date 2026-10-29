@@ -1,6 +1,6 @@
 using Models;
 
-// Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+// Create new systems as their own partial file; keep files below 300 lines where possible.
 public partial class IdleGameEngine
 {
     // ─── Charakter-Wechsel ───
@@ -19,13 +19,13 @@ public partial class IdleGameEngine
             PlayerClass = characterClass;
             Gender = gender;
 
-            // Bestehenden Player aktualisieren (Progress bleibt erhalten!)
+            // Update the existing player (progress is preserved!)
             Player.ChangeCharacter(faction, race);
             Player.SetActiveClass(characterClass);
-            Player.SetClass(characterClass);   // ← stellt sicher, dass Character.CurrentClass + Loadout aktualisiert werden
+            Player.SetClass(characterClass);   // ← ensures that Character.CurrentClass + loadout are updated
             Player.EquipStarterWeapon(characterClass);
 
-            // Kampfstatistik und Swing-Timer gehören zum alten Charakter
+            // Combat stats and swing timer belong to the old character
             Meter.Reset();
             _playerAttackAcc = 0;
             _enemyAttackAcc  = 0;
@@ -54,7 +54,7 @@ public partial class IdleGameEngine
         // One slot per class – update the existing one instead of duplicating
         var existing = _roster.FirstOrDefault(s => s.Class == characterClass);
 
-        // Namen sind im Roster eindeutig (der eigene Slot beim Bearbeiten ausgenommen)
+        // Names are unique in the roster (excluding the own slot when editing)
         if (_roster.Any(s => s != existing && string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException($"The name '{name}' is already taken by another character.");
 
@@ -67,7 +67,7 @@ public partial class IdleGameEngine
                 existing.Faction = faction;
                 existing.Race    = race;
                 existing.Gender  = gender;
-                // Bereits gewählte Zone bleibt erhalten; sonst Startgebiet der (neuen) Rasse
+                // An already chosen zone is kept; otherwise the starting zone of the (new) race
                 existing.CombatZoneId ??= CombatZoneRegistry.StartZoneFor(race)?.Id;
                 if (CombatZoneRegistry.Get(existing.CombatZoneId) is { } zone)
                     DiscoverZone(existing, zone, grantXp: false);
@@ -92,7 +92,7 @@ public partial class IdleGameEngine
             Player = newPlayer,
             CombatZoneId = CombatZoneRegistry.StartZoneFor(race)?.Id
         };
-        // Startgebiet ist bekannt, gibt aber keine Entdeckungs-XP
+        // The starting zone is known but gives no discovery XP
         if (CombatZoneRegistry.Get(slot.CombatZoneId) is { } startZone)
             DiscoverZone(slot, startZone, grantXp: false);
         _roster.Add(slot);
@@ -108,12 +108,12 @@ public partial class IdleGameEngine
         ActivateSlot(slot);
     }
 
-    // Charakter, der vor einem Wechsel in den Berufsfenstern gespielt wurde – wird beim Kämpfen wiederhergestellt
+    // Character played before a switch in the profession windows – restored when fighting
     private int? _characterBeforeProfessions;
 
     /// <summary>
-    /// Wechsel aus den Berufsfenstern (Klick in der Charakterliste, Hauptberuf eines anderen Charakters):
-    /// merkt sich beim ersten Wechsel den ursprünglichen Charakter, siehe <see cref="RestoreCharacterAfterProfessions"/>.
+    /// Switch from the profession windows (click in the character list, main profession of another character):
+    /// remembers the original character on the first switch, see <see cref="RestoreCharacterAfterProfessions"/>.
     /// </summary>
     public void SelectCharacterForProfessions(int id)
     {
@@ -122,7 +122,7 @@ public partial class IdleGameEngine
         _characterBeforeProfessions = original != id ? original : null;
     }
 
-    /// <summary>Zurück zum Kämpfen: ursprünglich gespielten Charakter wieder auswählen (falls noch vorhanden).</summary>
+    /// <summary>Back to fighting: select the originally played character again (if it still exists).</summary>
     public void RestoreCharacterAfterProfessions()
     {
         if (_characterBeforeProfessions is not { } id) return;
@@ -133,7 +133,7 @@ public partial class IdleGameEngine
 
     private void ActivateSlot(CharacterSlot slot)
     {
-        // Jede andere Auswahl (Charakterauswahl, neuer Charakter) ist eine bewusste Entscheidung → nichts wiederherstellen
+        // Any other selection (character selection, new character) is a deliberate decision → restore nothing
         _characterBeforeProfessions = null;
         lock (_simLock)
         {
@@ -144,7 +144,7 @@ public partial class IdleGameEngine
             PlayerClass = slot.Class;
             Player = slot.Player;
 
-            // Virtuelle Taschen für den neuen aktiven Charakter aktualisieren
+            // Update virtual bags for the new active character
             Player.Inventory.UpdateBagsForLevel(Player.Level);
 
             Meter.Reset();
@@ -163,7 +163,7 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Debug: Setzt alle Charaktere im Roster auf dasselbe Level und spawnt einen passenden Gegner.
+    /// Debug: sets all characters in the roster to the same level and spawns a matching enemy.
     /// </summary>
     public void SetAllCharactersLevel(int level)
     {

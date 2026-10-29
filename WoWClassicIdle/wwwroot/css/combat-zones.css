@@ -1,14 +1,14 @@
-/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
-   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
-   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
+/* One-time animations carry visibility in the start keyframe: that makes them run on the main thread
+   in WebKitGTK instead of in the compositor. Compositor animations ignore the backwards start value there – the element
+   flashed fully visible once before the animation start (page transition flicker). */
 /* ============================================
    Kampfgebiete in /idle (CombatZonePanel.razor)
-   Zonen-Farbverläufe: zone-theme-* (Basis-Themes in professions.css, weitere hier)
+   Zone gradients: zone-theme-* (base themes in professions.css, more here)
    ============================================ */
 
 .czone-panel { margin-bottom: 14px; }
 
-/* ----- Legende über der Zonenkarte ----- */
+/* ----- Legend above the zone map ----- */
 .czone-legend {
     display: flex;
     flex-wrap: wrap;
@@ -38,7 +38,7 @@
 }
 .czone-legend-levels { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
 
-/* ----- Banner der aktuellen Zone ----- */
+/* ----- Banner of the current zone ----- */
 .czone-banner {
     display: flex;
     align-items: center;
@@ -65,7 +65,7 @@
 .wow-btn.czone-toggle { margin: 0; padding: 5px 14px; font-size: .8rem; }
 .czone-xp-hint { color: #ffb070; font-size: .78rem; font-weight: 600; }
 
-/* Zonen-Ziele im Banner */
+/* Zone objectives in the banner */
 .czone-objectives { display: flex; gap: 6px; }
 .czone-objective {
     display: inline-flex;
@@ -82,7 +82,7 @@
 .czone-objective img { width: 20px; height: 20px; border: 1px solid #000; border-radius: 3px; }
 .czone-objective.done { color: #1eff00; }
 
-/* ----- Weltkarte: Kalimdor links, Östliche Königreiche rechts ----- */
+/* ----- World map: Kalimdor left, Eastern Kingdoms right ----- */
 .czone-map {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -95,7 +95,7 @@
     .czone-map { grid-template-columns: 1fr; }
 }
 
-/* Kontinent-Rahmen im Stil der WoW-Weltkarte: dunkles Pergament, doppelter Goldrand, Eckbeschläge */
+/* Continent frame in the style of the WoW world map: dark parchment, double gold border, corner fittings */
 .czone-continent-frame {
     position: relative;
     padding: 0 10px 10px;
@@ -128,7 +128,7 @@
 .czone-continent-frame::before { left: -7px; }
 .czone-continent-frame::after  { right: -7px; }
 
-/* Titel-Banner oben im Rahmen */
+/* Title banner at the top of the frame */
 .czone-continent-header {
     display: flex;
     align-items: center;
@@ -177,7 +177,7 @@
     padding: 8px 10px;
     border: 2px solid var(--wow-border-dark);
     border-radius: 8px;
-    /* kein eigener Hintergrund – sonst überschreibt er die zone-theme-* aus professions.css */
+    /* no own background – otherwise it overrides the zone-theme-* from professions.css */
     overflow: hidden;
     text-shadow: 0 1px 3px #000;
     transition: border-color .12s, box-shadow .12s, transform .12s, filter .12s;
@@ -193,11 +193,11 @@
     50% { box-shadow: 0 0 14px rgba(143, 208, 255, .55); }
 }
 
-/* ----- Karte öffnen/schließen: blendet ein, Kontinente gleiten herein, Kacheln gestaffelt -----
-   fill-mode "backwards": nach der Animation greifen wieder Hover-Transform & Co.
-   Wichtig: mapview und Kontinentrahmen sind Vorfahren der Zonen-Tooltips (position: fixed) –
-   dort kein transform/filter, sonst werden sie zum Bezugsrahmen und die Tooltips landen neben dem Bild.
-   Deshalb nur opacity + relative Verschiebung (top/left); transform nur auf Kacheln/Legende. */
+/* ----- Open/close map: fades in, continents slide in, tiles staggered -----
+   fill-mode "backwards": after the animation hover transform & co. apply again.
+   Important: mapview and continent frames are ancestors of the zone tooltips (position: fixed) –
+   no transform/filter there, otherwise they become the containing block and the tooltips end up next to the image.
+   Therefore only opacity + relative offset (top/left); transform only on tiles/legend. */
 .czone-mapview {
     position: relative;
     animation: czone-map-open .45s ease-out backwards;
@@ -215,7 +215,7 @@
                czone-target-pulse 1.6s ease-in-out infinite;
 }
 
-/* Goldener Lichtschimmer, der beim Aufklappen einmal über die Kontinentrahmen streicht */
+/* Golden shimmer that sweeps across the continent frames once when unfolding */
 .czone-sheen {
     position: absolute;
     inset: 0;
@@ -235,7 +235,7 @@
 @keyframes czone-fade-down {
     from { visibility: visible; opacity: 0; transform: translateY(-8px); }
 }
-/* Kontinentrahmen sind bereits position: relative → left verschiebt sie ohne transform */
+/* Continent frames are already position: relative → left shifts them without transform */
 @keyframes czone-slide-left {
     from { visibility: visible; opacity: 0; left: -28px; }
 }
@@ -250,7 +250,7 @@
     to   { background-position: -50% 0; opacity: 0; }
 }
 
-/* Kampf und Reise blenden nach dem Schließen der Karte weich ein */
+/* Combat and travel fade in smoothly after the map is closed */
 .battle-backdrop,
 .travel-scene { animation: czone-scene-in .45s ease-out backwards; }
 
@@ -302,7 +302,7 @@
 .czone-status.locked    { color: #ff8a7a; }
 .czone-status.xp        { color: #ffb070; }
 
-/* Erkundung + Zonen-Ziele auf der Kachel */
+/* Exploration + zone objectives on the tile */
 .czone-tile-badges { display: flex; flex-wrap: wrap; gap: 4px; }
 .czone-badge {
     padding: 1px 6px;
@@ -316,7 +316,7 @@
 .czone-badge.flight   { color: #8fd0ff; }
 .czone-badge.mastered { color: var(--wow-gold); }
 
-/* Reisezeit – fährt beim Hovern von unten ein */
+/* Travel time – slides in from below on hover */
 .czone-travel {
     position: absolute;
     left: 0;
@@ -342,7 +342,7 @@
 .czone-travel-busy { flex-basis: 100%; color: #ff8a7a; font-size: .72rem; }
 
 /* ============================================
-   Kampf-Hintergrund in /idle: Farbverlauf der aktuellen Zone + Berg-/Hügelsilhouetten
+   Combat background in /idle: gradient of the current zone + mountain/hill silhouettes
    ============================================ */
 .battle-backdrop {
     position: relative;
@@ -361,7 +361,7 @@
     pointer-events: none;
 }
 
-/* Abdunkeln zum Rand hin, damit die Unit-Frames lesbar bleiben */
+/* Darken towards the edge so the unit frames stay readable */
 .battle-scenery::after {
     content: "";
     position: absolute;
@@ -410,10 +410,10 @@
 }
 
 /* ============================================
-   Zusätzliche Zonen-Themes
+   Additional zone themes
    ============================================ */
 
-/* Elwynn: helles Laubwaldgrün */
+/* Elwynn: bright deciduous green */
 .zone-theme-elwynn {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(255, 244, 180, .3), transparent 55%),
@@ -421,7 +421,7 @@
     border-color: #4a8a2c;
 }
 
-/* Durotar: roter Fels und Staub */
+/* Durotar: red rock and dust */
 .zone-theme-durotar {
     background:
         repeating-linear-gradient(170deg, rgba(0, 0, 0, .06) 0 3px, transparent 3px 14px),
@@ -430,7 +430,7 @@
     border-color: #9a4a26;
 }
 
-/* Teldrassil: violetter Zwielichtwald */
+/* Teldrassil: violet twilight forest */
 .zone-theme-teldrassil {
     background:
         radial-gradient(ellipse at 20% 100%, rgba(120, 255, 200, .18), transparent 60%),
@@ -439,7 +439,7 @@
     border-color: #5a4a8a;
 }
 
-/* Tirisfal: fahles Grau-Grün, Nebel */
+/* Tirisfal: pale grey-green, fog */
 .zone-theme-tirisfal {
     background:
         radial-gradient(ellipse at 50% 100%, rgba(200, 220, 180, .18), transparent 60%),
@@ -447,7 +447,7 @@
     border-color: #5a6248;
 }
 
-/* Darkshore: mondbeschienene Küste */
+/* Darkshore: moonlit coast */
 .zone-theme-darkshore {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(190, 210, 255, .3), transparent 50%),
@@ -455,7 +455,7 @@
     border-color: #3a5a7e;
 }
 
-/* Loch Modan: Hochland mit See */
+/* Loch Modan: highlands with a lake */
 .zone-theme-lochmodan {
     background:
         radial-gradient(ellipse at 30% 100%, rgba(110, 170, 230, .35), transparent 55%),
@@ -463,7 +463,7 @@
     border-color: #6a7a3e;
 }
 
-/* Silverpine: dunkle, neblige Kiefern */
+/* Silverpine: dark, misty pines */
 .zone-theme-silverpine {
     background:
         repeating-linear-gradient(90deg, rgba(0, 0, 0, .1) 0 2px, transparent 2px 16px),
@@ -472,7 +472,7 @@
     border-color: #4a6452;
 }
 
-/* Westfall: goldene Felder */
+/* Westfall: golden fields */
 .zone-theme-westfall {
     background:
         repeating-linear-gradient(95deg, rgba(255, 255, 255, .05) 0 2px, transparent 2px 10px),
@@ -481,7 +481,7 @@
     border-color: #a8843a;
 }
 
-/* Redridge: rote Klippen */
+/* Redridge: red cliffs */
 .zone-theme-redridge {
     background:
         radial-gradient(ellipse at 20% 100%, rgba(80, 140, 60, .4), transparent 55%),
@@ -490,7 +490,7 @@
     border-color: #9a4234;
 }
 
-/* Stonetalon: graubrauner Fels */
+/* Stonetalon: grey-brown rock */
 .zone-theme-stonetalon {
     background:
         repeating-linear-gradient(160deg, rgba(0, 0, 0, .07) 0 3px, transparent 3px 12px),
@@ -499,7 +499,7 @@
     border-color: #7a6a56;
 }
 
-/* Ashenvale: türkiser Elfenwald, violetter Schimmer */
+/* Ashenvale: turquoise elven forest, violet shimmer */
 .zone-theme-ashenvale {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(190, 150, 255, .28), transparent 55%),
@@ -507,7 +507,7 @@
     border-color: #2f7068;
 }
 
-/* Wetlands: trübes Sumpfgrün, Regen */
+/* Wetlands: murky swamp green, rain */
 .zone-theme-wetlands {
     background:
         repeating-linear-gradient(105deg, rgba(200, 220, 255, .06) 0 1px, transparent 1px 8px),
@@ -515,7 +515,7 @@
     border-color: #4e6a4a;
 }
 
-/* Hillsbrad: sanfte grüne Hügel */
+/* Hillsbrad: gentle green hills */
 .zone-theme-hillsbrad {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(255, 250, 200, .3), transparent 55%),
@@ -532,7 +532,7 @@
     border-color: #a86a34;
 }
 
-/* Arathi: gelbgrünes Hochland */
+/* Arathi: yellow-green highlands */
 .zone-theme-arathi {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(255, 240, 170, .3), transparent 55%),
@@ -540,7 +540,7 @@
     border-color: #7a8a3e;
 }
 
-/* Desolace: graue, violette Ödnis */
+/* Desolace: grey, violet wasteland */
 .zone-theme-desolace {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(220, 200, 230, .2), transparent 55%),
@@ -548,7 +548,7 @@
     border-color: #6a6070;
 }
 
-/* Dustwallow: schlammiger Sumpf */
+/* Dustwallow: muddy swamp */
 .zone-theme-swamp {
     background:
         radial-gradient(ellipse at 30% 100%, rgba(120, 160, 90, .3), transparent 55%),
@@ -556,7 +556,7 @@
     border-color: #5a5a3a;
 }
 
-/* Badlands: rotbraune Ödlande */
+/* Badlands: red-brown wastelands */
 .zone-theme-badlands {
     background:
         repeating-linear-gradient(175deg, rgba(0, 0, 0, .07) 0 3px, transparent 3px 12px),
@@ -565,7 +565,7 @@
     border-color: #8a5230;
 }
 
-/* Swamp of Sorrows: dunkles, trauriges Moor */
+/* Swamp of Sorrows: dark, mournful moor */
 .zone-theme-sorrows {
     background:
         radial-gradient(ellipse at 50% 100%, rgba(90, 160, 140, .25), transparent 60%),
@@ -573,7 +573,7 @@
     border-color: #2e4a42;
 }
 
-/* Hinterlands: üppiges Wildland */
+/* Hinterlands: lush wildland */
 .zone-theme-hinterlands {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(255, 245, 190, .25), transparent 55%),
@@ -581,7 +581,7 @@
     border-color: #3e7a32;
 }
 
-/* Tanaris: gelbe Wüste */
+/* Tanaris: yellow desert */
 .zone-theme-tanaris {
     background:
         repeating-linear-gradient(170deg, rgba(255, 255, 255, .05) 0 2px, transparent 2px 14px),
@@ -590,7 +590,7 @@
     border-color: #c09a44;
 }
 
-/* Searing Gorge / Burning Steppes: Lava und Asche */
+/* Searing Gorge / Burning Steppes: lava and ash */
 .zone-theme-volcanic {
     background:
         radial-gradient(ellipse at 30% 100%, rgba(255, 110, 20, .5), transparent 55%),
@@ -599,7 +599,7 @@
     border-color: #8a3a1a;
 }
 
-/* Azshara: Herbstfarben und Ruinen */
+/* Azshara: autumn colors and ruins */
 .zone-theme-azshara {
     background:
         radial-gradient(ellipse at 20% 100%, rgba(80, 200, 200, .25), transparent 55%),
@@ -608,7 +608,7 @@
     border-color: #a0524a;
 }
 
-/* Blasted Lands: blutrote Dämonenödnis */
+/* Blasted Lands: blood-red demonic wasteland */
 .zone-theme-blasted {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(140, 255, 80, .15), transparent 50%),
@@ -616,7 +616,7 @@
     border-color: #8a2e22;
 }
 
-/* Un'Goro: Urzeitdschungel mit Vulkanglühen */
+/* Un'Goro: primeval jungle with volcanic glow */
 .zone-theme-ungoro {
     background:
         radial-gradient(ellipse at 85% 10%, rgba(255, 120, 40, .4), transparent 45%),
@@ -624,7 +624,7 @@
     border-color: #3a7a34;
 }
 
-/* Deadwind Pass: lebloses Grau */
+/* Deadwind Pass: lifeless grey */
 .zone-theme-deadwind {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(200, 200, 220, .15), transparent 55%),
@@ -632,7 +632,7 @@
     border-color: #5a544e;
 }
 
-/* Moonglade: Mondlicht, violett-grün */
+/* Moonglade: moonlight, violet-green */
 .zone-theme-moonglade {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(230, 220, 255, .35), transparent 50%),
@@ -641,7 +641,7 @@
     border-color: #5a4e8a;
 }
 
-/* Silithus: staubige Insektenwüste */
+/* Silithus: dusty insect desert */
 .zone-theme-silithus {
     background:
         repeating-linear-gradient(165deg, rgba(0, 0, 0, .06) 0 2px, transparent 2px 10px),
@@ -651,8 +651,8 @@
 }
 
 /* ============================================
-   WoW-Tooltips für Zonen und Reisen (WowTooltip.razor, positioniert über js/tooltip.js)
-   Gleicher Look wie die Item-Tooltips: dunkelblaue Fläche, grauer Rand.
+   WoW tooltips for zones and travel (WowTooltip.razor, positioned via js/tooltip.js)
+   Same look as the item tooltips: dark blue surface, grey border.
    ============================================ */
 .zt-host { display: inline-flex; }
 .zt-host.zt-contents { display: contents; }
@@ -695,7 +695,7 @@
 }
 .zt-section b { color: #fff; font-variant-numeric: tabular-nums; }
 
-/* Levelfarben wie im Questlog */
+/* Level colors like in the quest log */
 .zt-line.lvl-red    { color: #ff4a3a; }
 .zt-line.lvl-yellow { color: #ffd100; }
 .zt-line.lvl-green  { color: #4fd84f; }

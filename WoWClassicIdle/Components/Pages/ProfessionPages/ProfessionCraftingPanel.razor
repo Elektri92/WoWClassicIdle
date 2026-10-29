@@ -1,7 +1,7 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Herstellungsfenster wie in WoW: Rezeptliste links, Details + Create rechts. Aktiver Slot, 3 s pro Herstellung. *@
+@* Crafting window like in WoW: recipe list on the left, details + Create on the right. Active slot, 3 s per craft. *@
 <div class="al-panel">
     <h4>Active Slot</h4>
 
@@ -15,7 +15,7 @@
             <input class="trainer-search" type="search" placeholder="Search recipes…" @bind="_search" @bind:event="oninput" />
             @if (RecipeClasses.Count > 0)
             {
-                @* Klassen-Filter für Rüstungsrezepte *@
+                @* Class filter for armor recipes *@
                 <button class="craft-filter-btn @(_classFilter is null ? "active" : "")" @onclick="() => _classFilter = null">All</button>
                 @foreach (var cls in RecipeClasses)
                 {
@@ -40,7 +40,7 @@
                     int groupCraftable = groupLocked ? 0 : group.Count(r => Engine.MaxCraftable(r) > 0);
                     @if (grouped)
                     {
-                        @* Einklappbare Stufe: gesperrte Stufen starten eingeklappt *@
+                        @* Collapsible tier: locked tiers start collapsed *@
                         <div class="craft-list-group @(groupLocked ? "locked" : "")" @onclick="() => ToggleGroup(group.Key)">
                             <span class="craft-list-caret">@(collapsed ? "▸" : "▾")</span>
                             <span>Skill @group.Key</span>
@@ -59,7 +59,7 @@
                     {
                         @foreach (var classGroup in group.GroupBy(r => ItemRequirements.ClassOf(r.Result)))
                         {
-                            @* Bei "All" Klassen-Unterüberschrift, damit die Sets auseinanderzuhalten sind *@
+                            @* With "All" a class subheading so the sets can be told apart *@
                             @if (classGroup.Key is { } cls && _classFilter is null)
                             {
                                 <div class="craft-list-class-head class-@cls.ToString().ToLowerInvariant()">
@@ -77,7 +77,7 @@
                                      @onclick="() => SelectRecipe(recipe)">
                                     @if (!locked)
                                     {
-                                        @* Orange = gibt noch Skillpunkte, grau = unter der eigenen Skill-Range *@
+                                        @* Orange = still gives skill points, grey = below the own skill range *@
                                         <span class="craft-skill-dot @(GivesSkillUp(recipe) ? "up" : "trivial")"></span>
                                     }
                                     <img class="craft-list-icon" src="@item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
@@ -89,7 +89,7 @@
                                 </div>;
                                 string? hint = locked ? $"Requires {Progress.Definition.Name} ({recipe.RequiredSkill})" : null;
 
-                                @* Item-Tooltip beim Überfahren (Rüstung mit Vergleich zum getragenen Teil) *@
+                                @* Item tooltip on hover (armor with comparison to the worn piece) *@
                                 @if (item is ArmorItem armor)
                                 {
                                     <ArmorTooltip Armor="armor" Class="tt-contents" Hint="@hint"
@@ -180,7 +180,7 @@
     private string? _recipeId;
     private CharacterClass? _classFilter;
 
-    // Manuell auf-/zugeklappte Stufen (Skill → eingeklappt); ohne Eintrag gilt: gesperrt = eingeklappt
+    // Manually expanded/collapsed tiers (skill → collapsed); without an entry: locked = collapsed
     private readonly Dictionary<int, bool> _collapsedOverride = new();
 
     private bool IsCollapsed(int skill) =>
@@ -191,11 +191,11 @@
 
     private string _search = "";
 
-    // Nur beim Lehrer gelernte Rezepte (Herstellungsberufe starten mit einem Basisrezept)
+    // Only recipes learned from the trainer (crafting professions start with a basic recipe)
     private IReadOnlyList<Recipe> Recipes =>
         ProfessionRegistry.GetRecipes(Progress.Profession).Where(r => Progress.KnowsRecipe(r.Id)).ToList();
 
-    /// <summary>Klassen, für die dieser Beruf Rüstung herstellt (leer bei Verbrauchsgütern).</summary>
+    /// <summary>Classes this profession crafts armor for (empty for consumables).</summary>
     private IReadOnlyList<CharacterClass> RecipeClasses =>
         Recipes.Select(r => ItemRequirements.ClassOf(r.Result)).OfType<CharacterClass>().Distinct().ToList();
 
@@ -228,14 +228,14 @@
 
     protected override void OnParametersSet()
     {
-        // Filter einmal je Beruf vorbelegen: eigene Klasse, wenn der Beruf für sie herstellt
+        // Preset the filter once per profession: own class if the profession crafts for it
         if (_filterInitFor != Progress.Profession)
         {
             _filterInitFor = Progress.Profession;
             _classFilter = RecipeClasses.Contains(Engine.PlayerClass) ? Engine.PlayerClass : null;
         }
 
-        // Zuletzt gewähltes Rezept wieder auswählen (Herstellen startet nicht automatisch – verbraucht Material)
+        // Select the last chosen recipe again (crafting doesn't start automatically – it consumes materials)
         if (SelectedRecipe is null || SelectedRecipe.Profession != Progress.Profession)
         {
             var remembered = ProfessionRegistry.GetRecipe(Engine.GetLastProfessionTarget(Progress.Profession));

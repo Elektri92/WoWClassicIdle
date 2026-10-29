@@ -842,12 +842,12 @@
     private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
     private static readonly CharacterClass[] AllClasses = Enum.GetValues<CharacterClass>();
 
-    // Schnellauswahl für Level-Bereiche (1–10, 10–20, … 50–60)
+    // Quick selection for level ranges (1–10, 10–20, … 50–60)
     private static readonly (int From, int To)[] QuickRanges =
         [(1, 10), (10, 20), (20, 30), (30, 40), (40, 50), (50, 60)];
 
     // ─── Einstellungen ───
-    // Standard: Leveling Race 1–10, bis Ziel (Cap 600 h), alle Klassen
+    // Default: leveling race 1–10, until target (cap 600 h), all classes
     private int _levelFrom = 1;
     private int _levelTo = 10;
     private double _minutesPerRun = 36000;
@@ -864,7 +864,7 @@
     private readonly List<LevelingResult> _levelingResults = new();
     private readonly object _levelingResultsLock = new();
     private readonly HashSet<(CharacterClass, int)> _lrExpanded = new();
-    // Labels der gerade laufenden Specs (Läufe laufen parallel auf Worker-Threads)
+    // Labels of the specs currently running (runs execute in parallel on worker threads)
     private readonly HashSet<string> _runningLabels = new();
     private CancellationTokenSource? _cts;
     private bool _running;
@@ -1099,7 +1099,7 @@
         return values.Count % 2 == 1 ? values[mid] : (values[mid - 1] + values[mid]) / 2.0;
     }
 
-    /// <summary>Abweichung vom Median, positiv = besser (berücksichtigt "niedriger ist besser").</summary>
+    /// <summary>Deviation from the median, positive = better (accounts for "lower is better").</summary>
     private static double Deviation(Metric metric, double value, double median)
     {
         if (double.IsNaN(value) || double.IsNaN(median) || double.IsInfinity(value)) return double.NaN;
@@ -1118,7 +1118,7 @@
 
     private sealed record Outlier(CharacterClass Class, string SpecName, string Metric, string Levels, double Deviation, bool Better);
 
-    /// <summary>Fasst Ausreißer pro Klasse/Spec + Metrik über zusammenhängende Level zusammen.</summary>
+    /// <summary>Combines outliers per class/spec + metric across contiguous levels.</summary>
     private IEnumerable<Outlier> FindOutliers(List<SimulationResult> results)
     {
         var keys   = new[] { "dps", "kpm", "dph" };
@@ -1139,7 +1139,7 @@
                         hits.Add((lv, dev));
                 }
 
-                // Nach Richtung gruppieren, damit "zu stark" und "zu schwach" getrennt bleiben
+                // Group by direction so "too strong" and "too weak" stay separate
                 foreach (var group in hits.GroupBy(h => h.Dev > 0))
                 {
                     var lvs = group.Select(h => h.Level).ToList();
@@ -1177,11 +1177,11 @@
         }
         catch
         {
-            // Clipboard-Zugriff verweigert – Text bleibt im Textarea sichtbar
+            // Clipboard access denied – the text stays visible in the textarea
         }
     }
 
-    /// <summary>Pro Klasse/Spec der Lauf auf dem höchsten Level, bestes XP/h zuerst.</summary>
+    /// <summary>Per class/spec the run at the highest level, best XP/h first.</summary>
     private static List<SimulationResult> BestBuilds(List<SimulationResult> results) =>
         SimAiExport.BestBuilds(results);
 
@@ -1191,7 +1191,7 @@
                 .Select(o => $"{o.Deviation.ToString("+0%;-0%", Inv)} {o.Class} ({o.SpecName}) {o.Metric} · Lv {o.Levels}")
                 .ToList());
 
-    /// <summary>AI-Export als Markdown-Datei herunterladen (Blob-Download per JS-Eval, keine extra JS-Datei nötig).</summary>
+    /// <summary>Download the AI export as a Markdown file (blob download via JS eval, no extra JS file needed).</summary>
     private async Task DownloadAiSummaryAsync()
     {
         string name = $"simulation-{_mode}-{DateTime.Now:yyyyMMdd-HHmm}.md";
@@ -1245,7 +1245,7 @@
         }
     </span>;
 
-    // Parallele Läufe liefern in beliebiger Reihenfolge → stabil nach Klasse/Spec sortieren
+    // Parallel runs deliver in arbitrary order → sort stably by class/spec
     private List<LevelingResult> LevelingSnapshot()
     {
         lock (_levelingResultsLock)
@@ -1263,7 +1263,7 @@
         if (!_lrExpanded.Remove(key)) _lrExpanded.Add(key);
     }
 
-    /// <summary>Meilenstein-Level für die Timeline-Tabelle (max. ~12 Spalten).</summary>
+    /// <summary>Milestone levels for the timeline table (max. ~12 columns).</summary>
     private static IReadOnlyList<int> GetMilestoneLevels(int from, int to)
     {
         int range = to - from;
@@ -1275,7 +1275,7 @@
         return list;
     }
 
-    /// <summary>Abweichung vom Median der Leveling-Zeiten; negativ = schneller = besser (grün).</summary>
+    /// <summary>Deviation from the median of the leveling times; negative = faster = better (green).</summary>
     private static double LevelTimingDeviation(List<LevelingResult> results, int level, double seconds)
     {
         var values = results

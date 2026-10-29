@@ -1,14 +1,14 @@
 /* ============================================
-   Charakterfenster (/inventory) im Farbschema des Volkswappens
-   Je Volk zwei Wappenfarben (--crest-1 Haupt-, --crest-2 Nebenfarbe) plus helle Textfarbe (--crest-text).
-   Als <color> registriert, damit ein Volkswechsel weich überblendet statt hart umzuspringen.
+   Character window (/inventory) in the color scheme of the race crest
+   Two crest colors per race (--crest-1 main, --crest-2 secondary color) plus a light text color (--crest-text).
+   Registered as <color> so a race change cross-fades smoothly instead of switching abruptly.
    ============================================ */
 
 @property --crest-1    { syntax: '<color>'; inherits: true; initial-value: #c5a55a; }
 @property --crest-2    { syntax: '<color>'; inherits: true; initial-value: #8a7444; }
 @property --crest-text { syntax: '<color>'; inherits: true; initial-value: #ffd100; }
 
-/* ── Paletten (abgeleitet aus images/races/crest_*.png); auch für Charaktererstellung und Auswahlleiste in /character ── */
+/* ── Palettes (derived from images/races/crest_*.png); also for character creation and the selection bar in /character ── */
 :is(.inv-char, .cs-stage, .cs-pick-bar).race-human    { --crest-1: #4f7fc4; --crest-2: #d4af37; --crest-text: #cfe0ff; }
 :is(.inv-char, .cs-stage, .cs-pick-bar).race-dwarf    { --crest-1: #3fa35a; --crest-2: #d8b04a; --crest-text: #d2f2c8; }
 :is(.inv-char, .cs-stage, .cs-pick-bar).race-nightelf { --crest-1: #8c6ad8; --crest-2: #b8bcd8; --crest-text: #e2d8ff; }
@@ -18,7 +18,7 @@
 :is(.inv-char, .cs-stage, .cs-pick-bar).race-tauren   { --crest-1: #b8322e; --crest-2: #3aa8a0; --crest-text: #ffd2c8; }
 :is(.inv-char, .cs-stage, .cs-pick-bar).race-troll    { --crest-1: #d0405a; --crest-2: #9a5ad0; --crest-text: #ffd0dc; }
 
-/* ── Panel: Wappenfarbe strahlt von oben ein und läuft nach unten ins Dunkel aus ── */
+/* ── Panel: crest color shines in from the top and fades out into darkness towards the bottom ── */
 .al-panel.inv-char {
     background:
         radial-gradient(ellipse 90% 45% at 50% 32%, color-mix(in srgb, var(--crest-1) 22%, transparent) 0%, transparent 70%),
@@ -35,7 +35,7 @@
     transition: --crest-1 .8s ease, --crest-2 .8s ease, --crest-text .8s ease;
 }
 
-/* Titel mit Wappenfarb-Schimmer und auslaufender Zierlinie */
+/* Title with crest color shimmer and tapering ornamental line */
 .inventory-page .inv-char h4 {
     position: relative;
     padding-bottom: 6px;
@@ -53,7 +53,7 @@
     opacity: .8;
 }
 
-/* ── Wappenbühne: Hintergrund in Wappenfarben, Rand verschwimmt mit dem Panel ── */
+/* ── Crest stage: background in crest colors, the edge blends into the panel ── */
 .inv-char .model-area {
     background:
         radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--crest-1) 30%, transparent) 0%, transparent 58%),
@@ -65,7 +65,7 @@
     box-shadow: inset 0 0 22px #000, inset 0 0 40px color-mix(in srgb, var(--crest-1) 15%, transparent),
                 0 0 12px color-mix(in srgb, var(--crest-1) 15%, transparent);
 }
-/* Schimmer hinter dem Wappen: Wappenfarben statt Fraktionsfarbe */
+/* Shimmer behind the crest: crest colors instead of faction color */
 .inv-char .model-area.alliance::before,
 .inv-char .model-area.horde::before {
     background: radial-gradient(circle,
@@ -78,7 +78,7 @@
             drop-shadow(0 0 12px color-mix(in srgb, var(--crest-1) 35%, transparent));
 }
 
-/* ── Leere Slots: dunkel mit Wappenfarb-Rand; ausgerüstete behalten die Qualitätsfarbe ── */
+/* ── Empty slots: dark with a crest color border; equipped ones keep the quality color ── */
 .inv-char .equip-slot {
     background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--crest-1) 12%, #0c0a06) 0%, #0a0805 75%);
     border-color: color-mix(in srgb, var(--crest-1) 30%, var(--wow-border-dark));
@@ -92,7 +92,7 @@
     box-shadow: 0 0 9px color-mix(in srgb, var(--crest-1) 70%, transparent);
 }
 
-/* Weichen Übergang zwischen Paperdoll und Werten: Zierlinie unter der Waffenzeile */
+/* Smooth transition between paperdoll and stats: ornamental line below the weapon row */
 .inv-char .weapon-row {
     position: relative;
     padding-bottom: 10px;
@@ -107,7 +107,7 @@
     background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--crest-1) 70%, transparent), transparent);
 }
 
-/* ── Wertekästen: oben leicht in Wappenfarbe getönt, nach unten dunkel ── */
+/* ── Stat boxes: lightly tinted in crest color at the top, dark towards the bottom ── */
 .inv-char .stat-box {
     background:
         linear-gradient(180deg,

@@ -11,7 +11,7 @@
 <div class="wow-page narrow idle-page @(BuildInfo.IsDebug ? "with-debug" : "")">
 @if (_engine.IsAtSpiritHealer)
 {
-    <!-- Geisterwelt: Bildschirm entsättigt, nur der Spirit Healer bleibt farbig (css/spirit-healer.css) -->
+    <!-- Ghost world: screen desaturated, only the Spirit Healer stays in color (css/spirit-healer.css) -->
     <div class="death-overlay" aria-hidden="true"></div>
 }
 @if (ShowResurrectFlash)
@@ -25,7 +25,7 @@
 
 @if (ZoneMenuVisible)
 {
-    @* Zonenkarte offen → Kampf, Reise und Meter ausblenden *@
+    @* Zone map open → hide combat, travel and meter *@
 }
 else if (_engine.IsTraveling)
 {
@@ -34,7 +34,7 @@ else if (_engine.IsTraveling)
 else if (!_engine.NeedsCombatZone)
 {
     var battleTheme = _engine.CurrentCombatZone?.Theme ?? "grassland";
-<!-- Kampf-Hintergrund in den Farben der aktuellen Zone (css/combat-zones.css) -->
+<!-- Combat background in the colors of the current zone (css/combat-zones.css) -->
 <div class="battle-backdrop zone-theme-@battleTheme @(CombatZoneRegistry.IsNightTheme(battleTheme) ? "night" : "day")">
 <div class="battle-scenery" aria-hidden="true">
     <div class="battle-mountains zone-theme-@battleTheme"></div>
@@ -42,12 +42,12 @@ else if (!_engine.NeedsCombatZone)
 </div>
 <div class="battlefield">
     <!-- ═══════════════════════════════════════════ -->
-    <!--  PLAYER FRAME  (links)                     -->
+    <!--  PLAYER FRAME  (left)                      -->
     <!-- ═══════════════════════════════════════════ -->
     <div class="unit-frame player-frame @(ShowLevelUp ? "leveling-up" : "")">
         @if (ShowLevelUp)
         {
-            <!-- Level-Up: Lichtsäule, Ringwelle und aufsteigende Funken (css/level-up.css) -->
+            <!-- Level-up: light pillar, ring wave and rising sparks (css/level-up.css) -->
             <div @key="_levelUpAt.Ticks" class="levelup-fx" aria-hidden="true">
                 <div class="levelup-beam"></div>
                 <div class="levelup-ring"></div>
@@ -58,11 +58,11 @@ else if (!_engine.NeedsCombatZone)
                 }
             </div>
         }
-        <!-- ═══ CONSUMABLES: Spalte links neben dem Spieler, füllt von oben nach unten ═══ -->
+        <!-- ═══ CONSUMABLES: column left of the player, fills from top to bottom ═══ -->
         <div class="consumable-dock">
             <ConsumableBar />
         </div>
-        <!-- Zuletzt ausgelöste Spells: Icon fliegt links neben dem Charakter von unten nach oben -->
+        <!-- Most recently triggered spells: icon flies from bottom to top to the left of the character -->
         <div class="spell-scroll" aria-hidden="true">
             @foreach (var s in SnapshotSpellFloats())
             {
@@ -81,7 +81,7 @@ else if (!_engine.NeedsCombatZone)
             <div class="portrait-area">
                 @if (_engine.IsAtSpiritHealer)
                 {
-                    <!-- Totenkopf-Icon solange der Spieler tot ist -->
+                    <!-- Skull icon while the player is dead -->
                     <img class="death-skull"
                          src="https://wow.zamimg.com/images/wow/icons/large/inv_misc_bone_skull_01.jpg"
                          alt="Dead" title="You are dead" />
@@ -101,7 +101,7 @@ else if (!_engine.NeedsCombatZone)
                 <div class="name-line">
                     <span class="char-name">@_engine.ActiveCharacterName</span>
                     <span @key="_levelUpAt.Ticks" class="level @(ShowLevelUp ? "level-pop" : "")">Lv. @_engine.Player.Stats.Level</span>
-                    <!-- ═══ ACTIVE BUFFS: oben rechts in der Namenszeile, füllt von rechts nach links ═══ -->
+                    <!-- ═══ ACTIVE BUFFS: top right in the name row, fills from right to left ═══ -->
                     @{ var buffs = _engine.Player.Buffs.Snapshot(); }
                     @if (buffs.Count > 0)
                     {
@@ -126,7 +126,7 @@ else if (!_engine.NeedsCombatZone)
                         int playerHpPct = CalcPct(_engine.Player.CurrentHp, _engine.Player.Stats.MaxHp);
                         int shield      = _engine.Player.Buffs.TotalShield;
                         int shieldPct   = shield > 0 ? Math.Max(1, CalcPct(shield, _engine.Player.Stats.MaxHp)) : 0;
-                        // Schild hängt hinter den HP; passt er nicht mehr rein, wird er rechtsbündig über die HP gelegt
+                        // The shield sits behind the HP; if it no longer fits, it is laid right-aligned over the HP
                         int shieldLeft  = Math.Min(playerHpPct, 100 - shieldPct);
                     }
                     <div class="hp-bar">
@@ -170,7 +170,7 @@ else if (!_engine.NeedsCombatZone)
             </div>
         </div>
 
-            <!-- ═══ PET (Hunter-Pet / Warlock-Dämon) ═══ -->
+            <!-- ═══ PET (Hunter pet / Warlock demon) ═══ -->
             @if (_engine.Pet is { } pet)
             {
                 <div class="pet-row">
@@ -210,7 +210,7 @@ else if (!_engine.NeedsCombatZone)
 
             <!-- ═══ EQUIPPED ABILITIES ═══ -->
             <div class="ability-bar">
-                <!-- Auto-Attack: Swing-Timer füllt sich von unten, pausiert während eines Mana-Casts -->
+                <!-- Auto-attack: swing timer fills from the bottom, pauses during a mana cast -->
                 @{ bool swingHeld = _engine.IsSwingHeld; }
                 <WeaponTooltip Weapon="_engine.Player.EquippedWeapon">
                     <span class="ability-slot filled auto-attack-slot @(swingHeld ? "held" : "")"
@@ -238,7 +238,7 @@ else if (!_engine.NeedsCombatZone)
                         double remaining = _engine.Player.Cooldowns.GetRemaining(equipped.Id);
                         bool onCooldown = remaining > 0;
                         bool isCasting  = casting?.Id == equipped.Id;
-                        // GCD betrifft nur aktiv gewirkte Fähigkeiten (keine Passiven / On-Next-Swing)
+                        // The GCD only affects actively cast abilities (no passives / on-next-swing)
                         bool onGcd = !onCooldown && gcdRemaining > 0 && !equipped.IsPassive && !equipped.ReplacesAutoAttack;
                         <AbilityTooltip Ability="_engine.Player.GetEffectiveAbility(equipped)" PlayerLevel="_engine.Player.Level">
                             <span class="ability-slot filled @(onCooldown ? "on-cooldown" : "ready") @(isCasting ? "casting" : "")">
@@ -274,13 +274,13 @@ else if (!_engine.NeedsCombatZone)
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
-    <!--  ENEMY FRAME  (rechts)                      -->
+    <!--  ENEMY FRAME  (right)                       -->
     <!-- ═══════════════════════════════════════════ -->
         <div class="unit-frame enemy-frame @(_engine.IsAtSpiritHealer ? "spirit-frame" : _engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
             <div class="combat-text-overlay">
                 @foreach (var f in SnapshotFloats(_enemyFloats))
                 {
-                    <!-- Treffer erscheinen erst beim Einschlag des Effekts (animation-delay) -->
+                    <!-- Hits only appear on impact of the effect (animation-delay) -->
                     <span @key="f.Id" class="combat-text @FloatCssClass(f)"
                           style="left: calc(50% + @(f.XOffset)px); top: @(f.YOffset)px;@FloatDelayStyle(f)">@FloatText(f)</span>
                 }
@@ -293,7 +293,7 @@ else if (!_engine.NeedsCombatZone)
                              src="@SpiritHealerIconUrl"
                              alt="Spirit Healer"
                              onerror="this.src='images/enemy_placeholder.png'" />
-                        <!-- Aufsteigende Irrlichter um den Spirit Healer -->
+                        <!-- Rising wisps around the Spirit Healer -->
                         <span class="spirit-wisps" aria-hidden="true">
                             @for (int i = 0; i < 6; i++)
                             {
@@ -317,7 +317,7 @@ else if (!_engine.NeedsCombatZone)
                     }
                     @if (!_engine.IsAtSpiritHealer && _engine.CurrentEnemy?.IsRare == true)
                     {
-                        <!-- Silberner Drachen-Rahmen (WoW-Classic Rare-Elite), gespiegelt: Flügel zeigen nach außen statt über die Leisten -->
+                        <!-- Silver dragon frame (WoW Classic rare elite), mirrored: wings point outwards instead of over the bars -->
                         <img class="rare-dragon-frame" src="images/rare-dragon-frame.png" alt="" aria-hidden="true" />
                         <span class="rare-level-badge">@_engine.CurrentEnemy?.Stats.Level</span>
                     }
@@ -354,7 +354,7 @@ else if (!_engine.NeedsCombatZone)
                             <span class="bar-text">@enemy.CurrentHp / @enemy.Stats.MaxHp</span>
                         </div>
                     </div>
-                    <!-- Gegner-Swing-Timer: füllt sich bis zum nächsten Angriff, glüht kurz davor; Betäubung friert ihn optisch ein -->
+                    <!-- Enemy swing timer: fills up until the next attack, glows shortly before; a stun visually freezes it -->
                     double enemySwing = _engine.EnemySwingProgress;
                     bool enemyStunned = enemy.Debuffs.IsStunned;
                     double swingLeft = Math.Max(0, (1 - enemySwing) * _engine.EnemySwingInterval);
@@ -413,7 +413,7 @@ else if (!_engine.NeedsCombatZone)
 </div>
 @if (ShowLevelUp)
 {
-    <!-- Level-Up-Banner im Stil des Classic-Hinweises "You have reached level X" -->
+    <!-- Level-up banner in the style of the Classic notice "You have reached level X" -->
     <div @key="_levelUpAt.Ticks" class="levelup-banner" role="status">
         <span class="levelup-banner-glow" aria-hidden="true"></span>
         <span class="levelup-banner-title">Level Up!</span>
@@ -534,7 +534,7 @@ else if (!_engine.NeedsCombatZone)
         }
     </div>
 
-    <!-- ═══ ACTION HISTORY (standardmäßig ausgeblendet) ═══ -->
+    <!-- ═══ ACTION HISTORY (hidden by default) ═══ -->
     @if (_showHistory)
     {
     <div class="meter-box meter-window">
@@ -574,7 +574,7 @@ else if (!_engine.NeedsCombatZone)
 
     @if (BuildInfo.IsDebug)
     {
-        <!-- Schmale Spalte links, direkt neben der Navigation fixiert -->
+        <!-- Narrow column on the left, fixed right next to the navigation -->
         <div class="wow-card debug-panel">
             <h4 class="debug-title">Debug <span class="wow-badge">DEBUG</span></h4>
             <div class="debug-status-row">
@@ -681,7 +681,7 @@ else if (!_engine.NeedsCombatZone)
         justify-content: center;
         gap: 12px;
         margin: 1rem 0;
-        padding-left: 94px;   /* Platz für Verbrauchsgüter-Spalte + Spell-Scroll links neben dem Spieler */
+        padding-left: 94px;   /* Space for the consumables column + spell scroll to the left of the player */
     }
 
     .unit-frame {
@@ -697,7 +697,7 @@ else if (!_engine.NeedsCombatZone)
         overflow: visible;
     }
 
-    /* Azeroth-Karte sehr schwach hinter dem braunen Verlauf durchscheinen lassen */
+    /* Let the Azeroth map shine through very faintly behind the brown gradient */
     .player-frame {
         background:
             linear-gradient(180deg, rgba(43,36,24,.9) 0%, rgba(26,21,13,.93) 100%),
@@ -734,15 +734,15 @@ else if (!_engine.NeedsCombatZone)
         text-shadow: 0 0 4px rgba(120,180,210,.55);
     }
 
-    /* Silberner Portraitrand für Rare-Gegner */
+    /* Silver portrait border for rare enemies */
     .rare-portrait-area .enemy-portrait {
         border-color: #7aaabb;
         box-shadow: 0 0 12px rgba(100,160,190,0.7);
     }
 
-    /* Drachen-Rahmen (300 × 300 px Grafik, Portrait-Loch bei 114/138 mit r = 70, Level-Rund bei 169/190):
-       auf 141 px skaliert (Faktor 0,47 → Loch r ≈ 33 = Portrait + Rand) und horizontal gespiegelt,
-       damit Kopf und Flügel links aus dem Frame ragen. Loch-Mitte gespiegelt bei x = 186 → 87,6 px. */
+    /* Dragon frame (300 × 300 px graphic, portrait hole at 114/138 with r = 70, level circle at 169/190):
+       scaled to 141 px (factor 0.47 → hole r ≈ 33 = portrait + border) and mirrored horizontally,
+       so head and wings stick out of the frame on the left. Hole center mirrored at x = 186 → 87.6 px. */
     .rare-dragon-frame {
         position: absolute;
         left: -56px;
@@ -756,7 +756,7 @@ else if (!_engine.NeedsCombatZone)
         filter: drop-shadow(0 2px 4px rgba(0,0,0,.8)) drop-shadow(0 0 6px rgba(160,200,225,.35));
     }
 
-    /* Gegnerlevel im kleinen goldenen Rund des Rahmens (unten links nach dem Spiegeln) */
+    /* Enemy level in the small golden circle of the frame (bottom left after mirroring) */
     .rare-level-badge {
         position: absolute;
         left: 6px;
@@ -825,7 +825,7 @@ else if (!_engine.NeedsCombatZone)
         animation: combatTextPop 1.6s ease-out forwards;
     }
 
-    /* Kritischer Treffer: größer, mit goldenem Glühen */
+    /* Critical hit: bigger, with golden glow */
     .ct-crit {
         font-size: 2.4rem;
         -webkit-text-stroke: 1.5px #000;
@@ -842,7 +842,7 @@ else if (!_engine.NeedsCombatZone)
         100% { transform: translate(-50%, -70px) scale(1); opacity: 0; }
     }
 
-    /* Start bei opacity 0, damit verzögerte Zahlen (animation-delay) bis zum Einschlag unsichtbar bleiben */
+    /* Start at opacity 0 so delayed numbers (animation-delay) stay invisible until impact */
     @@keyframes combatTextRise {
         0%   { transform: translate(-50%, 0) scale(1.4); opacity: 0; }
         6%   { transform: translate(-50%, 0) scale(1.15); opacity: 1; }
@@ -898,7 +898,7 @@ else if (!_engine.NeedsCombatZone)
         object-fit: contain;
     }
 
-    /* Totenkopf-Icon beim Tod des Spielers */
+    /* Skull icon on player death */
     .death-skull {
         width: 64px;
         height: 64px;
@@ -979,7 +979,7 @@ else if (!_engine.NeedsCombatZone)
         box-shadow: inset 0 0 4px #000;
     }
 
-    /* Füllung per scaleX statt width – nur Compositing, kein Layout pro Tick */
+    /* Fill via scaleX instead of width – compositing only, no layout per tick */
     .hp-fill, .mana-fill, .xp-fill {
         height: 100%;
         transform-origin: left;
@@ -990,7 +990,7 @@ else if (!_engine.NeedsCombatZone)
         background: linear-gradient(180deg, #3fbf3f 0%, #1e7a1e 100%);
     }
 
-    /* Schild (Absorb) auf dem Spieler – blau, hinter bzw. über den HP */
+    /* Shield (absorb) on the player – blue, behind or over the HP */
     .shield-fill {
         position: absolute;
         top: 0;
@@ -1108,7 +1108,7 @@ else if (!_engine.NeedsCombatZone)
         box-shadow: 0 0 10px rgba(255, 211, 74, .8);
     }
 
-    /* ── Gegner-Swing-Timer: schmale Leiste unter dem Lebensbalken ── */
+    /* ── Enemy swing timer: narrow bar below the health bar ── */
     .enemy-swing {
         display: flex;
         align-items: center;
@@ -1143,7 +1143,7 @@ else if (!_engine.NeedsCombatZone)
         transform-origin: left;
     }
 
-    /* Funke an der Spitze der Füllung: spurbreiter Träger, per translateX verschoben (% = Spurbreite) */
+    /* Spark at the tip of the fill: track-wide carrier, shifted via translateX (% = track width) */
     .enemy-swing-tick {
         position: absolute;
         inset: -1px 0;
@@ -1169,7 +1169,7 @@ else if (!_engine.NeedsCombatZone)
         text-shadow: 0 1px 2px #000;
     }
 
-    /* Kurz vor dem Treffer: Leiste glüht rot */
+    /* Shortly before the hit: the bar glows red */
     .enemy-swing.imminent .enemy-swing-track {
         border-color: #ff5a2a;
         animation: enemySwingWarn .35s ease-in-out infinite alternate;
@@ -1181,7 +1181,7 @@ else if (!_engine.NeedsCombatZone)
         to   { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .8), 0 0 8px rgba(255, 80, 30, .9); }
     }
 
-    /* Betäubt: eingefroren, kühles Blau */
+    /* Stunned: frozen, cool blue */
     .enemy-swing.stunned .enemy-swing-fill { background: linear-gradient(180deg, #8fc8ff 0%, #3a6aa8 100%); }
     .enemy-swing.stunned .enemy-swing-tick { display: none; }
     .enemy-swing.stunned .enemy-swing-time { color: #8fc8ff; }
@@ -1276,7 +1276,7 @@ else if (!_engine.NeedsCombatZone)
         color: #ff6b5b;
     }
 
-    /* ── Spieler-Buffs: kompakt in der Namenszeile, rechtsbündig; row-reverse → erster Buff ganz rechts ── */
+    /* ── Player buffs: compact in the name row, right-aligned; row-reverse → first buff far right ── */
     .player-buff-bar {
         flex: 1 1 auto;
         min-width: 0;
@@ -1297,7 +1297,7 @@ else if (!_engine.NeedsCombatZone)
         height: 22px;
     }
 
-    /* Restzeit liegt auf dem unteren Icon-Rand statt darunter, damit die Zeile flach bleibt */
+    /* Remaining time sits on the bottom edge of the icon instead of below it, so the row stays flat */
     .player-buff-bar .buff-time {
         position: absolute;
         bottom: -3px;
@@ -1341,7 +1341,7 @@ else if (!_engine.NeedsCombatZone)
         margin: 0 2px;
     }
 
-    /* Volle Höhe, per translateY von unten hereingeschoben (Slot hat overflow: hidden) */
+    /* Full height, slid in from below via translateY (slot has overflow: hidden) */
     .swing-fill {
         position: absolute;
         inset: 0;
@@ -1350,7 +1350,7 @@ else if (!_engine.NeedsCombatZone)
         pointer-events: none;
     }
 
-    /* Zeitbasierte Balken (IdleFighter.Bars.cs): Dauer und negativer Startversatz kommen inline */
+    /* Time-based bars (IdleFighter.Bars.cs): duration and negative start offset come inline */
     .bar-anim-x { animation: bar-anim-x 1s linear both; }
     .bar-anim-tick { animation: bar-anim-tick 1s linear both; }
     .bar-anim-up { animation: bar-anim-up 1s linear both; }
@@ -1392,8 +1392,8 @@ else if (!_engine.NeedsCombatZone)
         pointer-events: none;
     }
 
-    /* ── Spell-Scroll: zuletzt ausgelöster Spell fliegt links neben dem Charakter nach oben ── */
-    /* Verbrauchsgüter direkt links am Spieler-Frame, Spell-Scroll weiter außen */
+    /* ── Spell scroll: most recently triggered spell flies upwards to the left of the character ── */
+    /* Consumables directly to the left of the player frame, spell scroll further out */
     .consumable-dock {
         position: absolute;
         right: calc(100% + 6px);
@@ -1508,8 +1508,8 @@ else if (!_engine.NeedsCombatZone)
         margin-bottom: 1rem;
     }
 
-    /* Fenster im Stil klassischer Meter-AddOns (Recount/Details!): dunkler Rahmen, Titelleiste, Statusbars */
-    /* Kompaktes Fenster: feste Maximalbreite statt volle Panelbreite */
+    /* Window in the style of classic meter add-ons (Recount/Details!): dark frame, title bar, status bars */
+    /* Compact window: fixed max width instead of full panel width */
     .meter-box {
         flex: 0 1 340px;
         min-width: 0;
@@ -1547,7 +1547,7 @@ else if (!_engine.NeedsCombatZone)
         gap: 3px;
     }
 
-    /* Kleine Buttons in der Meter-Titelleiste – roter Look mit Goldrand wie die Navigation */
+    /* Small buttons in the meter title bar – red look with gold rim like the navigation */
     .meter-tab {
         position: relative;
         height: 17px;
@@ -1572,7 +1572,7 @@ else if (!_engine.NeedsCombatZone)
         transition: filter .15s ease, box-shadow .15s ease, color .15s ease;
     }
 
-    /* Glänzende obere Hälfte */
+    /* Glossy upper half */
     .meter-tab::before {
         content: "";
         position: absolute;
@@ -1599,7 +1599,7 @@ else if (!_engine.NeedsCombatZone)
         box-shadow: inset 0 2px 5px rgba(0, 0, 0, .8);
     }
 
-    /* Eingeschaltet (Log offen): beleuchtet und eingedrückt wie der aktive Nav-Button */
+    /* Toggled on (log open): lit and pressed like the active nav button */
     .meter-tab.active {
         color: #fff;
         background: linear-gradient(180deg, #4a0808 0%, #6e120d 50%, #8e1a14 100%);
@@ -1678,7 +1678,7 @@ else if (!_engine.NeedsCombatZone)
         outline-offset: -1px;
     }
 
-    /* Statusbar-Textur: Glanzkante oben, dunklere Unterkante */
+    /* Status bar texture: glossy edge on top, darker bottom edge */
     .meter-fill {
         position: absolute;
         inset: 0;
@@ -1780,7 +1780,7 @@ else if (!_engine.NeedsCombatZone)
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Debug panel: schmale, vertikale Spalte links, direkt rechts neben der Sidebar ── */
+    /* ── Debug panel: narrow vertical column on the left, directly to the right of the sidebar ── */
     .debug-panel {
         position: fixed;
         left: 250px;
@@ -1800,7 +1800,7 @@ else if (!_engine.NeedsCombatZone)
 
     .debug-panel .debug-title { font-size: .95rem; margin-bottom: 8px; }
 
-    /* Seiteninhalt nur dann nach rechts schieben, wenn neben der zentrierten Seite kein Platz für die Spalte ist */
+    /* Only push the page content to the right if there is no room for the column next to the centered page */
     @@media (min-width: 641px) and (max-width: 1640px) {
         .idle-page.with-debug { margin-left: 168px; }
     }
@@ -1997,12 +1997,12 @@ else if (!_engine.NeedsCombatZone)
             max-width: 100%;
             width: 100%;
         }
-        /* Kein Platz links neben dem Frame → Icons fliegen innerhalb des Frames */
+        /* No room to the left of the frame → icons fly inside the frame */
         .spell-scroll {
             right: auto;
             left: 6px;
         }
-        /* Verbrauchsgüter als Zeile oben im Frame */
+        /* Consumables as a row at the top of the frame */
         .consumable-dock {
             position: static;
             margin-bottom: 6px;

@@ -1,15 +1,15 @@
-// Kampf-Effekte im Idle Fighter – Kern: Effekt-Layer, Farben, gemeinsame Bausteine und Einstieg aus Blazor.
-// Die Effekte selbst liegen in spells.js, swings.js und auras.js und registrieren sich in spellFx.handlers.
+// Combat effects in the Idle Fighter – core: effect layer, colors, shared building blocks and entry point from Blazor.
+// The effects themselves live in spells.js, swings.js and auras.js and register themselves in spellFx.handlers.
 window.spellFx = (() => {
     const PLAYER = '.player-frame .portrait-area';
     const ENEMY = '.enemy-frame .portrait-area';
-    const MAX_IN_FLIGHT = 8;     // bei hoher Spielgeschwindigkeit nicht den Bildschirm zuschütten
-    const TRAIL_INTERVAL = 22;   // ms zwischen zwei Schweif-Partikeln
+    const MAX_IN_FLIGHT = 8;     // at high game speed don't flood the screen
+    const TRAIL_INTERVAL = 22;   // ms between two trail particles
     let inFlight = 0;
     let layer = null;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    // Farbschema [Glühen, Kern, Highlight] anhand des Icon-Namens (spell_fire_…, spell_frost_…)
+    // Color scheme [glow, core, highlight] based on the icon name (spell_fire_…, spell_frost_…)
     const SCHOOLS = [
         [/arcane|missile|starfire|moonfire|polymorph/, ['#ff8af2', '#b03aff', '#ffe6ff']],
         [/fire|flame|immolat|incinerat|scorch|lava|burn|sear/, ['#ffb347', '#ff4a12', '#fff0b0']],
@@ -31,7 +31,7 @@ window.spellFx = (() => {
     }
 
     function ensureLayer() {
-        // Enhanced Navigation kann fremde Body-Kinder entfernen → bei Bedarf neu anhängen
+        // Enhanced navigation can remove foreign body children → re-append if needed
         if (!layer || !document.body.contains(layer)) {
             layer = document.createElement('div');
             layer.className = 'spellfx-layer';
@@ -91,7 +91,7 @@ window.spellFx = (() => {
         ], { duration, easing: 'cubic-bezier(.2,.7,.3,1)' });
     }
 
-    /** Funken; mit dirAngle (Radiant) als Kegel in Schlagrichtung, sonst rundum. */
+    /** Sparks; with dirAngle (radians) as a cone in the strike direction, otherwise all around. */
     function sparks(x, y, colors, count, minDist, spread, dirAngle = null, cls = 'spellfx-spark') {
         for (let i = 0; i < count; i++) {
             const angle = dirAngle === null
@@ -118,7 +118,7 @@ window.spellFx = (() => {
         ], { duration, delay, easing: 'ease-out' });
     }
 
-    /** Getroffenes Portrait zuckt in Schlagrichtung zurück und blitzt auf. */
+    /** The hit portrait recoils in the strike direction and flashes. */
     function hitReact(target, dir, colors, strength, squash = false) {
         const px = dir.x * strength, py = dir.y * strength;
         target.el.animate([
@@ -142,11 +142,11 @@ window.spellFx = (() => {
         ], { duration: 260, easing: 'linear' });
     }
 
-    /** Bewegt ein Element auf einer Bogenbahn von from nach to (quadratische Bézier-Kurve). */
+    /** Moves an element along an arc from from to to (quadratic Bézier curve). */
     function fly(from, to, { el, duration, arc, accelerate = true, onFrame, onArrive }) {
         const dx = to.x - from.x, dy = to.y - from.y;
         const len = Math.hypot(dx, dy) || 1;
-        // Kontrollpunkt senkrecht zur Flugbahn → Bogen nach oben (bzw. zur Seite bei gestapeltem Layout)
+        // Control point perpendicular to the trajectory → arc upwards (or sideways in a stacked layout)
         const sign = dx >= 0 ? 1 : -1;
         const cx = (from.x + to.x) / 2 + sign * (dy / len) * len * arc;
         const cy = (from.y + to.y) / 2 - sign * (dx / len) * len * arc;
@@ -185,10 +185,10 @@ window.spellFx = (() => {
         return { x: dx / len, y: dy / len, angle: Math.atan2(dy, dx) };
     }
 
-    // Effekt-Typen (spell | swing | buff) → Handler, registriert von den Modulen
+    // Effect types (spell | swing | buff) → handler, registered by the modules
     const handlers = {};
 
-    /** Einstieg aus Blazor: alle Effekte eines Engine-Ticks auf einmal. */
+    /** Entry point from Blazor: all effects of an engine tick at once. */
     function play(events) {
         if (document.hidden || reduceMotion.matches || !Array.isArray(events)) return;
         for (const e of events)

@@ -5,12 +5,12 @@
 
 <PageTitle>@(_def?.Name ?? "Profession")</PageTitle>
 
-@* Styles: wwwroot/css/professions.css – Panels (.al-panel) aus ability-loadout.css *@
+@* Styles: wwwroot/css/professions.css – panels (.al-panel) from ability-loadout.css *@
 <div class="wow-page narrow professions-page prof-detail-page">
     <a class="prof-back" href="professions">← Professions</a>
 
     <div class="prof-detail-layout">
-    @* Quick-Select: alle Berufe untereinander, Klick springt direkt in den Beruf *@
+    @* Quick select: all professions stacked, click jumps directly into the profession *@
     <nav class="prof-quick">
         @{ int quickIndex = 0; }
         @foreach (var group in new[] { Professions.All.Where(d => d.IsGathering), Professions.All.Where(d => !d.IsGathering) })
@@ -48,7 +48,7 @@
         var trainer = ProfessionTrainerRegistry.Get(_def.Profession);
 
         <div class="al-panel prof-header prof-bg-@_def.Slug prof-map-bg">
-            @* Transparente Karte im Hintergrund: Sammelberufe zufälliges Gebiet, Herstellungsberufe Hauptstadt der Fraktion *@
+            @* Transparent map in the background: gathering professions a random zone, crafting professions the faction capital *@
             <div class="prof-map" aria-hidden="true"
                  style="background-image: url('@(_def.IsGathering ? _gatheringMap : IconUrls.CapitalMapUrl(Engine.Faction))')"></div>
             <img class="prof-icon large" src="@_def.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
@@ -65,7 +65,7 @@
                 }
             </div>
 
-            @* Berufslehrer: Klick öffnet das Lehrerfenster, Sprechblase wie beim Händler im Inventar *@
+            @* Profession trainer: click opens the trainer window, speech bubble like the merchant in the inventory *@
             <div class="trainer-npc-col">
                 @if (_speech is not null)
                 {
@@ -148,19 +148,19 @@
     protected override void OnParametersSet()
     {
         var def = Professions.FromSlug(Slug);
-        // Wechsel zu einem anderen Beruf: aktiver Slot des alten Berufs endet mit dem Verlassen der Unterseite
+        // Switch to another profession: the old profession's active slot ends when leaving the subpage
         if (_def is not null && _def != def)
         {
             StopOwnActiveRun();
             ResetTrainer();
         }
-        // Neue Zufallskarte nur beim Berufswechsel, nicht bei jedem Rendern
+        // New random map only when the profession changes, not on every render
         if (_def != def) _gatheringMap = IconUrls.RandomGatheringMapUrl();
         _def = def;
         SwitchToOwner();
     }
 
-    // Hauptberuf gehört einem anderen Charakter → zu diesem wechseln (Kampf wird wie in der Charakterauswahl angehalten)
+    // Main profession belongs to another character → switch to it (combat is paused like in character selection)
     private void SwitchToOwner()
     {
         if (_def is not { IsPrimary: true } || Engine.ProfessionOwner(_def.Profession) is not { } owner) return;

@@ -6,15 +6,15 @@
 
 <PageTitle>Character Selection</PageTitle>
 
-@* Styles: wwwroot/css/character-select.css – gleicher Look wie die Unit-Frames und Kampf-Hintergründe in /idle *@
+@* Styles: wwwroot/css/character-select.css – same look as the unit frames and combat backgrounds in /idle *@
 <div class="wow-page narrow character-selection">
     <h2 class="cs-title">Character Selection</h2>
     <p class="wow-hint cs-hint">@(showCreation ? "Name your new hero and pick race, gender and class." : "Choose a hero to continue the fight, or create a new one.")</p>
 
-    @* ── Existing characters (ausgeblendet, solange die Erstellung offen ist) ── *@
+    @* ── Existing characters (hidden while creation is open) ── *@
     @if (Engine.CharacterRoster.Count > 0 && !showCreation)
     {
-        @* Fraktionen nebeneinander: Alliance links, Horde rechts – jeweils auf ihrem Banner *@
+        @* Factions side by side: Alliance left, Horde right – each on its banner *@
         <div class="cs-factions">
         @foreach (var side in new[] { Faction.Alliance, Faction.Horde })
         {
@@ -54,7 +54,7 @@
                         <div class="battle-hills zone-theme-@theme"></div>
                     </div>
                     <div class="cs-sheen" aria-hidden="true"></div>
-                    @* Volkswappen als Wasserzeichen rechts auf der Karte *@
+                    @* Race crests as a watermark on the right of the card *@
                     <img class="cs-card-crest" src="@IconUrls.RaceCrestUrl(slot.Race)" alt="" aria-hidden="true" onerror="this.remove()" />
 
                     <div class="cs-frame">
@@ -109,7 +109,7 @@
         }
         </div>
 
-        @* Aktionen für den per Klick gewählten Charakter; @key spielt beim Wechsel die Einblendung neu ab *@
+        @* Actions for the character selected by click; @key replays the fade-in on change *@
         @if (PickedSlot is { } picked)
         {
             <div @key="picked.Id" class="cs-pick-bar @(picked.Faction == Faction.Alliance ? "alliance" : "horde") race-@picked.Race.ToString().ToLowerInvariant()">
@@ -150,18 +150,18 @@
         }
     }
 
-    @* ── Creation form: Panels in den Wappenfarben der gewählten Rasse (Palette aus inventory-crest.css) ── *@
+    @* ── Creation form: panels in the crest colors of the chosen race (palette from inventory-crest.css) ── *@
     @if (showCreation)
     {
         var faction = GetFactionForRace(selectedRace);
         string raceCss = selectedRace.ToString().ToLowerInvariant();
 
         <div class="cs-stage @(faction == Faction.Alliance ? "alliance" : "horde") race-@raceCss">
-            @* @key: Bei jeder Rassenwahl neu erzeugt – der Schimmer läuft einmal über die Bühne *@
+            @* @key: recreated on every race selection – the shimmer runs across the stage once *@
             <div @key="selectedRace" class="cs-pick-wave" aria-hidden="true"></div>
 
             <div class="unit-frame cs-panel cs-map" style="--i: 0">
-                @* Hauptstadt der Fraktion; @key blendet beim Fraktionswechsel die neue Karte ein *@
+                @* Capital of the faction; @key fades in the new map when the faction changes *@
                 <div @key="faction" class="cs-map-layer capital-@(faction == Faction.Alliance ? "stormwind" : "orgrimmar")" aria-hidden="true"></div>
                 <h4>Name</h4>
                 <div class="cs-name-input-row">

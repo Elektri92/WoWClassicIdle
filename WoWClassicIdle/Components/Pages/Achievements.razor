@@ -4,7 +4,7 @@
 
 <PageTitle>Achievements</PageTitle>
 
-@* Bühne: zentriert das Fenster im Inhaltsbereich, dezenter Kartenhintergrund (achievements-stage.css) *@
+@* Stage: centers the window in the content area, subtle map background (achievements-stage.css) *@
 <div class="ach-stage">
 <div class="ach-stage-bg" aria-hidden="true">
     <div class="ach-stage-map"></div>
@@ -130,7 +130,7 @@
 </div>
 
 @code {
-    // Eine Erfolgszeile im WoW-Stil: Icon · Titel/Beschreibung/Fortschritt · Punkte-Schild + Datum
+    // A WoW-style achievement row: icon · title/description/progress · points shield + date
     private RenderFragment AchievementRow(AchievementDefinition def, EarnedAchievement? earned)
     {
         bool isEarned = earned is not null;
@@ -163,7 +163,7 @@
         </div>;
     }
 
-    // Beschrifteter Fortschrittsbalken für die Übersicht
+    // Labeled progress bar for the overview
     private RenderFragment ProgressBar(string label, int earnedCnt, int totalCnt)
     {
         double pct = totalCnt > 0 ? earnedCnt * 100.0 / totalCnt : 0;

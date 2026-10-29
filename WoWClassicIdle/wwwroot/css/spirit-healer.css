@@ -1,9 +1,9 @@
-/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
-   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
-   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
+/* One-time animations carry visibility in the start keyframe: that makes them run on the main thread
+   in WebKitGTK instead of in the compositor. Compositor animations ignore the backwards start value there – the element
+   flashed fully visible once before the animation start (page transition flicker). */
 /* ── Tod & Spirit Healer (Components/Pages/IdleFighter.Death.cs) ──
-   Geisterwelt: der ganze Bildschirm wird grau-blau entsättigt, nur der Spirit-Healer-Frame
-   liegt darüber und bleibt farbig. */
+   Ghost world: the whole screen is desaturated grey-blue, only the Spirit Healer frame
+   sits above it and stays in color. */
 
 /* ── Geisterwelt-Overlay ── */
 .death-overlay {
@@ -18,7 +18,7 @@
     animation: deathFadeIn 1.6s ease-out both;
 }
 
-/* Kurzes rotes Aufblitzen im Moment des Todes */
+/* Brief red flash at the moment of death */
 .death-overlay::after {
     content: "";
     position: absolute;
@@ -27,7 +27,7 @@
     animation: deathBlood 1.4s ease-out forwards;
 }
 
-/* Langsam aufsteigende Geisterpartikel */
+/* Slowly rising ghost particles */
 .death-overlay::before {
     content: "";
     position: absolute;
@@ -59,7 +59,7 @@
     to   { background-position: 40px -340px; }
 }
 
-/* ── Wiederbelebung: Farbe kehrt mit einem Lichtblitz zurück ── */
+/* ── Resurrection: color returns with a flash of light ── */
 .resurrect-flash {
     position: fixed;
     inset: 0;
@@ -89,7 +89,7 @@
     100% { opacity: 0; transform: scale(1.3); }
 }
 
-/* ── Spirit-Healer-Frame: über dem Overlay, ätherisch pulsierend ── */
+/* ── Spirit Healer frame: above the overlay, ethereally pulsing ── */
 .unit-frame.enemy-frame.spirit-frame {
     z-index: 31;
     background: linear-gradient(180deg, #16243a 0%, #0b1322 100%);
@@ -111,7 +111,7 @@
     50%      { text-shadow: 0 0 12px rgba(170, 225, 255, .95), 0 1px 2px #000; }
 }
 
-/* Portrait schwebt, rotierender Halo dahinter */
+/* Portrait floats, rotating halo behind it */
 .spirit-portrait-area::before {
     content: "";
     position: absolute;
@@ -145,7 +145,7 @@
     50%      { filter: drop-shadow(0 0 14px #bfe6ff) brightness(1.15); }
 }
 
-/* Irrlichter steigen um das Portrait auf */
+/* Wisps rise around the portrait */
 .spirit-wisps {
     position: absolute;
     inset: 0;
@@ -179,7 +179,7 @@
     100% { transform: translate(-4px, -80px) scale(.3); opacity: 0; }
 }
 
-/* Wiederbelebungs-Balken mit wanderndem Lichtschimmer */
+/* Resurrection bar with a moving shimmer of light */
 .spirit-bar .spirit-fill {
     position: relative;
     overflow: hidden;

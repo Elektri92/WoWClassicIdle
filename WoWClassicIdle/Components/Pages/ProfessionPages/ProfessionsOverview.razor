@@ -6,7 +6,7 @@
 
 <PageTitle>Professions</PageTitle>
 
-@* Styles: wwwroot/css/professions.css – Kopf und Panels (.al-header, .al-panel) aus ability-loadout.css *@
+@* Styles: wwwroot/css/professions.css – header and panels (.al-header, .al-panel) from ability-loadout.css *@
 <div class="wow-page professions-page @(BuildInfo.IsDebug ? "with-debug" : "")">
     <h2 class="prof-title">Professions</h2>
 
@@ -27,7 +27,7 @@
 
         @if (BuildInfo.IsDebug)
         {
-            @* Debug-Werkzeuge: fest am linken Rand des Inhaltsbereichs, direkt neben der Navigation *@
+            @* Debug tools: fixed at the left edge of the content area, right next to the navigation *@
             <aside class="al-panel prof-debug" style="--i: 0">
                 <h4><span class="wow-badge">DEBUG</span></h4>
                 <button class="wow-btn small" @onclick="DebugAssignAll">Assign all professions + passive slots (zone 1)</button>
@@ -54,7 +54,7 @@
         }
 
         <div class="prof-layout">
-        @* Linke Spalte: Charaktere – Klick wechselt den gespielten Charakter *@
+        @* Left column: characters – click switches the played character *@
         <aside class="al-panel prof-roster" style="--i: 0">
             <h4>Characters</h4>
             @{ int index = 0; }
@@ -68,7 +68,7 @@
         <ProfessionSearch />
 
         <div class="al-panel prof-map-bg" style="--i: 1">
-            @* Zufällige Gebietskarte transparent im Hintergrund *@
+            @* Random zone map transparent in the background *@
             <div class="prof-map" aria-hidden="true" style="background-image: url('@_gatheringMap')"></div>
             <h4>Gathering</h4>
             <div class="prof-grid">
@@ -80,7 +80,7 @@
         </div>
 
         <div class="al-panel prof-map-bg" style="--i: 2">
-            @* Hauptstadt-Karte der Fraktion transparent im Hintergrund (wie im Inventar) *@
+            @* Capital map of the faction transparent in the background (like in the inventory) *@
             <div class="prof-map" aria-hidden="true" style="background-image: url('@IconUrls.CapitalMapUrl(Engine.Faction)')"></div>
             <h4>Crafting</h4>
             <div class="prof-grid">
@@ -97,7 +97,7 @@
 
 @code {
     private Profession? _confirmUnlearn;
-    // Einmal je Seitenaufruf gewählt, damit die Karte beim Neuzeichnen nicht wechselt
+    // Chosen once per page visit so the map doesn't change on re-render
     private readonly string _gatheringMap = IconUrls.RandomGatheringMapUrl();
     private string? _debugResult;
 
@@ -108,7 +108,7 @@
         var progress = Engine.GetProfessionProgress(def.Profession);
         var blocker  = Engine.ProfessionLearnBlocker(def.Profession);
         var owner    = def.IsPrimary ? Engine.ProfessionOwner(def.Profession) : null;
-        // Fortschritt immer anzeigen – auch wenn ein anderer Charakter den Hauptberuf erlernt hat
+        // Always show progress – even if another character learned the main profession
         var shown    = progress ?? owner?.Player.ProfessionState.Get(def.Profession);
         var workers  = Engine.PassiveAssignments
             .Where(a => a.Profession == def.Profession)
@@ -123,12 +123,12 @@
                     @def.Name
                     @if (owner is not null)
                     {
-                        @* Klassen-Icon des Charakters, der den Hauptberuf erlernt hat *@
+                        @* Class icon of the character who learned the main profession *@
                         <img class="prof-owner-icon" src="@IconUrls.ClassIconUrl(owner.Class)" alt=""
                              title="@($"{IdleGameEngine.CharacterName(owner)} (Lv. {owner.Player.Level})")"
                              onerror="this.remove()" />
                     }
-                    @* Passive Sammler: Klassen-Icons direkt neben dem Namen *@
+                    @* Passive gatherers: class icons right next to the name *@
                     @foreach (var worker in workers)
                     {
                         <img class="prof-owner-icon prof-worker-icon" src="@IconUrls.ClassIconUrl(worker.Class)" alt=""
@@ -148,11 +148,11 @@
             <div class="prof-card-actions" @onclick:stopPropagation="true">
                 @if (!def.IsPrimary)
                 {
-                    @* Geteilte Berufe: automatisch gelernt, nicht verlernbar *@
+                    @* Shared professions: learned automatically, cannot be unlearned *@
                 }
                 else if (progress is null && owner is not null)
                 {
-                    @* Von einem anderen Charakter erlernt – verlernen nur als dieser Charakter *@
+                    @* Learned by another character – can only be unlearned as that character *@
                 }
                 else if (progress is null)
                 {
@@ -171,7 +171,7 @@
         </div>
     };
 
-    // Schnellauswahl: rundes Volksporträt mit Klassen-Badge, Name, Level und Berufs-Icons
+    // Quick select: round race portrait with class badge, name, level and profession icons
     private RenderFragment RosterEntry(CharacterSlot character, int index) => __builder =>
     {
         bool isActive = character.Id == Engine.ActiveCharacter?.Id;
@@ -190,7 +190,7 @@
                     Lv. @character.Player.Level @character.Race @character.Class
                 </span>
             </div>
-            @* Berufe des Charakters: Herstellungsberuf + passiv ausgeübter Sammelberuf *@
+            @* Professions of the character: crafting profession + passively practiced gathering profession *@
             <div class="roster-entry-profs">
                 @if (primary is not null)
                 {
@@ -214,7 +214,7 @@
         return $"Passive: {Professions.Get(passive.Profession).Name} · {zone}";
     }
 
-    // Lernbarer Hauptberuf und der Charakter hat noch keinen → direkt lernen statt die Unterseite zu öffnen
+    // Learnable main profession and the character has none yet → learn directly instead of opening the subpage
     private void Open(ProfessionDefinition def)
     {
         if (def.IsPrimary && Engine.ProfessionLearnBlocker(def.Profession) is null)
@@ -223,7 +223,7 @@
             Nav.NavigateTo($"/professions/{def.Slug}");
     }
 
-    // Wechselt den gespielten Charakter – wie in der Charakterauswahl wird der Kampf dabei angehalten
+    // Switches the played character – combat is paused like in character selection
     private void Play(CharacterSlot character)
     {
         if (character.Id == Engine.ActiveCharacter?.Id) return;
@@ -242,7 +242,7 @@
 
     protected override void OnInitialized() => Engine.ProfessionUpdated += OnProfessionUpdated;
 
-    // Status der Slots (Countdowns) laufend aktualisieren
+    // Continuously update the status of the slots (countdowns)
     private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
 
     public void Dispose() => Engine.ProfessionUpdated -= OnProfessionUpdated;

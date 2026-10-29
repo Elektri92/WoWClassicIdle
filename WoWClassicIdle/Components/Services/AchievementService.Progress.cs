@@ -2,7 +2,7 @@ using Models;
 
 namespace Services;
 
-// Fortschrittsanzeige (z. B. "523 / 1,000") für zählbare Erfolge
+// Progress display (e.g. "523 / 1,000") for countable achievements
 public partial class AchievementService
 {
     private readonly Dictionary<string, (Func<long> Current, long Target)> _progress;
@@ -13,7 +13,7 @@ public partial class AchievementService
 
         long current;
         try { current = tracker.Current(); }
-        catch (InvalidOperationException) { return null; }   // Collection wurde parallel vom Tick-Thread verändert
+        catch (InvalidOperationException) { return null; }   // Collection was modified in parallel by the tick thread
 
         return new AchievementProgress(Math.Min(current, tracker.Target), tracker.Target);
     }

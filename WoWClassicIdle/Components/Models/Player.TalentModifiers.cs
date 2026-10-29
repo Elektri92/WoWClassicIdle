@@ -1,12 +1,12 @@
 // Models/Player.TalentModifiers.cs
 namespace Models
 {
-    // Talent-Modifikatoren ab Reihe 2 – laufen nach GetTalentModifiedAbility, damit sich Boni beider Reihen addieren.
+    // Talent modifiers from row 2 – run after GetTalentModifiedAbility so the bonuses of both rows add up.
     public partial class Player
     {
         private double TalentBonus(TalentEffectType type) => TalentState.GetTotalBonus(ActiveClass, type);
 
-        /// <summary>Effektive Manakosten einer Fähigkeit nach allen Talent-Reduktionen (bzw. Rage/Energie der aktiven Gestalt).</summary>
+        /// <summary>Effective mana cost of an ability after all talent reductions (or rage/energy of the active form).</summary>
         public int GetEffectiveManaCost(Ability ability) => ApplyExtendedManaCost(ability, GetTalentManaCost(ability));
 
         private int ApplyExtendedManaCost(Ability ability, int cost)
@@ -25,7 +25,7 @@ namespace Models
 
         private Ability ApplyExtendedTalentBonus(Ability ability)
         {
-            // Lifesteal-Talent gilt für alle Fähigkeiten mit Lebensentzug (Drain Life, Siphon Life)
+            // The lifesteal talent applies to all abilities with life drain (Drain Life, Siphon Life)
             if (ability.DebuffDotLifesteal > 0)
             {
                 double lifesteal = TalentBonus(TalentEffectType.LifestealBonus);
@@ -33,7 +33,7 @@ namespace Models
                     ability = ability with { DebuffDotLifesteal = ability.DebuffDotLifesteal * (1.0 + lifesteal) };
             }
 
-            // Allgemeiner Fähigkeitsschaden (Shadow Power, Inner Focus, Arcane Instability)
+            // General ability damage (Shadow Power, Inner Focus, Arcane Instability)
             double dmgBonus = TalentBonus(TalentEffectType.DamageBonus);
             if (dmgBonus > 0)
             {
@@ -119,14 +119,14 @@ namespace Models
             }
         }
 
-        /// <summary>Zusätzliche HP aus Stamina durch Talente (Strong Life).</summary>
+        /// <summary>Additional HP from Stamina through talents (Strong Life).</summary>
         private int StaminaTalentHp(PrimaryStats primary) =>
             (int)Math.Round(primary.Stamina * StatScaling.HpPerStamina * TalentBonus(TalentEffectType.StaminaHpBonus));
 
-        /// <summary>Zusätzlicher Pet-Schaden (Master Demonologist).</summary>
+        /// <summary>Additional pet damage (Master Demonologist).</summary>
         public double PetDamageTalentBonus => TalentBonus(TalentEffectType.PetDamageBonus);
 
-        /// <summary>Zusätzliche Pet-HP als Anteil der Spieler-HP (Strong Pet, Strong Demon).</summary>
+        /// <summary>Additional pet HP as a share of the player HP (Strong Pet, Strong Demon).</summary>
         public double PetHealthTalentBonus => TalentBonus(TalentEffectType.PetHealthBonus);
     }
 }

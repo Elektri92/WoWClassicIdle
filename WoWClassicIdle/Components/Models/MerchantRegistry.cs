@@ -1,14 +1,14 @@
 // Models/MerchantRegistry.cs
 namespace Models;
 
-/// <summary>Ein Angebot des Händlers mit begrenztem Vorrat, der sich nach Echtzeit wieder auffüllt.</summary>
+/// <summary>A merchant offer with limited stock that restocks over real time.</summary>
 public record MerchantOffer(int ItemId, long Price, int MaxStock, TimeSpan RestockInterval)
 {
     public Item Item => ConsumableRegistry.GetById(ItemId)
         ?? throw new InvalidOperationException($"Unknown merchant item {ItemId}");
 }
 
-/// <summary>Statische Händlerdaten (Gibzig, Goblin-Händler im Inventar).</summary>
+/// <summary>Static merchant data (Gibzig, goblin merchant in the inventory).</summary>
 public static class MerchantRegistry
 {
     public const string Name     = "Gibzig";
@@ -17,7 +17,7 @@ public static class MerchantRegistry
     public const string PortraitUrl = "https://wow.zamimg.com/images/wow/icons/large/race_goblin_male.jpg";
     public const string BadgeUrl    = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_head_goblin_01.jpg";
 
-    // Sprechblasen-Sprüche je Anlass (zufällig gewählt, nie zweimal hintereinander derselbe)
+    // Speech bubble lines per occasion (chosen randomly, never the same one twice in a row)
     public static readonly IReadOnlyList<string> GreetingLines =
     [
         "Time is money, friend!",
@@ -66,7 +66,7 @@ public static class MerchantRegistry
         "Gibzig doesn't do credit!",
     ];
 
-    // Minor Healing Potion (sonst nur per Alchemie): 5 Stück, volle Auffüllung 5 min nach dem ersten Kauf
+    // Minor Healing Potion (otherwise only via Alchemy): 5 pieces, full restock 5 min after the first purchase
     public static readonly IReadOnlyList<MerchantOffer> Offers =
     [
         new(9103, Price: 25, MaxStock: 5, RestockInterval: TimeSpan.FromMinutes(5)),

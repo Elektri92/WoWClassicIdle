@@ -1,10 +1,10 @@
 // Models/BuffTracker.Consumables.cs
 namespace Models;
 
-// Buffs, die sich vor Ablauf ihrer Laufzeit verbrauchen: Treffer-Ladungen, garantierter Crit, Verstärkungen.
+// Buffs that are consumed before their duration ends: hit charges, guaranteed crit, empowerments.
 public partial class BuffTracker
 {
-    /// <summary>Ein erlittener Gegnertreffer verbraucht je eine Ladung aller Ladungs-Buffs (Holy Shield).</summary>
+    /// <summary>An enemy hit taken consumes one charge of every charge buff (Holy Shield).</summary>
     public void ConsumeHitCharges()
     {
         lock (_lock)
@@ -21,7 +21,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Verbraucht einen Garantiert-Crit-Buff (Cold Blood). True, wenn einer aktiv war.</summary>
+    /// <summary>Consumes a guaranteed-crit buff (Cold Blood). True if one was active.</summary>
     public bool ConsumeGuaranteedCrit()
     {
         lock (_lock)
@@ -34,8 +34,8 @@ public partial class BuffTracker
     }
 
     /// <summary>
-    /// Verbraucht alle Verstärkungs-Buffs für die Fähigkeit <paramref name="abilityName"/>
-    /// und gibt den Schadensmultiplikator zurück (1.0 = keine Verstärkung).
+    /// Consumes all empower buffs for the ability <paramref name="abilityName"/>
+    /// and returns the damage multiplier (1.0 = no empowerment).
     /// </summary>
     public double ConsumeEmpower(string abilityName)
     {

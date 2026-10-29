@@ -1,21 +1,21 @@
 // Models/Profession.cs
 namespace Models
 {
-    /// <summary>Alle Berufe: 8 Herstellungsberufe (je Charakter) sowie 3 Sammel- und 1 Sekundärberuf (accountweit).</summary>
+    /// <summary>All professions: 8 crafting professions (per character) plus 3 gathering and 1 secondary profession (account-wide).</summary>
     public enum Profession
     {
-        // Herstellungsberufe (Hauptberufe, je Charakter – inkl. Kochen und Erste Hilfe)
+        // Crafting professions (main professions, per character – incl. Cooking and First Aid)
         Alchemy,
         Engineering,
         Leatherworking,
         Blacksmithing,
         Tailoring,
         Enchanting,
-        // Sammelberufe (accountweit)
+        // Gathering professions (account-wide)
         Mining,
         Herbalism,
         Skinning,
-        // Sekundärberufe (accountweit)
+        // Secondary professions (account-wide)
         Fishing,
         FirstAid,
         Cooking,
@@ -23,8 +23,8 @@ namespace Models
 
     public enum ProfessionCategory { Crafting, Gathering, Secondary }
 
-    /// <summary>Statische Beschreibung eines Berufs.</summary>
-    /// <param name="IsGathering">true = Durchläufe liefern Zonen-Drops, false = Durchläufe stellen Rezepte her.</param>
+    /// <summary>Static description of a profession.</summary>
+    /// <param name="IsGathering">true = passes yield zone drops, false = passes craft recipes.</param>
     public record ProfessionDefinition(
         Profession Profession,
         string Name,
@@ -33,17 +33,17 @@ namespace Models
         bool IsGathering)
     {
         public string IconUrl => $"https://wow.zamimg.com/images/wow/icons/large/{Icon}.jpg";
-        /// <summary>Hauptberuf = Herstellungsberuf, max. einer je Charakter. Sammel- und Sekundärberufe sind accountweit geteilt.</summary>
+        /// <summary>Main profession = crafting profession, max. one per character. Gathering and secondary professions are shared account-wide.</summary>
         public bool IsPrimary => Category == ProfessionCategory.Crafting;
 
-        /// <summary>Alle Berufe mit Zonen (Sammeln + Angeln) haben passive Slots (Anzahl je Zone, <see cref="GatheringZone.PassiveSlotCount"/>).</summary>
+        /// <summary>All professions with zones (gathering + fishing) have passive slots (count per zone, <see cref="GatheringZone.PassiveSlotCount"/>).</summary>
         public bool HasPassiveSlots => IsGathering;
 
-        /// <summary>URL-Segment der Unterseite, z. B. "first-aid".</summary>
+        /// <summary>URL segment of the subpage, e.g. "first-aid".</summary>
         public string Slug => Profession == Profession.FirstAid ? "first-aid" : Profession.ToString().ToLowerInvariant();
     }
 
-    /// <summary>Ausbildungsstufe: hebt das Skill-Cap an, beim Lehrer lernbar ab Charakterlevel und Mindest-Skill gegen <see cref="Cost"/> Kupfer.</summary>
+    /// <summary>Training tier: raises the skill cap, learnable from the trainer from a character level and minimum skill for <see cref="Cost"/> copper.</summary>
     public record ProfessionRank(string Name, int MaxSkill, int RequiredLevel, int RequiredSkill = 1, long Cost = 0);
 
     public static class Professions
@@ -51,19 +51,19 @@ namespace Models
         public const int MinCharacterLevel = 5;
         public const int MaxSkill = 300;
 
-        /// <summary>Dauer eines Durchlaufs im aktiven Slot (Sekunden).</summary>
+        /// <summary>Duration of a pass in the active slot (seconds).</summary>
         public const double ActiveDurationSeconds = 3.0;
 
-        /// <summary>Dauer eines Durchlaufs je passivem Slot (Sekunden).</summary>
+        /// <summary>Duration of a pass per passive slot (seconds).</summary>
         public const double PassiveDurationSeconds = 120.0;
 
-        /// <summary>Max. passiv belegte Slots je Beruf – über alle Zonen zusammen.</summary>
+        /// <summary>Max. passively occupied slots per profession – across all zones combined.</summary>
         public const int MaxPassiveWorkers = 3;
 
-        /// <summary>Chance auf +1 Skill je aktivem Durchlauf.</summary>
+        /// <summary>Chance for +1 skill per active pass.</summary>
         public const double SkillUpChance = 0.01;
 
-        /// <summary>Apprentice wird beim Erlernen automatisch vergeben, höhere Stufen kauft man beim Lehrer.</summary>
+        /// <summary>Apprentice is granted automatically when learning, higher tiers are bought from the trainer.</summary>
         public static readonly IReadOnlyList<ProfessionRank> Ranks =
         [
             new("Apprentice",  75, 5),

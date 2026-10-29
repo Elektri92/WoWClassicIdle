@@ -1,4 +1,4 @@
-// Logik der Seite /character (Markup in CharacterSelection.razor, Sprüche in Models/CharacterQuotes.cs)
+// Logic of the /character page (markup in CharacterSelection.razor, quotes in Models/CharacterQuotes.cs)
 using Microsoft.AspNetCore.Components.Web;
 using Models;
 
@@ -14,10 +14,10 @@ public partial class CharacterSelection
     private string? errorMsg;
     private bool showCreation;
 
-    // Per Klick gewählter Charakter in der Übersicht; ohne Klick der aktive
+    // Character selected by click in the overview; without a click the active one
     private int? pickedSlotId;
 
-    // Sprechblase: wer spricht (Rasse oder Klasse) und was; quoteKey erzeugt die Blase bei jedem Klick neu
+    // Speech bubble: who speaks (race or class) and what; quoteKey recreates the bubble on every click
     private string? quoteText;
     private bool quoteFromClass;
     private int quoteKey;
@@ -69,13 +69,13 @@ public partial class CharacterSelection
         quoteText = null;
     }
 
-    // Vorschau zeigt den Namen bereits in der endgültigen Schreibweise
+    // The preview already shows the name in its final spelling
     private string PreviewName =>
         string.IsNullOrWhiteSpace(characterName) ? "Unnamed" : CharacterNames.Normalize(characterName);
 
     private void OnNameChanged()
     {
-        // Fehler erst nach Eingabe anzeigen – ein leeres Feld bei Formularstart ist kein Fehler
+        // Only show errors after input – an empty field at form start is not an error
         nameError = string.IsNullOrEmpty(characterName) ? null : CharacterNames.Validate(characterName);
         errorMsg = null;
     }
@@ -95,7 +95,7 @@ public partial class CharacterSelection
         Race.Orc, Race.Undead, Race.Tauren, Race.Troll
     };
 
-    // Startgebiet je Rasse – liefert Hintergrund-Thema für Vorschau und Charaktere ohne gewählte Zone
+    // Starting zone per race – provides the background theme for the preview and characters without a chosen zone
     private static CombatZone? StartZone(Race race) => CombatZoneRegistry.StartZoneFor(race);
 
     private Faction GetFactionForRace(Race race) =>

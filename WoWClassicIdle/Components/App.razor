@@ -45,7 +45,7 @@
 <script src="@Assets["_framework/blazor.web.js"]"></script>
 <script src="@Assets["js/visibility.js"]"></script>
 <script src="@Assets["js/tooltip.js"]"></script>
-<!-- Kampf-Effekte: core.js zuerst, die Module registrieren sich dort -->
+<!-- Combat effects: core.js first, the modules register themselves there -->
 <script src="@Assets["js/spellfx/core.js"]"></script>
 <script src="@Assets["js/spellfx/spells.js"]"></script>
 <script src="@Assets["js/spellfx/swings.js"]"></script>
@@ -57,10 +57,10 @@
 @code {
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
-    // Globale Interaktivität ohne Vorrendern: Seitenwechsel laufen komplett im bestehenden Circuit.
-    // Mit Render-Mode je Seite wurde jede Seite erst vorgerendert eingefügt und Millisekunden später
-    // interaktiv ersetzt – die Einblend-Animationen starteten doppelt und flackerten (v. a. WebKitGTK).
-    // Seiten mit [ExcludeFromInteractiveRouting] (Error) bleiben statisch.
+    // Global interactivity without prerendering: page navigation runs entirely inside the existing circuit.
+    // With a per-page render mode every page was first inserted prerendered and replaced interactively
+    // milliseconds later – the fade-in animations started twice and flickered (especially on WebKitGTK).
+    // Pages with [ExcludeFromInteractiveRouting] (Error) stay static.
     private IComponentRenderMode? PageRenderMode =>
         HttpContext.AcceptsInteractiveRouting() ? new InteractiveServerRenderMode(prerender: false) : null;
 }

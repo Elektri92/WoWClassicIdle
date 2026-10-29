@@ -1,37 +1,37 @@
 // Models/IdleGameEngine.Merchant.cs
 using Models;
 
-/// <summary>Händler: Verkaufen aus dem Inventar und Kauf von Angeboten mit Echtzeit-Vorrat.</summary>
+/// <summary>Merchant: selling from the inventory and buying offers with real-time stock.</summary>
 public partial class IdleGameEngine
 {
     private sealed class MerchantStockState
     {
         public int Count;
-        // Zeitpunkt der nächsten vollen Auffüllung; null = Vorrat ist voll
+        // Time of the next full restock; null = stock is full
         public DateTime? RestockAtUtc;
     }
 
     private readonly Dictionary<int, MerchantStockState> _merchantStock = new();
 
-    /// <summary>Wie viele verkaufte Stapel der Händler zum Rückkauf bereithält.</summary>
+    /// <summary>How many sold stacks the merchant keeps for buyback.</summary>
     public const int MerchantBuybackSlots = 6;
 
-    // Zuletzt verkaufte Stapel, neueste zuerst – nur für die laufende Sitzung (wie im Original)
+    // Most recently sold stacks, newest first – only for the current session (like in the original)
     private readonly List<MerchantBuybackEntry> _buyback = new();
 
-    /// <summary>Rückkaufliste (neueste zuerst), Kopie für die UI.</summary>
+    /// <summary>Buyback list (newest first), copy for the UI.</summary>
     public IReadOnlyList<MerchantBuybackEntry> MerchantBuyback
     {
         get { lock (_simLock) return _buyback.ToList(); }
     }
 
-    /// <summary>Aktueller Vorrat eines Angebots (füllt sich nach Ablauf der Echtzeit-Frist komplett auf).</summary>
+    /// <summary>Current stock of an offer (fully restocks after the real-time period expires).</summary>
     public int MerchantStockOf(MerchantOffer offer)
     {
         lock (_simLock) return StockState(offer).Count;
     }
 
-    /// <summary>Restzeit bis zur nächsten Auffüllung; null wenn der Vorrat voll ist.</summary>
+    /// <summary>Remaining time until the next restock; null if the stock is full.</summary>
     public TimeSpan? MerchantRestockRemaining(MerchantOffer offer)
     {
         lock (_simLock)
@@ -41,7 +41,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Kauft ein Stück. Gibt bei Misserfolg eine englische Fehlermeldung zurück, sonst null.</summary>
+    /// <summary>Buys one piece. Returns an English error message on failure, otherwise null.</summary>
     public string? BuyFromMerchant(MerchantOffer offer)
     {
         lock (_simLock)
@@ -58,7 +58,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Verkauft einen ganzen Stapel an den Händler. Gibt den verkauften Stapel und den Erlös zurück.</summary>
+    /// <summary>Sells a whole stack to the merchant. Returns the sold stack and the proceeds.</summary>
     public (ItemStack Stack, long Earned)? SellToMerchant(Bag bag, int index)
     {
         lock (_simLock)
@@ -76,8 +76,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Kauft einen verkauften Stapel zum Verkaufspreis zurück.
-    /// Gibt bei Misserfolg eine englische Fehlermeldung zurück, sonst den zurückgekauften Eintrag.
+    /// Buys back a sold stack at its selling price.
+    /// Returns an English error message on failure, otherwise the bought-back entry.
     /// </summary>
     public (MerchantBuybackEntry? Entry, string? Error) BuybackFromMerchant(int index)
     {
@@ -88,7 +88,7 @@ public partial class IdleGameEngine
             if (Player.Copper < entry.Price) return (null, "You don't have enough money.");
 
             var item = entry.Stack.Item;
-            // Nicht stapelbare Items brauchen einen freien Platz; Stapel werden bei Platzmangel zurückgerollt
+            // Non-stackable items need a free slot; stacks are rolled back if there is not enough space
             if (!item.IsStackable && _sharedInventory.FreeSlots == 0) return (null, "Your bags are full.");
             int leftover = _sharedInventory.TryAdd(item, entry.Stack.Count);
             if (leftover > 0)
@@ -103,7 +103,7 @@ public partial class IdleGameEngine
         }
     }
 
-    // Liefert den Vorratszustand und wendet eine fällige Auffüllung an (Aufruf nur unter _simLock)
+    // Returns the stock state and applies a due restock (call only under _simLock)
     private MerchantStockState StockState(MerchantOffer offer)
     {
         if (!_merchantStock.TryGetValue(offer.ItemId, out var state))
@@ -143,5 +143,5 @@ public partial class IdleGameEngine
     }
 }
 
-/// <summary>Ein an den Händler verkaufter Stapel mit Rückkaufpreis (= Verkaufserlös).</summary>
+/// <summary>A stack sold to the merchant with buyback price (= sale proceeds).</summary>
 public record MerchantBuybackEntry(ItemStack Stack, long Price);

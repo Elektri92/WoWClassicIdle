@@ -4,8 +4,8 @@ namespace Models
     public record WeaponProfile(string Name, int MinDamage, int MaxDamage, double Speed);
 
     /// <summary>
-    /// Startwaffen je Klasse – angelehnt an die Level-1-Ausrüstung aus WoW Classic.
-    /// Grundlage für Auto-Attacks, solange es kein Waffen-Equipment gibt.
+    /// Starter weapons per class – based on the level 1 gear from WoW Classic.
+    /// Basis for auto-attacks as long as there is no weapon equipment.
     /// </summary>
     public static class StarterWeapons
     {

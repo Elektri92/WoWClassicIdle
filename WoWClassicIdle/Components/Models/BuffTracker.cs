@@ -2,29 +2,29 @@
 namespace Models;
 
 /// <summary>
-/// Ein laufender Buff: die auslösende Fähigkeit und die Restlaufzeit in Sekunden.
-/// <see cref="TickAcc"/>/<see cref="TicksDone"/> zählen die HoT-Ticks mit.
+/// A running buff: the source ability and the remaining duration in seconds.
+/// <see cref="TickAcc"/>/<see cref="TicksDone"/> keep track of the HoT ticks.
 /// </summary>
 public sealed record ActiveBuff(Ability Source, double Remaining, double TickAcc = 0, int TicksDone = 0, int MotAmountPerTick = 0, int HotAmountPerTick = 0, int ShieldRemaining = 0, int ChargesRemaining = 0, int FreeCastsRemaining = 0);
 
-/// <summary>Ein fälliger HoT- oder MoT-Tick. <see cref="IsMana"/> = true → Mana-Regenerierung statt HP-Heilung.</summary>
+/// <summary>A pending HoT or MoT tick. <see cref="IsMana"/> = true → mana regeneration instead of HP healing.</summary>
 public readonly record struct HotTick(Ability Source, int Amount, bool IsMana = false);
 
 /// <summary>
-/// Aktive Buffs eines Charakters. Wird vom Simulations-Thread geschrieben und vom UI gelesen,
-/// daher alle Zugriffe unter Lock.
+/// Active buffs of a character. Written by the simulation thread and read by the UI,
+/// hence all accesses are lock-guarded.
 /// </summary>
 public partial class BuffTracker
 {
-    // Schutz gegen Gleitkomma-Drift (20 × 0.1 s ergibt nicht exakt 2.0)
+    // Guard against floating-point drift (20 × 0.1 s doesn't give exactly 2.0)
     private const double Epsilon = 1e-9;
 
     private readonly Dictionary<string, ActiveBuff> _active = new();
     private readonly object _lock = new();
-    // Vorab alloziierte Hilfslisten für Tick() – vermeiden Keys.ToList()-Allokation pro Step
+    // Pre-allocated helper lists for Tick() – avoid a Keys.ToList() allocation per step
     private readonly List<string> _expiredBuffs = new();
     private readonly List<(string Key, ActiveBuff Value)> _buffUpdates = new();
-    // Vorab alloziiert für AbsorbDamage – kein Heap-Alloc pro Treffer
+    // Pre-allocated for AbsorbDamage – no heap allocation per hit
     private readonly List<(Ability Source, int Absorbed)> _absorbLog = new();
 
     public bool IsActive(string abilityId)
@@ -32,7 +32,7 @@ public partial class BuffTracker
         lock (_lock) return _active.ContainsKey(abilityId);
     }
 
-    /// <summary>Startet den Buff bzw. frischt die Laufzeit auf. <paramref name="maxMana"/> für MoT-Buffs, <paramref name="maxHp"/> für prozentuale HoT-Buffs übergeben.</summary>
+    /// <summary>Starts the buff or refreshes its duration. Pass <paramref name="maxMana"/> for MoT buffs, <paramref name="maxHp"/> for percentage HoT buffs.</summary>
     public void Apply(Ability ability, int maxMana = 0, int maxHp = 0)
     {
         int motAmount = 0;
@@ -46,7 +46,7 @@ public partial class BuffTracker
             : 0;
         lock (_lock)
         {
-            // Alten Rang desselben Spells entfernen, damit zwei Ränge nicht gleichzeitig aktiv sind
+            // Remove an old rank of the same spell so two ranks aren't active at the same time
             var oldKey = _active.Keys.FirstOrDefault(k => k != ability.Id && _active[k].Source.Name == ability.Name);
             if (oldKey is not null) _active.Remove(oldKey);
             _active[ability.Id] = new ActiveBuff(ability, ability.BuffDuration,
@@ -56,8 +56,8 @@ public partial class BuffTracker
     }
 
     /// <summary>
-    /// Absorbiert so viel Schaden wie möglich aus aktiven Schildern.
-    /// Gibt pro Schild-Quelle die absorbierte Menge zurück; Liste ist nur bis zum nächsten Aufruf gültig.
+    /// Absorbs as much damage as possible from active shields.
+    /// Returns the absorbed amount per shield source; the list is only valid until the next call.
     /// </summary>
     public IReadOnlyList<(Ability Source, int Absorbed)> AbsorbDamage(int damage)
     {
@@ -80,7 +80,7 @@ public partial class BuffTracker
         return _absorbLog;
     }
 
-    /// <summary>Lässt alle Buffs um <paramref name="dt"/> ablaufen und liefert die dabei fälligen HoT-Ticks.</summary>
+    /// <summary>Advances all buffs by <paramref name="dt"/> and returns the HoT ticks that became due.</summary>
     public IReadOnlyList<HotTick> Tick(double dt)
     {
         List<HotTick>? ticks = null;
@@ -90,7 +90,7 @@ public partial class BuffTracker
             _expiredBuffs.Clear();
             _buffUpdates.Clear();
 
-            // Erst lesen (ohne Dictionary-Mutation), dann Änderungen anwenden
+            // Read first (without dictionary mutation), then apply changes
             foreach (var kvp in _active)
             {
                 var buff = kvp.Value;
@@ -138,7 +138,7 @@ public partial class BuffTracker
         lock (_lock) _active.Clear();
     }
 
-    /// <summary>Multiplikator auf allen verursachten Schaden (Boni stapeln multiplikativ).</summary>
+    /// <summary>Multiplier on all damage dealt (bonuses stack multiplicatively).</summary>
     public double DamageMultiplier
     {
         get
@@ -181,7 +181,7 @@ public partial class BuffTracker
     /// <summary>Extra max mana from Intellect buffs (15 mana per Intellect point, classic formula).</summary>
     public int BonusMaxMana => IntellectBonus * 15;
 
-    /// <summary>True wenn ein aktiver Buff Immunität gegen Schaden verleiht (z. B. Divine Shield).</summary>
+    /// <summary>True if an active buff grants immunity to damage (e.g. Divine Shield).</summary>
     public bool HasImmunity
     {
         get
@@ -191,14 +191,14 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Aktiver Buff mit Extra-Schlag-Chance (Windfury Weapon), sonst null.</summary>
+    /// <summary>Active buff with extra-attack chance (Windfury Weapon), otherwise null.</summary>
     public Ability? GetExtraAttackSource()
     {
         lock (_lock)
             return _active.Values.FirstOrDefault(b => b.Source.BuffExtraAttackChance > 0)?.Source;
     }
 
-    /// <summary>Gibt alle Buff-Quellen zurück, die Vergeltungsschaden haben (z. B. Thorns, Lightning Shield).</summary>
+    /// <summary>Returns all buff sources that have retaliation damage (e.g. Thorns, Lightning Shield).</summary>
     public IReadOnlyList<Ability> GetRetaliationSources()
     {
         lock (_lock)
@@ -208,7 +208,7 @@ public partial class BuffTracker
                 .ToList();
     }
 
-    /// <summary>Rage-Gen-Bonus aus aktiven Buffs (z. B. Battle Stance).</summary>
+    /// <summary>Rage generation bonus from active buffs (e.g. Battle Stance).</summary>
     public double RageGenBonus
     {
         get
@@ -218,7 +218,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Crit-Chance-Bonus aus aktiven Buffs (z. B. Berserker Stance).</summary>
+    /// <summary>Crit chance bonus from active buffs (e.g. Berserker Stance).</summary>
     public double CritChanceBonus
     {
         get
@@ -228,7 +228,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Schadensreduktions-Bonus aus aktiven Buffs (z. B. Defensive Stance).</summary>
+    /// <summary>Damage reduction bonus from active buffs (e.g. Defensive Stance).</summary>
     public double DamageTakenReduction
     {
         get
@@ -238,7 +238,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Summe aller noch absorbierbaren Schild-Punkte (z. B. Ice Barrier).</summary>
+    /// <summary>Sum of all shield points still absorbable (e.g. Ice Barrier).</summary>
     public int TotalShield
     {
         get
@@ -248,7 +248,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Kopie der aktiven Buffs für die Anzeige.</summary>
+    /// <summary>Copy of the active buffs for display.</summary>
     public IReadOnlyList<ActiveBuff> Snapshot()
     {
         lock (_lock) return _active.Values.ToList();

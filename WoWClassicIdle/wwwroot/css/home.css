@@ -1,8 +1,8 @@
 /* ============================================
-   Startseite (/) – Kopfbereich mit Azeroth-Karte, Hauptstädten und Fraktionswappen wie in /character,
-   darunter Feature-Karten auf Talentbaum-Hintergründen.
-   Einmalige Animationen tragen visibility im Start-Keyframe (WebKitGTK-Flackern, siehe character-select.css);
-   Endlos-Animationen nutzen nur transform/opacity und bleiben im Compositor.
+   Home page (/) – header with Azeroth map, capitals and faction crests like in /character,
+   below it feature cards on talent tree backgrounds.
+   One-time animations carry visibility in the start keyframe (WebKitGTK flicker, see character-select.css);
+   endless animations only use transform/opacity and stay in the compositor.
    ============================================ */
 
 .wow-page.home-page { max-width: 1060px; }
@@ -32,7 +32,7 @@
 }
 .home-hero-bg > * { position: absolute; }
 
-/* Weltkarte: übergroß, driftet langsam (transform statt background-position → Compositor) */
+/* World map: oversized, drifts slowly (transform instead of background-position → compositor) */
 .home-map {
     inset: -8%;
     background: url("../images/azeroth-map.png") center / cover no-repeat;
@@ -41,7 +41,7 @@
     animation: home-map-drift 48s ease-in-out infinite alternate;
 }
 
-/* Hauptstädte: Stormwind links, Orgrimmar rechts, zur Mitte hin ausgeblendet */
+/* Capitals: Stormwind left, Orgrimmar right, faded out towards the center */
 .home-capital {
     top: 0;
     bottom: 0;
@@ -63,7 +63,7 @@
     mask-image: linear-gradient(270deg, #000 20%, transparent 95%);
 }
 
-/* Goldener Strahlenkranz hinter dem Logo */
+/* Golden halo of rays behind the logo */
 .home-rays {
     top: 50%;
     left: 50%;
@@ -78,7 +78,7 @@
     animation: home-rays-spin 160s linear infinite;
 }
 
-/* Fraktionswappen an den Rändern (Horde links, Allianz rechts), schweben gegenläufig */
+/* Faction crests at the edges (Horde left, Alliance right), floating in opposite directions */
 .home-crest {
     top: 50%;
     width: 330px;
@@ -118,7 +118,7 @@
     animation: home-ember var(--d) linear var(--t) infinite;
 }
 
-/* Abdunkeln zur Mitte und zu den Rändern: Text bleibt lesbar */
+/* Darken towards the center and the edges: text stays readable */
 .home-vignette {
     inset: 0;
     background:
@@ -127,7 +127,7 @@
         linear-gradient(180deg, transparent 70%, rgba(10, 8, 5, .7) 100%);
 }
 
-/* ── Inhalt des Kopfbereichs ── */
+/* ── Header content ── */
 .home-hero-content {
     display: flex;
     flex-direction: column;
@@ -140,7 +140,7 @@
     position: relative;
     animation: home-logo-in 1s cubic-bezier(.2, .8, .2, 1) .1s both;
 }
-/* Pulsierender Schein hinter dem Logo (opacity statt filter → Compositor) */
+/* Pulsing glow behind the logo (opacity instead of filter → compositor) */
 .home-logo-wrap::before {
     content: "";
     position: absolute;
@@ -229,7 +229,7 @@
     color: var(--wow-gold-pale);
     opacity: .85;
 }
-/* Wandernder Lichtschimmer über dem Hauptknopf */
+/* Moving shimmer of light over the main button */
 .home-cta-main::after {
     content: "";
     position: absolute;
@@ -290,7 +290,7 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, .6), 0 0 12px rgba(255, 209, 0, .18), inset 0 0 0 1px var(--wow-gold-soft);
 }
 
-/* Talentbaum-Bild als Hintergrund, nach unten ausgeblendet; zoomt beim Hover */
+/* Talent tree image as background, faded out towards the bottom; zooms on hover */
 .home-feature-art {
     position: absolute;
     inset: 0;
@@ -420,7 +420,7 @@
     100%    { background-position: -120% 0; }
 }
 
-/* Schmale Fenster: Wappen dezenter und weiter am Rand, Städte ausgeblendet */
+/* Narrow windows: crests more subtle and further at the edge, cities hidden */
 @media (max-width: 760px) {
     .home-hero { min-height: 400px; }
     .home-crest { opacity: .22; }

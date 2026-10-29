@@ -1,11 +1,11 @@
 // Models/Player.Talents.cs
 namespace Models
 {
-    // Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+    // Create new systems as their own partial file; keep files below 300 lines where possible.
     public partial class Player
     {
         /// <summary>
-        /// Verfügbare Talent-Punkte für eine Klasse (1 pro Level ab Level 10, minus investierte).
+        /// Available talent points for a class (1 per level from level 10, minus invested ones).
         /// </summary>
         public int GetAvailableTalentPoints(CharacterClass cls)
         {
@@ -15,11 +15,11 @@ namespace Models
             return Math.Max(0, earned - spent);
         }
 
-        /// <summary>Ist eine Talent-Fähigkeit durch ein geskilltes Talent freigeschaltet?</summary>
+        /// <summary>Is a talent ability unlocked by a skilled talent?</summary>
         public bool HasTalentAbility(string abilityId) =>
             TalentRegistry.GetGrantingTalents(ActiveClass, abilityId).Any(t => TalentState.GetRanks(t.Id) > 0);
 
-        /// <summary>Investiert einen Talent-Punkt und berechnet Stats neu.</summary>
+        /// <summary>Invests a talent point and recalculates the stats.</summary>
         public bool InvestTalent(TalentDefinition talent)
         {
             int available = GetAvailableTalentPoints(ActiveClass);
@@ -28,12 +28,12 @@ namespace Models
             return ok;
         }
 
-        /// <summary>Setzt alle Talente der Klasse zurück und berechnet Stats neu.</summary>
+        /// <summary>Resets all talents of the class and recalculates the stats.</summary>
         public void ResetTalents(CharacterClass cls)
         {
             TalentState.Reset(cls);
 
-            // Talent-exklusive Abilities aus Loadout und aktiven Buffs entfernen
+            // Remove talent-exclusive abilities from the loadout and active buffs
             if (cls == ActiveClass)
             {
                 var talentOnlyIds = ClassAbilityRegistry.GetAbilitiesFor(cls)
@@ -43,7 +43,7 @@ namespace Models
 
                 var loadout = GetCurrentLoadout();
                 loadout.EquippedAbilityIds.RemoveAll(id => talentOnlyIds.Contains(id));
-                ApplyLoadout(loadout); // Ability-Cache und Gestalt aktualisieren
+                ApplyLoadout(loadout); // Update the ability cache and form
 
                 foreach (var id in talentOnlyIds)
                     Buffs.Remove(id);
@@ -52,7 +52,7 @@ namespace Models
             RecalculateStats();
         }
 
-        /// <summary>Stellt Talent-Punkte aus einem Spielstand wieder her.</summary>
+        /// <summary>Restores talent points from a save game.</summary>
         internal void RestoreTalentPoints(Dictionary<string, int> points)
         {
             foreach (var (talentId, ranks) in points)

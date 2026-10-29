@@ -8,7 +8,7 @@
 <div class="wow-page talents-page">
     <h2>Talents</h2>
 
-    @* ── Kopf: Charakter auf der Szene seiner aktuellen Zone (Styles aus ability-loadout.css) ── *@
+    @* ── Header: character on the scene of its current zone (styles from ability-loadout.css) ── *@
     <div class="al-header @(Engine.Faction == Faction.Alliance ? "alliance" : "horde") @(CombatZoneRegistry.IsNightTheme(HeaderTheme) ? "night" : "day")">
         <div class="al-scenery" aria-hidden="true">
             <div class="al-sky zone-theme-@HeaderTheme"></div>
@@ -117,7 +117,7 @@
                             }
                         </div>
 
-                        @* Reihen-Freischalt-Balken nach jeder Reihe (außer der letzten möglichen) *@
+                        @* Row unlock bar after each row (except the last possible one) *@
                         @if (currentRow < 6)
                         {
                             int required      = (currentRow + 1) * 5;
@@ -183,7 +183,7 @@
         margin-top: 0.5rem;
     }
 
-    /* Spec-Hintergrund wie im Original; Verlauf dunkelt für Lesbarkeit ab */
+    /* Spec background like in the original; gradient darkens for readability */
     .talent-tree {
         background:
             linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.45) 100%),
@@ -219,7 +219,7 @@
         justify-items: center;
     }
 
-    /* ── Freischalt-Balken zwischen Reihen ── */
+    /* ── Unlock bar between rows ── */
     .row-sep {
         position: relative;
         height: 18px;
@@ -293,7 +293,7 @@
     }
     .ranks-maxed { color: #1eff00; }
 
-    /* Zustände */
+    /* States */
     .talent-locked .talent-icon   { filter: grayscale(1) brightness(.35); }
     .talent-locked .talent-ranks  { color: #5a4a28; }
     .talent-locked                { border-color: #221a0a; }
@@ -354,7 +354,7 @@
     private int TotalSpent            => Engine.Player.TalentState.TotalInvested(ActiveClass);
     private string[] TreeNames        => TalentRegistry.GetTreeNames(ActiveClass);
 
-    // Hintergrund des Kopfbereichs: aktuelle Zone, sonst Startgebiet der Rasse
+    // Background of the header: current zone, otherwise the starting zone of the race
     private string HeaderTheme =>
         Engine.CurrentCombatZone?.Theme ?? CombatZoneRegistry.StartZoneFor(Engine.Race)?.Theme ?? "grassland";
 

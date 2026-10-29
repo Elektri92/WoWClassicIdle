@@ -1,6 +1,6 @@
-@* Allgemeiner WoW-Tooltip für beliebigen Inhalt (Zonen, Reiseabschnitte, Gegner).
-   Positionierung über js/tooltip.js (position: fixed); Styles global in css/combat-zones.css,
-   weil der Tooltip-Inhalt aus der aufrufenden Komponente stammt (Scoped CSS greift dort nicht). *@
+@* Generic WoW tooltip for arbitrary content (zones, travel legs, enemies).
+   Positioned via js/tooltip.js (position: fixed); styles are global in css/combat-zones.css,
+   because the tooltip content comes from the calling component (scoped CSS doesn't apply there). *@
 <span class="zt-host @(Contents ? "zt-contents" : "") @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
     @ChildContent
     <span class="wow-tooltip zt-tooltip" role="tooltip">
@@ -18,6 +18,6 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? TitleColor { get; set; }
     [Parameter] public string? Class { get; set; }
-    /// <summary>Host ohne eigene Box (display: contents) – das Kind bleibt direktes Grid-/Flex-Element.</summary>
+    /// <summary>Host without its own box (display: contents) – the child stays a direct grid/flex element.</summary>
     [Parameter] public bool Contents { get; set; }
 }

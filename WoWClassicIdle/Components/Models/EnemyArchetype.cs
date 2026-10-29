@@ -2,21 +2,21 @@
 namespace Models;
 
 /// <summary>
-/// Stat-Profil einer Gegnerart (Wolf, Bär, Troll …) – Multiplikatoren und Festwerte aus dem bisherigen Enemy-Scaling.
-/// Die eigentlichen Level-Werte berechnet <see cref="EnemyScaling"/>.
+/// Stat profile of an enemy type (wolf, bear, troll …) – multipliers and fixed values from the former enemy scaling.
+/// The actual level values are calculated by <see cref="EnemyScaling"/>.
 /// </summary>
-/// <param name="Type">Kreaturtyp für Kampfanimation und Stoff-Drops ("Humanoid" → Stoff).</param>
-/// <param name="HpMultiplier">Faktor auf die Standard-HP-Kurve.</param>
-/// <param name="AttackBonus">Aufschlag auf die Standard-Attack-Formel.</param>
-/// <param name="Defense">Rüstung bis Level 34.</param>
-/// <param name="DefenseLate">Rüstung ab Level 35 (dickeres Fell, ältere Drachen).</param>
+/// <param name="Type">Creature type for combat animation and cloth drops ("Humanoid" → cloth).</param>
+/// <param name="HpMultiplier">Factor on the default HP curve.</param>
+/// <param name="AttackBonus">Bonus on the default attack formula.</param>
+/// <param name="Defense">Armor up to level 34.</param>
+/// <param name="DefenseLate">Armor from level 35 (thicker fur, older dragons).</param>
 /// <param name="Speed">Angriffsintervall in Sekunden.</param>
 public record EnemyArchetype(string Type, double HpMultiplier, int AttackBonus, int Defense, int DefenseLate, double Speed)
 {
     public int DefenseAt(int level) => level >= 35 ? DefenseLate : Defense;
 }
 
-/// <summary>Alle Gegnerarten (Werte siehe Enemy-Scaling-Tabelle).</summary>
+/// <summary>All enemy types (values see the enemy scaling table).</summary>
 public static class Archetypes
 {
     // ── Tiere ──
@@ -36,7 +36,7 @@ public static class Archetypes
     public static readonly EnemyArchetype Insect    = new("Insect",    1.00,  0, 2, 2, 2.2);
     public static readonly EnemyArchetype Murloc    = new("Murloc",    0.93,  0, 0, 0, 2.6);
 
-    // ── Humanoide (droppen Stoff) ──
+    // ── Humanoids (drop cloth) ──
     public static readonly EnemyArchetype Humanoid  = new("Humanoid",  1.00,  0, 1, 1, 2.4);
     public static readonly EnemyArchetype Goblin    = new("Humanoid",  0.95,  0, 0, 0, 2.2);
     public static readonly EnemyArchetype Troll     = new("Humanoid",  1.15,  0, 1, 1, 2.5);

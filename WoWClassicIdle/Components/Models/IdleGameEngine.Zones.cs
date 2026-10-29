@@ -1,33 +1,33 @@
 using Models;
 
-// Kampfgebiete: Zonenwahl je Charakter, Reisen zwischen Zonen, Gegner-Spawn aus der aktiven Zone.
+// Combat zones: zone choice per character, travel between zones, enemy spawn from the active zone.
 public partial class IdleGameEngine
 {
     private double _travelRegenAcc;
 
     /// <summary>
-    /// Zone, in der gekämpft wird. Ohne Roster-Charakter (Headless-Simulation) automatisch passend zum Level.
+    /// Zone being fought in. Without a roster character (headless simulation) automatically matched to the level.
     /// </summary>
     public CombatZone? CurrentCombatZone => ActiveCharacter is { } slot
         ? CombatZoneRegistry.Get(slot.CombatZoneId)
         : CombatZoneRegistry.AutoZoneFor(Player.Level);
 
-    /// <summary>Der aktive Charakter hat noch nie eine Zone gewählt – vorher wird nicht gekämpft.</summary>
+    /// <summary>The active character has never chosen a zone – no fighting before that.</summary>
     public bool NeedsCombatZone => ActiveCharacter is { CombatZoneId: null };
 
     public ZoneTravelState? Travel => ActiveCharacter?.Travel;
     public bool IsTraveling => Travel is not null;
 
-    /// <summary>Bodenreise des aktiven Charakters (Laufen, Gestalt, Reittier).</summary>
+    /// <summary>Ground travel of the active character (walking, form, mount).</summary>
     public GroundTravel GroundTravel => ZoneTravel.GroundFor(PlayerClass, Race, Player.Level);
 
-    /// <summary>Route von der aktuellen Zone in <paramref name="target"/>; null ohne Startzone (erste Wahl ist sofort).</summary>
+    /// <summary>Route from the current zone to <paramref name="target"/>; null without a start zone (the first choice is immediate).</summary>
     public TravelRoute? RouteTo(CombatZone target) =>
         CurrentCombatZone is { } from && ActiveCharacter is { } slot
             ? ZoneTravel.Route(from, target, Faction, GroundTravel, slot.DiscoveredZoneIds)
             : null;
 
-    /// <summary>Grund, warum die Zone nicht gewählt werden kann (null = wählbar).</summary>
+    /// <summary>Reason why the zone cannot be chosen (null = selectable).</summary>
     public string? CombatZoneBlocker(CombatZone zone)
     {
         if (!CombatZoneRegistry.CanEnter(zone, Player.Level)) return $"Requires level {zone.MinLevel}";
@@ -37,7 +37,7 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Wählt das Kampfgebiet des aktiven Charakters. Die erste Wahl ist sofort aktiv, danach muss gereist werden.
+    /// Chooses the combat zone of the active character. The first choice is active immediately, afterwards travel is required.
     /// </summary>
     public bool SelectCombatZone(string zoneId)
     {
@@ -69,7 +69,7 @@ public partial class IdleGameEngine
         return true;
     }
 
-    /// <summary>Reise abbrechen – der Charakter kehrt sofort in seine bisherige Zone zurück.</summary>
+    /// <summary>Cancel the travel – the character immediately returns to its previous zone.</summary>
     public void CancelTravel()
     {
         lock (_simLock)
@@ -81,11 +81,11 @@ public partial class IdleGameEngine
         TickUpdated?.Invoke();
     }
 
-    /// <summary>Gegner aus der aktuellen Zone – null ohne Zone oder während einer Reise.</summary>
+    /// <summary>Enemy from the current zone – null without a zone or during travel.</summary>
     private Enemy? SpawnEnemy() =>
         !IsTraveling && CurrentCombatZone is { } zone ? _spawner.Spawn(Player.Stats.Level, zone) : null;
 
-    // Kampf verlassen: Gegner verschwindet, laufender Cast und Swing-Timer verfallen
+    // Leave combat: the enemy disappears, the running cast and swing timer are discarded
     private void LeaveCombat()
     {
         CurrentEnemy      = null;
@@ -95,7 +95,7 @@ public partial class IdleGameEngine
         _enemyAttackAcc  = 0;
     }
 
-    /// <summary>Reisefortschritt für einen Schritt; true = Charakter ist unterwegs (kein Kampf).</summary>
+    /// <summary>Travel progress for one step; true = character is traveling (no combat).</summary>
     private bool AdvanceTravel(double dt)
     {
         if (ActiveCharacter is not { Travel: { } travel } slot) return false;
@@ -112,7 +112,7 @@ public partial class IdleGameEngine
         return true;
     }
 
-    // Unterwegs erholt sich der Charakter wie außerhalb des Kampfes (HP + Mana alle 5 s)
+    // While traveling the character recovers like out of combat (HP + mana every 5 s)
     private void RegenWhileTraveling(double dt)
     {
         _travelRegenAcc += dt;
@@ -125,7 +125,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Zone und Reise eines Charakters aus dem Spielstand übernehmen (ungültige Werte werden verworfen).</summary>
+    /// <summary>Take over zone and travel of a character from the save game (invalid values are discarded).</summary>
     private static void RestoreCombatZone(CharacterSlot slot, SlotSaveData data)
     {
         if (CombatZoneRegistry.Get(data.CombatZone) is not { } zone) return;

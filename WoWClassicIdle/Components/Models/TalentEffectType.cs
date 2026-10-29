@@ -4,46 +4,46 @@ namespace Models;
 public enum TalentEffectType
 {
     CritChance,
-    ArcaneIntellectBonus,       // +x% Stärke von Arcane Intellect
-    ConjureWaterManaRegen,      // +x% Manaregg-Wert von Conjure Water
+    ArcaneIntellectBonus,       // +x% strength of Arcane Intellect
+    ConjureWaterManaRegen,      // +x% mana regen value of Conjure Water
     AutoAttackDamage,           // +x% Auto-Angriff-Schaden
-    FireballManaCost,           // -x Mana Kosten von Fireball (Flat)
-    FireballDot,                // Fireball-DoT-Schaden pro Rang
-    FireballCrit,               // +x% Crit-Chance für Fireball
-    FrostboltManaCost,          // -x Mana Kosten von Frostbolt (Flat)
-    FrostboltAttackSpeedDebuff, // +x% Angriffstempo-Debuff von Frostbolt
-    FrostboltCrit,              // +x% Crit-Chance für Frostbolt
+    FireballManaCost,           // -x mana cost of Fireball (flat)
+    FireballDot,                // Fireball DoT damage per rank
+    FireballCrit,               // +x% crit chance for Fireball
+    FrostboltManaCost,          // -x mana cost of Frostbolt (flat)
+    FrostboltAttackSpeedDebuff, // +x% attack speed debuff of Frostbolt
+    FrostboltCrit,              // +x% crit chance for Frostbolt
 
     // ─── Allgemein ───
     AutoAttackSpeed,             // +x% Angriffsgeschwindigkeit
-    AutoAttackCrit,              // +x% Crit-Chance nur für Auto-Attacks
-    DamageTaken,                 // -x% erlittener Schaden
+    AutoAttackCrit,              // +x% crit chance for auto-attacks only
+    DamageTaken,                 // -x% damage taken
     HealingBonus,                // +x% Heilung
-    RageGenBonus,                // +x% Rage-Generierung durch Auto-Attacks
+    RageGenBonus,                // +x% rage generation from auto-attacks
 
     // ─── Warrior ───
     HeroicStrikeDamage,          // +x% Heroic Strike Schaden
     HeroicStrikeManaCost,        // -x Rage-Kosten Heroic Strike (flat)
     ExecuteCooldown,             // -x Sekunden Cooldown Execute
-    ThunderclapBonus,            // +x% Thunderclap Schaden und Attack-Slow
-    CritHeal,                    // Heilt x HP bei Crit
-    RageOnHit,                   // +x Rage wenn Angegriffen (flat)
-    GrantBattleStance,           // Schaltet Battle Stance frei
-    GrantBerserkerStance,        // Schaltet Berserker Stance frei
-    GrantDefensiveStance,        // Schaltet Defensive Stance frei
+    ThunderclapBonus,            // +x% Thunderclap damage and attack slow
+    CritHeal,                    // Heals x HP on crit
+    RageOnHit,                   // +x rage when attacked (flat)
+    GrantBattleStance,           // Unlocks Battle Stance
+    GrantBerserkerStance,        // Unlocks Berserker Stance
+    GrantDefensiveStance,        // Unlocks Defensive Stance
 
     // ─── Priest ───
-    SmiteHeal,                   // Heilt x HP wenn Smite Schaden verursacht
+    SmiteHeal,                   // Heals x HP when Smite deals damage
     ShadowWordPainDamage,        // +x% Shadow Word Pain Schaden
-    GrantDivineShield,           // Schaltet Divine Shield (Priester-Schild) frei
+    GrantDivineShield,           // Unlocks Divine Shield (Priest shield)
     SmiteDamage,                 // +x% Smite Schaden
-    PowerWordFortitudeBonus,     // +x Prozentpunkte Schadensreduktion von Power Word: Fortitude
-    GrantHolyNova,               // Schaltet Holy Nova frei
+    PowerWordFortitudeBonus,     // +x percentage points damage reduction from Power Word: Fortitude
+    GrantHolyNova,               // Unlocks Holy Nova
     RenewManaCost,               // -x% Manakosten Renew
     RenewHealing,                // +x% Renew Heilung
-    GrantShadowForm,             // Schaltet Shadowform frei
+    GrantShadowForm,             // Unlocks Shadowform
     MindBlastManaCost,           // -x% Manakosten Mind Blast
-    DrainManaBonus,              // +x% Mana-Wiederherstellung von Drain Mana
+    DrainManaBonus,              // +x% mana restoration from Drain Mana
 
     // ─── Rogue ───
     SinisterStrikeDamage,        // +x% Sinister Strike Schaden
@@ -58,94 +58,94 @@ public enum TalentEffectType
     // ─── Hunter ───
     RaptorStrikeManaCost,        // -x Manakosten Raptor Strike (flat)
     SerpentStingManaCost,        // -x Manakosten Serpent Sting (flat)
-    HuntersMarkBonus,            // +x% Schadensbuff von Hunter's Mark
+    HuntersMarkBonus,            // +x% damage buff of Hunter's Mark
 
     // ─── Warlock ───
     CurseOfAgonyDuration,        // +x Sekunden Dauer Curse of Agony
-    DrainLifeTickDamage,         // +x Schaden pro Drain Life Tick
+    DrainLifeTickDamage,         // +x damage per Drain Life tick
     LifeTapHpCostReduction,      // -x HP-Kosten Life Tap (flat)
     ShadowBoltManaCost,          // -x Manakosten Shadow Bolt (flat)
 
     // ─── Shaman ───
     LightningBoltManaCost,       // -x Manakosten Lightning Bolt (flat)
     LightningBoltDamage,         // +x Schaden Lightning Bolt (flat)
-    LightningShieldDamage,       // +x% Vergeltungsschaden von Lightning Shield
-    GrantChainLightning,         // Schaltet Chain Lightning frei
+    LightningShieldDamage,       // +x% retaliation damage of Lightning Shield
+    GrantChainLightning,         // Unlocks Chain Lightning
     FlameShockDamage,            // +x% Flame Shock Schaden (Direkt + DoT)
-    GrantWindfuryWeapon,         // Schaltet Windfury Weapon frei
-    FlurryAttackSpeed,           // +x% Angriffstempo für die nächsten 3 Schläge nach einem Nahkampf-Crit
-    GrantManaTideTotem,          // Schaltet Mana Tide Totem frei
-    SpiritManaRegen,             // +x% Manaregeneration aus Spirit
+    GrantWindfuryWeapon,         // Unlocks Windfury Weapon
+    FlurryAttackSpeed,           // +x% attack speed for the next 3 swings after a melee crit
+    GrantManaTideTotem,          // Unlocks Mana Tide Totem
+    SpiritManaRegen,             // +x% mana regeneration from Spirit
     HealingWaveHealing,          // +x% Healing Wave Heilung
     EarthbindCooldown,           // -x Sekunden Cooldown Earthbind Totem
 
     // ─── Druid ───
-    WrathDamage,                 // +x% Wrath- und Starfire-Schaden
-    GrantMoonkinForm,            // Schaltet Moonkin Form frei
+    WrathDamage,                 // +x% Wrath and Starfire damage
+    GrantMoonkinForm,            // Unlocks Moonkin Form
     MoonfireDamage,              // +x% Moonfire Schaden (Direkt + DoT)
-    GrantBearForm,               // Schaltet Bear Form + Maul frei
+    GrantBearForm,               // Unlocks Bear Form + Maul
     MaulDamage,                  // +x% Maul Schaden
-    GrantCatForm,                // Schaltet Cat Form + Claw frei
+    GrantCatForm,                // Unlocks Cat Form + Claw
     ClawDamage,                  // +x% Claw Schaden
-    GrantTreeForm,               // Schaltet Tree Form frei
+    GrantTreeForm,               // Unlocks Tree Form
     RegrowthHealing,             // +x% Regrowth Heilung (Direkt + HoT)
 
     // ─── Mage (Reihe 2) ───
-    GrantEvocation,             // Schaltet Evocation frei
+    GrantEvocation,             // Unlocks Evocation
     ArcaneMissilesDamage,       // +x% Arcane Missiles Schaden
-    GrantIgnite,                // Schaltet Ignite frei
+    GrantIgnite,                // Unlocks Ignite
     FireBlastManaCost,          // -x Manakosten Fire Blast (Flat)
-    GrantIceBarrier,            // Schaltet Ice Barrier frei
+    GrantIceBarrier,            // Unlocks Ice Barrier
     FrostboltDamage,            // +x% Frostbolt Schaden
 
     // ─── Paladin (Reihe 2) ───
-    GrantHolyShock,             // Schaltet Holy Shock frei
-    HolyLightShield,            // Holy Light gibt Schild über x% max. HP
-    GrantHolyShield,            // Schaltet Holy Shield frei
+    GrantHolyShock,             // Unlocks Holy Shock
+    HolyLightShield,            // Holy Light grants a shield of x% max HP
+    GrantHolyShield,            // Unlocks Holy Shield
     ConsecrationDamage,         // +x% Consecration Schaden
     GrantSealOfCommand,         // Schaltet Seal of Command frei
     HolyStrikeDamage,           // +x% Holy Strike Schaden
 
     // ─── Rogue (Reihe 2) ───
-    GrantColdBlood,             // Schaltet Cold Blood frei
-    GrantBladeFlurry,           // Schaltet Blade Flurry frei
+    GrantColdBlood,             // Unlocks Cold Blood
+    GrantBladeFlurry,           // Unlocks Blade Flurry
     SinisterStrikeEnergyCost,   // -x Energiekosten Sinister Strike (flat)
-    SliceAndDiceBonus,          // +x Prozentpunkte Angriffstempo von Slice and Dice
-    GrantGhostlyStrike,         // Schaltet Ghostly Strike frei
-    StaminaHpBonus,             // +x% HP aus Stamina
-    ExposeArmorBonus,           // +x% Wirkung von Expose Armor
+    SliceAndDiceBonus,          // +x percentage points attack speed from Slice and Dice
+    GrantGhostlyStrike,         // Unlocks Ghostly Strike
+    StaminaHpBonus,             // +x% HP from Stamina
+    ExposeArmorBonus,           // +x% effect of Expose Armor
 
     // ─── Hunter (Reihe 2) ───
-    GrantTamePet,               // Schaltet Cat- und Bear-Pet frei
-    PetHealthBonus,             // +x% der Spieler-HP als zusätzliche Pet-HP (auch Warlock)
-    GrantSniperShot,            // Schaltet Sniper Shot frei
+    GrantTamePet,               // Unlocks Cat and Bear pets
+    PetHealthBonus,             // +x% of the player HP as additional pet HP (also Warlock)
+    GrantSniperShot,            // Unlocks Sniper Shot
     MultiShotDamage,            // +x% Multi-Shot Schaden
-    GrantMongooseBite,          // Schaltet Mongoose Bite frei
-    RaptorStrikeBonus,          // +x% Raptor Strike Schaden und -x% Manakosten
+    GrantMongooseBite,          // Unlocks Mongoose Bite
+    RaptorStrikeBonus,          // +x% Raptor Strike damage and -x% mana cost
 
     // ─── Warlock (Reihe 2) ───
-    GrantSiphonLife,            // Schaltet Siphon Life frei
-    LifestealBonus,             // +x% Heilung aus Lifesteal-Fähigkeiten
-    GrantSummonDemon,           // Schaltet Summon Voidwalker frei
-    GrantIncinerate,            // Schaltet Incinerate frei
-    IncinerateEmpower,          // Shadow Bolt erhöht den Schaden des nächsten Incinerate um x%
+    GrantSiphonLife,            // Unlocks Siphon Life
+    LifestealBonus,             // +x% healing from lifesteal abilities
+    GrantSummonDemon,           // Unlocks Summon Voidwalker
+    GrantIncinerate,            // Unlocks Incinerate
+    IncinerateEmpower,          // Shadow Bolt increases the damage of the next Incinerate by x%
 
-    // ─── Balance-Runde Lv 10–20 (ersetzen wirkungslose Mana-Talente) ───
+    // ─── Balancing round Lv 10–20 (replace ineffective mana talents) ───
     FireballDamage,             // +x% Fireball Schaden
     FireBlastDamage,            // +x% Fire Blast Schaden
     MindBlastDamage,            // +x% Mind Blast Schaden
     ShadowBoltDamage,           // +x% Shadow Bolt Schaden
-    DamageBonus,                // +x% Schaden aller Fähigkeiten (Direkt + DoT)
-    ThornsDamage,               // +x% Vergeltungsschaden von Thorns
+    DamageBonus,                // +x% damage of all abilities (direct + DoT)
+    ThornsDamage,               // +x% retaliation damage of Thorns
     InsectSwarmDamage,          // +x% Insect Swarm Schaden
-    DeadlyPoisonStacks,         // +x maximale Stacks Deadly Poison
-    DeadlyPoisonTickRate,       // Deadly Poison tickt x% schneller
-    PetDamageBonus,             // +x% Schaden des Begleittiers
+    DeadlyPoisonStacks,         // +x max stacks of Deadly Poison
+    DeadlyPoisonTickRate,       // Deadly Poison ticks x% faster
+    PetDamageBonus,             // +x% pet damage
 
     // ─── Spezialisierung (Reihe 3, ab Lv 20) ───
-    GrantSpecAbility,           // Schaltet die Spezialisierungs-Fähigkeit des Baums frei (GrantsAbilityId)
-    BerserkerFlurry,            // Flurry wie beim Schamanen (+x% Tempo nach Crit), nur in Berserker Stance
-    SpiritOfRedemption,         // Tödlicher Treffer → unverwundbarer Geist (Priester, Holy)
-    Nightfall,                  // x% Chance pro DoT-Tick: nächstes Shadow Bolt sofort
-    Eclipse,                    // Wrath verstärkt Starfire und umgekehrt
+    GrantSpecAbility,           // Unlocks the tree's specialization ability (GrantsAbilityId)
+    BerserkerFlurry,            // Flurry like the Shaman's (+x% haste after crit), only in Berserker Stance
+    SpiritOfRedemption,         // Lethal hit → invulnerable spirit (Priest, Holy)
+    Nightfall,                  // x% chance per DoT tick: next Shadow Bolt instant
+    Eclipse,                    // Wrath empowers Starfire and vice versa
 }

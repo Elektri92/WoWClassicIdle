@@ -1,6 +1,6 @@
 using Models;
 
-// Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+// Create new systems as their own partial file; keep files below 300 lines where possible.
 public partial class IdleGameEngine
 {
     private void OnTick(object? _, System.Timers.ElapsedEventArgs __)
@@ -11,8 +11,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Führt <paramref name="count"/> Simulationsschritte à <c>intervalMs</c> synchron aus –
-    /// ohne Timer, z. B. für Headless-Simulationen.
+    /// Runs <paramref name="count"/> simulation steps of <c>intervalMs</c> synchronously –
+    /// without a timer, e.g. for headless simulations.
     /// </summary>
     public void RunSteps(int count)
     {
@@ -28,30 +28,30 @@ public partial class IdleGameEngine
     private bool PlayerNeedsHeal =>
         Player.CurrentHp <= Player.Stats.MaxHp * Ability.HealThreshold;
 
-    /// <summary>Level, Cooldown und (bei Buffs/Debuffs) Ablauf erlauben einen Cast – Mana wird nicht geprüft.</summary>
+    /// <summary>Level, cooldown and (for buffs/debuffs) expiry allow a cast – mana is not checked.</summary>
     private bool IsReadyToCast(Ability ability) =>
         IsAbilityAvailable(ability)
         && Player.Cooldowns.IsReady(ability.Id)
         && !(ability.IsBuff && Player.Buffs.IsActive(ability.Id))
-        // Aktiver Debuff blockiert nur reine Debuffs – Schadenszauber mit Debuff (z. B. Frostbolt) werden weiter gewirkt und frischen ihn auf
+        // An active debuff only blocks pure debuffs – damage spells with a debuff (e.g. Frostbolt) keep being cast and refresh it
         && !(ability.IsDebuff && !ability.IsDamage && CurrentEnemy is { } e && e.Debuffs.IsActive(ability.Id))
         && !(ability.RequiresEnemyBelowHpPct > 0
              && (CurrentEnemy is null || CurrentEnemy.CurrentHp > CurrentEnemy.Stats.MaxHp * ability.RequiresEnemyBelowHpPct));
 
     /// <summary>
-    /// HP unter der Schwelle und eine ausgerüstete, bereite Heilung scheitert nur am Mana:
-    /// dann werden keine anderen Fähigkeiten gewirkt, bis genug Mana da ist.
+    /// HP below the threshold and an equipped, ready heal only fails because of mana:
+    /// then no other abilities are cast until there is enough mana.
     /// </summary>
     private bool IsSavingManaForHeal() =>
         PlayerNeedsHeal
         && Player.EquippedAbilities.Any(a => a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < CastCost(a));
 
-    /// <summary>Simulierte Spielzeit pro Schritt in Sekunden.</summary>
+    /// <summary>Simulated play time per step in seconds.</summary>
     public double StepSeconds => _baseDt;
 
     /// <summary>
-    /// Würfelt Crit für einen vom Spieler verursachten Wert und verdoppelt ihn gegebenenfalls.
-    /// Gilt für allen Schaden, jede Heilung und (sobald vorhanden) jeden Schild.
+    /// Rolls crit for a value caused by the player and doubles it if applicable.
+    /// Applies to all damage, every heal and (once present) every shield.
     /// </summary>
     private (int Amount, bool IsCrit) RollPlayerCrit(int amount, double extraCrit = 0)
     {
@@ -69,14 +69,14 @@ public partial class IdleGameEngine
 
     private void SimulateOneStep()
     {
-        // ── Tot: Wartezeit beim Geistheiler ──
+        // ── Dead: waiting at the spirit healer ──
         if (RespawnRemaining > 0)
         {
             RespawnRemaining = Math.Max(0, RespawnRemaining - _baseDt);
             return;
         }
 
-        // ── Unterwegs in eine andere Zone: kein Kampf ──
+        // ── Traveling to another zone: no combat ──
         if (AdvanceTravel(_baseDt))
             return;
 
@@ -84,7 +84,7 @@ public partial class IdleGameEngine
         {
             if (_pendingRareEnemy != null)
             {
-                // Spieler ist gegen diesen Rare gestorben – Rare mit verbleibendem HP erneut bekämpfen
+                // Player died against this rare – fight the rare again with its remaining HP
                 CurrentEnemy    = _pendingRareEnemy;
                 _pendingRareEnemy = null;
             }
@@ -94,7 +94,7 @@ public partial class IdleGameEngine
             }
             else
             {
-                return; // noch keine Zone gewählt
+                return; // no zone chosen yet
             }
             LastLog = $"{CurrentEnemy.Name} appeared!";
             _playerAttackAcc = 0;
@@ -107,7 +107,7 @@ public partial class IdleGameEngine
         MaintainPassiveAuras();
         UpdateConsumables(dt);
 
-        // Dynamit kann den Gegner bereits töten
+        // Dynamite can already kill the enemy
         if (!CurrentEnemy.IsAlive)
         {
             HandleEnemyDeath();
@@ -124,7 +124,7 @@ public partial class IdleGameEngine
         {
             if (tick.IsMana)
             {
-                // Mana-over-Time (z. B. Conjure Water) – kein Crit, kein Combat-Text
+                // Mana over time (e.g. Conjure Water) – no crit, no combat text
                 Player.RegenMana(tick.Amount);
             }
             else
@@ -164,7 +164,7 @@ public partial class IdleGameEngine
             return;
         }
 
-        // ── Energie (Rogue, Cat Form): Regeneration alle 3 Sekunden ──
+        // ── Energy (Rogue, Cat Form): regeneration every 3 seconds ──
         var resource = Player.Resource;
         if (resource == ResourceKind.Energy)
         {
@@ -185,7 +185,7 @@ public partial class IdleGameEngine
             }
         }
 
-        // ── Passive HP-Regeneration aus Spirit alle 5 Sekunden (alle Klassen) ──
+        // ── Passive HP regeneration from Spirit every 5 seconds (all classes) ──
         _hpRegenAcc += dt;
         while (_hpRegenAcc >= 5.0)
         {
@@ -193,12 +193,12 @@ public partial class IdleGameEngine
             int hpBefore = Player.CurrentHp;
             Player.RegenHp(Player.Stats.HpRegenPer5);
             int regenHealed = Player.CurrentHp - hpBefore;
-            // Nur tatsächlich geheilte HP zählen – bei vollem Leben kein Meter-Eintrag
+            // Only HP actually healed counts – no meter entry at full health
             if (regenHealed > 0)
                 Meter.RecordSpiritRegen(regenHealed);
         }
 
-        // Attack-Speed aus Charakter-Stat und Buffs – beschleunigt Auto-Attacks und Fähigkeiten-Cooldowns
+        // Attack speed from character stat and buffs – speeds up auto-attacks and ability cooldowns
         double attackSpeed    = Player.Stats.AttackSpeedMultiplier * Player.Buffs.AttackSpeedMultiplier * FlurryAttackSpeedMultiplier;
         double playerInterval = Math.Max(0.1, Player.Stats.Speed / attackSpeed);
         double enemyInterval  = Math.Max(0.1, CurrentEnemy.Stats.Speed / CurrentEnemy.Debuffs.AttackSpeedMultiplier);
@@ -209,7 +209,7 @@ public partial class IdleGameEngine
         SwingInterval = playerInterval;
         EnemySwingInterval = enemyInterval;
 
-        // ── Abilities (Cooldown-basiert, mit Cast-Zeit und Global Cooldown) + Pet-Angriffe ──
+        // ── Abilities (cooldown-based, with cast time and global cooldown) + pet attacks ──
         Player.Cooldowns.Tick(dt * attackSpeed);
         int abilityDmg = UpdateAbilities(dt, attackSpeed) + UpdatePet(dt, enemyDmgTakenMult);
         if (abilityDmg > 0)
@@ -218,7 +218,7 @@ public partial class IdleGameEngine
             playerAttacked = true;
         }
 
-        // ── Kill-Check nach Abilities (Spells werden vor der Auto-Attack ausgewertet) ──
+        // ── Kill check after abilities (spells are evaluated before the auto-attack) ──
         if (!CurrentEnemy.IsAlive)
         {
             HandleEnemyDeath();
@@ -230,7 +230,7 @@ public partial class IdleGameEngine
             .FirstOrDefault(a => a.ReplacesAutoAttack && IsAbilityAvailable(a) && Player.CanUseInCurrentForm(a));
         var nextSwingAbility = nextSwingRaw is null ? null : Player.GetEffectiveAbility(nextSwingRaw);
 
-        // Spell mit Manakosten wird gerade gewirkt → Swing wartet (Timer bleibt voll geladen)
+        // A spell with mana cost is being cast → the swing waits (timer stays fully charged)
         if (IsSwingHeld)
             _playerAttackAcc = Math.Min(_playerAttackAcc, playerInterval);
 
@@ -239,9 +239,9 @@ public partial class IdleGameEngine
             _playerAttackAcc -= playerInterval;
             playerAttacked = true;
 
-            // On-next-swing (Heroic Strike): ersetzt den Schlag, erzeugt wie in Classic keine Rage
+            // On-next-swing (Heroic Strike): replaces the swing, generates no rage like in Classic
             if (nextSwingAbility is not null
-                && Player.Cooldowns.IsReady(nextSwingAbility.Id)   // Holy Strike: 10 s CD; Heroic Strike/Maul haben keinen
+                && Player.Cooldowns.IsReady(nextSwingAbility.Id)   // Holy Strike: 10 s CD; Heroic Strike/Maul have none
                 && !IsSavingManaForHeal()
                 && Player.CurrentMana >= nextSwingAbility.MinResourceToCast
                 && Player.ConsumeMana(nextSwingAbility.ManaCost))
@@ -259,7 +259,7 @@ public partial class IdleGameEngine
                     Player.Cooldowns.StartCooldown(nextSwingAbility.Id, nextSwingAbility.Cooldown);
                 UpdateFlurry(swingCrit);
 
-                // Passive Procs (z. B. Deadly Poison) – auch bei On-Next-Swing
+                // Passive procs (e.g. Deadly Poison) – also on on-next-swing
                 foreach (var passive in Player.PassiveAbilities)
                     TryProcPassive(passive);
 
@@ -278,7 +278,7 @@ public partial class IdleGameEngine
             UpdateFlurry(autoCrit);
             totalPlayerDmg += TryWindfuryAttacks(autoMult);
 
-            // Rage (Warrior, Bear Form): +8 Rage pro Auto-Attack (durch Talente und Stances erhöhbar)
+            // Rage (Warrior, Bear Form): +8 rage per auto-attack (can be increased by talents and stances)
             if (resource == ResourceKind.Rage)
             {
                 double rageMult = 1.0
@@ -303,13 +303,13 @@ public partial class IdleGameEngine
         {
             _enemyAttackAcc -= enemyInterval;
 
-            // Betäubung: Gegner kann nicht angreifen
+            // Stun: enemy cannot attack
             if (CurrentEnemy.Debuffs.IsStunned)
                 continue;
 
             enemyAttacked = true;
 
-            // Immunität (z. B. Divine Shield): Treffer landet nicht
+            // Immunity (e.g. Divine Shield): the hit doesn't land
             if (Player.Buffs.HasImmunity)
                 continue;
 
@@ -317,7 +317,7 @@ public partial class IdleGameEngine
                 CurrentEnemy.Stats.Attack, Player.Stats.Defense, _rng);
             double dmgReduction = Math.Min(0.99, Player.Stats.DamageTakenReduction + Player.Buffs.DamageTakenReduction);
             int reducedDmg = Math.Max(1, (int)Math.Round(enemyDmg * (1.0 - dmgReduction)));
-            reducedDmg = SplitDamageWithPet(reducedDmg);   // Pet fängt einen Teil des Treffers ab
+            reducedDmg = SplitDamageWithPet(reducedDmg);   // Pet absorbs part of the hit
             var (taken, absorbs) = Player.TakeDamage(reducedDmg);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, taken));
             if (!Player.IsAlive)
@@ -328,7 +328,7 @@ public partial class IdleGameEngine
                 Meter.RecordAbility(src, CombatActionKind.Heal, amt);
             totalEnemyDmg += reducedDmg;
 
-            // RageOnHit: Warrior generiert bei Schaden-Einnahme extra Rage
+            // RageOnHit: Warrior generates extra rage when taking damage
             if (resource == ResourceKind.Rage)
             {
                 double rageOnHit = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.RageOnHit);
@@ -347,12 +347,12 @@ public partial class IdleGameEngine
                 playerAttacked = true;
             }
 
-            // Ladungs-Buffs (Holy Shield) verbrauchen pro erlittenem Treffer eine Ladung
+            // Charge buffs (Holy Shield) consume one charge per hit taken
             Player.Buffs.ConsumeHitCharges();
         }
 
-        // ── Kill-Check nach Vergeltungsschaden – sonst ginge der Kill (XP, Geld, Loot) verloren ──
-        // (Sterben beide im selben Schritt, gilt der Tod des Spielers)
+        // ── Kill check after retaliation damage – otherwise the kill (XP, money, loot) would be lost ──
+        // (If both die in the same step, the player's death counts)
         if (!CurrentEnemy.IsAlive && Player.IsAlive)
         {
             HandleEnemyDeath();
@@ -362,10 +362,10 @@ public partial class IdleGameEngine
         if (!Player.IsAlive)
         {
             TotalDeaths++;
-            Player.Buffs.Reset();   // wie in WoW: Tod entfernt alle Buffs
+            Player.Buffs.Reset();   // like in WoW: death removes all buffs
             DismissPet();
             Player.CurrentHp = Player.Stats.MaxHp;
-            // Rare-Gegner merken, damit er nach Respawn erneut erscheint (nur wenn aktiviert)
+            // Remember the rare enemy so it reappears after respawn (only if enabled)
             if (EnableRareRequeue && CurrentEnemy is { IsRare: true })
                 _pendingRareEnemy = CurrentEnemy;
             CurrentEnemy = null;
@@ -393,8 +393,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Verkauft ein Rüstungs- oder Waffenitem automatisch, wenn ein exaktes Duplikat
-    /// (gleiche ID) bereits im Inventar liegt oder angelegt ist.
+    /// Automatically sells an armor or weapon item if an exact duplicate
+    /// (same ID) is already in the inventory or equipped.
     /// </summary>
     private bool TryAutoSellIfDuplicate(Item item)
     {
@@ -417,7 +417,7 @@ public partial class IdleGameEngine
     {
         if (!TryAutoSellIfDuplicate(item))
         {
-            // Loot-Qualität verfolgen (nur im Normalbetrieb, nicht im Debug-Simulator)
+            // Track loot quality (only in normal mode, not in the debug simulator)
             if (!AutoEquipDrops)
             {
                 if (item.Quality == ItemQuality.Uncommon) TotalUncommonLooted++;
@@ -428,7 +428,7 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Waffe droppen: im AutoEquip-Modus als Upgrade anlegen, sonst normal ins Inventar.</summary>
+    /// <summary>Drop a weapon: equip it as an upgrade in AutoEquip mode, otherwise put it into the inventory normally.</summary>
     private void AddWeaponLootOrSell(WeaponItem weapon)
     {
         if (AutoEquipDrops)
@@ -446,14 +446,14 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>XP gutschreiben und dabei freigeschaltete Fähigkeiten melden; Rückgabe = gewonnene Level.</summary>
+    /// <summary>Credit XP and report unlocked abilities; return value = levels gained.</summary>
     private int GrantXp(int amount)
     {
         int oldLevel = Player.Level;
         int levelsGained = Player.GainXp(amount);
         for (int l = oldLevel + 1; l <= Player.Level; l++)
         {
-            // Talent-Fähigkeiten melden sich beim Skillen (InvestTalentPoint), nicht beim Level-Up
+            // Talent abilities are reported when skilling (InvestTalentPoint), not on level-up
             foreach (var ability in ClassAbilityRegistry.GetAbilitiesFor(Player.ActiveClass)
                          .Where(a => a.LevelRequired == l && !a.TalentUnlockOnly))
                 AbilityUnlocked?.Invoke(ability);
@@ -467,11 +467,11 @@ public partial class IdleGameEngine
         Player.Copper += deadEnemy.Stats.CopperReward;
         RollCombatTradeDrops(deadEnemy);
 
-        // Rare-Loot: Rüstung + 25 % Chance auf Klassenwaffe
+        // Rare loot: armor + 25 % chance for a class weapon
         if (deadEnemy.IsRare)
         {
             var rawTable  = RareLootRegistry.GetLootTable(deadEnemy.Stats.Level);
-            // Im Simulator nur klassenpassende Items droppen lassen
+            // In the simulator only drop class-appropriate items
             IReadOnlyList<ArmorItem> lootTable = AutoEquipDrops
                 ? rawTable.Where(i => RareLootRegistry.IsUsefulForClass(i.Bonuses, Player.ActiveClass)).ToList()
                 : rawTable;
@@ -481,7 +481,7 @@ public partial class IdleGameEngine
                 var droppedItem = lootTable[_rng.Next(lootTable.Count)] with { RequiredLevel = deadEnemy.Stats.Level };
                 if (AutoEquipDrops)
                 {
-                    // Debug-Simulator: Items werden automatisch angelegt wenn sie ein Upgrade sind.
+                    // Debug simulator: items are equipped automatically if they are an upgrade.
                     bool equipped = Player.EquipArmorIfUpgrade(droppedItem, out var displaced);
                     if (!equipped)
                         Player.Inventory.TryAdd(droppedItem);
@@ -496,11 +496,11 @@ public partial class IdleGameEngine
             }
             else
             {
-                // Kein Loottable → doppeltes Gold statt Item
+                // No loot table → double gold instead of an item
                 Player.Copper += deadEnemy.Stats.CopperReward;
             }
 
-            // 25 % Chance auf grüne Klassenwaffe
+            // 25 % chance for a green class weapon
             if (_rng.NextDouble() < 0.25)
             {
                 var classWeapon = WeaponRegistry.GetTierWeaponForLevel(Player.ActiveClass, deadEnemy.Stats.Level);
@@ -508,10 +508,10 @@ public partial class IdleGameEngine
                     AddWeaponLootOrSell(classWeapon);
             }
 
-            // Blaue Drops nur im normalen Spiel – im Simulator wird kein blaues Loot gerollt
+            // Blue drops only in the normal game – no blue loot is rolled in the simulator
             if (!AutoEquipDrops)
             {
-                // 15 % Chance auf blaue Rüstung (ab Level 11)
+                // 15 % chance for blue armor (from level 11)
                 if (_rng.NextDouble() < 0.15)
                 {
                     var blueTable = RareLootRegistry.GetBlueLootTable(deadEnemy.Stats.Level);
@@ -522,7 +522,7 @@ public partial class IdleGameEngine
                     }
                 }
 
-                // 10 % Chance auf blaue Klassenwaffe (ab Level 10)
+                // 10 % chance for a blue class weapon (from level 10)
                 if (_rng.NextDouble() < 0.10)
                 {
                     var blueWeapon = WeaponRegistry.GetBlueTierWeaponForLevel(Player.ActiveClass, deadEnemy.Stats.Level);
@@ -532,7 +532,7 @@ public partial class IdleGameEngine
             }
         }
 
-        // Zu niedrige Gegner (3+ Level unter dem Spieler) geben stark reduzierte bzw. keine XP
+        // Enemies that are too low (3+ levels below the player) give heavily reduced or no XP
         int xpReward = StaticHelpers.GetKillXp(Player.Level, deadEnemy.Stats.Level);
 
         if (GrantXp(xpReward) > 0)
@@ -542,13 +542,13 @@ public partial class IdleGameEngine
                 ? $"💀 {deadEnemy.Name} defeated (+{xpReward} XP)"
                 : $"💀 {deadEnemy.Name} defeated (no XP – too low level)";
 
-        // Zonen-Ziele zählen (überschreibt LastLog, wenn ein Ziel erledigt wurde)
+        // Count zone objectives (overwrites LastLog when an objective was completed)
         TrackZoneObjectives(deadEnemy);
 
         TotalKills++;
         if (deadEnemy.IsRare) TotalRareKills++;
         CurrentEnemy = null;
-        CancelCast();   // Ziel tot → laufender Cast verfällt
+        CancelCast();   // Target dead → the running cast is discarded
         _playerAttackAcc = 0;
         _enemyAttackAcc  = 0;
     }

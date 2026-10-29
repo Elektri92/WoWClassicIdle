@@ -42,7 +42,7 @@ main .top-row {
 
 /* ----- Sidebar frame ----- */
 .sidebar {
-    /* Statischer Goldschein oben (wie die Bühnen der Seiten, bewusst ohne Animation) */
+    /* Static golden glow at the top (like the page stages, deliberately without animation) */
     background:
         radial-gradient(ellipse 120% 40% at 50% 0%, rgba(255, 190, 70, .10) 0%, transparent 70%),
         radial-gradient(ellipse at top, rgba(90, 74, 40, .25) 0%, transparent 60%),
@@ -89,13 +89,13 @@ main .top-row {
     background-color: #2b2418 !important;
 }
 
-/* ----- Menu: gruppierte Einträge, matt-rote Buttons mit Goldkante für die aktive Seite ----- */
+/* ----- Menu: grouped entries, matte red buttons with a gold edge for the active page ----- */
 .sidebar .nav-scrollable {
     background: transparent;
     padding: 2px 0 12px;
 }
 
-/* Abschnittsüberschrift mit auslaufender Linie */
+/* Section heading with a tapering line */
 .nav-section-label {
     display: flex;
     align-items: center;
@@ -151,7 +151,7 @@ main .top-row {
     background: linear-gradient(180deg, #5a130e 0%, #3e0a07 100%);
 }
 
-/* Aktive Seite: eingedrückt, Goldrand, Goldkante links, Raute rechts */
+/* Active page: pressed, gold border, gold edge left, diamond right */
 .sidebar .nav-item .nav-link.active {
     color: #fff !important;
     border-color: var(--wow-gold);
@@ -183,7 +183,7 @@ main .top-row {
     box-shadow: 0 0 6px var(--wow-gold);
 }
 
-/* Icons im Aktionsleisten-Rahmen, inaktiv leicht entsättigt */
+/* Icons in the action bar frame, slightly desaturated when inactive */
 .sidebar .nav-icon {
     width: 26px;
     height: 26px;
@@ -206,7 +206,7 @@ main .top-row {
     box-shadow: 0 0 0 1px #000, 0 0 7px rgba(255, 209, 0, .6);
 }
 
-/* ----- Debug-Bereich (nur Debug-Build): gleiche Form, rot-grau getönt ----- */
+/* ----- Debug area (Debug build only): same shape, tinted red-grey ----- */
 .nav-debug-area {
     border-top: 1px solid rgba(255, 100, 100, .25);
     padding: 0 0 6px;

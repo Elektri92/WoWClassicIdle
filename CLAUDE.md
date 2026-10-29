@@ -60,7 +60,7 @@ Nie Debug-Typen aus shared/Release-Code referenzieren. Gate über `BuildInfo.IsD
 
 - **Partial classes**: Neue Systeme als eigene `partial`-Datei anlegen — keine Monolithen.
   Dateien möglichst < 300 Zeilen halten. Erst Grep/Outline, nie ganze Dateien am Stück lesen.
-- Code-Kommentare auf **Deutsch**.
+- Code-Kommentare auf **Englisch**.
 - UI-Text (Logs, Labels, Fehlermeldungen) auf **Englisch**.
 - Keine Lint-Konfiguration – umgebenden Stil manuell anpassen.
 - Statische Daten (Mobs, Items, Abilities) von Logik getrennt halten.

@@ -1,11 +1,11 @@
 // Models/Player.Combat.cs
 namespace Models
 {
-    // Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+    // Create new systems as their own partial file; keep files below 300 lines where possible.
     public partial class Player
     {
         /// <summary>
-        /// Setzt das Level der aktiven Klasse direkt (z. B. für Debug-Zwecke).
+        /// Sets the level of the active class directly (e.g. for debug purposes).
         /// </summary>
         public void SetLevel(int level)
         {
@@ -13,7 +13,7 @@ namespace Models
             RecalculateStats();
         }
 
-        /// <summary>Gibt eine talent- und gestaltmodifizierte Kopie der Fähigkeit zurück (inkl. Manakosten).</summary>
+        /// <summary>Returns a talent- and form-modified copy of the ability (incl. mana cost).</summary>
         public Ability GetEffectiveAbility(Ability ability) =>
             ApplyFormBonus(ApplyExtendedTalentBonus(GetTalentModifiedAbility(ability)));
 
@@ -58,7 +58,7 @@ namespace Models
             {
                 double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.ArcaneMissilesDamage);
                 if (bonus > 0)
-                    return ability.WithDamageBonus(bonus);   // Arcane Missiles ist inzwischen Direktschaden, kein DoT mehr
+                    return ability.WithDamageBonus(bonus);   // Arcane Missiles is now direct damage, no longer a DoT
             }
             if (ability.Id.StartsWith("Fire_Blast"))
             {
@@ -281,10 +281,10 @@ namespace Models
             return ability;
         }
 
-        /// <summary>Manakosten nach den Kosten-Talenten der ersten Reihe (bzw. Rage/Energie der aktiven Gestalt).</summary>
+        /// <summary>Mana cost after the first-row cost talents (or rage/energy of the active form).</summary>
         private int GetTalentManaCost(Ability ability)
         {
-            // Gestalt-spezifische Kosten (z. B. Rejuvenation in Bear Form → Rage) ersetzen die Manakosten
+            // Form-specific costs (e.g. Rejuvenation in Bear Form → rage) replace the mana cost
             if (ability.FormCosts.TryGetValue(ActiveForm, out int formCost))
                 return formCost;
             if (ability.Id.StartsWith("Fireball"))
@@ -350,7 +350,7 @@ namespace Models
             return ability.ManaCost;
         }
 
-        /// <summary>Zusätzlicher Crit-Bonus eines bestimmten Zaubers durch Talente.</summary>
+        /// <summary>Additional crit bonus of a specific spell from talents.</summary>
         public double GetAbilityCritBonus(Ability ability)
         {
             if (ability.Id.StartsWith("Fireball"))
@@ -378,18 +378,18 @@ namespace Models
             double healingBonus      = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.HealingBonus);
             double spiritRegenBonus  = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.SpiritManaRegen);
 
-            // Rüstungs- und Waffen-Boni aller ausgerüsteten Teile aufaddieren
+            // Add up the armor and weapon bonuses of all equipped pieces
             var armorBonus = PrimaryStats.Zero;
             foreach (var armor in EquippedArmor.Values)
                 armorBonus = armorBonus + armor.Bonuses;
             if (EquippedWeapon?.Bonuses is { } weaponBonus)
                 armorBonus = armorBonus + weaponBonus;
-            // Verbrauchsgüter (Elixiere, Fläschchen, Essen) wirken wie Ausrüstungs-Boni
+            // Consumables (elixirs, flasks, food) work like gear bonuses
             armorBonus = armorBonus + ConsumableBonus;
 
             var augPrimary = baseStats.Primary + armorBonus;
 
-            // Nahkampf-Formeln: Druiden-Gestalten skalieren wie Schurke (Katze) bzw. Krieger (Bär)
+            // Melee formulas: Druid forms scale like Rogue (Cat) or Warrior (Bear)
             var meleeClass = MeleeScalingClass;
 
             Stats = ApplyFormStats(baseStats with
@@ -414,7 +414,16 @@ namespace Models
             CurrentMana = StartingResource;
         }
 
-        /// <summary>Erhöht nur den Spirit-Anteil der Manaregeneration (Basiswert bleibt), z. B. Restoration Mana.</summary>
+        /// <summary>Recalculates stats but keeps current health/mana (clamped to the new maximums).</summary>
+        private void RecalculateStatsKeepResources()
+        {
+            int hp = CurrentHp, mana = CurrentMana;
+            RecalculateStats();
+            CurrentHp = Math.Clamp(hp, 1, Stats.MaxHp);
+            CurrentMana = Math.Clamp(mana, 0, Stats.MaxMana);
+        }
+
+        /// <summary>Only increases the Spirit part of mana regeneration (base value stays), e.g. Restoration Mana.</summary>
         private static int ManaRegenWithSpiritBonus(int regen, double bonus)
         {
             int spiritPart = Math.Max(0, regen - StatScaling.BaseManaRegenPer5);

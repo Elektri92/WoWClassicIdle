@@ -11,7 +11,7 @@ public class SaveGameService : ISaveGameService, IDisposable
     private readonly IAbilityLoadoutService _loadout;
 
     private int _tickCount;
-    private const int AutoSaveEveryTicks = 600; // ~1 Minute bei 100 ms Intervall
+    private const int AutoSaveEveryTicks = 600; // ~1 minute at 100 ms interval
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -75,7 +75,7 @@ public class SaveGameService : ISaveGameService, IDisposable
 
             _engine.RestoreFromSave(save);
 
-            // Loadouts für alle Klassen in den Service schreiben (für UI)
+            // Write the loadouts of all classes into the service (for the UI)
             foreach (var slotData in save.Roster)
             {
                 foreach (var (clsName, abilityIds) in slotData.Player.LoadoutAbilityIdsByClass)
@@ -98,10 +98,10 @@ public class SaveGameService : ISaveGameService, IDisposable
 
     public bool TryAutoLoad() => TryLoad();
 
-    /// <summary>Löscht die Speicherdatei und setzt Engine, Loadouts und Achievements auf einen leeren Stand zurück.</summary>
+    /// <summary>Deletes the save file and resets engine, loadouts and achievements to an empty state.</summary>
     public void DeleteSave()
     {
-        // Erst den Speicherzustand leeren, sonst schreibt Autosave/Beenden den alten Stand zurück
+        // Clear the in-memory state first, otherwise autosave/exit writes the old state back
         _tickCount = 0;
         var empty = new SaveData { SeenFeatureIntros = new() };
         _engine.RestoreFromSave(empty);
@@ -117,7 +117,7 @@ public class SaveGameService : ISaveGameService, IDisposable
             if (File.Exists(DefaultSavePath))
                 File.Delete(DefaultSavePath);
         }
-        catch { /* Löschfehler still ignorieren */ }
+        catch { /* Silently ignore delete errors */ }
     }
 
     private SaveData BuildSaveData()
@@ -137,7 +137,7 @@ public class SaveGameService : ISaveGameService, IDisposable
         foreach (var slot in _engine.CharacterRoster)
             save.Roster.Add(BuildSlotSaveData(slot));
 
-        // Gemeinsames Inventar einmal speichern – Rucksack
+        // Save the shared inventory once – backpack
         var backpack = _engine.SharedInventory.Backpack;
         for (int i = 0; i < backpack.SlotCount; i++)
         {
@@ -152,7 +152,7 @@ public class SaveGameService : ISaveGameService, IDisposable
             });
         }
 
-        // Taschenplätze 0-3
+        // Bag slots 0-3
         var bags = _engine.SharedInventory.Bags;
         for (int b = 0; b < bags.Count; b++)
         {
@@ -221,11 +221,11 @@ public class SaveGameService : ISaveGameService, IDisposable
         foreach (var (cls, weapon) in p.EquippedWeaponsByClass)
             data.EquippedWeaponIdByClass[cls.ToString()] = weapon?.Id;
 
-        // Getragene Rüstung (Slots gehören zum Charakter, nicht zur Klasse)
+        // Worn armor (slots belong to the character, not the class)
         foreach (var (slot, item) in p.EquippedArmor)
             data.EquippedArmorIdBySlot[slot.ToString()] = item.Id;
 
-        // Loadout: aktive Klasse aus Character._loadout, andere aus AbilityLoadoutService
+        // Loadout: active class from Character._loadout, others from AbilityLoadoutService
         foreach (var cls in p.ClassProgress.Keys)
         {
             var loadout = cls == p.ActiveClass

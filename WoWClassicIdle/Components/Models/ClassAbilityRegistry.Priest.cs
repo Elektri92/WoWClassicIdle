@@ -35,8 +35,8 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_renew.jpg",
             Cooldown = 60,
             ManaCost = 15,      // −50 % Manakosten
-            BuffDuration = 20,      // HoT über 20 s
-            HotTotalHeal = 40,      // 40 Heilung gesamt
+            BuffDuration = 20,      // HoT over 20 s
+            HotTotalHeal = 40,      // 40 healing total
             HotTickInterval = 4,    // 5 Ticks à 8
             LevelRequired = 3,
             Rank = 1,
@@ -47,9 +47,9 @@ public static partial class ClassAbilityRegistry
             Name = "Renew",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_renew.jpg",
             Cooldown = 60,
-            ManaCost = 19,          // ×1,25 gegenüber Rank 1
+            ManaCost = 19,          // ×1.25 compared to Rank 1
             BuffDuration = 20,
-            HotTotalHeal = 60,      // ×1,5 gegenüber Rank 1 (5 Ticks à 12)
+            HotTotalHeal = 60,      // ×1.5 compared to Rank 1 (5 ticks of 12)
             HotTickInterval = 4,
             LevelRequired = 13,
             Rank = 2,
@@ -61,8 +61,8 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowwordpain.jpg",
             Cooldown = 60,
             ManaCost = 20,
-            DebuffDuration = 30,        // DoT über 30 s
-            DebuffDotDamage = 12,       // verdoppelt (war 6), 6 Ticks à 12 = 72 DMG
+            DebuffDuration = 30,        // DoT over 30 s
+            DebuffDotDamage = 12,       // doubled (was 6), 6 ticks of 12 = 72 damage
             DebuffDotTickInterval = 5,
             LevelRequired = 5,
             Rank = 1,
@@ -73,9 +73,9 @@ public static partial class ClassAbilityRegistry
             Name = "Shadow Word: Pain",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowwordpain.jpg",
             Cooldown = 60,
-            ManaCost = 25,              // ×1,25 gegenüber Rank 1
+            ManaCost = 25,              // ×1.25 compared to Rank 1
             DebuffDuration = 30,
-            DebuffDotDamage = 18,       // ×1,5 gegenüber Rank 1 (6 Ticks à 18 = 108 DMG)
+            DebuffDotDamage = 18,       // ×1.5 compared to Rank 1 (6 ticks of 18 = 108 damage)
             DebuffDotTickInterval = 5,
             LevelRequired = 15,
             Rank = 2,
@@ -88,8 +88,8 @@ public static partial class ClassAbilityRegistry
             Cooldown = 30,
             CastTime = 1.0,
             ManaCost = 0,
-            BuffDuration = 20,              // MoT über 20 s
-            MotManaRestorePct = 0.08,       // 8 % maximales Mana
+            BuffDuration = 20,              // MoT over 20 s
+            MotManaRestorePct = 0.08,       // 8 % max mana
             MotTickInterval = 5.0,          // 4 Ticks à 2 %
             LevelRequired = 7,
             Rank = 1,
@@ -103,7 +103,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 1.0,
             ManaCost = 0,
             BuffDuration = 20,
-            MotManaRestorePct = 0.10,       // ×1,3 gegenüber Rank 1
+            MotManaRestorePct = 0.10,       // ×1.3 compared to Rank 1
             MotTickInterval = 5.0,
             LevelRequired = 17,
             Rank = 2,
@@ -116,7 +116,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 0,
             BuffDuration = 60,
-            BuffDamageTakenReduction = 0.15,    // −15 % erlittener Schaden
+            BuffDamageTakenReduction = 0.15,    // −15 % damage taken
             LevelRequired = 14,
             Rank = 1,
         },
@@ -145,16 +145,16 @@ public static partial class ClassAbilityRegistry
             Rank = 1,
         },
 
-        // ── Talent-Fähigkeiten (Reihe 2) ──
+        // ── Talent abilities (row 2) ──
         new Ability
         {
-            Id = "Priest_Divine_Shield_r1",     // eigenes Präfix – "Divine_Shield" ist der Paladin-Zauber
+            Id = "Priest_Divine_Shield_r1",     // own prefix – "Divine_Shield" is the Paladin spell
             Name = "Divine Shield",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_powerwordshield.jpg",
             Cooldown = 30,
             ManaCost = 20,
             BuffDuration = 30,
-            BuffShieldPct = 0.25,               // absorbiert 25 % der max. HP
+            BuffShieldPct = 0.25,               // absorbs 25 % of max HP
             TalentUnlockOnly = true,
             SpecHint = 0,
             LevelRequired = 1,
@@ -167,7 +167,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holynova.jpg",
             Cooldown = 10,
             ManaCost = 25,
-            Damage = 12,                        // Schaden + Heilung gleichzeitig, kein HP-Gate
+            Damage = 12,                        // Damage + healing at the same time, no HP gate
             Heal = 12,
             TalentUnlockOnly = true,
             SpecHint = 1,
@@ -180,7 +180,7 @@ public static partial class ClassAbilityRegistry
             Name = "Shadowform",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowform.jpg",
             Form = DruidForm.Shadow,
-            IsPassive = true,                   // kein Cast – wirkt solange ausgerüstet
+            IsPassive = true,                   // no cast – works while equipped
             ExclusiveGroup = "priest_form",
             TalentUnlockOnly = true,
             SpecHint = 2,
@@ -188,18 +188,18 @@ public static partial class ClassAbilityRegistry
             Rank = 1,
         },
 
-        // ─── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───
+        // ─── Specialization abilities (talent row 3, from Lv 20) ───
         new Ability
         {
             Id = "Penance_r1",
             Name = "Penance",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_penance.jpg",
             Cooldown = 10,
-            CastTime = 2.0,                     // Kanalisierung: 3 heilige Blitze
+            CastTime = 2.0,                     // Channeled: 3 holy bolts
             ManaCost = 30,
             Damage = 10,
             HitCount = 3,
-            Heal = 20,                          // heilt nebenbei – Disziplin: Schaden + Schutz
+            Heal = 20,                          // heals on the side – Discipline: damage + protection
             TalentUnlockOnly = true,
             SpecHint = 0,
             LevelRequired = 20,
@@ -211,11 +211,11 @@ public static partial class ClassAbilityRegistry
             Name = "Mind Flay",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_siphonmana.jpg",
             Cooldown = 0,
-            CastTime = 3.0,                     // Kanalisierung, Filler statt Smite
+            CastTime = 3.0,                     // Channeled, filler instead of Smite
             ManaCost = 25,
             Damage = 27,
             DebuffDuration = 3,
-            DebuffAttackSpeedReduction = 0.20,  // −20 % Angriffstempo während des Flays
+            DebuffAttackSpeedReduction = 0.20,  // −20 % attack speed during the Flay
             RequiredForm = DruidForm.Shadow,
             TalentUnlockOnly = true,
             SpecHint = 2,

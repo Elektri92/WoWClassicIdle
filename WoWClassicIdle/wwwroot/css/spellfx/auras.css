@@ -1,6 +1,6 @@
-/* ── Kampf-Effekte: Buffs und Debuffs (js/spellfx/auras.js) ── */
+/* ── Combat effects: buffs and debuffs (js/spellfx/auras.js) ── */
 
-/* Rotierender Runenkreis um das Portrait */
+/* Rotating rune circle around the portrait */
 .spellfx-rune {
     width: 92px;
     height: 92px;
@@ -18,7 +18,7 @@
     opacity: .7;
 }
 
-/* Lichtsäule; transform-origin unten, damit sie aus dem Boden wächst */
+/* Light pillar; transform-origin at the bottom so it grows out of the ground */
 .spellfx-pillar {
     width: 58px;
     height: 120px;
@@ -57,7 +57,7 @@
     box-shadow: 0 0 16px var(--fx-glow);
 }
 
-/* Icon, das in die Buff-/Debuff-Leiste fliegt */
+/* Icon flying into the buff/debuff bar */
 .spellfx-badge {
     width: 34px;
     height: 34px;
@@ -72,7 +72,7 @@
 }
 
 /* ── Debuffs (Gegner) ── */
-/* Container ohne eigene Größe, Kinder kreisen um den Mittelpunkt */
+/* Container without its own size, children circle around the center */
 .spellfx-orbit {
     width: 0;
     height: 0;
@@ -105,7 +105,7 @@
     text-shadow: 0 0 6px #ffb000, 0 1px 2px #000;
 }
 
-/* Herabsinkender Tropfen (Schwächung) */
+/* Sinking drop (weakening) */
 .spellfx-drip {
     width: 6px;
     height: 11px;

@@ -23,7 +23,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_ritualofsacrifice.jpg",
             Cooldown = 1,
             ManaCost = 45,
-            Damage = 4,         // +10 % gegenüber Rank 1 (3.3 → 4)
+            Damage = 4,         // +10 % compared to Rank 1 (3.3 → 4)
             AddsWeaponDamage = true,
             LevelRequired = 10,
             Rank = 2,
@@ -48,7 +48,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 5,
             BuffDuration = 10,
-            BuffAttackSpeedBonus = 0.13, // ×1,3 gegenüber Rank 1
+            BuffAttackSpeedBonus = 0.13, // ×1.3 compared to Rank 1
             LevelRequired = 13,
             Rank = 2,
         },
@@ -59,12 +59,12 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_poisons.jpg",
             Cooldown = 0,
             ManaCost = 0,
-            IsPassive = true,           // kein aktiver Cast – Proc bei jedem Angriff
-            ProcChance = 0.30,          // 30 % Proc-Chance pro Schlag (x3 buff)
-            DebuffDuration = 15,        // Debuff-Laufzeit pro Stack-Anwendung
-            DebuffDotDamage = 1,        // 1 DMG / 3 s pro Stack
+            IsPassive = true,           // no active cast – procs on every attack
+            ProcChance = 0.30,          // 30 % proc chance per swing (x3 buff)
+            DebuffDuration = 15,        // Debuff duration per stack application
+            DebuffDotDamage = 1,        // 1 damage / 3 s per stack
             DebuffDotTickInterval = 3,
-            DebuffMaxStacks = 5,        // bis zu 5 Stacks
+            DebuffMaxStacks = 5,        // up to 5 stacks
             LevelRequired = 5,
             Rank = 1,
         },
@@ -78,9 +78,9 @@ public static partial class ClassAbilityRegistry
             IsPassive = true,
             ProcChance = 0.30,
             DebuffDuration = 15,
-            DebuffDotDamage = 1,        // int – Skalierung stattdessen über Stacks
+            DebuffDotDamage = 1,        // int – scaling via stacks instead
             DebuffDotTickInterval = 3,
-            DebuffMaxStacks = 7,        // ×1,4 Max-Schaden gegenüber Rank 1
+            DebuffMaxStacks = 7,        // ×1.4 max damage compared to Rank 1
             LevelRequired = 15,
             Rank = 2,
         },
@@ -91,7 +91,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_kidneyshot.jpg",
             Cooldown = 30,
             ManaCost = 0,
-            DebuffDuration = 6,         // Betäubung für 6 s
+            DebuffDuration = 6,         // Stun for 6 s
             DebuffIsStun = true,
             LevelRequired = 7,
             Rank = 1,
@@ -103,7 +103,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_kidneyshot.jpg",
             Cooldown = 30,
             ManaCost = 0,
-            DebuffDuration = 7,         // +1 s Betäubung gegenüber Rank 1
+            DebuffDuration = 7,         // +1 s stun compared to Rank 1
             DebuffIsStun = true,
             LevelRequired = 17,
             Rank = 2,
@@ -128,7 +128,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 20,
             ManaCost = 25,                      // 25 Energy
             DebuffDuration = 15,
-            DebuffDamageTakenBonus = 0.10,      // +10 % erlittener Schaden des Ziels
+            DebuffDamageTakenBonus = 0.10,      // +10 % damage taken by the target
             LevelRequired = 18,
             Rank = 1,
         },
@@ -140,12 +140,12 @@ public static partial class ClassAbilityRegistry
             Cooldown = 60,
             ManaCost = 0,
             BuffDuration = 8,
-            BuffDamageTakenReduction = 0.20,    // −20 % erlittener Schaden
+            BuffDamageTakenReduction = 0.20,    // −20 % damage taken
             LevelRequired = 24,
             Rank = 1,
         },
 
-        // ── Talent-Fähigkeiten (Reihe 2) ──────────────────────────────────────
+        // ── Talent abilities (row 2) ──────────────────────────────────────
         new Ability
         {
             Id                 = "Cold_Blood_r1",
@@ -154,7 +154,7 @@ public static partial class ClassAbilityRegistry
             Cooldown           = 30,
             ManaCost           = 0,
             BuffDuration       = 20,
-            BuffGuaranteesCrit = true,          // nächste Schadensfähigkeit crittet garantiert
+            BuffGuaranteesCrit = true,          // next damaging ability is a guaranteed crit
             LevelRequired      = 1,
             Rank               = 1,
             TalentUnlockOnly   = true,
@@ -167,7 +167,7 @@ public static partial class ClassAbilityRegistry
             Cooldown              = 45,
             ManaCost              = 25,         // 25 Energy
             BuffDuration          = 10,
-            BuffExtraAttackChance = 1.0,        // jede Auto-Attack trifft doppelt
+            BuffExtraAttackChance = 1.0,        // every auto-attack hits twice
             BuffExtraAttacks      = 1,
             LevelRequired         = 1,
             Rank                  = 1,
@@ -183,13 +183,13 @@ public static partial class ClassAbilityRegistry
             Damage           = 8,
             AddsWeaponDamage = true,
             BuffDuration     = 15,
-            BuffShieldPct    = 0.10,            // Schild über 10 % max. HP
+            BuffShieldPct    = 0.10,            // Shield of 10 % max HP
             LevelRequired    = 1,
             Rank             = 1,
             TalentUnlockOnly = true,
         },
 
-        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20) ───────────
+        // ── Specialization abilities (talent row 3, from Lv 20) ───────────
         new Ability
         {
             Id                 = "Mutilate_r1",
@@ -199,9 +199,9 @@ public static partial class ClassAbilityRegistry
             ManaCost           = 50,            // 50 Energy
             Damage             = 4,
             AddsWeaponDamage   = true,
-            HitCount           = 2,             // trifft mit beiden Klingen
+            HitCount           = 2,             // hits with both blades
             SynergyDebuffName  = "Deadly Poison",
-            SynergyDamageBonus = 0.25,          // +25 % gegen vergiftete Gegner
+            SynergyDamageBonus = 0.25,          // +25 % against poisoned enemies
             SpecHint           = 0,
             LevelRequired      = 20,
             Rank               = 1,
@@ -215,7 +215,7 @@ public static partial class ClassAbilityRegistry
             Cooldown               = 60,
             ManaCost               = 0,
             BuffDuration           = 15,
-            BuffResourceRegenBonus = 1.0,       // doppelte Energie-Regeneration
+            BuffResourceRegenBonus = 1.0,       // double energy regeneration
             SpecHint               = 1,
             LevelRequired          = 20,
             Rank                   = 1,
@@ -229,8 +229,8 @@ public static partial class ClassAbilityRegistry
             Cooldown           = 45,
             ManaCost           = 0,
             BuffDuration       = 4,
-            BuffGrantsImmunity = true,          // kurzzeitig kein erlittener Schaden
-            BuffFreeCasts      = 1,             // nächste Fähigkeit kostet keine Energie
+            BuffGrantsImmunity = true,          // briefly no damage taken
+            BuffFreeCasts      = 1,             // next ability costs no energy
             SpecHint           = 2,
             LevelRequired      = 20,
             Rank               = 1,

@@ -1,8 +1,8 @@
-/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
-   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
-   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
+/* One-time animations carry visibility in the start keyframe: that makes them run on the main thread
+   in WebKitGTK instead of in the compositor. Compositor animations ignore the backwards start value there – the element
+   flashed fully visible once before the animation start (page transition flicker). */
 /* ============================================
-   Professions – Übersicht und Unterseiten
+   Professions – overview and subpages
    ============================================ */
 
 .prof-grid {
@@ -53,11 +53,11 @@
 
 .prof-card-sub { font-size: .78rem; color: var(--wow-muted); }
 
-/* Aktionen (Learn/Unlearn) fest rechts oben im Block */
+/* Actions (Learn/Unlearn) fixed at the top right of the block */
 .prof-card-actions { position: absolute; top: 5px; right: 6px; display: flex; gap: 3px; }
 .prof-card.has-action .prof-card-name { padding-right: 58px; }
 
-/* Kleiner Button im klassischen WoW-Panel-Stil: dunkles Rot, Goldrand, Goldschrift */
+/* Small button in the classic WoW panel style: dark red, gold border, gold lettering */
 .prof-mini-btn {
     padding: 1px 7px;
     border: 1px solid var(--wow-gold-soft);
@@ -92,7 +92,7 @@
 
 .prof-back:hover { color: var(--wow-gold-pale); }
 
-/* ----- Unterseite: Quick-Select-Leiste links ----- */
+/* ----- Subpage: quick select bar on the left ----- */
 .wow-page.prof-detail-page { max-width: 980px; }
 
 .prof-detail-layout {
@@ -209,7 +209,7 @@
 
 .prof-shared { font-family: var(--wow-font-body); font-size: .75rem; }
 
-/* ----- Zonen-Blöcke (groß, Farbverlauf je Zonen-Thema) ----- */
+/* ----- Zone blocks (large, gradient per zone theme) ----- */
 .zone-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -253,7 +253,7 @@
 
 .zone-drop img { width: 24px; height: 24px; border-radius: 3px; }
 
-/* Mulgore: saftiges Grasland – grüner Verlauf mit feinen Grashalm-Streifen */
+/* Mulgore: lush grassland – green gradient with fine grass blade stripes */
 .zone-theme-grassland {
     background:
         repeating-linear-gradient(100deg, rgba(255,255,255,.035) 0 2px, transparent 2px 9px),
@@ -270,7 +270,7 @@
     border-color: #8a6a2c;
 }
 
-/* Duskwood: dunkler Nachtwald, kühles Mondlicht */
+/* Duskwood: dark night forest, cool moonlight */
 .zone-theme-duskwood {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(170,190,255,.22), transparent 55%),
@@ -278,7 +278,7 @@
     border-color: #3c4e62;
 }
 
-/* Stranglethorn: sattes Dschungelgrün mit Lianen-Streifen */
+/* Stranglethorn: rich jungle green with liana stripes */
 .zone-theme-jungle {
     background:
         repeating-linear-gradient(75deg, rgba(0,0,0,.08) 0 3px, transparent 3px 12px),
@@ -287,7 +287,7 @@
     border-color: #2f7a45;
 }
 
-/* Feralas: uralter Wald, blaugrün */
+/* Feralas: ancient forest, blue-green */
 .zone-theme-feralas {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(200,255,230,.2), transparent 55%),
@@ -295,7 +295,7 @@
     border-color: #2f6e60;
 }
 
-/* Felwood: verderbtes Grün mit violettem Schimmer */
+/* Felwood: corrupted green with violet shimmer */
 .zone-theme-felwood {
     background:
         radial-gradient(ellipse at 20% 100%, rgba(140,255,60,.25), transparent 60%),
@@ -304,7 +304,7 @@
     border-color: #5a6a2a;
 }
 
-/* Eastern Plaguelands: fahles, krankes Gelbgrün */
+/* Eastern Plaguelands: pale, sickly yellow-green */
 .zone-theme-plague {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(230,240,150,.2), transparent 55%),
@@ -312,7 +312,7 @@
     border-color: #6a6a3a;
 }
 
-/* Winterspring: Schnee und Eis */
+/* Winterspring: snow and ice */
 .zone-theme-snow {
     background:
         radial-gradient(ellipse at 80% 0%, rgba(255,255,255,.35), transparent 55%),
@@ -338,7 +338,7 @@
 .prof-drop img,
 .craft-reagent img { width: 28px; height: 28px; border-radius: 4px; }
 
-/* ----- Slots im Zonen-Block (aktiv + passiv, Drag & Drop) ----- */
+/* ----- Slots in the zone block (active + passive, drag and drop) ----- */
 .zone-block.locked { cursor: not-allowed; filter: grayscale(.75) brightness(.6); }
 .zone-block.locked:hover { transform: none; border-color: var(--wow-border-dark); }
 
@@ -490,7 +490,7 @@
     letter-spacing: 0;
 }
 
-/* Klassen-Unterüberschrift (Filter "All") */
+/* Class subheading (filter "All") */
 .craft-list-class-head {
     display: flex;
     align-items: center;
@@ -503,7 +503,7 @@
 
 .craft-list-class-head img { width: 14px; height: 14px; border-radius: 2px; }
 
-/* Klassen-Filter über dem Herstellungsfenster */
+/* Class filter above the crafting window */
 .craft-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
 
 .craft-filter-btn {
@@ -525,7 +525,7 @@
 .craft-filter-btn.active { border-color: var(--wow-gold); box-shadow: 0 0 6px rgba(255,209,0,.4); color: var(--wow-gold-pale); }
 .craft-filter-btn.active img { filter: none; }
 
-/* Rezept-Eintrag: Item-Icon + Name in Item-Qualitätsfarbe (--quality), Anzahl rechts */
+/* Recipe entry: item icon + name in item quality color (--quality), count on the right */
 .craft-list-entry {
     display: flex;
     align-items: center;
@@ -552,7 +552,7 @@
     min-width: 0;
 }
 
-/* Nicht herstellbar (Material fehlt): gedimmt; Skill zu niedrig: stärker gedimmt */
+/* Not craftable (material missing): dimmed; skill too low: dimmed more */
 .craft-list-entry.empty  { opacity: .6; }
 .craft-list-entry.locked { opacity: .35; }
 .craft-list-entry:hover { background: #2a2218; opacity: 1; }
@@ -594,7 +594,7 @@
 .disenchant-queued { color: var(--wow-gold-soft); font-size: .72rem; padding: 0 6px; }
 .disenchant-yield { display: flex; gap: 2px; flex-shrink: 0; }
 
-/* Skill-Range: orange = gibt Skillpunkte, grau = zu niedrig */
+/* Skill range: orange = gives skill points, grey = too low */
 .craft-skill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-left: -9px; }
 .craft-skill-dot.up      { background: #ff8040; box-shadow: 0 0 4px rgba(255,128,64,.6); }
 .craft-skill-dot.trivial { background: #808080; }
@@ -604,7 +604,7 @@
 .zone-trivial { color: #b0b0b0; font-size: .72rem; font-style: italic; }
 .disenchant-yield img { width: 18px; height: 18px; border-radius: 3px; }
 
-/* ----- Scrolling-Text (Berufsereignisse fliegen im Bogen von links nach oben) ----- */
+/* ----- Scrolling text (profession events fly in an arc from the left upwards) ----- */
 .prof-detail-page { position: relative; }
 
 .prof-float-layer {
@@ -615,7 +615,7 @@
     z-index: 20;
 }
 
-/* Außen: horizontal, schnell los und dann ausrollen */
+/* Outer: horizontal, fast start and then coasting out */
 .prof-float-x {
     position: absolute;
     left: 2%;
@@ -624,7 +624,7 @@
     animation-fill-mode: forwards;
 }
 
-/* Innen: vertikal, langsam los und dann steil nach oben → Bogen */
+/* Inner: vertical, slow start and then steeply upwards → arc */
 .prof-float-y {
     display: flex;
     align-items: center;
@@ -659,7 +659,7 @@
     100% { transform: translateY(-46vh) scale(.9); opacity: 0; }
 }
 
-/* ----- Drag & Drop der Charaktere ----- */
+/* ----- Drag and drop of the characters ----- */
 .char-bar {
     display: flex;
     flex-wrap: wrap;
@@ -711,7 +711,7 @@
 }
 
 .prof-owner-icon { width: 18px; height: 18px; border-radius: 3px; vertical-align: middle; margin-left: 6px; }
-/* Passive Sammler neben dem Berufsnamen: grüner Rand, ploppen versetzt auf */
+/* Passive gatherers next to the profession name: green border, pop up staggered */
 .prof-card-name .prof-worker-icon {
     margin-left: 3px;
     border: 1px solid #4fa83a;
@@ -719,7 +719,7 @@
     animation: al-pop .35s cubic-bezier(.3, 1.6, .5, 1) calc(.6s + var(--i, 0) * .04s) backwards;
 }
 
-/* ----- Layout: Charakterliste links, Berufe rechts ----- */
+/* ----- Layout: character list on the left, professions on the right ----- */
 .professions-page { max-width: 1200px; }
 
 .prof-layout {
@@ -731,15 +731,15 @@
 }
 .prof-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 
-/* Gleicher Look wie /inventory: Titel/Hinweis fahren ein, Panel-Überschriften zentriert */
+/* Same look as /inventory: title/hint slide in, panel headings centered */
 .professions-page .prof-title { animation: al-fade-down .5s ease-out both; }
 .professions-page .prof-hint  { animation: al-fade-down .5s ease-out .08s both; }
 .prof-layout .al-panel h4 { text-align: center; letter-spacing: 1px; margin-bottom: 10px; }
 
 .prof-layout .prof-roster { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 3px; padding: 10px 8px; }
 
-/* ----- Charakter-Schnellauswahl: rundes Porträt mit Goldring + Klassen-Badge -----
-   Selektoren mit .roster-entry davor, weil ability-loadout.css später geladen wird */
+/* ----- Character quick select: round portrait with gold ring + class badge -----
+   Selectors prefixed with .roster-entry because ability-loadout.css is loaded later */
 .roster-entry {
     position: relative;
     display: flex;
@@ -770,7 +770,7 @@
     transition: transform .25s cubic-bezier(.3, 1.6, .5, 1);
 }
 
-/* Nur der gespielte Charakter pulsiert; die anderen sind gedämpft */
+/* Only the played character pulses; the others are muted */
 .roster-entry.selectable .roster-portrait .al-race-portrait {
     animation: none;
     border-color: var(--wow-gold-soft);
@@ -792,7 +792,7 @@
 .roster-entry.selectable:hover .roster-prof { transform: translateY(-1px); }
 .roster-entry.selectable:active { transform: translateX(3px) scale(.97); }
 
-/* Gespielter Charakter: Goldverlauf, Goldstreifen und Lichtschein, der beim Wechsel einmal durchläuft */
+/* Played character: gold gradient, gold stripe and a light glow that sweeps through once on switch */
 .roster-entry.current {
     border-color: var(--wow-gold-soft);
     background: linear-gradient(90deg, rgba(255, 209, 0, .16), rgba(255, 209, 0, .03) 70%);
@@ -807,7 +807,7 @@
     animation: prof-sweep .8s ease-out .1s;
     pointer-events: none;
 }
-/* Ring, der beim Wechsel vom Porträt ausstrahlt */
+/* Ring radiating from the portrait on switch */
 .roster-entry.current .roster-portrait::after {
     content: "";
     position: absolute;
@@ -818,7 +818,7 @@
 }
 .roster-entry.current .al-class-badge { animation: al-pop .35s cubic-bezier(.3, 1.6, .5, 1); }
 
-/* ----- Berufskarten: versetztes Einfahren, Anheben + Lichtschein beim Hover ----- */
+/* ----- Profession cards: staggered slide-in, lift + light glow on hover ----- */
 .prof-layout .prof-card {
     overflow: hidden;
     transition: border-color .15s, box-shadow .15s, transform .15s;
@@ -854,7 +854,7 @@
     .prof-layout .prof-roster { position: static; }
 }
 
-/* ----- Debug-Spalte (nur Debug-Build): links neben der Charakterliste, vertikal ----- */
+/* ----- Debug column (Debug build only): left of the character list, vertical ----- */
 .professions-page .prof-debug {
     display: flex;
     flex-direction: column;
@@ -869,8 +869,8 @@
 .prof-debug-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
 .prof-debug-buttons .wow-tab { margin: 0; padding: 2px 4px; font-size: .75rem; text-align: center; }
 
-/* Mit Seitenleiste (≥ 641px, Nav 250px breit): Debug fest an den linken Rand des Inhaltsbereichs.
-   Symmetrischer Innenabstand der Seite hält den Inhalt zentriert und frei von Überlappung. */
+/* With sidebar (≥ 641px, nav 250px wide): debug fixed at the left edge of the content area.
+   Symmetric page padding keeps the content centered and free of overlap. */
 @media (min-width: 641px) {
     .professions-page .prof-debug {
         position: fixed;
@@ -889,7 +889,7 @@
     .prof-debug-buttons { grid-template-columns: repeat(6, auto); justify-content: start; }
 }
 
-/* ----- Dezenter, leicht transparenter Farbverlauf je Beruf (--prof-tint) – Karten und Unterseiten-Kopf ----- */
+/* ----- Subtle, slightly transparent gradient per profession (--prof-tint) – cards and subpage header ----- */
 .prof-layout .prof-card {
     background:
         linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 70%),
@@ -907,23 +907,23 @@
 }
 
 .prof-bg-mining         { --prof-tint: rgba(140, 150, 165, .22); }  /* Stein/Eisen */
-.prof-bg-herbalism      { --prof-tint: rgba(80, 170, 70, .22); }    /* Kräutergrün */
+.prof-bg-herbalism      { --prof-tint: rgba(80, 170, 70, .22); }    /* Herb green */
 .prof-bg-skinning       { --prof-tint: rgba(150, 100, 55, .24); }   /* Fell/Leder */
 .prof-bg-fishing        { --prof-tint: rgba(50, 120, 190, .24); }   /* Wasser */
 .prof-bg-first-aid      { --prof-tint: rgba(190, 50, 50, .22); }    /* Verband/Blut */
 .prof-bg-cooking        { --prof-tint: rgba(215, 120, 40, .22); }   /* Herdfeuer */
-.prof-bg-alchemy        { --prof-tint: rgba(150, 70, 200, .22); }   /* Tränke */
+.prof-bg-alchemy        { --prof-tint: rgba(150, 70, 200, .22); }   /* Potions */
 .prof-bg-engineering    { --prof-tint: rgba(200, 160, 60, .2); }    /* Messing */
 .prof-bg-leatherworking { --prof-tint: rgba(130, 80, 40, .26); }    /* Gegerbtes Leder */
-.prof-bg-blacksmithing  { --prof-tint: rgba(220, 90, 30, .2); }     /* Glühende Esse */
+.prof-bg-blacksmithing  { --prof-tint: rgba(220, 90, 30, .2); }     /* Glowing forge */
 .prof-bg-tailoring      { --prof-tint: rgba(200, 80, 140, .2); }    /* Stoff */
 .prof-bg-enchanting     { --prof-tint: rgba(110, 90, 230, .24); }   /* Arkan */
 
-/* ----- Unterseiten (/professions/{slug}): gleicher Look wie die Übersicht ----- */
+/* ----- Subpages (/professions/{slug}): same look as the overview ----- */
 .prof-detail-page .prof-back { display: inline-block; animation: al-fade-down .5s ease-out both; transition: transform .15s, color .15s; }
 .prof-detail-page .prof-back:hover { transform: translateX(-3px); }
 
-/* Panels untereinander, versetzt einfahrend (--i je Position) */
+/* Panels stacked, sliding in staggered (--i per position) */
 .prof-detail-main { display: flex; flex-direction: column; gap: 14px; margin-top: 1rem; }
 .prof-detail-main > .al-panel:nth-child(1) { --i: 0; }
 .prof-detail-main > .al-panel:nth-child(2) { --i: 1; }
@@ -932,7 +932,7 @@
 .prof-detail-main > .al-panel:nth-child(n+5) { --i: 4; }
 .prof-detail-main > .wow-hint { animation: al-fade-down .5s ease-out .6s both; }
 
-/* Kopf: großes Icon ploppt auf, Skill-Leiste wächst, Lichtschein läuft einmal durch */
+/* Header: large icon pops up, skill bar grows, light glow sweeps through once */
 .prof-detail-page .prof-header { overflow: hidden; padding: 14px 16px; }
 .prof-detail-page .prof-header::after {
     content: "";
@@ -949,7 +949,7 @@
 }
 .prof-detail-page .prof-header .prof-skill-bar .bar { transform-origin: left; animation: al-bar-grow .9s cubic-bezier(.2, .8, .2, 1) .45s both; }
 
-/* Ausbildungsstufen fahren nacheinander ein, die trainierbare pulsiert */
+/* Training tiers slide in one after another, the trainable one pulses */
 .prof-detail-page .prof-rank { animation: al-card-in .4s cubic-bezier(.2, .8, .2, 1) backwards; transition: transform .15s; }
 .prof-detail-page .prof-rank:nth-child(1) { animation-delay: .35s; }
 .prof-detail-page .prof-rank:nth-child(2) { animation-delay: .4s; }
@@ -958,7 +958,7 @@
 .prof-detail-page .prof-rank.trainable { animation: al-card-in .4s cubic-bezier(.2, .8, .2, 1) .45s backwards, prof-train-glow 1.8s ease-in-out 1s infinite; }
 .prof-detail-page .prof-rank:hover { transform: translateY(-1px); }
 
-/* Quick-Select links: Icons rutschen versetzt herein, Hover hebt an */
+/* Quick select on the left: icons slide in staggered, hover lifts them */
 .prof-detail-page .prof-quick { animation: al-slot-in .45s cubic-bezier(.3, 1.4, .5, 1) .1s backwards; }
 .prof-detail-page .prof-quick-item { animation: al-pop .35s cubic-bezier(.3, 1.6, .5, 1) calc(.2s + var(--i, 0) * .03s) backwards; }
 .prof-detail-page .prof-quick-item > img:first-child { transition: filter .15s, border-color .15s, box-shadow .15s, transform .2s cubic-bezier(.3, 1.6, .5, 1); }

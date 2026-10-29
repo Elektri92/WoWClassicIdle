@@ -211,7 +211,7 @@
         || t.EffectType.ToString().Contains(_search, StringComparison.OrdinalIgnoreCase)
         || t.Id.Contains(_search, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Konsistenzprüfung der Talentdaten (unerreichbare Reihen, doppelte Plätze, fehlende Referenzen).</summary>
+    /// <summary>Consistency check of the talent data (unreachable rows, duplicate positions, missing references).</summary>
     private IEnumerable<string> FindIssues()
     {
         foreach (var cls in AllClasses.Where(c => _classFilter is null || _classFilter == c))
@@ -235,7 +235,7 @@
                     yield return $"{cls}: '{t.Name}' has no effect description for {t.EffectType}.";
             }
 
-            // Reihe N braucht N×5 Punkte aus den Reihen darüber – sonst ist sie nie erreichbar
+            // Row N needs N×5 points from the rows above – otherwise it is never reachable
             for (int ti = 0; ti < 3; ti++)
             {
                 var tree = talents.Where(t => t.TreeIndex == ti).ToList();

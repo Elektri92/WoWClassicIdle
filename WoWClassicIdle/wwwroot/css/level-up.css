@@ -1,11 +1,11 @@
-/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
-   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
-   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
+/* One-time animations carry visibility in the start keyframe: that makes them run on the main thread
+   in WebKitGTK instead of in the compositor. Compositor animations ignore the backwards start value there – the element
+   flashed fully visible once before the animation start (page transition flicker). */
 /* ── Level-Up (Components/Pages/IdleFighter.LevelUp.cs) ──
-   Wie in Classic: goldene Lichtsäule steigt um den Charakter auf, dazu Ringwelle,
-   aufsteigende Funken und das Banner "You have reached Level X". Gesamtdauer 3,4 s. */
+   Like in Classic: a golden pillar of light rises around the character, plus a ring wave,
+   rising sparks and the banner "You have reached Level X". Total duration 3.4 s. */
 
-/* ── Spieler-Frame: goldener Rahmenpuls ── */
+/* ── Player frame: golden frame pulse ── */
 .player-frame.leveling-up {
     animation: levelupFrameGlow 3.4s ease-out both;
 }
@@ -17,7 +17,7 @@
     100% { box-shadow: 0 4px 14px rgba(0,0,0,.5), inset 0 0 0 1px #8a7444; border-color: #5a4a28; }
 }
 
-/* Porträt leuchtet kurz golden auf */
+/* Portrait briefly glows golden */
 .player-frame.leveling-up .race-portrait {
     animation: levelupPortrait 2.2s ease-out both;
 }
@@ -28,7 +28,7 @@
     100% { box-shadow: 0 0 8px rgba(0,0,0,.8); filter: none; }
 }
 
-/* ── Effekt-Ebene über dem Frame ── */
+/* ── Effect layer above the frame ── */
 .levelup-fx {
     position: absolute;
     inset: 0;
@@ -37,7 +37,7 @@
     mix-blend-mode: screen;
 }
 
-/* Lichtsäule: wächst vom Boden nach oben über den Frame hinaus und verblasst */
+/* Light pillar: grows from the ground upwards beyond the frame and fades */
 .levelup-beam {
     position: absolute;
     left: 6%;
@@ -62,7 +62,7 @@
     100% { opacity: 0;   transform: scaleY(1.08) scaleX(.35); }
 }
 
-/* Ringwelle am Boden des Frames */
+/* Ring wave at the bottom of the frame */
 .levelup-ring {
     position: absolute;
     left: 50%;
@@ -88,7 +88,7 @@
     100% { opacity: 0;  transform: translateX(-50%) scale(1.25); }
 }
 
-/* Aufsteigende Funken (Position, Größe und Verzögerung kommen inline aus LevelUpSparks) */
+/* Rising sparks (position, size and delay come inline from LevelUpSparks) */
 .levelup-spark {
     position: absolute;
     bottom: 4px;
@@ -105,7 +105,7 @@
     100% { opacity: 0; transform: translate(6px, -210px) scale(.2); }
 }
 
-/* Level-Anzeige im Frame: kurz groß und golden */
+/* Level display in the frame: briefly large and golden */
 .level.level-pop {
     display: inline-block;
     animation: levelupNumber 1.6s ease-out both;
@@ -117,7 +117,7 @@
     100% { color: #9a8a64; transform: scale(1); text-shadow: none; }
 }
 
-/* ── Banner über dem Schlachtfeld ── */
+/* ── Banner above the battlefield ── */
 .levelup-banner {
     position: absolute;
     top: 6px;
@@ -134,7 +134,7 @@
     animation: levelupBanner 3.4s ease-out both;
 }
 
-/* Dunkler, weich auslaufender Hintergrund wie bei den Classic-Bildschirmmeldungen */
+/* Dark, softly tapering background like the Classic on-screen messages */
 .levelup-banner-glow {
     position: absolute;
     inset: 0;
@@ -155,7 +155,7 @@
     filter: drop-shadow(0 0 1px #000) drop-shadow(0 2px 2px #000) drop-shadow(0 0 10px rgba(255, 190, 40, .55));
 }
 
-/* Goldene Zierlinie mit Raute in der Mitte */
+/* Golden ornamental line with a diamond in the middle */
 .levelup-banner-rule {
     position: relative;
     width: 220px;
@@ -199,7 +199,7 @@
     to   { transform: scaleX(1); opacity: 1; }
 }
 
-/* Reduzierte Bewegung: nur Banner und Rahmenglühen, keine Säule/Funken */
+/* Reduced motion: only banner and frame glow, no pillar/sparks */
 @media (prefers-reduced-motion: reduce) {
     .levelup-fx { display: none; }
     .levelup-banner,

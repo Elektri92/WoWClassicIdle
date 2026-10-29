@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   Erfolge (/achievements) – angelehnt an das WoW-Achievement-Fenster
+   Achievements (/achievements) – based on the WoW achievement window
    ═══════════════════════════════════════════════════════════ */
 
 .ach-window {
@@ -85,7 +85,7 @@
     pointer-events: none;
 }
 
-/* Mittlere Plakette mit Punktestand */
+/* Middle plaque with the point total */
 .ach-plaque {
     display: flex;
     flex-direction: column;
@@ -133,7 +133,7 @@
     min-height: 520px;
 }
 
-/* ── KATEGORIEN (links) ── */
+/* ── CATEGORIES (left) ── */
 .ach-cats {
     width: 180px;
     flex-shrink: 0;
@@ -171,7 +171,7 @@
     filter: brightness(1.2);
 }
 
-/* Unterkategorien (z. B. Klassen) – eingerückt, weißer Text */
+/* Subcategories (e.g. classes) – indented, white text */
 .ach-subcat {
     width: calc(100% - 12px);
     margin-left: 12px;
@@ -188,7 +188,7 @@
     box-shadow: inset 0 1px 0 rgba(220, 255, 170, .35), 0 0 6px rgba(140, 200, 70, .35);
 }
 
-/* ── INHALT (rechts) ── */
+/* ── CONTENT (right) ── */
 .ach-pane {
     flex: 1;
     min-width: 0;
@@ -241,14 +241,14 @@
     position: relative;
 }
 
-/* Unvollständig: graubraunes Leder */
+/* Incomplete: grey-brown leather */
 .ach-row.locked {
     background:
         linear-gradient(180deg, rgba(255, 255, 255, .04) 0%, transparent 30%),
         linear-gradient(180deg, #3a332b 0%, #2a251f 55%, #221e19 100%);
 }
 
-/* Abgeschlossen: warmes Gold wie im Spiel */
+/* Completed: warm gold like in the game */
 .ach-row.earned {
     background:
         linear-gradient(180deg, rgba(255, 240, 190, .18) 0%, transparent 35%),
@@ -288,7 +288,7 @@
     text-align: center;
 }
 
-/* Titel auf dunklem Streifen, wie in WoW */
+/* Title on a dark strip, like in WoW */
 .ach-row-title {
     width: 100%;
     font-family: var(--wow-font-title);
@@ -426,7 +426,7 @@
     color: #a08848;
 }
 
-/* ── ÜBERSICHT ── */
+/* ── OVERVIEW ── */
 .ach-overview-total { margin-bottom: 12px; }
 
 .ach-overview-total .ach-progress {

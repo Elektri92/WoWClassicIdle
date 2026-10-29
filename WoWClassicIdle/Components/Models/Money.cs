@@ -2,7 +2,7 @@
 namespace Models
 {
     /// <summary>
-    /// WoW-Classic-Währung: alles wird intern in Kupfer gespeichert.
+    /// WoW Classic currency: everything is stored internally in copper.
     /// 100 Kupfer = 1 Silber, 100 Silber = 1 Gold.
     /// </summary>
     public static class Money
@@ -22,7 +22,7 @@ namespace Models
                     totalCopper % CopperPerSilver);
         }
 
-        /// <summary>Textform wie "1g 23s 45c" – führende Nullwerte werden weggelassen.</summary>
+        /// <summary>Text form like "1g 23s 45c" – leading zero values are omitted.</summary>
         public static string Format(long totalCopper)
         {
             var (g, s, c) = Split(totalCopper);

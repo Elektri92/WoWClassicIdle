@@ -2,18 +2,18 @@ using System.Diagnostics;
 using Models;
 using Timer = System.Timers.Timer;
 
-/// <summary>Laufender Durchlauf im aktiven Slot – existiert nur, solange die Berufs-Unterseite offen ist.</summary>
+/// <summary>Running pass in the active slot – only exists while the profession subpage is open.</summary>
 public class ActiveProfessionRun
 {
     public required Player Player { get; init; }
     public required Profession Profession { get; init; }
-    /// <summary>Zonen-ID (Sammeln) bzw. Rezept-ID (Herstellen).</summary>
+    /// <summary>Zone ID (gathering) or recipe ID (crafting).</summary>
     public required string Target { get; init; }
-    /// <summary>Verbleibende Herstellungen; <c>null</c> = endlos (Sammeln).</summary>
+    /// <summary>Remaining crafts; <c>null</c> = endless (gathering).</summary>
     public int? Remaining { get; set; }
-    /// <summary>Dauer eines Durchlaufs (Sekunden) – Entzaubern ist kürzer als Sammeln/Herstellen.</summary>
+    /// <summary>Duration of a pass (seconds) – disenchanting is shorter than gathering/crafting.</summary>
     public double Duration { get; init; } = Professions.ActiveDurationSeconds;
-    /// <summary>Warteschlange beim Entzaubern (<see cref="IdleGameEngine.DisenchantTarget"/>), sonst <c>null</c>.</summary>
+    /// <summary>Queue when disenchanting (<see cref="IdleGameEngine.DisenchantTarget"/>), otherwise <c>null</c>.</summary>
     public Queue<Item>? DisenchantQueue { get; init; }
     public double Elapsed { get; set; }
     public double Progress => Math.Clamp(Elapsed / Duration, 0, 1);
@@ -21,12 +21,12 @@ public class ActiveProfessionRun
 
 public enum ProfessionLogKind { Loot, SkillUp, Error }
 
-/// <summary>Berufsereignis; <see cref="Id"/> steigt fortlaufend (UI erkennt neue Einträge für die Scrolling-Texte).</summary>
+/// <summary>Profession event; <see cref="Id"/> increases continuously (UI detects new entries for the scrolling texts).</summary>
 public record ProfessionLogEntry(
     long Id, Profession Profession, string Text, ProfessionLogKind Kind,
     Item? Item = null, int Count = 0, string? Source = null);
 
-// Berufe: eigener Echtzeit-Timer (unabhängig von Kampf-Pause und Spielgeschwindigkeit)
+// Professions: own real-time timer (independent of combat pause and game speed)
 // Passive Slots (Charakter-Belegung) → IdleGameEngine.ProfessionPassive.cs, Lehrer → IdleGameEngine.ProfessionTrainer.cs
 public partial class IdleGameEngine
 {
@@ -35,25 +35,25 @@ public partial class IdleGameEngine
     private Timer? _professionTimer;
     private readonly Stopwatch _professionClock = new();
     private double _lastProfessionTime;
-    // Eigener RNG, damit Stoff-Drops und Berufe die Kampf-Zufallsfolge (Simulator-Seed) nicht verändern
+    // Own RNG so cloth drops and professions don't change the combat random sequence (simulator seed)
     private readonly Random _professionRng = new();
     private readonly List<ProfessionLogEntry> _professionLog = new();
     private long _nextProfessionLogId;
 
-    // Sammel- und Sekundärberufe sind an keinen Charakter gebunden (accountweit)
+    // Gathering and secondary professions are not bound to a character (account-wide)
     private readonly Dictionary<Profession, ProfessionProgress> _sharedProfessions = new();
 
-    // Zuletzt gewählte Zone (Sammeln) bzw. Rezept (Herstellen) je Beruf – wird beim Öffnen der Unterseite wieder ausgewählt
+    // Last chosen zone (gathering) or recipe (crafting) per profession – selected again when the subpage is opened
     private readonly Dictionary<Profession, string> _lastProfessionTargets = new();
 
     public ActiveProfessionRun? ActiveProfessionRun { get; private set; }
 
     internal IReadOnlyDictionary<Profession, string> LastProfessionTargets => _lastProfessionTargets;
 
-    /// <summary>Wird nach jedem Berufs-Tick ausgelöst (Timer-Thread!).</summary>
+    /// <summary>Raised after every profession tick (timer thread!).</summary>
     public event Action? ProfessionUpdated;
 
-    /// <summary>Letzte Berufsereignisse, neueste zuerst.</summary>
+    /// <summary>Latest profession events, newest first.</summary>
     public IReadOnlyList<ProfessionLogEntry> ProfessionLog
     {
         get { lock (_simLock) return _professionLog.ToList(); }
@@ -61,7 +61,7 @@ public partial class IdleGameEngine
 
     public IReadOnlyCollection<ProfessionProgress> SharedProfessions => _sharedProfessions.Values;
 
-    /// <summary>Startet den Berufs-Timer (einmalig aus Program.cs – nicht im Headless-Simulator).</summary>
+    /// <summary>Starts the profession timer (once from Program.cs – not in the headless simulator).</summary>
     public void StartProfessionTimer()
     {
         if (_professionTimer is not null) return;
@@ -88,19 +88,19 @@ public partial class IdleGameEngine
 
     // ─── Abfragen ───
 
-    /// <summary>Fortschritt eines Berufs aus Sicht des aktiven Charakters (Hauptberuf) bzw. accountweit (Sammel-/Sekundärberuf).</summary>
+    /// <summary>Progress of a profession from the perspective of the active character (main profession) or account-wide (gathering/secondary profession).</summary>
     public ProfessionProgress? GetProfessionProgress(Profession profession) =>
         Professions.Get(profession).IsPrimary
             ? Player.ProfessionState.Get(profession)
             : _sharedProfessions.GetValueOrDefault(profession);
 
-    /// <summary>Für Ausbildungsstufen maßgebliches Level: aktiver Charakter bzw. höchster Charakter (accountweit).</summary>
+    /// <summary>Level relevant for training tiers: active character or highest character (account-wide).</summary>
     public int ProfessionTrainingLevel(Profession profession) =>
         Professions.Get(profession).IsPrimary || _roster.Count == 0
             ? Player.Level
             : _roster.Max(s => s.Player.Level);
 
-    /// <summary>Höchster Skill eines Berufs: Hauptberuf über alle Charaktere, geteilte Berufe accountweit (Erfolge).</summary>
+    /// <summary>Highest skill of a profession: main profession across all characters, shared professions account-wide (achievements).</summary>
     public int HighestProfessionSkill(Profession profession)
     {
         lock (_simLock)
@@ -109,7 +109,7 @@ public partial class IdleGameEngine
                 : _sharedProfessions.GetValueOrDefault(profession)?.Skill ?? 0;
     }
 
-    /// <summary>Reicht der (accountweite) Sammel-Skill für die Zone? Siehe <see cref="ProfessionRegistry.ZoneRequiredSkill"/>.</summary>
+    /// <summary>Is the (account-wide) gathering skill enough for the zone? See <see cref="ProfessionRegistry.ZoneRequiredSkill"/>.</summary>
     public bool IsZoneUnlocked(Profession profession, string? zoneId) =>
         ProfessionRegistry.GetZone(profession, zoneId) is { } zone
         && (GetProfessionProgress(profession)?.Skill ?? 0) >= ProfessionRegistry.ZoneRequiredSkill(zone);
@@ -124,7 +124,7 @@ public partial class IdleGameEngine
 
     // ─── Lernen / Verlernen / Ausbildung ───
 
-    /// <summary>Accountweite Berufe werden automatisch gelernt, sobald ein Charakter Level 5 erreicht.</summary>
+    /// <summary>Account-wide professions are learned automatically as soon as a character reaches level 5.</summary>
     private void UnlockSharedProfessions()
     {
         if (_sharedProfessions.Count == Professions.All.Count(d => !d.IsPrimary)) return;
@@ -133,11 +133,11 @@ public partial class IdleGameEngine
             _sharedProfessions.TryAdd(def.Profession, new ProfessionProgress(def.Profession));
     }
 
-    /// <summary>Charakter, der den Hauptberuf erlernt hat – jeder Hauptberuf darf nur von einem Charakter gleichzeitig gelernt sein.</summary>
+    /// <summary>Character who learned the main profession – each main profession may only be learned by one character at a time.</summary>
     public CharacterSlot? ProfessionOwner(Profession profession) =>
         _roster.FirstOrDefault(s => s.Player.ProfessionState.IsLearned(profession));
 
-    /// <summary>Grund, warum der aktive Charakter den Beruf nicht erlernen kann (UI-Text) – <c>null</c> wenn erlaubt.</summary>
+    /// <summary>Reason why the active character cannot learn the profession (UI text) – <c>null</c> if allowed.</summary>
     public string? ProfessionLearnBlocker(Profession profession)
     {
         if (Professions.Get(profession).IsPrimary
@@ -148,7 +148,7 @@ public partial class IdleGameEngine
         return Player.ProfessionState.LearnBlocker(profession, Player.Level);
     }
 
-    /// <summary>Erlernt einen Hauptberuf für den aktiven Charakter. Gibt einen Fehlertext zurück oder <c>null</c>.</summary>
+    /// <summary>Learns a main profession for the active character. Returns an error text or <c>null</c>.</summary>
     public string? LearnProfession(Profession profession)
     {
         lock (_simLock)
@@ -167,7 +167,7 @@ public partial class IdleGameEngine
         {
             if (!Player.ProfessionState.Unlearn(profession)) return;
             if (ActiveProfessionRun?.Profession == profession) ActiveProfessionRun = null;
-            // Passive Slots, die der Charakter ohne den Beruf nicht mehr ausüben darf, freigeben
+            // Free passive slots the character may no longer work without the profession
             if (_activeSlotId is { } id && GetCharacter(id) is { } character && !CanWorkPassive(character, profession))
                 _passiveAssignments.RemoveAll(a => a.CharacterId == id && a.Profession == profession);
         }
@@ -176,7 +176,7 @@ public partial class IdleGameEngine
 
     // ─── Aktiver Slot ───
 
-    /// <summary>Startet den aktiven Slot (ersetzt einen laufenden Durchlauf). <paramref name="count"/> nur beim Herstellen.</summary>
+    /// <summary>Starts the active slot (replaces a running pass). <paramref name="count"/> only when crafting.</summary>
     public void StartActiveProfession(Profession profession, string target, int? count = null)
     {
         lock (_simLock)
@@ -198,7 +198,7 @@ public partial class IdleGameEngine
         ProfessionUpdated?.Invoke();
     }
 
-    /// <summary>Wie oft das Rezept mit dem aktuellen Inventar hergestellt werden kann.</summary>
+    /// <summary>How often the recipe can be crafted with the current inventory.</summary>
     public int MaxCraftable(Recipe recipe) =>
         recipe.Reagents.Min(r => _sharedInventory.CountOf(r.Item.Id) / r.Count);
 
@@ -206,7 +206,7 @@ public partial class IdleGameEngine
     {
         if (ActiveProfessionRun is not { } run) return;
 
-        // Charakterwechsel oder verlernt → Durchlauf verfällt
+        // Character switch or unlearned → the pass is discarded
         var progress = run.Player == Player ? GetProfessionProgress(run.Profession) : null;
         if (progress is null)
         {
@@ -214,7 +214,7 @@ public partial class IdleGameEngine
             return;
         }
 
-        // Bei beschleunigter Simulation (Debug) können mehrere Durchläufe in einen Tick fallen
+        // With accelerated simulation (debug) several passes can fall into one tick
         run.Elapsed += dt;
         while (run.Elapsed >= run.Duration)
         {
@@ -250,11 +250,11 @@ public partial class IdleGameEngine
         }
     }
 
-    // ─── Ausführung ───
+    // ─── Execution ───
 
     /// <summary>
-    /// Führt einen Durchlauf aus (Sammeln oder Herstellen). Skillpunkte gibt es nur im aktiven Slot.
-    /// <paramref name="source"/> = Name des passiven Charakters fürs Protokoll.
+    /// Executes one pass (gathering or crafting). Skill points are only given in the active slot.
+    /// <paramref name="source"/> = name of the passive character for the log.
     /// </summary>
     private bool ExecuteProfession(ProfessionProgress progress, string target, bool isActive, string? source)
     {
@@ -268,7 +268,7 @@ public partial class IdleGameEngine
         return success;
     }
 
-    /// <summary>Skillpunkt-Chance – nur solange die Stufe in der eigenen Skill-Range liegt (<see cref="ProfessionRegistry.GivesSkillUp"/>).</summary>
+    /// <summary>Skill-up chance – only while the tier is within its own skill range (<see cref="ProfessionRegistry.GivesSkillUp"/>).</summary>
     private void RollSkillUp(ProfessionProgress progress, int requiredSkill)
     {
         if (!ProfessionRegistry.GivesSkillUp(progress.Profession, requiredSkill, progress.Skill)) return;
@@ -312,7 +312,7 @@ public partial class IdleGameEngine
         int leftover = _sharedInventory.TryAdd(recipe.Result, recipe.ResultCount);
         if (leftover > 0)
         {
-            // Kein Platz → Herstellung rückgängig machen
+            // No space → undo the crafting
             _sharedInventory.Remove(recipe.Result.Id, recipe.ResultCount - leftover);
             foreach (var reagent in recipe.Reagents)
                 _sharedInventory.TryAdd(reagent.Item, reagent.Count);
@@ -332,9 +332,9 @@ public partial class IdleGameEngine
             _professionLog.RemoveAt(_professionLog.Count - 1);
     }
 
-    // ─── Stoff-Drops im Kampf ───
+    // ─── Cloth drops in combat ───
 
-    /// <summary>Stoffe (Leinen → Runenstoff): je passendem Levelband, Chance/Menge nach Gegnerart (<see cref="ProfessionRegistry.ClothDropFor"/>).</summary>
+    /// <summary>Cloth (Linen → Runecloth): per matching level band, chance/amount by enemy type (<see cref="ProfessionRegistry.ClothDropFor"/>).</summary>
     private void RollCombatTradeDrops(Enemy enemy)
     {
         int level = enemy.Stats.Level;

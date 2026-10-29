@@ -1,4 +1,4 @@
-// Nur im Debug-Build kompiliert (siehe WoWClassicIdle.csproj)
+// Only compiled in the Debug build (see WoWClassicIdle.csproj)
 public static class DebugEnemyTemplates
 {
     public static IReadOnlyList<EnemyTemplate> All { get; } = new List<EnemyTemplate>
@@ -25,7 +25,7 @@ public static class DebugEnemyTemplates
             MinCopperReward = 1,
             MaxCopperReward = 5,
             BaseXpReward    = 15,
-            Weight          = 10  // im Debug sehr häufig gespawnt
+            Weight          = 10  // spawned very often in Debug
         },
     };
 }

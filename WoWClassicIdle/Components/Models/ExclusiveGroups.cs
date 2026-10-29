@@ -1,7 +1,7 @@
 namespace Models;
 
 /// <summary>
-/// Anzeigenamen der <see cref="Ability.ExclusiveGroup"/>s – pro Gruppe ist nur ein Zauber gleichzeitig ausrüstbar.
+/// Display names of the <see cref="Ability.ExclusiveGroup"/>s – only one spell per group can be equipped at a time.
 /// </summary>
 public static class ExclusiveGroups
 {
@@ -17,7 +17,7 @@ public static class ExclusiveGroups
         ["shaman_weapon_enchant"] = "Weapon Imbue",
     };
 
-    /// <summary>Anzeigename der Gruppe, null wenn die Ability keiner Gruppe angehört.</summary>
+    /// <summary>Display name of the group, null if the ability belongs to no group.</summary>
     public static string? LabelOf(Ability ability) =>
         string.IsNullOrEmpty(ability.ExclusiveGroup) ? null
         : Labels.TryGetValue(ability.ExclusiveGroup, out var label) ? label

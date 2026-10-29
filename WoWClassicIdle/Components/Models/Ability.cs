@@ -7,38 +7,38 @@ public sealed partial record Ability
     public string Name { get; init; } = "";
     public string IconUrl { get; init; } = "";
 
-    /// <summary>Abilities mit derselben nicht-leeren Gruppe schließen sich gegenseitig aus (z. B. Fireball vs. Frostbolt).</summary>
+    /// <summary>Abilities with the same non-empty group are mutually exclusive (e.g. Fireball vs. Frostbolt).</summary>
     public string ExclusiveGroup { get; init; } = "";
     public double Cooldown { get; init; }   // Sekunden
     public int ManaCost { get; init; }
-    public int Damage { get; init; }       // > 0 → macht Schaden
+    public int Damage { get; init; }       // > 0 → deals damage
     public int Heal { get; init; }         
     public int Rank { get; init; }
     public int LevelRequired { get; init; }
 
-    /// <summary>Zauberzeit in Sekunden. &gt; 0 → Effekt erst nach Abschluss des Casts, löst keinen GCD aus.</summary>
+    /// <summary>Cast time in seconds. &gt; 0 → effect only after the cast completes, does not trigger a GCD.</summary>
     public double CastTime { get; init; }
     public bool HasCastTime => CastTime > 0;
 
-    /// <summary>Nahkampf-Schlag: Schaden = Waffenschlag (inkl. AP) + <see cref="Damage"/>. Sonst fixer Zauberschaden.</summary>
+    /// <summary>Melee strike: damage = weapon swing (incl. AP) + <see cref="Damage"/>. Otherwise fixed spell damage.</summary>
     public bool AddsWeaponDamage { get; init; }
 
-    /// <summary>„On next swing“ wie Heroic Strike: ersetzt die nächste Auto-Attack statt über den Cooldown zu feuern.</summary>
+    /// <summary>"On next swing" like Heroic Strike: replaces the next auto-attack instead of firing via its cooldown.</summary>
     public bool ReplacesAutoAttack { get; init; }
 
-    /// <summary>Mindest-Ressource (Mana/Rage), ab der die Fähigkeit eingesetzt wird. 0 = nur <see cref="ManaCost"/> zählt.</summary>
+    /// <summary>Minimum resource (Mana/Rage) at which the ability is used. 0 = only <see cref="ManaCost"/> counts.</summary>
     public int MinResourceToCast { get; init; }
 
-    /// <summary>Buff-Laufzeit in Sekunden. &gt; 0 → Fähigkeit ist ein Selbst-Buff, der automatisch neu gecastet wird, sobald er ausläuft.</summary>
+    /// <summary>Buff duration in seconds. &gt; 0 → ability is a self-buff that is recast automatically as soon as it expires.</summary>
     public double BuffDuration { get; init; }
 
-    /// <summary>Schadensbonus des Buffs auf allen verursachten Schaden (0.05 = +5 %).</summary>
+    /// <summary>Damage bonus of the buff on all damage dealt (0.05 = +5 %).</summary>
     public double BuffDamageBonus { get; init; }
 
-    /// <summary>Heal over Time: Gesamtheilung über die <see cref="BuffDuration"/>, verteilt auf Ticks.</summary>
+    /// <summary>Heal over Time: total healing over the <see cref="BuffDuration"/>, spread across ticks.</summary>
     public int HotTotalHeal { get; init; }
 
-    /// <summary>Sekunden zwischen zwei HoT-Ticks.</summary>
+    /// <summary>Seconds between two HoT ticks.</summary>
     public double HotTickInterval { get; init; } = 3;
 
     /// <summary>+X% attack speed while buff is active (e.g. 0.2 = +20%). Divides swing interval by (1+bonus).</summary>
@@ -67,129 +67,129 @@ public sealed partial record Ability
     /// <summary>Seconds between two DoT ticks.</summary>
     public double DebuffDotTickInterval { get; init; } = 3;
 
-    /// <summary>Anteil des DoT-Schadens, der den Spieler heilt (1.0 = 100 %, z. B. Drain Life).</summary>
+    /// <summary>Share of DoT damage that heals the player (1.0 = 100 %, e.g. Drain Life).</summary>
     public double DebuffDotLifesteal { get; init; }
 
-    /// <summary>Verringert das Angriffstempo des Gegners um diesen Anteil (0.20 = −20 %, z. B. Thunderclap).</summary>
+    /// <summary>Reduces the enemy's attack speed by this share (0.20 = −20 %, e.g. Thunderclap).</summary>
     public double DebuffAttackSpeedReduction { get; init; }
 
-    /// <summary>Passiv: Fähigkeit wird nicht aktiv eingesetzt, sondern per Proc ausgelöst.</summary>
+    /// <summary>Passive: ability is not used actively but triggered by a proc.</summary>
     public bool IsPassive { get; init; }
 
-    /// <summary>Proc-Chance pro Auto-Attack (0.05 = 5 %).</summary>
+    /// <summary>Proc chance per auto-attack (0.05 = 5 %).</summary>
     public double ProcChance { get; init; }
 
-    /// <summary>Maximale Stack-Anzahl für stapelbare Debuffs (0 = kein Stacking → 1 Stack).</summary>
+    /// <summary>Maximum stack count for stackable debuffs (0 = no stacking → 1 stack).</summary>
     public int DebuffMaxStacks { get; init; }
 
-    /// <summary>Anteil des maximalen Manas, der über <see cref="BuffDuration"/> Sekunden regeneriert wird (0.10 = 10 %).</summary>
+    /// <summary>Share of max mana regenerated over <see cref="BuffDuration"/> seconds (0.10 = 10 %).</summary>
     public double MotManaRestorePct { get; init; }
 
-    /// <summary>Sekunden zwischen zwei Mana-over-Time-Ticks.</summary>
+    /// <summary>Seconds between two mana-over-time ticks.</summary>
     public double MotTickInterval { get; init; } = 5.0;
 
     public bool IsMot => MotManaRestorePct > 0;
 
-    /// <summary>Gesamtzahl der MoT-Ticks über die <see cref="BuffDuration"/>.</summary>
+    /// <summary>Total number of MoT ticks over the <see cref="BuffDuration"/>.</summary>
     public int MotTickCount => IsMot ? Math.Max(1, (int)Math.Round(BuffDuration / MotTickInterval)) : 0;
 
-    /// <summary>Anteil der maximalen HP, der über <see cref="BuffDuration"/> Sekunden regeneriert wird (0.12 = 12 %).</summary>
+    /// <summary>Share of max HP regenerated over <see cref="BuffDuration"/> seconds (0.12 = 12 %).</summary>
     public double HotHealPct { get; init; }
 
-    /// <summary>Nur einsetzbar wenn der Gegner weniger als diesen Anteil seiner max. HP hat (0.20 = 20 %). 0 = keine Einschränkung.</summary>
+    /// <summary>Only usable when the enemy has less than this share of its max HP (0.20 = 20 %). 0 = no restriction.</summary>
     public double RequiresEnemyBelowHpPct { get; init; }
 
-    /// <summary>Buff schützt den Spieler vor allen Treffern (Immunität) solange aktiv.</summary>
+    /// <summary>Buff protects the player from all hits (immunity) while active.</summary>
     public bool BuffGrantsImmunity { get; init; }
 
-    /// <summary>HP-Kosten des Life Tap (wird vom Spieler abgezogen).</summary>
+    /// <summary>HP cost of Life Tap (deducted from the player).</summary>
     public int LifeTapHpCost { get; init; }
 
-    /// <summary>Mana-Gewinn des Life Tap.</summary>
+    /// <summary>Mana gain of Life Tap.</summary>
     public int LifeTapManaGain { get; init; }
 
-    /// <summary>Vergeltungsschaden wenn der Spieler während dieses Buffs getroffen wird (z. B. Thorns, Lightning Shield).</summary>
+    /// <summary>Retaliation damage when the player is hit during this buff (e.g. Thorns, Lightning Shield).</summary>
     public int BuffRetaliationDamage { get; init; }
 
-    /// <summary>Waffen-Buff (Windfury): Chance pro Auto-Attack auf <see cref="BuffExtraAttacks"/> zusätzliche Schläge.</summary>
+    /// <summary>Weapon buff (Windfury): chance per auto-attack for <see cref="BuffExtraAttacks"/> additional swings.</summary>
     public double BuffExtraAttackChance { get; init; }
     public int BuffExtraAttacks { get; init; }
 
-    /// <summary>Anzahl Treffer des Direktschadens (Chain Lightning: 3). Jeder Treffer würfelt eigenen Crit.</summary>
+    /// <summary>Number of hits of the direct damage (Chain Lightning: 3). Each hit rolls its own crit.</summary>
     public int HitCount { get; init; } = 1;
 
-    /// <summary>Zusätzliche Crit-Chance nur für diese Fähigkeit (0.20 = +20 %).</summary>
+    /// <summary>Additional crit chance for this ability only (0.20 = +20 %).</summary>
     public double BonusCritChance { get; init; }
 
-    /// <summary>Kann nur über ein Talent freigeschaltet werden, erscheint nicht im Standard-Loadout.</summary>
+    /// <summary>Can only be unlocked via a talent, does not appear in the default loadout.</summary>
     public bool TalentUnlockOnly { get; init; }
 
     /// <summary>
-    /// Bevorzugter Talent-Baum (0/1/2) für die Simulation. −1 = keine Präferenz.
-    /// Wird verwendet, wenn mehrere Abilities in derselben ExclusiveGroup konkurrieren (z. B. Fireball vs. Frostbolt).
+    /// Preferred talent tree (0/1/2) for the simulation. −1 = no preference.
+    /// Used when several abilities compete in the same ExclusiveGroup (e.g. Fireball vs. Frostbolt).
     /// </summary>
     public int SpecHint { get; init; } = -1;
-    /// <summary>+% Rage-Generierung durch Auto-Attacks während der Buff aktiv ist.</summary>
+    /// <summary>+% rage generation from auto-attacks while the buff is active.</summary>
     public double BuffRageGenBonus { get; init; }
-    /// <summary>+% Crit-Chance während der Buff aktiv ist.</summary>
+    /// <summary>+% crit chance while the buff is active.</summary>
     public double BuffCritChanceBonus { get; init; }
-    /// <summary>-% erlittener Schaden während der Buff aktiv ist.</summary>
+    /// <summary>-% damage taken while the buff is active.</summary>
     public double BuffDamageTakenReduction { get; init; }
 
-    /// <summary>Wird nur gewirkt wenn aktuelles Mana unter diesem Anteil von MaxMana liegt (0 = keine Bedingung).</summary>
+    /// <summary>Only cast when current mana is below this share of MaxMana (0 = no condition).</summary>
     public double CastWhenManaBelowPct { get; init; }
 
-    /// <summary>Buff absorbiert diesen Anteil der maximalen HP als Schild (0.30 = 30 %).</summary>
+    /// <summary>Buff absorbs this share of max HP as a shield (0.30 = 30 %).</summary>
     public double BuffShieldPct { get; init; }
 
-    /// <summary>Debuff betäubt den Gegner: keine Angriffe für <see cref="DebuffDuration"/> Sekunden.</summary>
+    /// <summary>Debuff stuns the enemy: no attacks for <see cref="DebuffDuration"/> seconds.</summary>
     public bool DebuffIsStun { get; init; }
 
-    /// <summary>Druiden-Gestalt: wirkt passiv, solange die Fähigkeit ausgerüstet ist (siehe <see cref="ShapeshiftForms"/>).</summary>
+    /// <summary>Druid form: works passively as long as the ability is equipped (see <see cref="ShapeshiftForms"/>).</summary>
     public DruidForm Form { get; init; }
 
-    /// <summary>Nur in dieser Gestalt ausrüst- und einsetzbar (z. B. Maul → Bear). None = keine Einschränkung.</summary>
+    /// <summary>Only equippable and usable in this form (e.g. Maul → Bear). None = no restriction.</summary>
     public DruidForm RequiredForm { get; init; }
 
     /// <summary>
     /// Alternative Kosten in Rage-/Energie-Gestalten (z. B. Rejuvenation: Bear → Rage, Cat → Energy).
-    /// Eine Fähigkeit mit Eintrag für eine Gestalt ist dort trotz Manakosten nutzbar.
+    /// An ability with an entry for a form is usable there despite its mana cost.
     /// </summary>
     public IReadOnlyDictionary<DruidForm, int> FormCosts { get; init; } = NoFormCosts;
     private static readonly IReadOnlyDictionary<DruidForm, int> NoFormCosts = new Dictionary<DruidForm, int>();
 
-    /// <summary>Buff endet nach so vielen erlittenen Gegnertreffern vorzeitig (Holy Shield: 3). 0 = nur Laufzeit.</summary>
+    /// <summary>Buff ends early after this many enemy hits taken (Holy Shield: 3). 0 = duration only.</summary>
     public int BuffHitCharges { get; init; }
 
-    /// <summary>Buff macht die nächste Schadensfähigkeit zu einem garantierten Crit und wird dabei verbraucht (Cold Blood).</summary>
+    /// <summary>Buff turns the next damaging ability into a guaranteed crit and is consumed by it (Cold Blood).</summary>
     public bool BuffGuaranteesCrit { get; init; }
 
     /// <summary>
-    /// Verstärkt die nächste Fähigkeit mit diesem Namen um <see cref="EmpowerDamageBonus"/> (Mongoose Bite → Raptor Strike).
-    /// Bei einer Schadensfähigkeit: Treffer legt den Verstärkungs-Buff an. Bei einem Buff: der Buff selbst ist die Verstärkung.
+    /// Empowers the next ability with this name by <see cref="EmpowerDamageBonus"/> (Mongoose Bite → Raptor Strike).
+    /// For a damaging ability: a hit applies the empower buff. For a buff: the buff itself is the empowerment.
     /// </summary>
     public string EmpowersAbilityName { get; init; } = "";
     public double EmpowerDamageBonus { get; init; }
 
-    /// <summary>Laufzeit des Verstärkungs-Buffs in Sekunden.</summary>
+    /// <summary>Duration of the empower buff in seconds.</summary>
     public double EmpowerDuration { get; init; } = 10;
 
     public bool IsEmpowering => EmpowersAbilityName.Length > 0 && EmpowerDamageBonus > 0;
 
-    /// <summary>Beschwört (bzw. belebt) dieses Begleittier (Hunter-Pets, Warlock-Dämonen).</summary>
+    /// <summary>Summons (or revives) this pet (Hunter pets, Warlock demons).</summary>
     public PetKind SummonsPet { get; init; }
 
     public bool IsPetSummon => SummonsPet != PetKind.None;
 
     /// <summary>
-    /// Multiplikator auf den gesamten Treffer inkl. Waffenschaden (Talente/Gestalten auf Waffenschläge).
-    /// Prozent-Boni nur auf <see cref="Damage"/> würden bei Waffenschlägen fast verpuffen (4 × 1.02 → 4).
+    /// Multiplier on the entire hit incl. weapon damage (talents/forms on weapon strikes).
+    /// Percentage bonuses on <see cref="Damage"/> only would almost vanish on weapon strikes (4 × 1.02 → 4).
     /// </summary>
     public double DamageMultiplier { get; init; } = 1.0;
 
     /// <summary>
-    /// Kopie mit +<paramref name="bonus"/> Schaden: Waffenschläge über <see cref="DamageMultiplier"/>,
-    /// Zauber direkt auf <see cref="Damage"/>.
+    /// Copy with +<paramref name="bonus"/> damage: weapon strikes via <see cref="DamageMultiplier"/>,
+    /// spells directly on <see cref="Damage"/>.
     /// </summary>
     public Ability WithDamageBonus(double bonus) =>
         bonus == 0 ? this
@@ -213,32 +213,32 @@ public sealed partial record Ability
     public int DebuffDotTickCount => IsDebuffDot ? Math.Max(1, (int)Math.Round(DebuffDuration / DebuffDotTickInterval)) : 0;
 
     /// <summary>
-    /// Direktheilung oder HoT – wird erst unter <see cref="HealThreshold"/> gewirkt.
-    /// Schadenszauber mit Nebenheilung (Holy Nova) zählen nicht dazu und werden normal eingesetzt.
+    /// Direct heal or HoT – only cast below <see cref="HealThreshold"/>.
+    /// Damage spells with incidental healing (Holy Nova) don't count and are used normally.
     /// </summary>
     public bool IsHealing => (IsHeal && !IsDamage) || IsHot;
 
     public bool IsShield => IsBuff && BuffShieldPct > 0;
 
-    /// <summary>Reiner Spieler-Buff (keine Heilung, kein Schild) – höchste Cast-Priorität.</summary>
+    /// <summary>Pure player buff (no heal, no shield) – highest cast priority.</summary>
     public bool IsPlayerBuff => IsBuff && !IsHealing && !IsShield;
 
     /// <summary>
-    /// Cast-Priorität: 0 = Spieler-Buffs (+ Utility ohne Schaden wie Life Tap, Stuns, Marks, Pet-Beschwörung),
-    /// 1 = Heilung/Schild, 2 = Schaden (innerhalb der Gruppe nach geschätztem DPS).
+    /// Cast priority: 0 = player buffs (+ utility without damage such as Life Tap, stuns, marks, pet summons),
+    /// 1 = heal/shield, 2 = damage (within the group by estimated DPS).
     /// </summary>
     public int CastPriorityGroup =>
         IsPlayerBuff || IsLifeTap || IsPetSummon || (IsDebuff && !IsDamage && !IsDebuffDot) ? 0
         : IsHealing || IsShield ? 1
         : 2;
 
-    /// <summary>HP-Anteil, ab dem (und darunter) Heilzauber automatisch gewirkt werden.</summary>
+    /// <summary>HP share at (and below) which healing spells are cast automatically.</summary>
     public const double HealThreshold = 0.5;
 
-    /// <summary>Anzahl HoT-Ticks über die gesamte Laufzeit.</summary>
+    /// <summary>Number of HoT ticks over the entire duration.</summary>
     public int HotTickCount => IsHot ? Math.Max(1, (int)Math.Round(BuffDuration / HotTickInterval)) : 0;
 
-    /// <summary>Heilung pro Tick (Rest der Ganzzahl-Division landet auf dem letzten Tick).</summary>
+    /// <summary>Healing per tick (the remainder of the integer division lands on the last tick).</summary>
     public int HotHealForTick(int tickIndex)
     {
         int perTick = HotTotalHeal / HotTickCount;

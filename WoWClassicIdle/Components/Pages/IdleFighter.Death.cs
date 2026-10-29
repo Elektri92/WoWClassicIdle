@@ -1,4 +1,4 @@
-// Tod & Spirit Healer: Geisterwelt-Overlay solange der Spieler tot ist, Lichtblitz bei der Wiederbelebung.
+// Death & spirit healer: ghost world overlay while the player is dead, flash of light on resurrection.
 // Darstellung in wwwroot/css/spirit-healer.css.
 namespace WoWClassicIdle.Components.Pages;
 
@@ -10,7 +10,7 @@ public partial class IdleFighter
 
     private bool ShowResurrectFlash => DateTime.UtcNow - _resurrectedAt < ResurrectFlashDuration;
 
-    // Timer-Thread! Übergang tot → lebendig startet den Wiederbelebungs-Blitz.
+    // Timer thread! The transition dead → alive starts the resurrection flash.
     private void DetectResurrection()
     {
         bool dead = _engine.IsAtSpiritHealer;

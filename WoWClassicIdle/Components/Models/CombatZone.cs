@@ -1,15 +1,15 @@
 // Models/CombatZone.cs
 namespace Models;
 
-/// <summary>Landmasse – zwischen verschiedenen Landmassen geht es nur per Schiff/Zeppelin.</summary>
+/// <summary>Landmass – travel between different landmasses is only possible by ship/zeppelin.</summary>
 public enum Landmass { EasternKingdoms, Kalimdor, Teldrassil }
 
-/// <summary>Gegnerart einer Kampfzone; Stats kommen aus dem <see cref="EnemyArchetype"/>.</summary>
+/// <summary>Enemy type of a combat zone; stats come from the <see cref="EnemyArchetype"/>.</summary>
 public record ZoneMob(string Name, EnemyArchetype Archetype, string ImageUrl, int Weight = 3);
 
 /// <summary>
-/// Kampfgebiet. <paramref name="X"/>/<paramref name="Y"/> sind WoW-Weltkoordinaten in Yards (X = Norden, Y = Westen)
-/// des Zonenzentrums – Grundlage der Reisezeit. <paramref name="Theme"/> wählt den Farbverlauf (CSS zone-theme-*).
+/// Combat zone. <paramref name="X"/>/<paramref name="Y"/> are WoW world coordinates in yards (X = north, Y = west)
+/// of the zone center – basis of the travel time. <paramref name="Theme"/> selects the gradient (CSS zone-theme-*).
 /// </summary>
 public record CombatZone(
     string Id,
@@ -23,7 +23,7 @@ public record CombatZone(
     string Description,
     IReadOnlyList<ZoneMob> Mobs)
 {
-    /// <summary>Spielerlevel, ab dem Kills keine XP mehr geben (Gegner liegen dann 6+ Level darunter).</summary>
+    /// <summary>Player level from which kills no longer grant XP (enemies are then 6+ levels below).</summary>
     public int NoXpLevel => MaxLevel + StaticHelpers.NoXpLevelDifference;
 
     public string LevelRange => MinLevel == MaxLevel ? $"{MinLevel}" : $"{MinLevel}–{MaxLevel}";

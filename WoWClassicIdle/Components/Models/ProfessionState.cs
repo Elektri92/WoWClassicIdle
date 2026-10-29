@@ -2,8 +2,8 @@
 namespace Models
 {
     /// <summary>
-    /// Passiver Slot einer Sammelzone, mit einem Charakter belegt. Jeder Charakter kann höchstens einen Beruf passiv ausüben.
-    /// <see cref="Group"/> = Zonen-ID des Slots (= <see cref="Target"/>).
+    /// Passive slot of a gathering zone, filled with a character. Each character can practice at most one profession passively.
+    /// <see cref="Group"/> = zone ID of the slot (= <see cref="Target"/>).
     /// </summary>
     public class PassiveAssignment
     {
@@ -12,17 +12,17 @@ namespace Models
         public required int Index { get; init; }
         public required int CharacterId { get; set; }
 
-        /// <summary>Zonen-ID, in der gesammelt wird; <c>null</c> = Slot ruht.</summary>
+        /// <summary>Zone ID being gathered in; <c>null</c> = slot is idle.</summary>
         public string? Target { get; set; }
 
-        /// <summary>Bereits verstrichene Sekunden des laufenden Durchlaufs.</summary>
+        /// <summary>Seconds already elapsed of the running pass.</summary>
         public double Elapsed { get; set; }
 
         public bool Matches(Profession profession, string group, int index) =>
             Profession == profession && Group == group && Index == index;
     }
 
-    /// <summary>Skill-Stand eines erlernten Berufs inkl. der beim Lehrer gelernten Rezepte.</summary>
+    /// <summary>Skill state of a learned profession incl. the recipes learned from the trainer.</summary>
     public class ProfessionProgress
     {
         private readonly HashSet<string> _knownRecipes = new();
@@ -39,10 +39,10 @@ namespace Models
         public ProfessionRank? NextRank =>
             RankIndex + 1 < Professions.Ranks.Count ? Professions.Ranks[RankIndex + 1] : null;
 
-        /// <summary>Bekannte Rezept-IDs (nur Herstellungsberufe).</summary>
+        /// <summary>Known recipe IDs (crafting professions only).</summary>
         public IReadOnlyCollection<string> KnownRecipes => _knownRecipes;
 
-        /// <summary>Herstellungsberufe starten mit einem Basisrezept (<see cref="ProfessionTrainerRegistry.StarterRecipe"/>).</summary>
+        /// <summary>Crafting professions start with a basic recipe (<see cref="ProfessionTrainerRegistry.StarterRecipe"/>).</summary>
         public ProfessionProgress(Profession profession, CharacterClass? learnerClass = null)
         {
             Definition = Professions.Get(profession);
@@ -52,11 +52,11 @@ namespace Models
 
         public bool KnowsRecipe(string recipeId) => _knownRecipes.Contains(recipeId);
 
-        /// <summary>Lernt ein Rezept dieses Berufs (Kosten/Voraussetzungen prüft die Engine).</summary>
+        /// <summary>Learns a recipe of this profession (the engine checks cost/requirements).</summary>
         internal bool LearnRecipe(Recipe recipe) =>
             recipe.Profession == Profession && _knownRecipes.Add(recipe.Id);
 
-        /// <summary>+1 Skill, solange das Cap der aktuellen Stufe nicht erreicht ist.</summary>
+        /// <summary>+1 skill as long as the cap of the current tier is not reached.</summary>
         public bool TrySkillUp()
         {
             if (IsCapped) return false;
@@ -64,7 +64,7 @@ namespace Models
             return true;
         }
 
-        /// <summary>Lernt die nächste Ausbildungsstufe, wenn Charakterlevel und Skill reichen.</summary>
+        /// <summary>Learns the next training tier if character level and skill are sufficient.</summary>
         public bool TrainNextRank(int characterLevel)
         {
             if (NextRank is not { } next || characterLevel < next.RequiredLevel || Skill < next.RequiredSkill) return false;
@@ -73,8 +73,8 @@ namespace Models
         }
 
         /// <summary>
-        /// Stellt Skill, Stufe und Rezepte wieder her. <paramref name="knownRecipes"/> = <c>null</c> (Altstand ohne Lehrer, Debug):
-        /// alle Rezepte bis zum aktuellen Skill gelten als gelernt.
+        /// Restores skill, tier and recipes. <paramref name="knownRecipes"/> = <c>null</c> (legacy save without trainer, debug):
+        /// all recipes up to the current skill count as learned.
         /// </summary>
         internal void Restore(int skill, int rankIndex, IEnumerable<string>? knownRecipes = null)
         {
@@ -88,13 +88,13 @@ namespace Models
                     _knownRecipes.Add(recipe.Id);
                 return;
             }
-            // Unbekannte/entfernte Rezept-IDs ignorieren; das Basisrezept aus dem Konstruktor bleibt erhalten
+            // Ignore unknown/removed recipe IDs; the basic recipe from the constructor is kept
             var valid = recipes.Select(r => r.Id).ToHashSet();
             _knownRecipes.UnionWith(knownRecipes.Where(valid.Contains));
         }
     }
 
-    /// <summary>Hauptberuf eines Charakters (max. einer). Sammel- und Sekundärberufe sind accountweit in der Engine.</summary>
+    /// <summary>Main profession of a character (max. one). Gathering and secondary professions are account-wide in the engine.</summary>
     public class ProfessionState
     {
         public ProfessionProgress? Primary { get; private set; }
@@ -104,7 +104,7 @@ namespace Models
 
         public bool IsLearned(Profession profession) => Primary?.Profession == profession;
 
-        /// <summary>Grund, warum der Beruf nicht erlernt werden kann (UI-Text) – <c>null</c> wenn erlaubt.</summary>
+        /// <summary>Reason why the profession cannot be learned (UI text) – <c>null</c> if allowed.</summary>
         public string? LearnBlocker(Profession profession, int characterLevel)
         {
             if (!Professions.Get(profession).IsPrimary)
@@ -118,14 +118,14 @@ namespace Models
             return null;
         }
 
-        /// <summary>Erlernt den Hauptberuf mit Apprentice (Skill 1) und dem Basisrezept passend zur Klasse.</summary>
+        /// <summary>Learns the main profession at Apprentice (skill 1) with the basic recipe matching the class.</summary>
         public ProfessionProgress? Learn(Profession profession, int characterLevel, CharacterClass? learnerClass = null)
         {
             if (LearnBlocker(profession, characterLevel) is not null) return null;
             return Primary = new ProfessionProgress(profession, learnerClass);
         }
 
-        /// <summary>Verlernt den Hauptberuf – der Skill geht verloren.</summary>
+        /// <summary>Unlearns the main profession – the skill is lost.</summary>
         public bool Unlearn(Profession profession)
         {
             if (!IsLearned(profession)) return false;

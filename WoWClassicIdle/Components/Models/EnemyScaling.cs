@@ -2,11 +2,11 @@
 namespace Models;
 
 /// <summary>
-/// Standard-Gegnerwerte je Level (HP-Kurve, Attack-Formel, Kupfer) – baut aus Zonen-Gegnern fertige <see cref="EnemyTemplate"/>s.
+/// Default enemy values per level (HP curve, attack formula, copper) – builds finished <see cref="EnemyTemplate"/>s from zone enemies.
 /// </summary>
 public static class EnemyScaling
 {
-    // Standard-HP je Level (Index 0 = Level 1); bis L11 aus WoW-Classic-Ankern, danach Δ ≈ 24 + (L − 10) × 1,5
+    // Default HP per level (index 0 = level 1); up to L11 from WoW Classic anchors, after that Δ ≈ 24 + (L − 10) × 1.5
     private static readonly int[] BaseHp =
     [
           42,   55,   71,   86,  102,  120,  137,  156,  176,  198,  // L1–10
@@ -20,15 +20,15 @@ public static class EnemyScaling
     public static int Hp(int level, EnemyArchetype archetype) =>
         (int)Math.Round(BaseHp[Math.Clamp(level, 1, BaseHp.Length) - 1] * archetype.HpMultiplier);
 
-    // BaseAttack ≈ 5 + Level × 0,38 (abgerundet, damit Lv 1–2 bei 5 bleibt wie nach dem Balancing)
+    // BaseAttack ≈ 5 + level × 0.38 (rounded down so Lv 1–2 stays at 5 like after balancing)
     public static int Attack(int level, EnemyArchetype archetype) =>
         Math.Max(3, (int)(5 + level * 0.38) + archetype.AttackBonus);
 
-    // Kupfer auf dem Mindestlevel der Zone; der Spawner rechnet +1 je Level darüber
+    // Copper at the minimum level of the zone; the spawner adds +1 per level above
     public static int MinCopper(int level) => Math.Max(1, (int)Math.Round(level * 0.8));
     public static int MaxCopper(int level) => Math.Max(3, (int)Math.Round(level * 1.5));
 
-    /// <summary>Gegner-Template für den ganzen Levelbereich einer Zone.</summary>
+    /// <summary>Enemy template for the whole level range of a zone.</summary>
     public static EnemyTemplate BuildTemplate(ZoneMob mob, CombatZone zone)
     {
         var levels = Enumerable.Range(zone.MinLevel, zone.MaxLevel - zone.MinLevel + 1).ToList();

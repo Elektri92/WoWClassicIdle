@@ -1,9 +1,9 @@
 // Models/ProfessionRegistry.Recipes.cs
 namespace Models
 {
-    // Rezepte: Verbrauchsgüter aus ConsumableRegistry, herstellbare Rüstung aus CraftedGearRegistry.
-    // Lazy, damit der statische Konstruktor nicht in einen Init-Zyklus mit diesen Registries läuft
-    // (beide lesen beim Aufbau die Rohstoffe dieser Klasse).
+    // Recipes: consumables from ConsumableRegistry, craftable armor from CraftedGearRegistry.
+    // Lazy so the static constructor doesn't run into an init cycle with these registries
+    // (both read the raw materials of this class during construction).
     public static partial class ProfessionRegistry
     {
         private static readonly Lazy<IReadOnlyList<Recipe>> _recipes = new(BuildRecipes);

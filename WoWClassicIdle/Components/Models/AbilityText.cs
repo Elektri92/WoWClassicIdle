@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace Models;
 
-/// <summary>Tooltip-Texte für Fähigkeiten im WoW-Stil, aus den Ability-Werten generiert.</summary>
+/// <summary>WoW-style tooltip texts for abilities, generated from the ability values.</summary>
 public static partial class AbilityText
 {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -15,14 +15,14 @@ public static partial class AbilityText
         _                      => "Mana",
     };
 
-    /// <summary>Ressource einer Fähigkeit – Form-gebundene (Maul, Claw) nutzen die Ressource ihrer Gestalt, Haltungen die der Klasse.</summary>
+    /// <summary>Resource of an ability – form-bound ones (Maul, Claw) use the resource of their form, stances that of the class.</summary>
     public static string ResourceName(Ability ability) =>
         ability.RequiredForm != DruidForm.None
             ? ShapeshiftForms.ResourceName(ShapeshiftForms.ResourceFor(
                 ClassAbilityRegistry.ClassOf(ability) ?? CharacterClass.Druid, ability.RequiredForm))
             : ResourceName(ClassAbilityRegistry.ClassOf(ability));
 
-    /// <summary>Kostenzeile – gestaltabhängige Kosten werden angehängt (z. B. „14 Mana / 10 Rage / 25 Energy").</summary>
+    /// <summary>Cost line – form-dependent costs are appended (e.g. "14 Mana / 10 Rage / 25 Energy").</summary>
     public static string CostText(Ability ability)
     {
         if (ability.ManaCost <= 0) return "";
@@ -32,13 +32,13 @@ public static partial class AbilityText
         return string.Join(" / ", parts);
     }
 
-    /// <summary>Kosten in einer bestimmten Gestalt (z. B. Rejuvenation in Cat Form → „25 Energy").</summary>
+    /// <summary>Cost in a specific form (e.g. Rejuvenation in Cat Form → "25 Energy").</summary>
     public static string CostText(Ability ability, DruidForm form) =>
         ability.FormCosts.TryGetValue(form, out int cost)
             ? $"{cost} {ShapeshiftForms.ResourceName(ShapeshiftForms.ResourceFor(CharacterClass.Druid, form))}"
             : ability.ManaCost > 0 ? $"{ability.ManaCost} {ResourceName(ability)}" : "";
 
-    /// <summary>Rechte Seite der Kostenzeile: „Passive", „Next melee" oder Cooldown.</summary>
+    /// <summary>Right side of the cost line: "Passive", "Next melee" or cooldown.</summary>
     public static string TimingText(Ability ability)
     {
         if (ability.IsForm)             return ShapeshiftForms.Get(ability.Form) is { IsStance: true } ? "Stance" : "Shapeshift";
@@ -54,21 +54,21 @@ public static partial class AbilityText
         return "Instant";
     }
 
-    /// <summary>Gelber Effekttext wie im Classic-Tooltip – inkl. Synergie- und Gestalt-Hinweis.</summary>
+    /// <summary>Yellow effect text like in the Classic tooltip – incl. synergy and form hint.</summary>
     public static string Description(Ability ability) =>
         CoreDescription(ability) + SynergyText(ability) + RequiredFormText(ability);
 
     private static string CoreDescription(Ability ability)
     {
-        // Mechaniken ab Talent-Reihe 2 (Pets, Ladungen, Verstärkungen …) – siehe AbilityText.Special.cs
+        // Mechanics from talent row 2 (pets, charges, empowerments …) – see AbilityText.Special.cs
         if (SpecialDescription(ability) is { } special)
             return special;
 
-        // Druiden-Gestalt – vor IsPassive prüfen (Formen sind passiv, haben aber keinen Proc)
+        // Druid form – check before IsPassive (forms are passive but have no proc)
         if (ability.IsForm)
             return FormDescription(ability);
 
-        // Passiv-Proc (z. B. Deadly Poison) – zuerst prüfen, da IsDebuffDot hier auch true sein kann
+        // Passive proc (e.g. Deadly Poison) – check first, since IsDebuffDot can also be true here
         if (ability.IsPassive)
         {
             string s = $"Passive. Each of your attacks has a {Num(ability.ProcChance * 100)}% chance to apply"
@@ -81,20 +81,20 @@ public static partial class AbilityText
             return s;
         }
 
-        // Mana-over-Time (z. B. Conjure Water, Drain Mana) – vor allgemeinem IsBuff prüfen, weil IsMot ⊂ IsBuff
+        // Mana over time (e.g. Conjure Water, Drain Mana) – check before general IsBuff, because IsMot ⊂ IsBuff
         if (ability.IsMot)
             return $"Restores {Num(ability.MotManaRestorePct * 100)}% of your maximum mana over"
                  + $" {Num(ability.BuffDuration)} sec ({ability.MotTickCount} ticks, every {Num(ability.MotTickInterval)} sec)."
                  + (ability.BuffDamageBonus > 0 ? $" Increases all damage you deal by {Num(ability.BuffDamageBonus * 100)}% during that time." : "")
                  + " Recast automatically when it expires.";
 
-        // Prozentuale HoT (z. B. Conjure Food) – vor allgemeinem IsHot prüfen
+        // Percentage HoT (e.g. Conjure Food) – check before general IsHot
         if (ability.IsHot && ability.HotHealPct > 0)
             return $"Restores {Num(ability.HotHealPct * 100)}% of your maximum health over"
                  + $" {Num(ability.BuffDuration)} sec ({ability.HotTickCount} ticks, every {Num(ability.HotTickInterval)} sec)."
                  + " Recast automatically when it expires.";
 
-        // HoT – ebenfalls vor allgemeinem IsBuff prüfen
+        // HoT – also check before general IsBuff
         if (ability.IsHot)
             return $"Heals you for {ability.HotTotalHeal} over {Num(ability.BuffDuration)} sec"
                  + $" ({ability.HotTickCount} ticks, every {Num(ability.HotTickInterval)} sec).";
@@ -110,7 +110,7 @@ public static partial class AbilityText
         if (ability.AddsWeaponDamage)
             return $"An instant strike that deals weapon damage plus {ability.Damage}{MultiplierText(ability)}.";
 
-        // Direktschaden – ggf. mit Execute-Bedingung und angehängtem DoT (z. B. Moonfire)
+        // Direct damage – possibly with execute condition and attached DoT (e.g. Moonfire)
         if (ability.IsDamage)
         {
             string desc = ability.HitCount > 1
@@ -138,11 +138,11 @@ public static partial class AbilityText
             return $"Reduces the target's attack speed by {Num(ability.DebuffAttackSpeedReduction * 100)}%"
                  + $" for {Num(ability.DebuffDuration)} sec.";
 
-        // Betäubung (z. B. Kidney Shot)
+        // Stun (e.g. Kidney Shot)
         if (ability.IsDebuff && ability.DebuffIsStun)
             return $"Stuns the target for {Num(ability.DebuffDuration)} sec.";
 
-        // Reiner DoT – ggf. mit Lifesteal (z. B. Curse of Agony, Drain Life, Shadow Word: Pain)
+        // Pure DoT – possibly with lifesteal (e.g. Curse of Agony, Drain Life, Shadow Word: Pain)
         if (ability.IsDebuffDot)
         {
             int total = ability.DebuffDotDamage * ability.DebuffDotTickCount;
@@ -153,7 +153,7 @@ public static partial class AbilityText
             return desc;
         }
 
-        // Debuff: erhöhter Schaden (z. B. Hunter's Mark)
+        // Debuff: increased damage (e.g. Hunter's Mark)
         if (ability.IsDebuff && ability.DebuffDamageTakenBonus > 0)
             return $"Marks the target, causing it to take {Num(ability.DebuffDamageTakenBonus * 100)}% more damage"
                  + $" for {Num(ability.DebuffDuration)} sec.";
@@ -195,7 +195,7 @@ public static partial class AbilityText
 
     private static string BuffDescription(Ability ability)
     {
-        // "Recast automatically" nur sinnvoll wenn Buff nicht vor dem Cooldown abläuft
+        // "Recast automatically" only makes sense if the buff doesn't expire before the cooldown
         bool autoRecast = ability.Cooldown == 0 || ability.Cooldown <= ability.BuffDuration;
         string suffix = autoRecast
             ? $" for {Num(ability.BuffDuration)} sec. Recast automatically when it expires."
@@ -237,7 +237,7 @@ public static partial class AbilityText
         return $"Buffs you{suffix}";
     }
 
-    /// <summary>Zusatzhinweis zur Auto-Cast-Logik (z. B. Rage-Schwelle, Heilungs-Gate).</summary>
+    /// <summary>Additional hint on the auto-cast logic (e.g. rage threshold, heal gate).</summary>
     public static string AutoCastNote(Ability ability)
     {
         if (ability.IsForm || ability.IsAura)
@@ -256,7 +256,7 @@ public static partial class AbilityText
             : "";
     }
 
-    /// <summary>Einzeiliger Effekttext für die Pool-Ansicht (ohne Cooldown und Ressourcen).</summary>
+    /// <summary>Single-line effect text for the pool view (without cooldown and resources).</summary>
     public static string ShortSummary(Ability ability)
     {
         if (SpecialShortSummary(ability) is { } special)
@@ -355,7 +355,7 @@ public static partial class AbilityText
         return "";
     }
 
-    /// <summary>CSS-Klasse für ShortSummary: „wow-dmg", „wow-heal" oder leer.</summary>
+    /// <summary>CSS class for ShortSummary: "wow-dmg", "wow-heal" or empty.</summary>
     public static string ShortSummaryClass(Ability ability)
     {
         if (ability.IsHealing || ability.IsMot) return "wow-heal";
@@ -365,7 +365,7 @@ public static partial class AbilityText
 
     private static string Num(double v) => v.ToString("0.#", Inv);
 
-    /// <summary>Talent-/Gestalt-Bonus auf den gesamten Waffenschlag, z. B. „ (+10% damage)".</summary>
+    /// <summary>Talent/form bonus on the entire weapon strike, e.g. " (+10% damage)".</summary>
     private static string MultiplierText(Ability ability, bool compact = false)
     {
         if (Math.Abs(ability.DamageMultiplier - 1.0) < 1e-9) return "";

@@ -1,8 +1,8 @@
 // Models/CombatZoneRegistry.EasternKingdoms.cs
 namespace Models;
 
-// Östliche Königreiche. Koordinaten = ungefähre Zonenmitte in WoW-Weltkoordinaten (X = Norden, Y = Westen).
-// Nur Methoden – statische Felder in Partial-Dateien hätten keine feste Initialisierungsreihenfolge.
+// Eastern Kingdoms. Coordinates = approximate zone center in WoW world coordinates (X = north, Y = west).
+// Methods only – static fields in partial files would have no fixed initialization order.
 public static partial class CombatZoneRegistry
 {
     private static IEnumerable<CombatZone> EasternKingdoms() =>

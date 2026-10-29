@@ -1,7 +1,7 @@
 @using Models
 
-@* Umhüllt beliebigen Inhalt und zeigt beim Hovern einen Fähigkeits-Tooltip im WoW-Stil.
-   Positionierung per js/tooltip.js (position: fixed), damit overflow-Container ihn nicht abschneiden. *@
+@* Wraps arbitrary content and shows a WoW-style ability tooltip on hover.
+   Positioned via js/tooltip.js (position: fixed) so overflow containers don't clip it. *@
 @if (Ability is null)
 {
     @ChildContent
@@ -44,12 +44,12 @@ else
     [Parameter] public Ability? Ability { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    /// <summary>Spielerlevel – ist es zu niedrig, wird „Requires Level“ rot angezeigt.</summary>
+    /// <summary>Player level – if it is too low, "Requires Level" is shown in red.</summary>
     [Parameter] public int? PlayerLevel { get; set; }
 
-    /// <summary>Restlaufzeit, falls der Tooltip zu einem aktiven Buff gehört.</summary>
+    /// <summary>Remaining duration, if the tooltip belongs to an active buff.</summary>
     [Parameter] public double? BuffRemaining { get; set; }
 
-    /// <summary>Zusätzliche CSS-Klasse für den Wrapper (z. B. „tt-block“ für Zeilen).</summary>
+    /// <summary>Extra CSS class for the wrapper (e.g. "tt-block" for rows).</summary>
     [Parameter] public string? Class { get; set; }
 }

@@ -9,10 +9,10 @@ public static partial class ClassAbilityRegistry
             Id = "Raptor_Strike_r1",
             Name = "Raptor Strike",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
-            // Normaler Sofortschlag (wie Sinister Strike), unabhängig von der Auto-Attack
+            // Normal instant strike (like Sinister Strike), independent of the auto-attack
             Cooldown = 6,
             ManaCost = 15,
-            Damage = 6,                 // war 4 – Hunter Lv 1–3 zu schwach
+            Damage = 6,                 // was 4 – Hunter too weak at Lv 1–3
             AddsWeaponDamage = true,
             LevelRequired = 1,
             Rank = 1,
@@ -24,7 +24,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_meleedamage.jpg",
             Cooldown = 6,
             ManaCost = 15,
-            Damage = 7,                 // war 5 – bleibt über Rank 1
+            Damage = 7,                 // was 5 – stays above Rank 1
             AddsWeaponDamage = true,
             LevelRequired = 10,
             Rank = 2,
@@ -51,7 +51,7 @@ public static partial class ClassAbilityRegistry
             CastTime = 1.0,
             ManaCost = 0,
             DebuffDuration = 10,
-            DebuffDamageTakenBonus = 0.07, // ×1,3 gegenüber Rank 1
+            DebuffDamageTakenBonus = 0.07, // ×1.3 compared to Rank 1
             LevelRequired = 13,
             Rank = 2,
         },
@@ -62,10 +62,10 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_poisonsting.jpg",
             Cooldown = 20,
             ManaCost = 15,
-            DebuffDuration = 10,        // DoT über 10 s
-            DebuffDotDamage = 10,       // 2 Ticks à 10 = 20 DMG (−10 % Nerf, war 11)
+            DebuffDuration = 10,        // DoT over 10 s
+            DebuffDotDamage = 10,       // 2 ticks of 10 = 20 damage (−10 % nerf, was 11)
             DebuffDotTickInterval = 5,
-            LevelRequired = 3,          // war 4 – Kill-Loch auf Lv 3
+            LevelRequired = 3,          // was 4 – kill gap at Lv 3
             Rank = 1,
         },
         new Ability
@@ -74,9 +74,9 @@ public static partial class ClassAbilityRegistry
             Name = "Serpent Sting",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_poisonsting.jpg",
             Cooldown = 20,
-            ManaCost = 19,              // ×1,25 gegenüber Rank 1
+            ManaCost = 19,              // ×1.25 compared to Rank 1
             DebuffDuration = 10,
-            DebuffDotDamage = 15,       // ×1,5 gegenüber Rank 1 (2 Ticks à 15 = 30 DMG)
+            DebuffDotDamage = 15,       // ×1.5 compared to Rank 1 (2 ticks of 15 = 30 damage)
             DebuffDotTickInterval = 5,
             LevelRequired = 13,
             Rank = 2,
@@ -87,8 +87,8 @@ public static partial class ClassAbilityRegistry
             Name = "Arcane Shot",
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_impalingbolt.jpg",
             Cooldown = 6,
-            ManaCost = 0,       // kostenlos (−100 % Mana)
-            Damage = 9,                 // war 10 – Hunter Lv 9–10 Kills zu hoch
+            ManaCost = 0,       // free (−100 % mana)
+            Damage = 9,                 // was 10 – Hunter kills too high at Lv 9–10
             LevelRequired = 7,
             Rank = 1,
         },
@@ -99,7 +99,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/ability_impalingbolt.jpg",
             Cooldown = 6,
             ManaCost = 0,
-            Damage = 14,                // ×1,5 gegenüber Rank 1
+            Damage = 14,                // ×1.5 compared to Rank 1
             LevelRequired = 17,
             Rank = 2,
         },
@@ -123,7 +123,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 30,
             ManaCost = 0,
             BuffDuration = 6,
-            BuffDamageTakenReduction = 0.15,    // −15 % erlittener Schaden
+            BuffDamageTakenReduction = 0.15,    // −15 % damage taken
             LevelRequired = 18,
             Rank = 1,
         },
@@ -140,13 +140,13 @@ public static partial class ClassAbilityRegistry
             Rank = 1,
         },
 
-        // ── Talent-Fähigkeiten (Reihe 2) ──────────────────────────────────────
+        // ── Talent abilities (row 2) ──────────────────────────────────────
         new Ability
         {
             Id               = "Call_Pet_Cat_r1",
             Name             = "Call Cat",
             IconUrl          = "https://wow.zamimg.com/images/wow/icons/large/ability_hunter_pet_cat.jpg",
-            CastTime         = 3.0,             // Beschwören bzw. Wiederbeleben
+            CastTime         = 3.0,             // Summon or revive
             ManaCost         = 15,
             SummonsPet       = PetKind.Cat,
             ExclusiveGroup   = "hunter_pet",
@@ -175,7 +175,7 @@ public static partial class ClassAbilityRegistry
             Cooldown         = 15,
             CastTime         = 3.0,
             ManaCost         = 25,
-            Damage           = 70,              // war 45 / 3,5 s – wurde im Sim nie gewählt
+            Damage           = 70,              // was 45 / 3.5 s – never chosen in the sim
             LevelRequired    = 1,
             Rank             = 1,
             TalentUnlockOnly = true,
@@ -190,14 +190,14 @@ public static partial class ClassAbilityRegistry
             Damage              = 8,
             AddsWeaponDamage    = true,
             EmpowersAbilityName = "Raptor Strike",
-            EmpowerDamageBonus  = 0.30,         // nächster Raptor Strike +30 % Schaden (war 50 %)
+            EmpowerDamageBonus  = 0.30,         // next Raptor Strike +30 % damage (was 50 %)
             EmpowerDuration     = 10,
             LevelRequired       = 1,
             Rank                = 1,
             TalentUnlockOnly    = true,
         },
 
-        // ── Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20): passive Aspekte, nur einer gleichzeitig ──
+        // ── Specialization abilities (talent row 3, from Lv 20): passive aspects, only one at a time ──
         new Ability
         {
             Id                     = "Aspect_of_the_Owl",
@@ -205,8 +205,8 @@ public static partial class ClassAbilityRegistry
             IconUrl                = "https://wow.zamimg.com/images/wow/icons/large/ability_eyeoftheowl.jpg",
             ManaCost               = 0,
             IsPassive              = true,
-            BuffDuration           = 9999,      // Aspekt: wirkt solange ausgerüstet
-            BuffPetDamageBonus     = 0.50,      // Beast Mastery: stärkeres Begleittier
+            BuffDuration           = 9999,      // Aspect: works while equipped
+            BuffPetDamageBonus     = 0.50,      // Beast Mastery: stronger pet
             BuffResourceRegenBonus = 0.30,
             ExclusiveGroup         = "hunter_aspect",
             SpecHint               = 0,
@@ -222,7 +222,7 @@ public static partial class ClassAbilityRegistry
             ManaCost            = 0,
             IsPassive           = true,
             BuffDuration        = 9999,
-            BuffDamageBonus     = 0.05,         // Marksmanship: mehr Schusschaden (8 % + 5 % Crit ergab +9,3 % XP/h)
+            BuffDamageBonus     = 0.05,         // Marksmanship: more shot damage (8 % + 5 % crit gave +9.3 % XP/h)
             BuffCritChanceBonus = 0.03,
             ExclusiveGroup      = "hunter_aspect",
             SpecHint            = 1,
@@ -238,7 +238,7 @@ public static partial class ClassAbilityRegistry
             ManaCost                 = 0,
             IsPassive                = true,
             BuffDuration             = 9999,
-            BuffDamageTakenReduction = 0.15,    // Survival: Ausweichen im Nahkampf (12 % / 5 % brachte nur +0,9 %)
+            BuffDamageTakenReduction = 0.15,    // Survival: melee dodge (12 % / 5 % only gave +0.9 %)
             BuffAttackSpeedBonus     = 0.08,
             ExclusiveGroup           = "hunter_aspect",
             SpecHint                 = 2,

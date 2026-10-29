@@ -4,7 +4,7 @@
 
 <PageTitle>Home</PageTitle>
 
-@* Styles: wwwroot/css/home.css – Kartenhintergründe, Fraktionswappen und Glut wie in /character *@
+@* Styles: wwwroot/css/home.css – map backgrounds, faction crests and embers like in /character *@
 <div class="wow-page home-page">
     <section class="home-hero">
         <div class="home-hero-bg" aria-hidden="true">
@@ -59,7 +59,7 @@
         {
             var f = Features[i];
             <div class="home-feature" style="--i: @i">
-                @* Bild inline statt als CSS-Variable: url() in Variablen löst relativ zu css/ auf *@
+                @* Image inline instead of as a CSS variable: url() in variables resolves relative to css/ *@
                 <div class="home-feature-art" style="background-image: url('images/talents/@(f.Art).jpg')" aria-hidden="true"></div>
                 <div class="home-feature-head">
                     <img class="home-feature-icon" src="@IconUrl(f.Icon)" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" />
@@ -90,11 +90,11 @@
 
     private static string IconUrl(string name) => $"{IconBase}{name}.jpg";
 
-    // Feste Werte je Index statt Zufall: kein Springen bei erneutem Rendern
+    // Fixed values per index instead of random: no jumping on re-render
     private static string EmberStyle(int i) =>
         $"--x: {(i * 37 + 11) % 100}%; --d: {6 + i * 7 % 6}s; --t: -{i * 1300 % 9000}ms; --s: {2 + i % 3}px";
 
-    // Art = Talentbaum-Hintergrund aus wwwroot/images/talents
+    // Art = talent tree background from wwwroot/images/talents
     private static readonly (string Title, string Icon, string Art, string Text)[] Features =
     [
         ("Classes & Abilities", "inv_sword_04", "warrior-arms",

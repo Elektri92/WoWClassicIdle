@@ -1,6 +1,6 @@
 @using Models
 
-@* Skill-Leiste eines Berufs: Skill / Cap der aktuellen Ausbildungsstufe. *@
+@* Skill bar of a profession: skill / cap of the current training tier. *@
 <div class="wow-progress prof-skill-bar" title="@Progress.Rank.Name – skill cap @Progress.SkillCap">
     <div class="bar" style="width: @Percent.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></div>
     <span>@Progress.Rank.Name · @Progress.Skill / @Progress.SkillCap</span>

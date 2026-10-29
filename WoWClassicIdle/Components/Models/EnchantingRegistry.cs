@@ -1,18 +1,18 @@
 // Models/EnchantingRegistry.cs
 namespace Models
 {
-    /// <summary>Ergebnis-Band beim Entzaubern: Item-Level-Bereich → Staub/Essenz, benötigter Verzauberkunst-Skill.</summary>
+    /// <summary>Result band when disenchanting: item level range → dust/essence, required Enchanting skill.</summary>
     public record DisenchantBand(int MinLevel, int MaxLevel, int RequiredSkill, TradeItem Dust, TradeItem Essence);
 
     /// <summary>
-    /// Verzauberkunst: Entzaubern grüner Ausrüstung (Materialien nach Item-Level) und
-    /// herstellbarer Schmuck (Ring + Halskette je Klasse und Stufe, an die Klasse gebunden). IDs ab 9801.
+    /// Enchanting: disenchanting green gear (materials by item level) and
+    /// craftable jewelry (ring + necklace per class and tier, bound to the class). IDs from 9801.
     /// </summary>
     public static class EnchantingRegistry
     {
         // ─── Entzaubern ───
 
-        /// <summary>Rüstung: 75 % Staub, sonst Essenz. Waffen umgekehrt (wie in Classic).</summary>
+        /// <summary>Armor: 75 % dust, otherwise essence. Weapons the other way round (like in Classic).</summary>
         private const double ArmorDustChance = 0.75;
 
         public static readonly IReadOnlyList<DisenchantBand> Bands =
@@ -24,7 +24,7 @@ namespace Models
             new(51, int.MaxValue, 200, ProfessionRegistry.IllusionDust, ProfessionRegistry.GreaterEternalEssence),
         ];
 
-        /// <summary>Nur grüne (Uncommon) Rüstung und Waffen lassen sich entzaubern.</summary>
+        /// <summary>Only green (Uncommon) armor and weapons can be disenchanted.</summary>
         public static bool CanDisenchant(Item item) =>
             item.Quality == ItemQuality.Uncommon && item is ArmorItem or WeaponItem;
 
@@ -34,7 +34,7 @@ namespace Models
             return Bands.FirstOrDefault(b => level >= b.MinLevel && level <= b.MaxLevel) ?? Bands[0];
         }
 
-        /// <summary>Würfelt das Material: Staub 1–3, Essenz 1–2.</summary>
+        /// <summary>Rolls the material: dust 1–3, essence 1–2.</summary>
         public static (TradeItem Item, int Count) RollDisenchant(Item item, Random rng)
         {
             var band = BandFor(item);
@@ -46,7 +46,7 @@ namespace Models
 
         // ─── Herstellbarer Schmuck ───
 
-        /// <summary>Stufe wie bei CraftedGearRegistry (Lv 5/15/…/55, Skill 1/50/…/250) plus Materialien.</summary>
+        /// <summary>Tier like in CraftedGearRegistry (Lv 5/15/…/55, skill 1/50/…/250) plus materials.</summary>
         private record JewelryTier(
             int Level, int Skill, int Budget, string Prefix,
             TradeItem Dust, int DustCount, TradeItem? Essence, int EssenceCount,
@@ -62,15 +62,15 @@ namespace Models
             new(55, 250, 35, "Eternal",    ProfessionRegistry.IllusionDust, 6, ProfessionRegistry.GreaterEternalEssence, 2, "inv_jewelry_ring_15", "inv_jewelry_amulet_07"),
         ];
 
-        /// <summary>Anteil am Stufen-Budget (wie Hände/Füße bei hergestellter Rüstung).</summary>
+        /// <summary>Share of the tier budget (like hands/feet for crafted armor).</summary>
         private const double SlotWeight = 0.75;
 
-        /// <summary>Klassen-Set: Name (wie die Rüstungssets) und Stat-Gewichtung (Summe 1).</summary>
+        /// <summary>Class set: name (like the armor sets) and stat weighting (sum 1).</summary>
         private record ClassSet(
             CharacterClass Class, string SetName,
             double Str = 0, double Agi = 0, double Sta = 0, double Int = 0, double Spi = 0);
 
-        // Reihenfolge nicht ändern – IDs (Spielstand) hängen daran
+        // Do not change the order – IDs (save game) depend on it
         private static readonly ClassSet[] Sets =
         [
             new(CharacterClass.Warrior, "Vanguard",    Str: 0.45, Sta: 0.40, Agi: 0.15),
@@ -96,7 +96,7 @@ namespace Models
             var recipes = new List<Recipe>();
             int id = 9801;
 
-            // Reihenfolge nicht ändern – IDs (Spielstand) und Rezept-IDs hängen daran
+            // Do not change the order – IDs (save game) and recipe IDs depend on it
             foreach (var tier in Tiers)
             {
                 foreach (var set in Sets)
@@ -126,7 +126,7 @@ namespace Models
             Recipes = recipes;
         }
 
-        /// <summary>Verteilt das Budget nach der Klassen-Gewichtung; der Hauptstat bekommt mindestens 1.</summary>
+        /// <summary>Distributes the budget by class weighting; the main stat gets at least 1.</summary>
         private static PrimaryStats Stats(double budget, ClassSet set)
         {
             int Part(double share) => (int)Math.Round(budget * share);

@@ -1,7 +1,7 @@
 /* ============================================
-   Zauberbuch auf /ability-loadout im Stil des Classic-Spellbooks:
-   steinerner Rahmen mit Titelleiste, darin ein Pergament mit angebrannten Rändern.
-   Überschreibt die dunklen Grundstile aus ability-loadout.css nur innerhalb von .spellbook.
+   Spellbook on /ability-loadout in the style of the Classic spellbook:
+   stone frame with a title bar, inside it a parchment with burnt edges.
+   Overrides the dark base styles from ability-loadout.css only inside .spellbook.
    ============================================ */
 
 .ability-loadout-page .spellbook {
@@ -28,7 +28,7 @@
     text-shadow: 1px 1px 0 #000, 0 0 3px #000;
 }
 
-/* Filter liegen wie der „Rank Filter" auf dem Rahmen über dem Pergament */
+/* Filters sit on the frame above the parchment like the "Rank Filter" */
 .ability-loadout-page .spellbook .pool-filters { margin-bottom: 8px; }
 
 /* ── Pergament ── */
@@ -38,16 +38,16 @@
     border-radius: 3px;
     color: var(--sb-ink);
     background:
-        /* angebrannte Ecken */
+        /* burnt corners */
         radial-gradient(circle at 0 0,       rgba(60, 30, 5, .55), transparent 70px),
         radial-gradient(circle at 100% 0,    rgba(60, 30, 5, .55), transparent 70px),
         radial-gradient(circle at 0 100%,    rgba(60, 30, 5, .6),  transparent 80px),
         radial-gradient(circle at 100% 100%, rgba(60, 30, 5, .6),  transparent 80px),
-        /* helle Mitte */
+        /* light center */
         radial-gradient(ellipse at 50% 35%, rgba(255, 238, 190, .35) 0%, transparent 70%),
         /* Flecken */
         url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='7'/><feColorMatrix values='0 0 0 0 .38  0 0 0 0 .22  0 0 0 0 .06  0 0 0 -1.2 .6'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>"),
-        /* Faser-Körnung */
+        /* Fiber grain */
         url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3  0 0 0 0 .18  0 0 0 0 .05  0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
         linear-gradient(180deg, #d6b47a 0%, #c9a263 55%, #bf955a 100%);
     box-shadow:
@@ -57,7 +57,7 @@
         inset 0 0 40px rgba(110, 60, 15, .45);
 }
 
-/* ── Zauber auf dem Pergament: kompaktes Zwei-Spalten-Raster ── */
+/* ── Spells on the parchment: compact two-column grid ── */
 .ability-loadout-page .spellbook .spell-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -69,14 +69,14 @@
     border: 1px solid rgba(70, 40, 10, .45);
     border-radius: 4px;
     background: transparent;
-    overflow: visible;             /* Slot-Abzeichen darf über den Rand ragen */
+    overflow: visible;             /* Slot badge may stick out over the edge */
 }
 .ability-loadout-page .spellbook .spell-card:not(.locked):hover {
     border-color: var(--sb-line);
     background: rgba(255, 236, 180, .22);
     box-shadow: none;
 }
-/* Ausgerüstet: kräftiger Goldrahmen mit Schein, deutlich abgesetzt vom Rest */
+/* Equipped: strong gold frame with glow, clearly set apart from the rest */
 .ability-loadout-page .spellbook .spell-card.equipped,
 .ability-loadout-page .spellbook .spell-card.equipped:hover {
     border-color: #a8740e;
@@ -86,7 +86,7 @@
 .ability-loadout-page .spellbook .spell-card.upgradable { border-color: rgba(47, 110, 30, .55); }
 .ability-loadout-page .spellbook .spell-card.locked { opacity: .6; }
 
-/* Icon im dunklen, abgeschrägten Rahmen wie im Original */
+/* Icon in a dark, beveled frame like in the original */
 .ability-loadout-page .spellbook .spell-icon {
     width: 36px;
     height: 36px;
@@ -107,12 +107,12 @@
 .ability-loadout-page .spellbook .spell-card:not(.locked):hover .spell-icon img { box-shadow: 0 0 8px rgba(255, 209, 0, .7); }
 .ability-loadout-page .spellbook .spell-card.equipped .spell-icon { background: linear-gradient(180deg, #ffd96a 0%, #8a5a10 100%); }
 
-/* Goldener Name mit dunkler Kontur, Rang und Details in brauner Tinte */
+/* Golden name with dark outline, rank and details in brown ink */
 .ability-loadout-page .spellbook .pool-info strong {
     font-family: var(--wow-font-title);
     font-size: .9rem;
     color: var(--wow-gold);
-    /* Rundum-Kontur, damit der Name auf dem hellen Pergament klar lesbar ist */
+    /* All-round outline so the name is clearly readable on the light parchment */
     text-shadow:
         -1px -1px 0 #000, 0 -1px 0 #000, 1px -1px 0 #000,
         -1px  0   0 #000,                1px  0   0 #000,
@@ -160,7 +160,7 @@
 }
 .ability-loadout-page .spellbook .excl-line.conflict { color: #8a3a10; }
 
-/* Konflikt: gestrichelter Rahmen und blasses Icon, bis man drüberfährt */
+/* Conflict: dashed frame and pale icon until hovered */
 .ability-loadout-page .spellbook .spell-card.excluded { border-style: dashed; border-color: rgba(138, 58, 16, .55); }
 .ability-loadout-page .spellbook .spell-card.excluded .spell-icon img { filter: saturate(.35) brightness(.85); transition: filter .2s; }
 .ability-loadout-page .spellbook .spell-card.excluded:hover .spell-icon img { filter: none; }
@@ -176,7 +176,7 @@
     color: #fff;
 }
 
-/* „Slot N“-Marke ausgerüsteter Zauber, beim Hovern „Remove“ */
+/* "Slot N" marker of equipped spells, "Remove" on hover */
 .ability-loadout-page .spellbook .pool-action.equipped-tag {
     border-color: #6a4a10;
     background: linear-gradient(180deg, #ffd96a 0%, #c58a1a 100%);
@@ -194,7 +194,7 @@
 .ability-loadout-page .spell-card.equipped:hover .equipped-tag .tag-hover { display: inline; }
 .ability-loadout-page .spellbook .locked-badge { color: #8a2a1a !important; border-color: rgba(138, 42, 26, .5) !important; }
 
-/* ── Rangleiste auf Pergament ── */
+/* ── Rank bar on parchment ── */
 .ability-loadout-page .spellbook .rank-track {
     padding: 0 6px 4px;
     border-top: 1px solid var(--sb-line);

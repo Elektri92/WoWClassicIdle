@@ -1,4 +1,4 @@
-// Logik der Seite /inventory (Markup in Inventory.razor, Handelsfenster in Components/MerchantWindow.razor)
+// Logic of the /inventory page (markup in Inventory.razor, trade window in Components/MerchantWindow.razor)
 using Microsoft.AspNetCore.Components.Web;
 using Models;
 
@@ -33,7 +33,7 @@ public partial class Inventory
 
     private static readonly EquipSlot WeaponSlot = new("Weapon", "mainhand");
 
-    // Bedienhinweise im WoW-Tooltip (statt schwebendem Systemtooltip)
+    // Usage hints in the WoW tooltip (instead of a floating system tooltip)
     private const string UnequipHint = "Right-click to unequip";
     private const string EquipHint   = "Right-click or drag to equip";
     private const string SellHint    = "Right-click to sell";
@@ -41,17 +41,17 @@ public partial class Inventory
 
     private PrimaryStats Primary => _engine.Player.Stats.Primary;
 
-    // Hintergrund des Kopfbereichs: aktuelle Zone, sonst Startgebiet der Rasse
+    // Background of the header: current zone, otherwise the starting zone of the race
     private string HeaderTheme =>
         _engine.CurrentCombatZone?.Theme ?? CombatZoneRegistry.StartZoneFor(_engine.Race)?.Theme ?? "grassland";
 
     private string ResourceName => ShapeshiftForms.ResourceName(_engine.Player.Resource);
 
-    /// <summary>Anteil als Prozentwert, z. B. 0.05 → "5.0%".</summary>
+    /// <summary>Share as a percentage, e.g. 0.05 → "5.0%".</summary>
     private static string FormatPercent(double fraction) =>
         (fraction * 100).ToString("0.0") + "%";
 
-    /// <summary>Wie <see cref="FormatPercent"/>, aber mit Vorzeichen für Bonuswerte ("+0.0%").</summary>
+    /// <summary>Like <see cref="FormatPercent"/>, but with a sign for bonus values ("+0.0%").</summary>
     private static string FormatBonusPercent(double fraction) =>
         (fraction >= 0 ? "+" : "") + FormatPercent(fraction);
 
@@ -89,7 +89,7 @@ public partial class Inventory
 
     private static string SpiritTooltip(CharacterClass cls)
     {
-        // HP-Regeneration gilt für alle Klassen, Mana-Regeneration nur für Mana-Nutzer
+        // HP regeneration applies to all classes, mana regeneration only to mana users
         string hpPart = $"+{StatScaling.HpRegenPerSpiritStep} Health per 5s for every {StatScaling.SpiritPerHpRegen} points of Spirit.";
         return StatScaling.UsesMana(cls)
             ? $"+{StatScaling.ManaRegenPerSpiritStep} Mana per 5s for every {StatScaling.SpiritPerManaRegen} points of Spirit. {hpPart}"
@@ -101,20 +101,20 @@ public partial class Inventory
 
     private static readonly string EmptyBagSlotIconUrl = SlotIconUrl("bag");
 
-    // Erklärtext zu Taschenplätzen – aus den Konstanten erzeugt, damit er bei Balancing-Änderungen stimmt
+    // Explanation text for bag slots – generated from the constants so it stays correct after balancing changes
     private static readonly string BagUnlockHint =
         $"Bag slots unlock at levels {string.Join(", ", Models.Inventory.BagUnlockLevels[..^1])} and {Models.Inventory.BagUnlockLevels[^1]}. " +
         $"Every bag has {Models.Inventory.BaseBagSlotSize} slots, plus one more for every 5 character levels.";
 
     // ─── Paperdoll-Slots ───
 
-    /// <summary>Das in einem Paperdoll-Slot getragene Rüstungsteil (null wenn Slot leer oder nicht ausrüstbar).</summary>
+    /// <summary>The armor piece worn in a paperdoll slot (null if the slot is empty or not equippable).</summary>
     private ArmorItem? EquippedIn(EquipSlot slot) =>
         slot.Armor is { } armor && _engine.Player.EquippedArmor.TryGetValue(armor, out var item)
             ? item
             : null;
 
-    /// <summary>Im Slot des Bag-Items getragenes Teil – Vergleichsziel für den Tooltip.</summary>
+    /// <summary>Piece worn in the bag item's slot – comparison target for the tooltip.</summary>
     private ArmorItem? EquippedArmorFor(ArmorItem item) =>
         _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var equipped) ? equipped : null;
 
@@ -126,13 +126,13 @@ public partial class Inventory
 
     private static string? SlotHint(EquipSlot slot, ArmorItem? gear) =>
         gear is not null
-            ? null // ausgerüstete Teile haben einen WoW-Tooltip – kein schwebender Systemtooltip
+            ? null // equipped pieces have a WoW tooltip – no floating system tooltip
             : slot.Armor is null ? slot.Name : $"{slot.Name} (drag item here)";
 
     private static string SlotQuality(ArmorItem? gear) =>
         gear is not null ? ItemQualityColors.Hex(gear.Quality) : "#4a3d22";
 
-    /// <summary>Nur Slots mit Rüstungsplatz nehmen gezogene Items an.</summary>
+    /// <summary>Only slots with an armor slot accept dragged items.</summary>
     private static bool CanDropArmor(EquipSlot slot) => slot.Armor is not null;
 
     // -1 = Backpack, 0..3 = equipped bag slots
@@ -149,7 +149,7 @@ public partial class Inventory
     private void ClearDrag() =>
         _dragSource = null;
 
-    /// <summary>Rechtsklick auf einen Taschenplatz: bei offenem Händler verkaufen, sonst anlegen bzw. benutzen.</summary>
+    /// <summary>Right-click on a bag slot: sell when the merchant is open, otherwise equip or use.</summary>
     private void OnSlotRightClick(int bagIndex, int slotIndex)
     {
         if (_merchantOpen)
@@ -163,7 +163,7 @@ public partial class Inventory
             TryEquipItem(bagIndex, slotIndex);
     }
 
-    // Browser-Kontextmenü nur dort zulassen, wo Rechtsklick nichts bewirkt
+    // Only allow the browser context menu where right-clicking does nothing
     private bool PreventContextMenu(Item item) =>
         _merchantOpen || item is not TradeItem || item is ConsumableItem { Kind: ConsumableKind.Costume };
 
@@ -172,7 +172,7 @@ public partial class Inventory
         : item is ConsumableItem { Kind: ConsumableKind.Costume } ? UseHint
         : null;
 
-    // ─── Stapel teilen (Shift-Linksklick) ───
+    // ─── Split stack (shift-left-click) ───
     private (int bagIndex, int slotIndex)? _split;
     private int _splitAmount = 1;
     private string? _splitError;
@@ -180,7 +180,7 @@ public partial class Inventory
     private string? _useMessage;
     private bool _useFailed;
 
-    // Rechtsklick: manuell benutzbare Verbrauchsgüter (Verkleidung) anwenden, Ergebnis als Meldung anzeigen
+    // Right-click: apply manually usable consumables (disguise), show the result as a message
     private void UseConsumable(TradeItem item)
     {
         if (item is not ConsumableItem { Kind: ConsumableKind.Costume } consumable) return;
@@ -237,20 +237,20 @@ public partial class Inventory
             OpenContainers.Add(index);
     }
 
-    // Taschenplätze, die bereits belegt waren – neu hinzugekommene werden automatisch geöffnet
+    // Bag slots that were already occupied – newly added ones are opened automatically
     private readonly HashSet<int> _knownBags = new();
 
     protected override void OnInitialized()
     {
         _engine.TickUpdated += OnTick;
-        // Backpack und alle vorhandenen Taschen beim Laden öffnen
+        // Open the backpack and all existing bags on load
         OpenContainers.Add(BackpackIndex);
         SyncBags();
     }
 
     /// <summary>
-    /// Öffnet Taschen, die seit dem letzten Render freigeschaltet wurden (Level-Up, Charakterwechsel),
-    /// und vergisst weggefallene Plätze, damit sie beim erneuten Freischalten wieder aufgehen.
+    /// Opens bags unlocked since the last render (level-up, character switch),
+    /// and forgets removed slots so they open again when unlocked again.
     /// </summary>
     private void SyncBags()
     {

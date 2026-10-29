@@ -29,7 +29,7 @@ public static partial class TalentRegistry
             Row           = 0,
             Column        = 1,
             MaxRanks      = 5,
-            EffectType    = TalentEffectType.WrathDamage,   // war Manakosten – brachte im Sim 0 %
+            EffectType    = TalentEffectType.WrathDamage,   // was mana cost – gave 0 % in the sim
             EffectPerRank = 0.02,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_nature_abolishmagic.jpg",
         },

@@ -1,7 +1,7 @@
 @using Models
 
 @* Wraps content and shows a WoW-style weapon tooltip on hover.
-   Mit Compare werden daneben die ausgerüstete Waffe und ein Panel mit den Stat-Differenzen angezeigt.
+   With Compare, the equipped weapon and a panel with the stat differences are shown next to it.
    Positioning via js/tooltip.js (position: fixed). *@
 @if (Weapon is null)
 {
@@ -49,13 +49,13 @@ else
     [Parameter] public string? Class { get; set; }
     [Parameter] public string? Hint { get; set; }
 
-    /// <summary>Erfüllt der Charakter die Levelvoraussetzung (färbt die Zeile rot wenn nicht).</summary>
+    /// <summary>Whether the character meets the level requirement (row turns red if not).</summary>
     [Parameter] public bool RequirementsMet { get; set; } = true;
 
-    /// <summary>Aktuell ausgerüstete Waffe – wird als Vergleich daneben angezeigt.</summary>
+    /// <summary>Currently equipped weapon – shown next to it for comparison.</summary>
     [Parameter] public WeaponItem? Compare { get; set; }
 
-    // Tooltip-Inhalt einer Waffe (für Haupt- und Vergleichs-Panel)
+    // Tooltip content of a weapon (for main and comparison panel)
     private static RenderFragment Body(WeaponItem weapon, bool requirementsMet, string? hint) => @<text>
         <span class="tt-name" style="color: @ItemQualityColors.Hex(weapon.Quality)">@weapon.Name</span>
         <span class="tt-subtype">@weapon.Type</span>

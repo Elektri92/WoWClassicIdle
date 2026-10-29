@@ -2,13 +2,13 @@
 namespace Models
 {
     /// <summary>
-    /// Loottabellen für seltene Gegner.
-    /// Grün/Uncommon: immer 1 Item pro Rare-Kill.
-    /// Blau/Rare:     15 % Chance, doppelte Stats, ab Level 11.
+    /// Loot tables for rare enemies.
+    /// Green/Uncommon: always 1 item per rare kill.
+    /// Blue/Rare:     15 % chance, double stats, from level 11.
     /// </summary>
     public static class RareLootRegistry
     {
-        // Alle Slots in Reihenfolge – spätere Tiers nutzen mehr davon
+        // All slots in order – later tiers use more of them
         private static readonly (ArmorSlot Slot, string Display, string Icon)[] AllSlots =
         [
             (ArmorSlot.Hands,   "Handwraps",  "inv_gauntlets_04"),
@@ -76,17 +76,17 @@ namespace Models
             "the Ancient",  "the Legendary",
         ];
 
-        // Grüne Tier-Präfixe (Tier 1–12)
+        // Green tier prefixes (tier 1–12)
         private static readonly string[] GreenPrefixes =
             ["Rough", "Worn", "Sturdy", "Crafted", "Refined", "Tempered",
              "Hardened", "Exceptional", "Superior", "Masterwork", "Ancient", "Eternal"];
 
-        // Blaue Tier-Präfixe (Tier 3–12, ab Level 11)
+        // Blue tier prefixes (tier 3–12, from level 11)
         private static readonly string[] BluePrefixes =
             ["Gleaming", "Radiant", "Brilliant", "Lustrous", "Resplendent",
              "Illustrious", "Magnificent", "Exquisite", "Mythical", "Timeless"];
 
-        // ─── Grüne Tier-Listen ───
+        // ─── Green tier lists ───
         private static readonly IReadOnlyList<ArmorItem> _tier1, _tier2, _tier3, _tier4,
             _tier5, _tier6, _tier7, _tier8, _tier9, _tier10, _tier11, _tier12;
 
@@ -96,14 +96,14 @@ namespace Models
 
         private static readonly Dictionary<int, ArmorItem> _byId = new();
 
-        /// <summary>Loottabellen-Item anhand der gespeicherten Id (null wenn unbekannt).</summary>
+        /// <summary>Loot table item by the stored ID (null if unknown).</summary>
         public static ArmorItem? GetById(int id) => _byId.TryGetValue(id, out var item) ? item : null;
 
         static RareLootRegistry()
         {
             int id = 6001;
 
-            // ── Grüne Tiers ──
+            // ── Green tiers ──
             _tier1  = BuildSingle  (ref id, 6,  GreenPrefixes[0],  1,  1,    100);
             _tier2  = BuildSingle  (ref id, 7,  GreenPrefixes[1],  2,  6,    500);
             _tier3  = BuildWithCombos(ref id, 7,  GreenPrefixes[2],  4, 11,  2000,  1500, TwoStatCombos,   2);
@@ -117,7 +117,7 @@ namespace Models
             _tier11 = BuildAllStat  (ref id, GreenPrefixes[10], 20, 51, 600000, 480000, AllStatSuffixes[4], 10);
             _tier12 = BuildAllStat  (ref id, GreenPrefixes[11], 22, 56, 1200000, 960000, AllStatSuffixes[5], 11);
 
-            // ── Blaue Tiers (id startet bei 7001, doppelte Stats) ──
+            // ── Blue tiers (id starts at 7001, double stats) ──
             id = 7001;
             _tier3B  = BuildWithCombos(ref id, 7,  BluePrefixes[0],   8, 11,  8000,  6000, TwoStatCombos,   4,  ItemQuality.Rare);
             _tier4B  = BuildWithCombos(ref id, 8,  BluePrefixes[1],  12, 16, 20000, 16000, TwoStatCombos,   6,  ItemQuality.Rare);
@@ -130,7 +130,7 @@ namespace Models
             _tier11B = BuildAllStat   (ref id, BluePrefixes[8],  40, 51, 2400000, 1920000, AllStatSuffixes[4], 20, ItemQuality.Rare);
             _tier12B = BuildAllStat   (ref id, BluePrefixes[9],  44, 56, 4800000, 3840000, AllStatSuffixes[5], 22, ItemQuality.Rare);
 
-            // Id→Item für den Spielstand
+            // Id→item for the save game
             foreach (var tier in new[] { _tier1, _tier2, _tier3, _tier4, _tier5, _tier6,
                                           _tier7, _tier8, _tier9, _tier10, _tier11, _tier12,
                                           _tier3B, _tier4B, _tier5B, _tier6B, _tier7B, _tier8B,
@@ -139,7 +139,7 @@ namespace Models
                     _byId[item.Id] = item;
         }
 
-        /// <summary>Grüne Loottabelle für den Gegner-Level.</summary>
+        /// <summary>Green loot table for the enemy level.</summary>
         public static IReadOnlyList<ArmorItem> GetLootTable(int enemyLevel) => enemyLevel switch
         {
             >= 1  and <= 5  => _tier1,
@@ -158,8 +158,8 @@ namespace Models
         };
 
         /// <summary>
-        /// Prüft ob ein Item sinnvolle Stats für die Klasse enthält.
-        /// Verhindert z. B. reine Int/Spi-Items für Krieger oder reine Str/Agi-Items für Magier.
+        /// Checks whether an item contains useful stats for the class.
+        /// Prevents e.g. pure Int/Spi items for Warriors or pure Str/Agi items for Mages.
         /// </summary>
         public static bool IsUsefulForClass(PrimaryStats b, CharacterClass cls)
         {

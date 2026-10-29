@@ -1,5 +1,5 @@
-/* Verbrauchsgüter links neben dem Spieler-Frame: Spalte von oben nach unten,
-   bei Platzmangel weitere Spalten nach links (rtl-Spaltenfluss, Inhalte wieder ltr) */
+/* Consumables left of the player frame: column from top to bottom,
+   more columns to the left when space runs out (rtl column flow, contents back to ltr) */
 .consumable-bar {
     position: relative;
     display: grid;
@@ -13,7 +13,7 @@
 
 .consumable-bar > * { direction: ltr; }
 
-/* Schmale Ansicht: Dock liegt statisch im Frame → normale Zeile */
+/* Narrow view: dock sits statically inside the frame → normal row */
 @media (max-width: 700px) {
     .consumable-bar {
         display: flex;
@@ -38,7 +38,7 @@
 
 .consumable-frame img { width: 100%; height: 100%; display: block; }
 
-/* Rahmenfarbe je Art */
+/* Border color per kind */
 .kind-healthpotion .consumable-frame { border-color: #d03a3a; }
 .kind-manapotion   .consumable-frame { border-color: #3a7ad0; }
 .kind-elixir       .consumable-frame { border-color: #4fa83a; }
@@ -48,11 +48,11 @@
 .kind-explosive    .consumable-frame { border-color: #ff5a1f; }
 .kind-costume      .consumable-frame { border-color: #1eff00; cursor: pointer; }
 
-/* Aktiver Buff leuchtet, aufgebraucht = grau */
+/* Active buff glows, used up = grey */
 .consumable-icon.active .consumable-frame { box-shadow: 0 0 6px rgba(125, 220, 111, .8); }
 .consumable-icon.empty img { filter: grayscale(1) brightness(.55); }
 
-/* Abklingzeit / Restlaufzeit: dunkler Uhrzeiger-Sektor über dem Icon */
+/* Cooldown / remaining duration: dark clock-hand sector over the icon */
 .consumable-sweep {
     position: absolute;
     inset: 0;
@@ -89,7 +89,7 @@
     pointer-events: none;
 }
 
-/* Aufsteigende Anzeige beim Benutzen (über der Spalte) */
+/* Rising indicator on use (above the column) */
 .consumable-pops {
     position: absolute;
     right: 0;

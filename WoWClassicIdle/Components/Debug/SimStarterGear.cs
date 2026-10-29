@@ -1,12 +1,12 @@
-// Debug/SimStarterGear.cs – wird nur im DEBUG-Build kompiliert (siehe .csproj)
+// Debug/SimStarterGear.cs – only compiled in the DEBUG build (see .csproj)
 namespace DebugTools;
 
 using Models;
 
 /// <summary>
-/// Rüstet einen Simulations-Charakter mit stufengerechtem grünem (Uncommon) Gear aus.
-/// Stat-Werte entsprechen den grünen Loot-Tier-Stufen; Stats sind spec-spezifisch gewählt.
-/// Die erzeugten Items haben negative IDs (nie gespeichert, nur im Simulator).
+/// Equips a simulation character with level-appropriate green (Uncommon) gear.
+/// Stat values match the green loot tier levels; stats are chosen per spec.
+/// The generated items have negative IDs (never saved, simulator only).
 /// </summary>
 internal static class SimStarterGear
 {
@@ -34,7 +34,7 @@ internal static class SimStarterGear
 
         int statVal       = StatValForLevel(level);
         int reqLevel      = Math.Max(1, level - 4);
-        // Bär tankt wie ein Protection-Warrior → Str+Sta statt der Feral-Standardkombination
+        // Bear tanks like a Protection Warrior → Str+Sta instead of the default Feral combination
         var bonusFn       = form == DruidForm.Bear
             ? (Func<int, PrimaryStats>)(v => new PrimaryStats { Strength = v, Stamina = v })
             : BonusFn(cls, specIndex);
@@ -55,7 +55,7 @@ internal static class SimStarterGear
         }
     }
 
-    // Passt zu den Loot-Tier-Stufen von RareLootRegistry (grüne comboVal-Werte)
+    // Matches the loot tier levels of RareLootRegistry (green comboVal values)
     private static int StatValForLevel(int level) => level switch
     {
         <= 5  => 1,
@@ -72,7 +72,7 @@ internal static class SimStarterGear
         _     => 11,
     };
 
-    // Gibt eine spec-passende 2-Stat-Kombination zurück
+    // Returns a spec-appropriate 2-stat combination
     private static Func<int, PrimaryStats> BonusFn(CharacterClass cls, int specIndex) =>
         (cls, specIndex) switch
         {
@@ -88,20 +88,20 @@ internal static class SimStarterGear
             // Hunter: Beast Mastery(0)/Marksmanship(1)/Survival(2) → Agi+Sta
             (CharacterClass.Hunter,  _) => v => new PrimaryStats { Agility  = v, Stamina      = v },
 
-            // Rogue: alle Specs → Agi+Str
+            // Rogue: all specs → Agi+Str
             (CharacterClass.Rogue,   _) => v => new PrimaryStats { Agility  = v, Strength     = v },
 
             // Priest: Discipline(0)/Holy(1) → Int+Spi; Shadow(2) → Int+Spi
             (CharacterClass.Priest,  _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
 
-            // Mage: alle Specs → Int+Spi
+            // Mage: all specs → Int+Spi
             (CharacterClass.Mage,    _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
 
-            // Warlock: alle Specs → Int+Spi
+            // Warlock: all specs → Int+Spi
             (CharacterClass.Warlock, _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
 
             // Shaman: Elemental(0) → Int+Spi; Enhancement(1) → Str+Sta; Restoration(2) → Int+Spi
-            // (Enhancement mit Agi+Str starb doppelt so oft – vor Windfury zaubert er wie ein Caster ohne Ausdauer)
+            // (Enhancement with Agi+Str died twice as often – before Windfury it casts like a caster without stamina)
             (CharacterClass.Shaman, 1)  => v => new PrimaryStats { Strength = v, Stamina      = v },
             (CharacterClass.Shaman,  _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
 

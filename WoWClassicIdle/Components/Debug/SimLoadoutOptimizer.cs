@@ -1,35 +1,35 @@
-// Debug/SimLoadoutOptimizer.cs – wird nur im DEBUG-Build kompiliert (siehe .csproj)
+// Debug/SimLoadoutOptimizer.cs – only compiled in the DEBUG build (see .csproj)
 namespace DebugTools;
 
 using Models;
 
 /// <summary>
-/// Verbessert den Simulator-Loadout empirisch: Statt einer festen Heuristik werden Fähigkeiten
-/// in Probe-Kämpfen ausgetauscht und behalten, wenn sie mehr XP pro Stunde bringen.
-/// XP/h bewertet Schaden, Überleben (Wiederbelebungszeit, verlorene Gegner) und Mana (Leerlauf) gemeinsam.
+/// Improves the simulator loadout empirically: instead of a fixed heuristic, abilities
+/// are swapped in trial fights and kept if they yield more XP per hour.
+/// XP/h weighs damage, survival (resurrection time, lost enemies) and mana (idle time) together.
 /// </summary>
 public static class SimLoadoutOptimizer
 {
     /// <summary>
-    /// Simulierte Sekunden pro Probe-Kampf – lang genug, dass Manaknappheit und Tode sichtbar werden
-    /// (bei 4 Minuten zeigten Mana- und Überlebens-Talente durchweg 0 %).
+    /// Simulated seconds per trial fight – long enough for mana shortage and deaths to show up
+    /// (at 4 minutes, mana and survival talents consistently showed 0 %).
     /// </summary>
     private const double TrialSeconds = 600;
 
-    /// <summary>Ein Tausch muss mindestens so viel besser sein, damit Zufallsrauschen keine Wechsel auslöst.</summary>
+    /// <summary>A swap must be at least this much better so random noise doesn't trigger changes.</summary>
     private const double MinImprovement = 1.03;
 
     private const int MaxPasses = 2;
 
     /// <summary>
-    /// Jede Probe läuft mit diesen festen Seeds und wird gemittelt: gleiche Gegner und Würfe für alle Varianten,
-    /// aber kein Zufallstreffer eines einzelnen Kampfverlaufs (ein Seed allein ergab z. B. +13,8 % für +2 % Tempo).
+    /// Each trial runs with these fixed seeds and is averaged: same enemies and rolls for all variants,
+    /// but no lucky outlier of a single fight (a single seed yielded e.g. +13.8 % for +2 % haste).
     /// </summary>
     private static readonly int[] TrialSeeds = [1337, 7331, 4242];
 
     /// <summary>
-    /// Kandidaten-Pool des Spielers: pro Fähigkeit der höchste verfügbare Rang (inkl. Talent-Fähigkeiten),
-    /// ohne Gestalten – die bleiben aus <paramref name="seedIds"/> fest. Dient auch als Cache-Schlüssel.
+    /// Candidate pool of the player: per ability the highest available rank (incl. talent abilities),
+    /// without forms – they stay fixed from <paramref name="seedIds"/>. Also serves as cache key.
     /// </summary>
     public static IReadOnlyList<Ability> CandidatePool(Player player, IReadOnlyList<string> seedIds)
     {
@@ -47,8 +47,8 @@ public static class SimLoadoutOptimizer
     }
 
     /// <summary>
-    /// Talent-Gestalten (Shadowform, Moonkin, Tree, Bear, Cat) sind im Simulator immer ausgerüstet:
-    /// fehlt im Loadout eine Gestalt, wird die freigeschaltete vorne eingefügt und der letzte Slot verdrängt.
+    /// Talent forms (Shadowform, Moonkin, Tree, Bear, Cat) are always equipped in the simulator:
+    /// if the loadout lacks a form, the unlocked one is inserted at the front and the last slot is pushed out.
     /// </summary>
     public static List<string> WithTalentForm(Player player, IReadOnlyList<string> ids)
     {
@@ -61,25 +61,25 @@ public static class SimLoadoutOptimizer
         if (form is null) return result;
 
         result.Insert(0, form.Id);
-        // In Rage-/Energie-Gestalten nicht nutzbare Fähigkeiten fallen raus
+        // Abilities unusable in Rage/Energy forms are dropped
         result = result.Where(id => ClassAbilityRegistry.FindById(id) is { } a && ShapeshiftForms.IsUsableIn(a, form.Form)).ToList();
         return result.Take(ClassAbilityRegistry.MaxSlotsPerClass).ToList();
     }
 
-    /// <summary>Lesbarer Schlüssel des Pools – ändert er sich nicht, muss nicht neu optimiert werden.</summary>
+    /// <summary>Readable key of the pool – if it doesn't change, no re-optimization is needed.</summary>
     public static string PoolKey(IReadOnlyList<Ability> pool) =>
         string.Join(",", pool.Select(a => a.Id).OrderBy(id => id));
 
     /// <summary>
-    /// Startet beim Heuristik-Loadout <paramref name="seedIds"/> und tauscht Fähigkeiten gegen Pool-Kandidaten,
-    /// solange ein Tausch die XP pro Stunde spürbar erhöht (Hill-Climbing, erster Treffer gewinnt).
+    /// Starts at the heuristic loadout <paramref name="seedIds"/> and swaps abilities for pool candidates
+    /// as long as a swap noticeably increases XP per hour (hill climbing, first hit wins).
     /// </summary>
     public static List<string> Optimize(Player player, IReadOnlyList<string> seedIds, CancellationToken ct = default)
     {
         seedIds   = WithTalentForm(player, seedIds);
         var pool  = CandidatePool(player, seedIds);
         var fixedIds = seedIds.Where(id => ClassAbilityRegistry.FindById(id) is { IsForm: true }).ToList();
-        // Ausgerüstete Fähigkeiten auf den höchsten verfügbaren Rang heben; nicht mehr nutzbare fallen raus
+        // Raise equipped abilities to the highest available rank; abilities no longer usable are dropped
         var current  = seedIds.Except(fixedIds)
             .Select(id => ClassAbilityRegistry.FindById(id) is { } a ? pool.FirstOrDefault(c => c.Name == a.Name)?.Id : null)
             .OfType<string>()
@@ -95,7 +95,7 @@ public static class SimLoadoutOptimizer
             bool improved = false;
             foreach (var candidate in pool.Where(c => !current.Contains(c.Id)))
             {
-                // Freier Slot: einfach ergänzen, sonst jeden belegten Slot als Tauschziel probieren
+                // Free slot: simply add, otherwise try every occupied slot as swap target
                 var trials = current.Count < freeSlots
                     ? [current.Append(candidate.Id).ToList()]
                     : Enumerable.Range(0, current.Count)
@@ -125,7 +125,7 @@ public static class SimLoadoutOptimizer
         return fixedIds.Concat(current).ToList();
     }
 
-    /// <summary>Zwei Fähigkeiten derselben ExclusiveGroup (z. B. zwei Seals oder Pets) sind nicht erlaubt.</summary>
+    /// <summary>Two abilities of the same ExclusiveGroup (e.g. two Seals or Pets) are not allowed.</summary>
     internal static bool HasExclusiveConflict(IEnumerable<string> ids) =>
         ids.Select(ClassAbilityRegistry.FindById)
             .Where(a => a is not null && !string.IsNullOrEmpty(a.ExclusiveGroup))
@@ -133,10 +133,10 @@ public static class SimLoadoutOptimizer
             .Any(g => g.Count() > 1);
 
     /// <summary>
-    /// Probe-Kampf mit einer frischen Engine, die Level, Talente und Ausrüstung von <paramref name="template"/> übernimmt.
-    /// Ergebnis: XP pro simulierter Sekunde. Der angeschlagene letzte Gegner zählt anteilig nach entferntem HP-Anteil,
-    /// damit der Wert nicht in ganzen Kills springt.
-    /// <paramref name="extraTalent"/> wird zusätzlich um einen Rang erhöht (Talent-Probe).
+    /// Trial fight with a fresh engine that takes over level, talents and gear from <paramref name="template"/>.
+    /// Result: XP per simulated second. The damaged last enemy counts proportionally to the HP removed,
+    /// so the value doesn't jump in whole kills.
+    /// <paramref name="extraTalent"/> is additionally raised by one rank (talent trial).
     /// </summary>
     internal static double Evaluate(Player template, List<string> ids, CancellationToken ct, TalentDefinition? extraTalent = null) =>
         TrialSeeds.Average(seed => EvaluateOnce(template, ids, seed, ct, extraTalent));
@@ -178,10 +178,10 @@ public static class SimLoadoutOptimizer
             }
             catch (InvalidOperationException)
             {
-                // Spawner hat kein Template für das gewürfelte Gegner-Level
+                // Spawner has no template for the rolled enemy level
             }
 
-            // Level einfrieren, damit alle Proben unter gleichen Bedingungen laufen
+            // Freeze level so all trials run under the same conditions
             if (progress.Xp > 0 || progress.Level != level)
             {
                 xpGained += progress.Xp;

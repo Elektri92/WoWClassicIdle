@@ -13,15 +13,15 @@ public static class CombatEngine
     }
 
     /// <summary>
-    /// Auto-Attack wie in WoW Classic: Waffenschaden (zufällig in der Spanne)
-    /// + AttackPower / 14 × Waffengeschwindigkeit, mit Klassenfaktor für Auto-Attacks.
+    /// Auto-attack like in WoW Classic: weapon damage (random within the range)
+    /// + AttackPower / 14 × weapon speed, with class factor for auto-attacks.
     /// </summary>
     public static int CalculateAutoAttack(Stats stats, Random rng, double damageMultiplier = 1.0) =>
         Math.Max(1, (int)Math.Round(RollWeaponSwing(stats, rng) * stats.MeleeDamageMultiplier * stats.AutoAttackDamageMultiplier * damageMultiplier));
 
     /// <summary>
-    /// Schaden einer Fähigkeit: Nahkampf-Schläge = (Waffenschlag + Bonus) × Nahkampf-Faktor, Zauber = fixer Wert.
-    /// <paramref name="damageMultiplier"/> = Bonus durch aktive Buffs.
+    /// Damage of an ability: melee strikes = (weapon swing + bonus) × melee factor, spells = fixed value.
+    /// <paramref name="damageMultiplier"/> = bonus from active buffs.
     /// </summary>
     public static int CalculateAbilityDamage(Ability ability, Stats stats, Random rng, double damageMultiplier = 1.0)
     {
@@ -32,8 +32,8 @@ public static class CombatEngine
     }
 
     /// <summary>
-    /// Erwarteter Gesamtschaden eines Casts (Direktschaden mit Durchschnitts-Waffenschlag + kompletter DoT),
-    /// ohne Crit und Buffs – dient nur der Priorisierung.
+    /// Expected total damage of a cast (direct damage with average weapon swing + complete DoT),
+    /// without crit and buffs – only used for prioritization.
     /// </summary>
     public static double EstimateAbilityDamage(Ability ability, Stats stats)
     {
@@ -52,13 +52,13 @@ public static class CombatEngine
         return weaponDmg + stats.AttackPower / 14.0 * stats.Speed;
     }
 
-    /// <summary>Ein kritischer Treffer verdoppelt den Effekt (Schaden, Heilung, Schild).</summary>
+    /// <summary>A critical hit doubles the effect (damage, healing, shield).</summary>
     public const double CritMultiplier = 2.0;
 
-    /// <summary>Würfelt, ob der nächste Effekt kritisch trifft (<see cref="Stats.CritChance"/>).</summary>
+    /// <summary>Rolls whether the next effect is a critical hit (<see cref="Stats.CritChance"/>).</summary>
     public static bool RollCrit(Stats stats, Random rng) => rng.NextDouble() < stats.CritChance;
 
-    /// <summary>Verdoppelt <paramref name="amount"/>, wenn <paramref name="isCrit"/> gesetzt ist.</summary>
+    /// <summary>Doubles <paramref name="amount"/> if <paramref name="isCrit"/> is set.</summary>
     public static int ApplyCrit(int amount, bool isCrit) =>
         isCrit ? (int)Math.Round(amount * CritMultiplier) : amount;
 

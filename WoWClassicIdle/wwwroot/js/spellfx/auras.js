@@ -1,12 +1,12 @@
-// Kampf-Effekte – Buffs am Spieler (Rune, Lichtsäule, Partikel) und Debuffs am Gegner
-// (kreisende Motes, Tropfen, Stun-Sterne); das Icon fliegt jeweils in die Buff-/Debuff-Leiste.
+// Combat effects – buffs on the player (rune, light pillar, particles) and debuffs on the enemy
+// (circling motes, drops, stun stars); the icon then flies into the buff/debuff bar.
 (() => {
     const { PLAYER, colorsFor, centerOf, spawn, animateAndRemove, flash, ring, sparks } = window.spellFx.fx;
     const HEAL = ['#9dff8a', '#24b02a', '#f0fff0'];
     const SHIELD = ['#a8dcff', '#2f7fe0', '#ffffff'];
-    const DEBUFF_DEFAULT = ['#ff6a5a', '#8a1010', '#ffd0c8'];  // physische Debuffs (Rend, Sunder Armor)
+    const DEBUFF_DEFAULT = ['#ff6a5a', '#8a1010', '#ffd0c8'];  // physical debuffs (Rend, Sunder Armor)
 
-    /** Icon des Buffs/Debuffs in der Leiste des Frames (alt = Ability-Name). */
+    /** Icon of the buff/debuff in the frame's bar (alt = ability name). */
     function findBarIcon(barSelector, name) {
         for (const img of document.querySelectorAll(`${barSelector} img`)) {
             if (img.alt !== name) continue;
@@ -16,7 +16,7 @@
         return null;
     }
 
-    /** Icon ploppt auf, verharrt kurz und fliegt dann in die Buff-/Debuff-Leiste. */
+    /** Icon pops up, pauses briefly and then flies into the buff/debuff bar. */
     function badgeToBar(x, y, colors, opts, barSelector, { startScale = 0, holdMs = 450 } = {}) {
         if (!opts.icon) return;
         const badge = spawn('spellfx-badge', x, y, colors);
@@ -32,7 +32,7 @@
         ], { duration: 380, fill: 'forwards', easing: 'ease-out' });
 
         setTimeout(() => {
-            // Leiste wird erst mit dem nächsten UI-Render aktualisiert → Ziel erst jetzt suchen
+            // The bar is only updated with the next UI render → only look for the target now
             const dest = findBarIcon(barSelector, opts.name);
             const tx = dest ? dest.x - x : 0, ty = dest ? dest.y - y : -40;
             animateAndRemove(badge, [
@@ -50,7 +50,7 @@
         }, holdMs);
     }
 
-    /** Partikel, die nach oben (dy < 0) oder unten (dy > 0) treiben, gestaffelt gestartet. */
+    /** Particles drifting upwards (dy < 0) or downwards (dy > 0), started staggered. */
     function drift(x, y, colors, cls, count, { spreadX = 30, rise = 70, delayStep = 40, life = 800 } = {}) {
         for (let i = 0; i < count; i++) {
             const sx = x + (Math.random() - 0.5) * 2 * spreadX;
@@ -79,7 +79,7 @@
             : colorsFor(opts.icon);
         const { x, y } = t;
 
-        // Portrait leuchtet auf
+        // Portrait lights up
         t.el.animate([
             { filter: 'brightness(1)' },
             { filter: `brightness(1.6) drop-shadow(0 0 14px ${colors[0]})`, offset: 0.3 },
@@ -93,7 +93,7 @@
             { transform: 'translate(-50%, -50%) scale(1.3) rotate(160deg)', opacity: 0 },
         ], { duration: 950, easing: 'ease-out' });
 
-        // Lichtsäule aus dem Boden des Portraits
+        // Light pillar from the bottom of the portrait
         animateAndRemove(spawn('spellfx-pillar', x, y + 34, colors), [
             { transform: 'translate(-50%, -100%) scaleY(0)', opacity: 0.2 },
             { transform: 'translate(-50%, -100%) scaleY(1)', opacity: 0.9, offset: 0.3 },
@@ -126,12 +126,12 @@
         badgeToBar(x, y - 46, colors, opts, '.player-frame .buff-bar:not(.debuff-bar)');
     }
 
-    /** Debuff landet am Gegner: kreisende Motes, herabfallende Tropfen, Icon-Stempel → Debuff-Leiste. */
+    /** Debuff lands on the enemy: circling motes, falling drops, icon stamp → debuff bar. */
     function debuffFx(target, opts) {
         const { x, y } = target;
         const colors = colorsFor(opts.icon, DEBUFF_DEFAULT);
 
-        // Kreisende Motes, die sich ins Ziel hineinziehen
+        // Circling motes that pull into the target
         const orbit = spawn('spellfx-orbit', x, y, colors);
         for (let i = 0; i < 3; i++) {
             const m = document.createElement('div');
@@ -145,17 +145,17 @@
             { transform: 'translate(-50%, -50%) rotate(420deg) scale(.25)', opacity: 0 },
         ], { duration: 950, easing: 'ease-in-out' });
 
-        // Schwächung: Tropfen sinken nach unten
+        // Weakening: drops sink downwards
         drift(x, y - 20, colors, 'spellfx-drip', 8, { spreadX: 28, rise: -45, delayStep: 50, life: 700 });
 
-        // Krankhaftes Aufglimmen des Portraits
+        // Sickly glow of the portrait
         target.el.animate([
             { filter: 'saturate(1) brightness(1)' },
             { filter: `saturate(1.6) brightness(.75) drop-shadow(0 0 12px ${colors[0]})`, offset: 0.35 },
             { filter: 'saturate(1) brightness(1)' },
         ], { duration: 900, easing: 'ease-out' });
 
-        if (opts.stun) {   // Betäubung: Sterne kreisen über dem Kopf
+        if (opts.stun) {   // Stun: stars circle above the head
             const stars = spawn('spellfx-orbit stars', x, y - 38, colors);
             for (let i = 0; i < 3; i++) {
                 const s = document.createElement('div');
@@ -176,5 +176,5 @@
     }
 
     window.spellFx.handlers.buff = buffFx;
-    window.spellFx.fx.debuffFx = debuffFx;   // Aufruf aus spells.js beim Einschlag
+    window.spellFx.fx.debuffFx = debuffFx;   // Called from spells.js on impact
 })();

@@ -18,7 +18,7 @@ public class TalentState
     public int TotalInvested(CharacterClass cls) =>
         TalentRegistry.GetTalents(cls).Sum(t => GetRanks(t.Id));
 
-    /// <summary>Reihe N erfordert N*5 Punkte im selben Baum (WoW-Classic-Regel).</summary>
+    /// <summary>Row N requires N*5 points in the same tree (WoW Classic rule).</summary>
     public bool IsRowUnlocked(CharacterClass cls, int treeIndex, int row) =>
         row == 0 || TotalInvestedInTree(cls, treeIndex) >= row * 5;
 
@@ -32,7 +32,7 @@ public class TalentState
         return true;
     }
 
-    /// <summary>Investiert einen Punkt. Gibt true zurück wenn erfolgreich.</summary>
+    /// <summary>Invests a point. Returns true if successful.</summary>
     public bool Invest(TalentDefinition talent, int availablePoints, int level)
     {
         if (!CanInvest(talent, availablePoints, level)) return false;
@@ -46,7 +46,7 @@ public class TalentState
             _invested.Remove(talent.Id);
     }
 
-    /// <summary>Für Spielstand-Wiederherstellung.</summary>
+    /// <summary>For restoring a save game.</summary>
     internal void RestoreRanks(string talentId, int ranks)
     {
         if (ranks > 0)
@@ -55,7 +55,7 @@ public class TalentState
             _invested.Remove(talentId);
     }
 
-    /// <summary>Summe aller investierten Ränge × EffectPerRank für den gegebenen Effekttyp.</summary>
+    /// <summary>Sum of all invested ranks × EffectPerRank for the given effect type.</summary>
     public double GetTotalBonus(CharacterClass cls, TalentEffectType type) =>
         TalentRegistry.GetTalents(cls)
             .Where(t => t.EffectType == type)

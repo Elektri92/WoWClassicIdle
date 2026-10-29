@@ -1,10 +1,10 @@
 // Models/BuffTracker.SpecMechanics.cs
 namespace Models;
 
-// Buff-Summen und Verbrauch für die Spezialisierungs-Fähigkeiten (Auren, Gratis-/Sofort-Zauber, Heilung bei Treffern).
+// Buff totals and consumption for the specialization abilities (auras, free/instant casts, healing on hits).
 public partial class BuffTracker
 {
-    /// <summary>Heilungsbonus aus aktiven Buffs (z. B. Holy Aura, Spirit of Redemption).</summary>
+    /// <summary>Healing bonus from active buffs (e.g. Holy Aura, Spirit of Redemption).</summary>
     public double HealingBonus
     {
         get
@@ -14,7 +14,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Bonus auf Mana- und Energie-Regeneration (z. B. Adrenaline Rush, Aspect of the Owl).</summary>
+    /// <summary>Bonus on mana and energy regeneration (e.g. Adrenaline Rush, Aspect of the Owl).</summary>
     public double ResourceRegenBonus
     {
         get
@@ -24,7 +24,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Schadensbonus des Begleittiers aus aktiven Buffs.</summary>
+    /// <summary>Pet damage bonus from active buffs.</summary>
     public double PetDamageBonus
     {
         get
@@ -34,7 +34,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Zusätzlicher Schadensanteil, den das Begleittier abfängt (Soul Link).</summary>
+    /// <summary>Additional damage share absorbed by the pet (Soul Link).</summary>
     public double PetDamageShareBonus
     {
         get
@@ -44,14 +44,14 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Aktiver Buff, der bei erlittenen Treffern heilt (Earth Shield), sonst null.</summary>
+    /// <summary>Active buff that heals on hits taken (Earth Shield), otherwise null.</summary>
     public Ability? GetHealOnHitSource()
     {
         lock (_lock)
             return _active.Values.FirstOrDefault(b => b.Source.BuffHealOnHit > 0)?.Source;
     }
 
-    /// <summary>True, wenn ein Buff die nächste Fähigkeit kostenlos macht (Vanish, Spirit of Redemption).</summary>
+    /// <summary>True if a buff makes the next ability free (Vanish, Spirit of Redemption).</summary>
     public bool HasFreeCast
     {
         get
@@ -61,7 +61,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Verbraucht eine Gratis-Ladung. Der Buff selbst läuft weiter (Vanish bleibt immun).</summary>
+    /// <summary>Consumes a free charge. The buff itself keeps running (Vanish stays immune).</summary>
     public bool ConsumeFreeCast()
     {
         lock (_lock)
@@ -74,7 +74,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Verbraucht einen Sofort-Zauber-Buff für <paramref name="abilityName"/> (Shadow Trance → Shadow Bolt).</summary>
+    /// <summary>Consumes an instant-cast buff for <paramref name="abilityName"/> (Shadow Trance → Shadow Bolt).</summary>
     public bool ConsumeInstantCast(string abilityName)
     {
         lock (_lock)
@@ -86,7 +86,7 @@ public partial class BuffTracker
         }
     }
 
-    /// <summary>Schadensmultiplikator der Verstärkungen für <paramref name="abilityName"/>, ohne sie zu verbrauchen (Cast-Auswahl).</summary>
+    /// <summary>Damage multiplier of the empowerments for <paramref name="abilityName"/> without consuming them (cast selection).</summary>
     public double PeekEmpower(string abilityName)
     {
         lock (_lock)
@@ -95,7 +95,7 @@ public partial class BuffTracker
                 .Aggregate(1.0, (m, b) => m * (1.0 + b.Source.EmpowerDamageBonus));
     }
 
-    /// <summary>Entfernt Auren, deren Fähigkeit nicht mehr ausgerüstet ist (Loadout-Wechsel).</summary>
+    /// <summary>Removes auras whose ability is no longer equipped (loadout change).</summary>
     public void RemoveAurasExcept(IReadOnlyList<Ability> equipped)
     {
         lock (_lock)

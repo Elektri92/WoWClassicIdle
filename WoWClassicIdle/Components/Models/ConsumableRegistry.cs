@@ -4,11 +4,11 @@ using static Models.ProfessionRegistry;
 namespace Models
 {
     /// <summary>
-    /// Verbrauchsgüter und ihre Rezepte: Alchemie (Heil-/Manatränke, Stat-Elixiere, Fläschchen), Kochkunst (Buff-Essen),
-    /// Erste Hilfe (Verbände). Stufen passen zu den Kräutern/Fischen der Farmgebiete (Skill 1/50/100/150/200/250).
-    /// Ingenieurskunst (Dynamit aus Stoff + Stein).
-    /// IDs: 9101–9103 (Altbestand), Alchemie ab 9110, Kochkunst ab 9200, Erste Hilfe ab 9300, Ingenieurskunst ab 9400.
-    /// Wird nicht aus dem statischen Konstruktor von ProfessionRegistry gelesen (sonst Init-Zyklus).
+    /// Consumables and their recipes: Alchemy (healing/mana potions, stat elixirs, flasks), Cooking (buff food),
+    /// First Aid (bandages). Tiers match the herbs/fish of the farming zones (skill 1/50/100/150/200/250).
+    /// Engineering (dynamite from cloth + stone).
+    /// IDs: 9101–9103 (legacy), Alchemy from 9110, Cooking from 9200, First Aid from 9300, Engineering from 9400.
+    /// Not read from the static constructor of ProfessionRegistry (otherwise init cycle).
     /// </summary>
     public static class ConsumableRegistry
     {
@@ -47,7 +47,7 @@ namespace Models
             [Stat.Spirit]    = "inv_potion_12",
         };
 
-        // ─── Kräuter je Alchemie-Stufe (passend zu den Herbalism-Zonen) ───
+        // ─── Herbs per Alchemy tier (matching the Herbalism zones) ───
         private static TradeItem[][] HerbTiers() =>
         [
             [Peacebloom, Silverleaf, Earthroot],
@@ -58,18 +58,18 @@ namespace Models
             [GoldenSansam, Dreamfoil, MountainSilversage, Plaguebloom],
         ];
 
-        // ─── Fische je Kochstufe (passend zu den Fishing-Zonen) ───
+        // ─── Fish per Cooking tier (matching the Fishing zones) ───
         private static TradeItem[][] FishTiers() =>
         [
             [RawBrilliantSmallfish],
-            [RawBristleWhiskerCatfish],   // Deviate Fish nur für Savory Deviate Delight
+            [RawBristleWhiskerCatfish],   // Deviate Fish only for Savory Deviate Delight
             [RawGreaterSagefish, RawLongjawMudSnapper],
             [RawGlossyMightfish, RawNightfinSnapper],
             [RawRedgill, RawSpottedYellowtail],
             [RawSummerBass, RawWhitescaleSalmon, StonescaleEel, WinterSquid],
         ];
 
-        // Essen: Zubereitung je Stat
+        // Food: preparation per stat
         private static readonly Dictionary<Stat, string> FoodPrefix = new()
         {
             [Stat.Strength]  = "Hearty",
@@ -88,7 +88,7 @@ namespace Models
             (Stat.Spirit,    "Flask of Distilled Wisdom", "inv_potion_97"),
         ];
 
-        // Verbände je Stoff: normal + schwer, Prozent schnellere Wiederbelebung
+        // Bandages per cloth: normal + heavy, percent faster resurrection
         private static (TradeItem Cloth, string Name, int Skill, int Percent, string Icon)[] Bandages() =>
         [
             (LinenCloth,     "Linen Bandage",           1, 10, "inv_misc_bandage_15"),
@@ -121,7 +121,7 @@ namespace Models
                 recipes.Add(new Recipe(recipeId ?? $"consumable_{item.Id}", profession, item, reagents.ToList(), skill));
             }
 
-            // Reihenfolge nicht ändern – IDs (Spielstand) und Rezept-IDs hängen daran
+            // Do not change the order – IDs (save game) and recipe IDs depend on it
             BuildAlchemy(Add);
             BuildCooking(Add);
             BuildDeviateDelight(Add);
@@ -134,7 +134,7 @@ namespace Models
 
         private delegate void AddFn(ConsumableItem item, Profession profession, int skill, IEnumerable<Reagent> reagents, string? recipeId = null);
 
-        /// <summary>Zwei Reagenzien aus einer Materialliste: Haupt-Material ×main, nächstes ×1 (bei einer Sorte nur eines).</summary>
+        /// <summary>Two reagents from a material list: main material ×main, next one ×1 (only one for a single kind).</summary>
         private static IEnumerable<Reagent> Pick(TradeItem[] mats, int index, int main)
         {
             var first = mats[index % mats.Length];
@@ -152,7 +152,7 @@ namespace Models
                 string prefix = PotionNames[t].Length > 0 ? PotionNames[t] + " " : "";
                 int main = t < 2 ? 1 : 2;
 
-                // Heiltrank (Tier 1 = bestehender Minor Healing Potion, ID 9103)
+                // Healing potion (tier 1 = existing Minor Healing Potion, ID 9103)
                 var heal = new ConsumableItem(t == 0 ? 9103 : id++, $"{prefix}Healing Potion", HealIcon(t),
                     ConsumableKind.HealthPotion, Amount: HealAmounts[t], RequiredLevel: TierLevel[t], SellPrice: 5 + 10 * t * t);
                 add(heal, Profession.Alchemy, TierSkill[t], Pick(herbs[t], 0, main), t == 0 ? "minor_healing_potion" : null);
@@ -171,7 +171,7 @@ namespace Models
                 }
             }
 
-            // Fläschchen: einzige Rezepte mit Black Lotus, je Hauptstat eines, 1 Stunde
+            // Flasks: the only recipes with Black Lotus, one per main stat, 1 hour
             var top = herbs[^1];
             for (int s = 0; s < Flasks.Length; s++)
             {
@@ -196,7 +196,7 @@ namespace Models
                     var raw = fish[t][s % fish[t].Length];
                     string fishName = raw.Name.StartsWith("Raw ") ? raw.Name[4..] : raw.Name;
 
-                    // Tier 1 Ausdauer = bestehender Brilliant Smallfish (ID 9101)
+                    // Tier 1 Stamina = existing Brilliant Smallfish (ID 9101)
                     bool legacy = t == 0 && stat == Stat.Stamina;
                     var food = new ConsumableItem(legacy ? 9101 : id++, $"{FoodPrefix[stat]} {fishName}", FoodIcon(t, s),
                         ConsumableKind.Food, Bonus(stat, FoodStats[t]), DurationSeconds: BuffSeconds,
@@ -207,13 +207,13 @@ namespace Models
             }
         }
 
-        /// <summary>Einzige Verwendung von Deviate Fish: Verkleidung für 5 min (nur manuell, erneuert sich automatisch).</summary>
+        /// <summary>Only use of Deviate Fish: disguise for 5 min (manual only, renews itself automatically).</summary>
         public const int SavoryDeviateDelightId = 9290;
 
         private static void BuildDeviateDelight(AddFn add)
         {
             var delight = new ConsumableItem(SavoryDeviateDelightId, "Savory Deviate Delight", "inv_misc_monsterhead_04",
-                ConsumableKind.Costume, DurationSeconds: 300, Quality: ItemQuality.Uncommon, SellPrice: 25);   // rein optisch → keine Levelanforderung
+                ConsumableKind.Costume, DurationSeconds: 300, Quality: ItemQuality.Uncommon, SellPrice: 25);   // purely cosmetic → no level requirement
             add(delight, Profession.Cooking, 85, [new Reagent(DeviateFish, 1)]);
         }
 
@@ -222,7 +222,7 @@ namespace Models
             int id = 9300;
             foreach (var (cloth, name, skill, percent, icon) in Bandages())
             {
-                bool legacy = name == "Linen Bandage";   // bestehende ID 9102
+                bool legacy = name == "Linen Bandage";   // existing ID 9102
                 bool heavy = name.StartsWith("Heavy");
                 var bandage = new ConsumableItem(legacy ? 9102 : id++, name, icon, ConsumableKind.Bandage,
                     Amount: percent, SellPrice: 10 + skill / 2);
@@ -230,7 +230,7 @@ namespace Models
             }
         }
 
-        // Dynamit: Stoff + Stein je Stufe; Schaden ≈ ein Viertel der Gegner-HP auf Stufenlevel
+        // Dynamite: cloth + stone per tier; damage ≈ a quarter of the enemy HP at tier level
         private static (string Name, TradeItem Cloth, TradeItem Stone, int Skill, int Level, int Damage, string Icon)[] Explosives() =>
         [
             ("Rough Dynamite",  LinenCloth,     RoughStone,   1,  1,  15, "inv_misc_bomb_05"),

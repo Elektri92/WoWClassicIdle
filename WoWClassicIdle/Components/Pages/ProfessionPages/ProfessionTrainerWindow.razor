@@ -1,8 +1,8 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Lehrerfenster im Classic-Stil: Liste (Stufe + Rezepte) links, Details + Train rechts.
-   Rahmen, Titelleiste und Geldleiste teilt es mit dem Händlerfenster (.inv-merchant-window/.mw-* in inventory.css),
+@* Trainer window in Classic style: list (tier + recipes) on the left, details + Train on the right.
+   It shares frame, title bar and money bar with the merchant window (.inv-merchant-window/.mw-* in inventory.css),
    Anpassungen in wwwroot/css/profession-trainer.css *@
 <div class="inv-merchant-window trainer-window">
     <div class="mw-titlebar">
@@ -16,7 +16,7 @@
         <button class="bag-close" title="Close" @onclick="OnClose">×</button>
     </div>
 
-    @* Sammelberufe haben keine Rezepte – dort nur die Ausbildungsstufen *@
+    @* Gathering professions have no recipes – only the training tiers there *@
     @if (!Definition.IsGathering)
     {
         <div class="trainer-tools">
@@ -153,7 +153,7 @@
     [Parameter, EditorRequired] public ProfessionDefinition Definition { get; set; } = null!;
     [Parameter] public ProfessionProgress? Progress { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
-    /// <summary>Lehrer soll einen Spruch aus der Liste sagen (Sprechblase im Kopf der Unterseite).</summary>
+    /// <summary>The trainer should say a line from the list (speech bubble in the subpage header).</summary>
     [Parameter] public EventCallback<IReadOnlyList<string>> OnSpeech { get; set; }
 
     private string? _selected;
@@ -176,7 +176,7 @@
     private IReadOnlyList<CharacterClass> RecipeClasses =>
         Recipes.Select(r => ItemRequirements.ClassOf(r.Result)).OfType<CharacterClass>().Distinct().ToList();
 
-    /// <summary>Noch nicht gelernte Rezepte nach Suche, Klasse und Verfügbarkeit gefiltert.</summary>
+    /// <summary>Recipes not yet learned, filtered by search, class and availability.</summary>
     private IEnumerable<Recipe> VisibleRecipes => Recipes
         .Where(r => Progress?.KnowsRecipe(r.Id) != true)
         .Where(r => !_availableOnly || Skill >= r.RequiredSkill)
@@ -199,7 +199,7 @@
         _message = null;
     }
 
-    // Eintrag: grün = Voraussetzungen erfüllt, rot = (noch) nicht lernbar
+    // Entry: green = requirements met, red = not learnable (yet)
     private RenderFragment Entry(string key, string iconUrl, string name, bool available, Recipe? recipe) => __builder =>
     {
         <div class="craft-list-entry trainer-entry @(available ? "available" : "unavailable") @(key == _selected ? "selected" : "")"
@@ -258,12 +258,12 @@
         (_message, _messageFailed) = error is null ? ($"You have learned {learned}.", false) : (error, true);
         await OnSpeech.InvokeAsync(error is null ? Trainer.TrainLines : Trainer.RefuseLines);
 
-        // Nach dem Lernen den nächsten lernbaren Eintrag vorauswählen
+        // After learning, preselect the next learnable entry
         if (error is null)
             _selected = DefaultSelection();
     }
 
-    // Lernbare Stufe zuerst, dann das erste sichtbare Rezept; ohne Rezepte (Sammelberuf) immer die nächste Stufe
+    // Learnable tier first, then the first visible recipe; without recipes (gathering profession) always the next tier
     private string? DefaultSelection() =>
         Progress?.NextRank is null ? VisibleRecipes.FirstOrDefault()?.Id
         : RankRequirementsMet || !VisibleRecipes.Any() ? RankKey

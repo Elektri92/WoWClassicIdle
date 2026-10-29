@@ -1,18 +1,18 @@
 using Models;
 
-// Cast-Zeiten, Global Cooldown und Auswahl der nächsten Fähigkeit.
+// Cast times, global cooldown and selection of the next ability.
 public partial class IdleGameEngine
 {
-    /// <summary>Global Cooldown in Sekunden, ausgelöst von jeder Fähigkeit ohne Zauberzeit.</summary>
+    /// <summary>Global cooldown in seconds, triggered by every ability without cast time.</summary>
     public const double GlobalCooldown = 0.5;
 
-    /// <summary>Fähigkeit, die gerade gewirkt wird (null = kein Cast).</summary>
+    /// <summary>Ability currently being cast (null = no cast).</summary>
     public Ability? CurrentCast { get; private set; }
 
     /// <summary>Bisher vergangene Cast-Zeit in Sekunden.</summary>
     public double CastElapsed { get; private set; }
 
-    /// <summary>Gesamtdauer des aktuellen Casts (Zauberzeit, durch Attack-Speed verkürzt).</summary>
+    /// <summary>Total duration of the current cast (cast time, shortened by attack speed).</summary>
     public double CastDuration { get; private set; }
 
     /// <summary>Verbleibender Global Cooldown in Sekunden (0 = bereit).</summary>
@@ -23,19 +23,19 @@ public partial class IdleGameEngine
     /// <summary>Aktuelles Auto-Attack-Intervall in Sekunden (inkl. Attack-Speed).</summary>
     public double SwingInterval { get; private set; } = 1;
 
-    /// <summary>Fortschritt des Swing-Timers (0..1).</summary>
+    /// <summary>Progress of the swing timer (0..1).</summary>
     public double SwingProgress => SwingInterval <= 0 ? 0 : Math.Clamp(_playerAttackAcc / SwingInterval, 0, 1);
 
-    /// <summary>Aktuelles Angriffsintervall des Gegners in Sekunden (inkl. Verlangsamungs-Debuffs).</summary>
+    /// <summary>Current attack interval of the enemy in seconds (incl. slow debuffs).</summary>
     public double EnemySwingInterval { get; private set; } = 1;
 
-    /// <summary>Fortschritt des Gegner-Swing-Timers (0..1).</summary>
+    /// <summary>Progress of the enemy swing timer (0..1).</summary>
     public double EnemySwingProgress => EnemySwingInterval <= 0 ? 0 : Math.Clamp(_enemyAttackAcc / EnemySwingInterval, 0, 1);
 
-    /// <summary>Spells mit Manakosten haben Vorrang: während ihres Casts wartet die Auto-Attack.</summary>
+    /// <summary>Spells with mana cost take precedence: the auto-attack waits during their cast.</summary>
     public bool IsSwingHeld => CurrentCast is { ManaCost: > 0 };
 
-    /// <summary>Bricht einen laufenden Cast ab (kein Mana-Verbrauch, kein Cooldown).</summary>
+    /// <summary>Cancels a running cast (no mana spent, no cooldown).</summary>
     private void CancelCast()
     {
         CurrentCast  = null;
@@ -43,7 +43,7 @@ public partial class IdleGameEngine
         CastDuration = 0;
     }
 
-    /// <summary>Cast und GCD zurücksetzen (Tod, Charakterwechsel).</summary>
+    /// <summary>Reset cast and GCD (death, character switch).</summary>
     private void ResetCastState()
     {
         CancelCast();
@@ -51,13 +51,13 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Schreitet laufenden Cast und GCD voran und startet ggf. die nächste Fähigkeit.
-    /// Gibt den dabei verursachten Schaden am Gegner zurück.
+    /// Advances the running cast and GCD and starts the next ability if applicable.
+    /// Returns the damage dealt to the enemy in the process.
     /// </summary>
     private int UpdateAbilities(double dt, double attackSpeed)
     {
         int dealt = 0;
-        // Epsilon: 0.5 - 5 × 0.1 ergibt in double knapp > 0 und würde den GCD um einen Schritt verlängern
+        // Epsilon: 0.5 - 5 × 0.1 in double is slightly > 0 and would extend the GCD by one step
         GcdRemaining = GcdRemaining - dt > 1e-9 ? GcdRemaining - dt : 0;
 
         if (CurrentCast is { } casting)
@@ -68,7 +68,7 @@ public partial class IdleGameEngine
             CancelCast();
             dealt += FinishCast(casting);
             if (!CurrentEnemy!.IsAlive) return dealt;
-            // Kein GCD nach einem Cast → nächste Fähigkeit darf direkt starten
+            // No GCD after a cast → the next ability may start immediately
         }
 
         if (GcdRemaining > 0) return dealt;
@@ -76,7 +76,7 @@ public partial class IdleGameEngine
         var next = SelectNextAbility();
         if (next is null) return dealt;
 
-        // Shadow Trance (Nightfall): Zauber mit Cast-Zeit wird sofort gewirkt
+        // Shadow Trance (Nightfall): a spell with cast time is cast instantly
         if (next.HasCastTime && !Player.Buffs.ConsumeInstantCast(next.Name))
         {
             CurrentCast  = next;
@@ -93,7 +93,7 @@ public partial class IdleGameEngine
         return dealt;
     }
 
-    /// <summary>Cast abgeschlossen: Mana erst jetzt abziehen, dann Effekt auslösen.</summary>
+    /// <summary>Cast completed: only now deduct mana, then trigger the effect.</summary>
     private int FinishCast(Ability ability)
     {
         if (!PayCastCost(ability))
@@ -107,8 +107,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Wählt die nächste Fähigkeit: zuerst Spieler-Buffs, dann Heilung/Schild,
-    /// danach die Schadensfähigkeit mit dem höchsten geschätzten DPS.
+    /// Picks the next ability: player buffs first, then heal/shield,
+    /// then the damaging ability with the highest estimated DPS.
     /// </summary>
     private Ability? SelectNextAbility()
     {
@@ -117,7 +117,7 @@ public partial class IdleGameEngine
         foreach (var ability in Player.SortedEquippedAbilities)
         {
             if (!CanStartAbility(ability)) continue;
-            // Liste ist nach Gruppe sortiert → erste bereite Buff/Heal-Fähigkeit gewinnt
+            // List is sorted by group → the first ready buff/heal ability wins
             if (ability.CastPriorityGroup < 2) return ability;
 
             double dps = CombatEngine.EstimateAbilityDamage(ability, Player.Stats) * SelectionDamageFactor(ability)
@@ -131,17 +131,17 @@ public partial class IdleGameEngine
         return best;
     }
 
-    /// <summary>Alle Bedingungen für den Start einer Fähigkeit inkl. ausreichender Ressource.</summary>
+    /// <summary>All conditions for starting an ability incl. sufficient resource.</summary>
     private bool CanStartAbility(Ability ability)
     {
         if (!IsReadyToCast(ability)) return false;
         if (!Player.CanUseInCurrentForm(ability)) return false;
-        if (ability.IsPetSummon && Pet is not null) return false;   // Pet lebt bereits
+        if (ability.IsPetSummon && Pet is not null) return false;   // Pet is already alive
         if (ability.CastWhenManaBelowPct > 0
             && Player.CurrentMana >= Player.Stats.MaxMana * ability.CastWhenManaBelowPct) return false;
         if (ability.IsHealing && !PlayerNeedsHeal) return false;
         if (!ability.IsHealing && ability.ManaCost > 0 && IsSavingManaForHeal()) return false;
-        // Life Tap: nur bei niedrigem Mana und ausreichend HP
+        // Life Tap: only at low mana and with sufficient HP
         if (ability.IsLifeTap
             && (Player.CurrentMana >= Player.Stats.MaxMana / 2 || PlayerNeedsHeal || Player.CurrentHp <= ability.LifeTapHpCost))
             return false;

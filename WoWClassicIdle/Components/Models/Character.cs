@@ -15,19 +15,19 @@ public abstract class Character
     public BuffTracker Buffs { get; } = new();
     private ClassLoadout _loadout = new() { Class = CharacterClass.Warrior };
 
-    // Gecachte Ability-Listen – werden bei Klassen- oder Loadout-Wechsel zurückgesetzt
+    // Cached ability lists – reset on class or loadout change
     private Ability[]? _cachedEquipped;
-    private Ability[]? _cachedSortedActive;  // ohne ReplacesAutoAttack/IsPassive, sortiert nach Cast-Priorität
-    private Ability[]? _cachedPassives;       // nur IsPassive && ProcChance > 0
+    private Ability[]? _cachedSortedActive;  // without ReplacesAutoAttack/IsPassive, sorted by cast priority
+    private Ability[]? _cachedPassives;       // only IsPassive && ProcChance > 0
 
-    /// <summary>Nur die ausgerüsteten Abilities der aktuellen Klasse (gecacht).</summary>
+    /// <summary>Only the equipped abilities of the current class (cached).</summary>
     public IReadOnlyList<Ability> EquippedAbilities => _cachedEquipped ??= BuildEquippedCache();
 
-    /// <summary>Aktive Cast-Abilities, vorsortiert nach <see cref="Ability.CastPriorityGroup"/>: Buff → Heilung/Schild → Schaden.</summary>
+    /// <summary>Active cast abilities, pre-sorted by <see cref="Ability.CastPriorityGroup"/>: buff → heal/shield → damage.</summary>
     internal Ability[] SortedEquippedAbilities =>
         _cachedSortedActive ??= BuildSortedActiveCache();
 
-    /// <summary>Passive Abilities mit ProcChance > 0 (z. B. Deadly Poison).</summary>
+    /// <summary>Passive abilities with ProcChance > 0 (e.g. Deadly Poison).</summary>
     internal Ability[] PassiveAbilities =>
         _cachedPassives ??= BuildPassivesCache();
 
@@ -65,7 +65,7 @@ public abstract class Character
     public event Action<string, int>? AbilityUsed;   // (AbilityName, Schaden/Heilung)
 
     /// <summary>
-    /// Öffentlich aufrufbarer Trigger für das <see cref="AbilityUsed"/>-Event.
+    /// Publicly callable trigger for the <see cref="AbilityUsed"/> event.
     /// </summary>
     public void TriggerAbilityUsed(string abilityName, int value)
     {
@@ -97,8 +97,8 @@ public abstract class Character
     internal ClassLoadout GetCurrentLoadout() => _loadout;
 
     /// <summary>
-    /// Lädt eine gespeicherte Loadout (z.&nbsp;B. aus dem Service) in den Charakter.
-    /// Ruft dies nach <see cref="SetClass"/>, sobald die persistierte Loadout verfügbar ist.
+    /// Loads a saved loadout (e.g.&nbsp;from the service) into the character.
+    /// Call this after <see cref="SetClass"/> as soon as the persisted loadout is available.
     /// </summary>
     public void ApplyLoadout(ClassLoadout loadout)
     {
@@ -108,7 +108,7 @@ public abstract class Character
         OnLoadoutChanged();
     }
 
-    /// <summary>Hook nach Loadout-Wechsel (z. B. Druiden-Gestalt ändert Ressource und Stats).</summary>
+    /// <summary>Hook after a loadout change (e.g. Druid form changes resource and stats).</summary>
     protected virtual void OnLoadoutChanged() { }
 
     
@@ -119,7 +119,7 @@ public abstract class Character
         CurrentMana = stats.MaxMana;
     }
 
-    /// <returns>Tatsächlich erlittener Schaden und per-Quelle absorbierte Mengen.</returns>
+    /// <returns>Damage actually taken and amounts absorbed per source.</returns>
     public (int Effective, IReadOnlyList<(Ability Source, int Absorbed)> Absorbs) TakeDamage(int rawDamage)
     {
         var mitigated = Math.Max(1, rawDamage - Stats.Defense);

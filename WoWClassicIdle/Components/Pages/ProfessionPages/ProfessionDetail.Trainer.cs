@@ -1,4 +1,4 @@
-// Berufslehrer im Kopf der Unterseite: Öffnen per Klick, Sprechblase wie beim Händler im Inventar
+// Profession trainer in the subpage header: open by click, speech bubble like the merchant in the inventory
 using Models;
 
 namespace WoWClassicIdle.Components.Pages.ProfessionPages;
@@ -7,7 +7,7 @@ public partial class ProfessionDetail
 {
     private bool _trainerOpen;
 
-    // Sprechblase des Lehrers; Zähler als @key, damit die Animation bei jedem Spruch neu startet
+    // Speech bubble of the trainer; counter as @key so the animation restarts on every line
     private string? _speech;
     private int _speechKey;
 
@@ -39,7 +39,7 @@ public partial class ProfessionDetail
 
     private void Say(IReadOnlyList<string> lines)
     {
-        // Nie zweimal hintereinander denselben Spruch
+        // Never the same line twice in a row
         var options = lines.Where(l => l != _speech).ToList();
         if (options.Count == 0) return;
         _speech = options[Random.Shared.Next(options.Count)];

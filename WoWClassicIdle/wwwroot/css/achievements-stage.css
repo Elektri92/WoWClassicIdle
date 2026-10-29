@@ -1,7 +1,7 @@
 /* ============================================
-   Erfolge (/achievements) – Bühne um das Fenster: vertikal zentriert, dezenter Hintergrund
-   (Azeroth-Karte + goldener Schein, ruhiger als die Startseite).
-   Einmalige Animationen tragen visibility im Start-Keyframe (WebKitGTK-Flackern, siehe character-select.css).
+   Achievements (/achievements) – stage around the window: vertically centered, subtle background
+   (Azeroth map + golden glow, calmer than the home page).
+   One-time animations carry visibility in the start keyframe (WebKitGTK flicker, see character-select.css).
    ============================================ */
 
 .ach-stage {
@@ -10,7 +10,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Inhaltsbereich abzüglich Padding von article.content */
+    /* Content area minus the padding of article.content */
     min-height: calc(100vh - 2.6rem);
     padding: 1.5rem 0;
 }
@@ -18,12 +18,12 @@
 .ach-stage .ach-window {
     width: 100%;
     margin: 0;
-    /* backwards statt both: ein bleibender transform würde fixed-Tooltips im Fenster verschieben */
+    /* backwards instead of both: a persistent transform would shift fixed tooltips in the window */
     animation: ach-window-in .5s cubic-bezier(.2, .8, .2, 1) backwards;
 }
 
-/* Maske auf dem ruhenden Container: closest-side → an jeder Kante vollständig transparent, keine harten Ränder,
-   auch während die Karte darin driftet */
+/* Mask on the static container: closest-side → fully transparent at every edge, no hard borders,
+   even while the map drifts inside it */
 .ach-stage-bg {
     position: absolute;
     inset: 0;
@@ -35,7 +35,7 @@
 }
 .ach-stage-bg > * { position: absolute; }
 
-/* Weltkarte: schwach, driftet sehr langsam (Ausblenden übernimmt .ach-stage-bg) */
+/* World map: faint, drifts very slowly (.ach-stage-bg handles the fade-out) */
 .ach-stage-map {
     inset: -4%;
     background: url("../images/azeroth-map.png") center / cover no-repeat;
@@ -44,7 +44,7 @@
     animation: ach-map-in 1.2s ease-out both, ach-map-drift 60s ease-in-out 1.2s infinite alternate;
 }
 
-/* Warmer Schein hinter dem Fenster */
+/* Warm glow behind the window */
 .ach-stage-glow {
     top: 50%;
     left: 50%;
@@ -70,7 +70,7 @@
     to   { opacity: 1; }
 }
 
-/* Einspaltiges Layout: Navigation steht oben, Zentrieren würde nur eine Lücke erzeugen */
+/* Single-column layout: navigation is on top, centering would only create a gap */
 @media (max-width: 640.98px) {
     .ach-stage { min-height: 0; }
 }

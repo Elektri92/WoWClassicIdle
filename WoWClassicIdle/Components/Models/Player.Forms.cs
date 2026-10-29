@@ -1,34 +1,34 @@
 // Models/Player.Forms.cs
 namespace Models
 {
-    // Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+    // Create new systems as their own partial file; keep files below 300 lines where possible.
     public partial class Player
     {
-        // Gestalt, mit der die Stats zuletzt berechnet wurden
+        // Form the stats were last calculated with
         private DruidForm _statsForm;
 
-        /// <summary>Gestalt (Druide, Priester-Shadowform) – ergibt sich aus der ausgerüsteten Form-Fähigkeit.</summary>
+        /// <summary>Form (Druid, Priest Shadowform) – derived from the equipped form ability.</summary>
         public DruidForm ActiveForm => ShapeshiftForms.FormOf(EquippedAbilities);
 
-        /// <summary>Klasse, nach deren Formeln die Nahkampf-Werte skalieren (Katze → Schurke, Bär → Krieger).</summary>
+        /// <summary>Class whose formulas the melee values scale with (Cat → Rogue, Bear → Warrior).</summary>
         public CharacterClass MeleeScalingClass => StatScaling.MeleeScalingClass(ActiveClass, ActiveForm);
 
-        /// <summary>Ressource, die die Fähigkeiten aktuell verbrauchen (Klasse bzw. Gestalt).</summary>
+        /// <summary>Resource the abilities currently consume (class or form).</summary>
         public ResourceKind Resource => ShapeshiftForms.ResourceFor(ActiveClass, ActiveForm);
 
-        /// <summary>Portrait der aktiven Gestalt; null = normales Rassen-Portrait.</summary>
+        /// <summary>Portrait of the active form; null = normal race portrait.</summary>
         public string? FormPortraitUrl => ShapeshiftForms.Get(ActiveForm) is { PortraitUrl.Length: > 0 } f ? f.PortraitUrl : null;
 
-        /// <summary>Rage startet leer, Mana und Energie voll.</summary>
+        /// <summary>Rage starts empty, mana and energy full.</summary>
         private int StartingResource => Resource == ResourceKind.Rage ? 0 : Stats.MaxMana;
 
-        /// <summary>Kann die Fähigkeit in der aktuellen Gestalt eingesetzt werden?</summary>
+        /// <summary>Can the ability be used in the current form?</summary>
         public bool CanUseInCurrentForm(Ability ability) => ShapeshiftForms.IsUsableIn(ability, ActiveForm);
 
-        /// <summary>Gestaltwechsel → Ressource und Stats neu berechnen (HP bleiben erhalten).</summary>
+        /// <summary>Form change → recalculate resource and stats (HP is preserved).</summary>
         protected override void OnLoadoutChanged()
         {
-            // Abgelegte Auren (Paladin-Auren, Aspekte, Haltungen) enden sofort
+            // Unequipped auras (Paladin auras, aspects, stances) end immediately
             Buffs.RemoveAurasExcept(EquippedAbilities);
             if (ActiveForm == _statsForm) return;
             int hp = CurrentHp;
@@ -36,12 +36,12 @@ namespace Models
             CurrentHp = Math.Min(hp, Stats.MaxHp);
         }
 
-        /// <summary>Wendet die passiven Gestalt-Boni auf frisch berechnete Stats an.</summary>
+        /// <summary>Applies the passive form bonuses to freshly calculated stats.</summary>
         private Stats ApplyFormStats(Stats stats)
         {
             _statsForm = ActiveForm;
             var form = ShapeshiftForms.Get(_statsForm);
-            if (form is null || form.IsStance) return stats;   // Haltungen wirken über ihren Aura-Buff
+            if (form is null || form.IsStance) return stats;   // Stances work via their aura buff
 
             if (form.Resource != ResourceKind.Mana)
                 return stats with
@@ -61,7 +61,7 @@ namespace Models
             };
         }
 
-        /// <summary>Gestalt-Schadensbonus auf bestimmte Zauber (z. B. Moonkin → Wrath, Moonfire).</summary>
+        /// <summary>Form damage bonus on specific spells (e.g. Moonkin → Wrath, Moonfire).</summary>
         private Ability ApplyFormBonus(Ability ability)
         {
             var form = ShapeshiftForms.Get(ActiveForm);

@@ -1,22 +1,22 @@
 // Models/ActivePet.cs
 namespace Models;
 
-/// <summary>Laufzeit-Zustand eines beschworenen Begleittiers (lebt nur im Speicher, wird nicht gespeichert).</summary>
+/// <summary>Runtime state of a summoned pet (lives in memory only, is not saved).</summary>
 public sealed class ActivePet
 {
     public PetDefinition Definition { get; }
 
-    /// <summary>Beschwörungs-Fähigkeit – bekommt nach dem Tod den Wiederbelebungs-Cooldown.</summary>
+    /// <summary>Summon ability – receives the revive cooldown after death.</summary>
     public Ability SummonAbility { get; }
 
-    /// <summary>Eigene Meter-Zeile für den Pet-Schaden (Name und Icon des Pets).</summary>
+    /// <summary>Own meter row for pet damage (name and icon of the pet).</summary>
     public Ability MeterSource { get; }
 
     public int MaxHp { get; }
     public int CurrentHp { get; private set; }
     public bool IsAlive => CurrentHp > 0;
 
-    /// <summary>Vergangene Zeit seit dem letzten Angriff.</summary>
+    /// <summary>Elapsed time since the last attack.</summary>
     public double AttackAcc { get; set; }
 
     public ActivePet(PetDefinition definition, Ability summonAbility, int maxHp)

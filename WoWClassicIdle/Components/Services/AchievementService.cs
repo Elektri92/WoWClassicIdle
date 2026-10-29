@@ -10,7 +10,7 @@ public partial class AchievementService : IAchievementService
     private readonly HashSet<string> _earnedIds = new();
     private readonly object _lock = new();
 
-    // Tracking-Zustand für Änderungserkennung
+    // Tracking state for change detection
     private readonly Dictionary<CharacterClass, int> _lastKnownLevels = new();
     private int _lastKnownKills;
     private int _lastKnownDeaths;
@@ -56,7 +56,7 @@ public partial class AchievementService : IAchievementService
             _lastKnownLevels[cls] = 1;
 
         _engine.TickUpdated += OnTick;
-        _engine.ProfessionUpdated += CheckProfessions;   // Berufe laufen auf eigenem Timer
+        _engine.ProfessionUpdated += CheckProfessions;   // Professions run on their own timer
     }
 
     private void OnTick()
@@ -195,15 +195,15 @@ public partial class AchievementService : IAchievementService
     {
         var inv = _engine.Player.Inventory;
 
-        // Alle 4 Taschenplätze freigeschaltet (automatisch per Level)
+        // All 4 bag slots unlocked (automatically by level)
         if (inv.Bags.Count(b => b is not null) >= Inventory.BagSlotCount)
             TryAward("inv_all_bags_unlocked");
 
-        // Inventar komplett gefüllt
+        // Inventory completely full
         if (inv.FreeSlots == 0 && inv.TotalSlots > 0)
             TryAward("inv_full");
 
-        // Alle Rüstungsslots belegt und Waffe angelegt
+        // All armor slots occupied and weapon equipped
         var player = _engine.Player;
         int totalArmorSlots = Enum.GetValues<ArmorSlot>().Length;
         if (player.EquippedArmor.Count >= totalArmorSlots && player.EquippedWeapon is not null)
@@ -266,11 +266,11 @@ public partial class AchievementService : IAchievementService
             }
         }
 
-        // Tracking-State auf aktuellen Stand setzen, damit keine Achievements doppelt feuern
+        // Set tracking state to the current state so no achievements fire twice
         _lastKnownLevels.Clear();
         foreach (var cls in Enum.GetValues<CharacterClass>())
         {
-            // Ohne Charakter (oder ohne Fortschritt) bei Level 1 starten, sonst fehlt der Schlüssel in CheckClassLevels
+            // Without a character (or without progress) start at level 1, otherwise the key is missing in CheckClassLevels
             _lastKnownLevels[cls] = engine.HasActiveCharacter && engine.Player.ClassProgress.TryGetValue(cls, out var progress)
                 ? progress.Level
                 : 1;
@@ -370,7 +370,7 @@ public partial class AchievementService : IAchievementService
         list.Add(new() { Id = "inv_full",               Category = AchievementCategory.Inventory, Points = 15, Title = "Pack Rat",           Description = "Fill every slot in your inventory.",          IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_08.jpg" });
         list.Add(new() { Id = "inv_all_slots_equipped", Category = AchievementCategory.Inventory, Points = 25, Title = "Fully Geared",       Description = "Equip an item in every equipment slot.",      IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_helmet_44.jpg" });
 
-        // ── Verkäufe ──
+        // ── Sales ──
         list.Add(new() { Id = "sold_1",   Category = AchievementCategory.Inventory, Points = 5,  Title = "Open for Business",  Description = "Sell your first item.",                       IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_coin_01.jpg" });
         list.Add(new() { Id = "sold_10",  Category = AchievementCategory.Inventory, Points = 10, Title = "Merchant",           Description = "Sell 10 items.",                              IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_coin_01.jpg" });
         list.Add(new() { Id = "sold_50",  Category = AchievementCategory.Inventory, Points = 15, Title = "Trader",             Description = "Sell 50 items.",                              IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_coin_01.jpg" });

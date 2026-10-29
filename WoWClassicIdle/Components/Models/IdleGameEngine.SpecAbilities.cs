@@ -1,21 +1,21 @@
 using Models;
 
-// Spezialisierungs-Fähigkeiten (Talent-Reihe 3, ab Lv 20): passive Auren, Gratis- und Sofort-Zauber,
-// Synergie-Debuffs, Earth Shield sowie die Talent-Passive Eclipse, Nightfall und Spirit of Redemption.
+// Specialization abilities (talent row 3, from Lv 20): passive auras, free and instant casts,
+// synergy debuffs, Earth Shield and the talent passives Eclipse, Nightfall and Spirit of Redemption.
 public partial class IdleGameEngine
 {
-    /// <summary>Eclipse: Wrath verstärkt das nächste Starfire …</summary>
+    /// <summary>Eclipse: Wrath empowers the next Starfire …</summary>
     public const double LunarEclipseBonus = 0.30;
 
-    /// <summary>… und Starfire das nächste Wrath – Wrath ist deutlich schwächer und braucht mehr, damit sich der Wechsel immer lohnt.</summary>
+    /// <summary>… and Starfire the next Wrath – Wrath is considerably weaker and needs more so the switch always pays off.</summary>
     public const double SolarEclipseBonus = 0.75;
 
     private const double EclipseDuration = 15;
 
-    /// <summary>Spirit of Redemption greift höchstens alle 2 Minuten.</summary>
+    /// <summary>Spirit of Redemption triggers at most every 2 minutes.</summary>
     private const double SpiritOfRedemptionCooldown = 120;
 
-    /// <summary>Geistgestalt nach einem abgewendeten Tod: immun, Zauber gratis, mehr Heilung.</summary>
+    /// <summary>Spirit form after an averted death: immune, free spells, more healing.</summary>
     public static readonly Ability SpiritOfRedemptionBuff = new()
     {
         Id                 = "talent_spirit_of_redemption",
@@ -27,7 +27,7 @@ public partial class IdleGameEngine
         BuffHealingBonus   = 0.50,
     };
 
-    /// <summary>Nightfall-Proc: das nächste Shadow Bolt ist sofort.</summary>
+    /// <summary>Nightfall proc: the next Shadow Bolt is instant.</summary>
     private static readonly Ability ShadowTrance = new()
     {
         Id                  = "nightfall_shadow_trance",
@@ -40,17 +40,17 @@ public partial class IdleGameEngine
     /// <summary>Heilungs-Multiplikator inkl. Buffs (Holy Aura, Spirit of Redemption).</summary>
     private double HealingMultiplier => Player.Stats.HealingMultiplier + Player.Buffs.HealingBonus;
 
-    /// <summary>Tempo der Mana- und Energie-Regeneration (Adrenaline Rush, Holy Aura, Aspect of the Owl).</summary>
+    /// <summary>Rate of mana and energy regeneration (Adrenaline Rush, Holy Aura, Aspect of the Owl).</summary>
     private double ResourceRegenMultiplier => 1.0 + Player.Buffs.ResourceRegenBonus;
 
-    /// <summary>Level erreicht und – bei Talent-Fähigkeiten – das freischaltende Talent geskillt.</summary>
+    /// <summary>Level reached and – for talent abilities – the unlocking talent skilled.</summary>
     private bool IsAbilityAvailable(Ability ability) =>
         Player.Level >= ability.LevelRequired
         && (!ability.TalentUnlockOnly || Player.HasTalentAbility(ability.Id));
 
     /// <summary>
-    /// Passive Auren (Paladin-Auren, Aspekte, Haltungen, Soul Link) liegen an, solange sie ausgerüstet
-    /// und nutzbar sind – ohne Cast und GCD. Nach dem Tod (Buff-Reset) werden sie sofort erneuert.
+    /// Passive auras (Paladin auras, aspects, stances, Soul Link) are applied as long as they are equipped
+    /// and usable – without cast and GCD. After death (buff reset) they are renewed immediately.
     /// </summary>
     private void MaintainPassiveAuras()
     {
@@ -68,10 +68,10 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Kosten beim Wirken – eine Gratis-Ladung (Vanish, Spirit of Redemption) macht sie 0.</summary>
+    /// <summary>Cost when casting – a free charge (Vanish, Spirit of Redemption) makes it 0.</summary>
     private int CastCost(Ability ability) => Player.Buffs.HasFreeCast ? 0 : Player.GetEffectiveManaCost(ability);
 
-    /// <summary>Zieht die Kosten ab bzw. verbraucht eine Gratis-Ladung (nur bei Fähigkeiten, die etwas kosten).</summary>
+    /// <summary>Deducts the cost or consumes a free charge (only for abilities that cost something).</summary>
     private bool PayCastCost(Ability ability)
     {
         int cost = Player.GetEffectiveManaCost(ability);
@@ -79,13 +79,13 @@ public partial class IdleGameEngine
         return Player.ConsumeMana(cost);
     }
 
-    /// <summary>Liegt der Synergie-Debuff der Fähigkeit auf dem Gegner (Flame Shock für Lava Burst, Immolate für Conflagrate …)?</summary>
+    /// <summary>Is the ability's synergy debuff on the enemy (Flame Shock for Lava Burst, Immolate for Conflagrate …)?</summary>
     private bool IsSynergyActive(Ability ability) =>
         ability.HasSynergy && CurrentEnemy is { } enemy && enemy.Debuffs.HasDebuffNamed(ability.SynergyDebuffName);
 
     /// <summary>
-    /// Erwarteter Schadensfaktor für die Cast-Auswahl: offene Verstärkungen (Eclipse, Arcane Blast) und Synergien
-    /// (ein Crit verdoppelt, +100 % Crit-Chance ≈ ×2).
+    /// Expected damage factor for cast selection: pending empowerments (Eclipse, Arcane Blast) and synergies
+    /// (a crit doubles, +100 % crit chance ≈ ×2).
     /// </summary>
     private double SelectionDamageFactor(Ability ability)
     {
@@ -95,7 +95,7 @@ public partial class IdleGameEngine
         return factor;
     }
 
-    /// <summary>Eclipse-Talent: Wrath und Starfire verstärken sich abwechselnd.</summary>
+    /// <summary>Eclipse talent: Wrath and Starfire empower each other alternately.</summary>
     private void ApplyEclipse(Ability ability)
     {
         if (ability.Name is not ("Wrath" or "Starfire")) return;
@@ -109,7 +109,7 @@ public partial class IdleGameEngine
                 "Wrath", SolarEclipseBonus, EclipseDuration);
     }
 
-    /// <summary>Nightfall-Talent: jeder DoT-Tick kann Shadow Trance auslösen (nächstes Shadow Bolt sofort).</summary>
+    /// <summary>Nightfall talent: every DoT tick can trigger Shadow Trance (next Shadow Bolt instant).</summary>
     private void TryNightfallProc()
     {
         double chance = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.Nightfall);
@@ -117,7 +117,7 @@ public partial class IdleGameEngine
             Player.Buffs.Apply(ShadowTrance);
     }
 
-    /// <summary>Earth Shield: ein erlittener Treffer heilt den Spieler (Ladung verbraucht ConsumeHitCharges).</summary>
+    /// <summary>Earth Shield: a hit taken heals the player (the charge is consumed by ConsumeHitCharges).</summary>
     private void ApplyHealOnHit()
     {
         var source = Player.Buffs.GetHealOnHitSource();
@@ -129,7 +129,7 @@ public partial class IdleGameEngine
         CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, heal, crit));
     }
 
-    /// <summary>Spirit-of-Redemption-Talent: ein tödlicher Treffer lässt den Spieler mit 1 HP als unverwundbaren Geist weiterkämpfen.</summary>
+    /// <summary>Spirit of Redemption talent: a lethal hit lets the player keep fighting with 1 HP as an invulnerable spirit.</summary>
     private void TryCheatDeath()
     {
         if (Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.SpiritOfRedemption) <= 0) return;

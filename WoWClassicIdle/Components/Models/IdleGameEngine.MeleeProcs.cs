@@ -1,31 +1,31 @@
 using Models;
 
-// Nahkampf-Procs rund um die Auto-Attack: Flurry (Tempo nach Crit) und Windfury Weapon (Zusatzschläge).
+// Melee procs around the auto-attack: Flurry (haste after crit) and Windfury Weapon (extra swings).
 public partial class IdleGameEngine
 {
-    /// <summary>Anzahl Schläge, die nach einem Nahkampf-Crit beschleunigt sind (wie Classic-Flurry).</summary>
+    /// <summary>Number of swings that are sped up after a melee crit (like Classic Flurry).</summary>
     private const int FlurryChargesPerCrit = 3;
 
     private int _flurryCharges;
 
-    // Schamanen-Talent + Warrior-Flurry (nur in Berserker Stance)
+    // Shaman talent + Warrior Flurry (only in Berserker Stance)
     private double FlurryBonus =>
         Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.FlurryAttackSpeed)
         + (Player.ActiveForm == DruidForm.BerserkerStance
             ? Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.BerserkerFlurry)
             : 0);
 
-    /// <summary>Tempo-Multiplikator durch Flurry (1.0 = kein Bonus aktiv).</summary>
+    /// <summary>Haste multiplier from Flurry (1.0 = no bonus active).</summary>
     private double FlurryAttackSpeedMultiplier => _flurryCharges > 0 ? 1.0 + FlurryBonus : 1.0;
 
-    /// <summary>Nach jedem regulären Schlag: eine Ladung verbrauchen, bei Crit neu aufladen.</summary>
+    /// <summary>After every regular swing: consume one charge, recharge on crit.</summary>
     private void UpdateFlurry(bool isCrit)
     {
         if (_flurryCharges > 0) _flurryCharges--;
         if (isCrit && FlurryBonus > 0) _flurryCharges = FlurryChargesPerCrit;
     }
 
-    /// <summary>Passiver Proc (Deadly Poison) – mit Talent-Boni (Proc-Chance, Stacks, Tick-Tempo).</summary>
+    /// <summary>Passive proc (Deadly Poison) – with talent bonuses (proc chance, stacks, tick rate).</summary>
     private void TryProcPassive(Ability passive)
     {
         var effective = Player.GetEffectiveAbility(passive);
@@ -34,8 +34,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Windfury Weapon: mit <see cref="Ability.BuffExtraAttackChance"/> folgen dem Schlag
-    /// <see cref="Ability.BuffExtraAttacks"/> zusätzliche Auto-Attacks. Gibt den Zusatzschaden zurück.
+    /// Windfury Weapon: with <see cref="Ability.BuffExtraAttackChance"/> the swing is followed by
+    /// <see cref="Ability.BuffExtraAttacks"/> additional auto-attacks. Returns the extra damage.
     /// </summary>
     private int TryWindfuryAttacks(double autoMult)
     {
@@ -54,7 +54,7 @@ public partial class IdleGameEngine
             anyCrit |= crit;
         }
 
-        // Crit eines Zusatzschlags lädt Flurry auf, verbraucht aber keine Ladung
+        // A crit of an extra swing charges Flurry but consumes no charge
         if (anyCrit && FlurryBonus > 0) _flurryCharges = FlurryChargesPerCrit;
         LastLog = $"⚔ {source.Name} → +{total} DMG ({source.BuffExtraAttacks} extra attacks)!";
         return total;

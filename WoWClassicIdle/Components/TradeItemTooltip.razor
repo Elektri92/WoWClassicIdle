@@ -1,7 +1,7 @@
 @using Models
 
-@* Umschließt den Inhalt und zeigt beim Überfahren einen WoW-Tooltip für ein Berufs-Item.
-   Positionierung über js/tooltip.js (position: fixed). *@
+@* Wraps the content and shows a WoW tooltip for a profession item on hover.
+   Positioned via js/tooltip.js (position: fixed). *@
 @if (Item is null)
 {
     @ChildContent
@@ -58,6 +58,6 @@ else
     [Parameter] public string? Class { get; set; }
     [Parameter] public string? Hint { get; set; }
 
-    /// <summary>Anzahl im Stack/Inventar (0 = nicht anzeigen).</summary>
+    /// <summary>Amount in the stack/inventory (0 = don't show).</summary>
     [Parameter] public int Count { get; set; }
 }

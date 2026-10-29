@@ -13,24 +13,24 @@ public class TalentDefinition
     public int MaxRanks { get; init; } = 1;
     public string? RequiresTalentId { get; init; }
 
-    /// <summary>Mindest-Charakterlevel zum Investieren (Spezialisierungs-Talente: 20). 0 = nur Reihen-Regel.</summary>
+    /// <summary>Minimum character level to invest (specialization talents: 20). 0 = row rule only.</summary>
     public int LevelRequired { get; init; }
     public TalentEffectType EffectType { get; init; }
     public double EffectPerRank { get; init; }
     public string IconUrl { get; init; } = "";
-    /// <summary>ID der Fähigkeit die durch dieses Talent freigeschaltet wird (optional).</summary>
+    /// <summary>ID of the ability unlocked by this talent (optional).</summary>
     public string? GrantsAbilityId { get; init; }
 
-    /// <summary>Weitere freigeschaltete Fähigkeiten (z. B. Bear Form → Maul).</summary>
+    /// <summary>Further unlocked abilities (e.g. Bear Form → Maul).</summary>
     public IReadOnlyList<string> AlsoGrantsAbilityIds { get; init; } = [];
 
-    /// <summary>Alle durch dieses Talent freigeschalteten Fähigkeiten.</summary>
+    /// <summary>All abilities unlocked by this talent.</summary>
     public IEnumerable<string> GrantedAbilityIds =>
         string.IsNullOrEmpty(GrantsAbilityId)
             ? AlsoGrantsAbilityIds
             : AlsoGrantsAbilityIds.Prepend(GrantsAbilityId);
 
-    /// <summary>Beschreibung des Effekts für einen bestimmten Rang.</summary>
+    /// <summary>Description of the effect for a specific rank.</summary>
     public string EffectDescription(int ranks) => EffectType switch
     {
         TalentEffectType.CritChance =>

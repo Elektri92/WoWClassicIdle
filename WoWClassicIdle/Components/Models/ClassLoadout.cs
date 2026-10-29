@@ -2,16 +2,16 @@
 namespace Models;
 
 /// <summary>
-/// Definiert, welche Abilities in den Slots einer Klasse ausgerüstet sind.
+/// Defines which abilities are equipped in the slots of a class.
 /// </summary>
 public class ClassLoadout
 {
     public CharacterClass Class { get; init; }
 
     /// <summary>
-    /// Geordnete Liste von Ability-Ids (max. <see cref="ClassAbilityRegistry.MaxSlotsPerClass"/> Einträge).
-    /// Leere Slots werden durch <see langword="null"/>-Einträge nicht representiert –
-    /// die Liste enthält nur die tatsächlich ausgerüsteten Ids.
+    /// Ordered list of ability IDs (max. <see cref="ClassAbilityRegistry.MaxSlotsPerClass"/> entries).
+    /// Empty slots are not represented by <see langword="null"/> entries –
+    /// the list only contains the IDs actually equipped.
     /// </summary>
     public List<string> EquippedAbilityIds { get; set; } = new();
 

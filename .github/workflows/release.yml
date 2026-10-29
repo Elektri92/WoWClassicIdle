@@ -17,7 +17,7 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      # Patch-Version in version.json erhöhen und neue Version für alle Schritte bereitstellen
+      # Bump the patch version in version.json and expose the new version to all steps
       - name: Bump version
         id: version
         run: |
@@ -40,7 +40,7 @@ jobs:
           )
           echo "value=$NEW" >> $GITHUB_OUTPUT
 
-      # Alle Publishes erhalten die Version explizit, damit AssemblyVersion korrekt eingebettet wird
+      # Pass the version explicitly to every publish so AssemblyVersion is embedded correctly
       - name: Publish Linux
         run: dotnet publish WoWClassicIdle -p:PublishProfile=Linux-x64 -p:Version=${{ steps.version.outputs.value }}
 
@@ -50,9 +50,9 @@ jobs:
       - name: Publish macOS
         run: dotnet publish WoWClassicIdle -p:PublishProfile=MacOS-x64 -p:Version=${{ steps.version.outputs.value }}
 
-      # Release-Assets vorbereiten
-      # Linux: tar.gz (Erstinstall: Binary + wwwroot) + Binary allein (Auto-Update)
-      # Windows/macOS: Einzelne Executable
+      # Prepare release assets
+      # Linux: tar.gz (first install: binary + wwwroot) + binary alone (auto-update)
+      # Windows/macOS: single executable
       - name: Prepare release assets
         run: |
           chmod +x publish/linux/WoWClassicIdle
@@ -62,7 +62,7 @@ jobs:
           cp publish/win/WoWClassicIdle.exe    publish/win/WoWClassicIdle-win-x64.exe
           cp publish/mac/WoWClassicIdle        publish/mac/WoWClassicIdle-osx-x64
 
-      # version.json zurück in main committen ([skip ci] verhindert Endlosschleife)
+      # Commit version.json back to main ([skip ci] prevents an endless loop)
       - name: Commit version.json
         run: |
           git config user.name  "github-actions[bot]"
@@ -71,7 +71,7 @@ jobs:
           git commit -m "chore: bump version to v${{ steps.version.outputs.value }} [skip ci]"
           git push
 
-      # GitHub Release anlegen und Binaries hochladen
+      # Create the GitHub release and upload the binaries
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

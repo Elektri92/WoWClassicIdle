@@ -1,9 +1,9 @@
-/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
-   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
-   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
+/* One-time animations carry visibility in the start keyframe: that makes them run on the main thread
+   in WebKitGTK instead of in the compositor. Compositor animations ignore the backwards start value there – the element
+   flashed fully visible once before the animation start (page transition flicker). */
 /* ============================================
-   Inventory (/inventory) – gleicher Look wie /ability-loadout
-   Kopf (.al-header, .al-portrait, .al-slot-meter) und Panels (.al-panel) kommen aus ability-loadout.css
+   Inventory (/inventory) – same look as /ability-loadout
+   Header (.al-header, .al-portrait, .al-slot-meter) and panels (.al-panel) come from ability-loadout.css
    ============================================ */
 
 .inventory-page { max-width: 1400px; }
@@ -18,7 +18,7 @@
     text-shadow: 0 1px 2px #000;
 }
 
-/* ── Spalten: Charakter | Taschen | Händler (rechts) ── */
+/* ── Columns: character | bags | merchant (right) ── */
 .inv-layout {
     display: grid;
     grid-template-columns: 380px minmax(0, 1fr) 330px;
@@ -58,7 +58,7 @@
     border-radius: 6px;
     box-shadow: inset 0 0 18px #000;
 }
-/* Fraktionsfarbener Schimmer hinter dem Wappen */
+/* Faction-colored shimmer behind the crest */
 .model-area::before {
     content: "";
     position: absolute;
@@ -71,7 +71,7 @@
 .model-area.alliance::before { background: radial-gradient(circle, rgba(74, 144, 217, .8), transparent 70%); }
 .model-area.horde::before    { background: radial-gradient(circle, rgba(208, 74, 74, .8), transparent 70%); }
 
-/* Volkswappen (freigestelltes PNG): weicher Schatten und Ausblenden nach unten ins Panel */
+/* Race crest (cut-out PNG): soft shadow and fade-out downwards into the panel */
 .model-crest {
     position: relative;
     width: 88%;
@@ -106,7 +106,7 @@
 }
 .equip-slot:hover { border-color: var(--wow-gold-soft); }
 
-/* Ausgerüstete Rüstung / Waffe */
+/* Equipped armor / weapon */
 .equip-slot.equipped-item,
 .equip-slot.equipped-weapon {
     border-color: var(--quality, var(--wow-gold-soft));
@@ -125,14 +125,14 @@
 }
 
 /* ── Gear-Wechsel ── */
-/* Anlegen: neues Icon springt in den Slot, Rahmen leuchtet in Qualitätsfarbe */
+/* Equip: new icon jumps into the slot, border glows in quality color */
 .equip-slot.swap-in { animation: inv-slot-glow 1s ease-out; z-index: 2; }
 .equip-slot.swap-in > img:not(.swap-ghost) { animation: inv-gear-pop .5s cubic-bezier(.3, 1.6, .5, 1); }
-/* Ablegen: Slot zuckt kurz, Platzhalter blendet ein */
+/* Unequip: slot twitches briefly, placeholder fades in */
 .equip-slot.swap-out { animation: inv-slot-shake .35s ease-in-out; z-index: 2; }
 .equip-slot.swap-out > img:not(.swap-ghost) { animation: inv-fade-in .5s ease-out; }
 
-/* Lichtring, der sich vom Slot ausbreitet */
+/* Ring of light spreading out from the slot */
 .swap-ring {
     position: absolute;
     inset: -2px;
@@ -142,7 +142,7 @@
     animation: inv-ring .7s ease-out forwards;
 }
 .swap-out .swap-ring { border-color: var(--wow-muted); }
-/* Altes Icon löst sich auf */
+/* Old icon dissolves */
 .swap-ghost {
     position: absolute;
     inset: 0;
@@ -153,7 +153,7 @@
     animation: inv-ghost .6s ease-in forwards;
 }
 
-/* Stat-Änderung schwebt neben dem Wert hoch */
+/* Stat change floats up next to the value */
 .stats-area .wow-stat-row { position: relative; }
 .stat-delta {
     position: absolute;
@@ -221,7 +221,7 @@
     padding: 4px 8px;
 }
 
-/* ── Geld (klassischer Rucksack-Geldrahmen) ── */
+/* ── Money (classic backpack money frame) ── */
 .money-frame {
     display: inline-flex;
     gap: 8px;
@@ -244,7 +244,7 @@
     height: 13px;
 }
 
-/* ── Taschen-Panel: Karte der Hauptstadt als Hintergrund ── */
+/* ── Bags panel: map of the capital as background ── */
 .inv-bags { overflow: hidden; }
 .inv-bags > :not(.inv-bags-map) { position: relative; z-index: 1; }
 .inv-bags-map {
@@ -257,7 +257,7 @@
     pointer-events: none;
     animation: inv-map-in 1.2s ease-out .3s backwards;
 }
-/* Vignette: Karte läuft zu den Panelrändern hin ins UI-Braun aus */
+/* Vignette: the map fades out into the UI brown towards the panel edges */
 .inv-bags-map::after {
     content: "";
     position: absolute;
@@ -304,7 +304,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     opacity: .45;
     filter: grayscale(.6);
 }
-/* Gesperrter Taschenplatz (Level nicht erreicht) */
+/* Locked bag slot (level not reached) */
 .bar-slot.bag-locked img {
     opacity: .25;
     filter: grayscale(.9) brightness(.6);
@@ -319,7 +319,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     gap: 10px;
     margin-top: 14px;
 }
-/* Weitere Taschen rechts vom Rucksack: zwei je Reihe */
+/* Further bags to the right of the backpack: two per row */
 .bags-side {
     display: grid;
     grid-template-columns: repeat(2, auto);
@@ -408,7 +408,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 .bag-slot.armor-item,
 .bag-slot.sellable-item { cursor: grab; }
 
-/* Levelvoraussetzung nicht erfüllt – Icon abgedunkelt */
+/* Level requirement not met – icon darkened */
 .bag-slot.level-locked,
 .bag-slot.level-locked:hover {
     cursor: not-allowed;
@@ -419,7 +419,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     filter: grayscale(.7);
 }
 
-/* Händler offen: Rechtsklick verkauft – Münz-Cursor und goldener Schimmer */
+/* Merchant open: right-click sells – coin cursor and golden shimmer */
 .bag-slot.sell-mode,
 .bag-slot.sell-mode.level-locked { cursor: pointer; }
 .bag-slot.sell-mode:hover {
@@ -444,14 +444,14 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     font-size: .85rem;
 }
 
-/* ── Händler (rechte Spalte) ── */
+/* ── Merchant (right column) ── */
 .inv-merchant-col {
     position: sticky;
     top: 16px;
     animation: al-card-in .5s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i, 0) * .1s) backwards;
 }
 
-/* Geschlossen: NPC zum Anklicken (Links- oder Rechtsklick); Farben wie das geöffnete Händlerfenster */
+/* Closed: NPC to click (left or right click); colors like the opened merchant window */
 .inv-merchant-npc {
     width: 100%;
     display: flex;
@@ -499,7 +499,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     animation: al-shine 2.4s linear infinite;
 }
 
-/* Geöffnet: Handelsfenster im Stil des Classic-Händlerfensters */
+/* Opened: trade window in the style of the Classic merchant window */
 .inv-merchant-window {
     position: relative;
     padding: 0 10px 0;
@@ -510,7 +510,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     animation: al-card-in .3s cubic-bezier(.2, .8, .2, 1) backwards;
 }
 
-/* Titelleiste; Porträt ragt oben links über den Rahmen */
+/* Title bar; the portrait sticks out over the frame at the top left */
 .mw-titlebar {
     position: relative;
     display: flex;
@@ -554,7 +554,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 .mw-subtitle { font-size: .7rem; color: var(--wow-muted); }
 .mw-titlebar .bag-close { align-self: flex-start; }
 
-/* Raster: 2 Spalten, je Zelle Icon + Name + Preis */
+/* Grid: 2 columns, each cell icon + name + price */
 .mw-grid {
     position: relative;
     display: grid;
@@ -613,18 +613,18 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 .mw-cell.empty { cursor: default; }
 .mw-cell.empty:hover { background: none; }
 
-/* Nicht bezahlbar: rot getönt wie im Original */
+/* Not affordable: tinted red like in the original */
 .mw-cell.too-expensive .mw-cell-info { background: linear-gradient(90deg, rgba(110, 10, 10, .55), rgba(60, 5, 5, .25)); }
 .mw-cell.too-expensive .mw-icon img { filter: sepia(1) saturate(4) hue-rotate(-50deg) brightness(.7); }
 .mw-cell.too-expensive .coin { color: #ff5050; }
 .mw-cell.sold-out { cursor: not-allowed; }
 .mw-cell.sold-out .mw-icon img { opacity: .35; filter: grayscale(1); }
 .mw-cell.sold-out .mw-cell-name { opacity: .5; }
-/* Gerade verkauft: neuester Rückkauf-Eintrag ploppt auf */
+/* Just sold: the newest buyback entry pops up */
 .mw-cell.fresh .mw-icon { animation: inv-gear-pop .5s cubic-bezier(.3, 1.6, .5, 1); }
 .mw-cell.fresh .mw-cell-info { animation: inv-flash-gold 1s ease-out; }
 
-/* Unterer Bereich: Verkaufsfläche + zuletzt verkauftes Item */
+/* Lower area: sell area + most recently sold item */
 .mw-bottom {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -642,7 +642,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     color: #6a6660;
 }
 
-/* Geldleiste unten rechts */
+/* Money bar bottom right */
 .mw-footer {
     display: flex;
     justify-content: flex-end;
@@ -654,7 +654,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     font-size: .85rem;
 }
 
-/* Reiter unter dem Fenster */
+/* Tabs below the window */
 .mw-tabs {
     position: absolute;
     top: 100%;
@@ -740,7 +740,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     animation: al-toast-in .3s cubic-bezier(.2, .8, .2, 1) both, al-shake .4s ease-in-out .1s;
 }
 
-/* ── Sprechblase des Händlers ── */
+/* ── Speech bubble of the merchant ── */
 .inv-speech {
     position: absolute;
     bottom: calc(100% + 12px);
@@ -764,7 +764,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     transform-origin: 50% 100%;
     animation: inv-speech 4.6s cubic-bezier(.2, .8, .2, 1) forwards;
 }
-/* Schwänzchen zeigt auf das Porträt */
+/* The tail points at the portrait */
 .inv-speech::before,
 .inv-speech::after {
     content: "";
@@ -775,13 +775,13 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 }
 .inv-speech::before { top: 100%; border-width: 12px 10px 0; border-color: #6b5426 transparent transparent; }
 .inv-speech::after  { top: calc(100% - 3px); border-width: 10px 8px 0; border-color: #ecdcb0 transparent transparent; }
-/* Im Handelsfenster sitzt das Porträt links → Blase links ausrichten */
+/* In the trade window the portrait sits on the left → align the bubble left */
 .inv-merchant-col.trading .inv-speech { left: 0; transform: none; transform-origin: 30px 100%; }
 .inv-merchant-col.trading .inv-speech::before,
 .inv-merchant-col.trading .inv-speech::after { left: 38px; }
 .inv-speech-text { display: inline-block; animation: inv-speech-text .5s ease-out .12s backwards; }
 
-/* Porträt wackelt beim Sprechen */
+/* Portrait wiggles while talking */
 .al-portrait.talking { animation: inv-talk .9s ease-in-out 2; }
 
 /* ── Kauf-/Verkaufseffekte ── */
@@ -809,13 +809,13 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     border-radius: 4px;
     box-shadow: 0 0 12px rgba(255, 209, 0, .7);
 }
-/* Kauf: Item springt aus dem Slot und fliegt nach links zu den Taschen */
+/* Purchase: item jumps out of the slot and flies left to the bags */
 .inv-fx-buy .inv-fx-item {
     left: 11px;
     top: calc(50% - 16px);
     animation: inv-buy-fly .9s cubic-bezier(.5, -0.3, .7, 1) forwards;
 }
-/* Verkauf: Item wird in der Mitte der Verkaufsfläche „geschluckt“ */
+/* Sale: item gets "swallowed" in the middle of the sell area */
 .inv-fx-sell .inv-fx-item {
     left: calc(50% - 16px);
     top: calc(50% - 16px);
@@ -898,7 +898,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     100% { transform: translate(-50%, -30px) scale(1); opacity: 0; }
 }
 
-/* ── Stapel teilen (Shift-Linksklick) ── */
+/* ── Split stack (shift-left-click) ── */
 .split-backdrop {
     position: fixed;
     inset: 0;

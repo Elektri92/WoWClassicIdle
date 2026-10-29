@@ -1,27 +1,27 @@
 // Models/Consumable.cs
 namespace Models
 {
-    /// <summary>Art eines Verbrauchsguts – bestimmt, wann und wie es im Kampf automatisch benutzt wird.</summary>
+    /// <summary>Kind of consumable – determines when and how it is used automatically in combat.</summary>
     public enum ConsumableKind
     {
-        HealthPotion,   // stellt Leben wieder her (bei niedrigem Leben, gemeinsame Trank-Abklingzeit)
-        ManaPotion,     // stellt Mana wieder her (bei niedrigem Mana, gemeinsame Trank-Abklingzeit)
+        HealthPotion,   // restores health (at low health, shared potion cooldown)
+        ManaPotion,     // restores mana (at low mana, shared potion cooldown)
         Elixir,         // Stat-Buff (Alchemie), 1 min
-        Flask,          // Stat-Buff (Alchemie), 1 h, bleibt nach dem Tod erhalten
+        Flask,          // stat buff (Alchemy), 1 h, persists through death
         Food,           // Stat-Buff (Kochkunst), 1 min
-        Bandage,        // verkürzt die Wartezeit beim Geistheiler um Amount %
-        Explosive,      // Ingenieurskunst: Amount Schaden am Gegner, eigene Abklingzeit
-        Costume,        // nur manuell: verwandelt das Charaktermodell (Savory Deviate Delight), erneuert sich automatisch
+        Bandage,        // shortens the spirit healer wait by Amount %
+        Explosive,      // Engineering: Amount damage to the enemy, own cooldown
+        Costume,        // manual only: transforms the character model (Savory Deviate Delight), renews itself automatically
     }
 
-    /// <summary>Verkleidung durch Savory Deviate Delight (50/50).</summary>
+    /// <summary>Disguise from Savory Deviate Delight (50/50).</summary>
     public enum Costume { None, Pirate, Ninja }
 
     public static class Costumes
     {
         public static string Name(Costume costume) => costume.ToString();
 
-        /// <summary>Portrait der Verkleidung; null = keine.</summary>
+        /// <summary>Portrait of the disguise; null = none.</summary>
         public static string? PortraitUrl(Costume costume) => costume switch
         {
             Costume.Pirate => "https://wow.zamimg.com/images/wow/icons/large/inv_helmet_66.jpg",
@@ -31,9 +31,9 @@ namespace Models
     }
 
     /// <summary>
-    /// Verbrauchsgut (Kategorie "Consumable"): stapelbares Berufs-Item, das im Kampf automatisch aus dem Inventar benutzt wird.
-    /// <paramref name="Bonuses"/> = Stat-Buff (Elixier/Fläschchen/Essen) für <paramref name="DurationSeconds"/> Kampfsekunden,
-    /// <paramref name="Amount"/> = Heilung/Mana bzw. Prozent schnellere Wiederbelebung (Verband).
+    /// Consumable (category "Consumable"): stackable profession item that is used automatically from the inventory in combat.
+    /// <paramref name="Bonuses"/> = stat buff (elixir/flask/food) for <paramref name="DurationSeconds"/> combat seconds,
+    /// <paramref name="Amount"/> = healing/mana or percent faster resurrection (bandage).
     /// </summary>
     public record ConsumableItem(
         int Id,
@@ -51,17 +51,17 @@ namespace Models
         public bool IsBuff => Kind is ConsumableKind.Elixir or ConsumableKind.Flask or ConsumableKind.Food;
 
         /// <summary>
-        /// Buff-Slot: gleiche Art mit denselben Stats teilt sich einen Slot (stärkere überschreiben schwächere),
-        /// verschiedene Arten (z. B. Elixier + Essen + Fläschchen) laufen parallel.
+        /// Buff slot: the same kind with the same stats shares a slot (stronger ones overwrite weaker ones),
+        /// different kinds (e.g. elixir + food + flask) run in parallel.
         /// </summary>
         public string BuffKey => $"{Kind}:{StatSignature(Bonuses ?? PrimaryStats.Zero)}";
 
-        /// <summary>Stärke für den Vergleich innerhalb eines Slots.</summary>
+        /// <summary>Strength for comparison within a slot.</summary>
         public int Potency => Bonuses is { } b
             ? b.Strength + b.Agility + b.Stamina + b.Intelligence + b.Spirit
             : Amount;
 
-        /// <summary>Beschreibung des Effekts für Tooltips (englisch).</summary>
+        /// <summary>Description of the effect for tooltips (English).</summary>
         public string EffectText => Kind switch
         {
             ConsumableKind.HealthPotion => $"Restores {Amount} health.",
@@ -86,6 +86,6 @@ namespace Models
             seconds >= 3600 ? $"{seconds / 3600:0.#} h" : seconds >= 60 ? $"{seconds / 60:0.#} min" : $"{seconds:0} sec";
     }
 
-    /// <summary>Aktiver Verbrauchsgut-Buff mit verbleibender Laufzeit (Kampfsekunden).</summary>
+    /// <summary>Active consumable buff with remaining duration (combat seconds).</summary>
     public record ActiveConsumable(ConsumableItem Item, double Remaining);
 }

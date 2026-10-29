@@ -25,7 +25,7 @@ public class DebuffTracker
         lock (_lock) return _active.ContainsKey(abilityId);
     }
 
-    /// <summary>True wenn ein Debuff dieses Namens aktiv ist – rangunabhängig (Synergien wie Lava Burst → Flame Shock).</summary>
+    /// <summary>True if a debuff with this name is active – regardless of rank (synergies like Lava Burst → Flame Shock).</summary>
     public bool HasDebuffNamed(string name)
     {
         lock (_lock) return _active.Values.Any(d => d.Source.Name == name);
@@ -37,7 +37,7 @@ public class DebuffTracker
         lock (_lock) _active[ability.Id] = new ActiveDebuff(ability, ability.DebuffDuration);
     }
 
-    /// <summary>Wendet Ignite an – überschreibt nur wenn der neue Schaden-per-Tick größer ist als der aktuelle.</summary>
+    /// <summary>Applies Ignite – only overwrites if the new damage per tick is greater than the current one.</summary>
     public void ApplyIgnite(Ability ability)
     {
         lock (_lock)
@@ -92,7 +92,7 @@ public class DebuffTracker
         lock (_lock) _active.Clear();
     }
 
-    /// <summary>Wendet einen stapelbaren Debuff an: erhöht den Stack-Zähler bis <see cref="Ability.DebuffMaxStacks"/> und frischt die Laufzeit auf.</summary>
+    /// <summary>Applies a stackable debuff: raises the stack counter up to <see cref="Ability.DebuffMaxStacks"/> and refreshes the duration.</summary>
     public void ApplyStack(Ability ability)
     {
         lock (_lock)
@@ -120,7 +120,7 @@ public class DebuffTracker
         }
     }
 
-    /// <summary>Angriffstempo-Multiplikator des Gegners (z. B. 0.80 bei −20 %). enemyInterval = Speed / Multiplier → längeres Intervall = langsamer.</summary>
+    /// <summary>Attack speed multiplier of the enemy (e.g. 0.80 at −20 %). enemyInterval = Speed / Multiplier → longer interval = slower.</summary>
     public double AttackSpeedMultiplier
     {
         get
@@ -130,7 +130,7 @@ public class DebuffTracker
         }
     }
 
-    /// <summary>True wenn der Gegner durch einen Betäubungs-Debuff handlungsunfähig ist.</summary>
+    /// <summary>True if the enemy is incapacitated by a stun debuff.</summary>
     public bool IsStunned
     {
         get

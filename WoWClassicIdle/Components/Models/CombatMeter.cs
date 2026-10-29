@@ -3,10 +3,10 @@ namespace Models;
 
 public enum CombatActionKind { Damage, Heal }
 
-/// <summary>Ein einzelner Ability-Einsatz für die Aktionshistorie.</summary>
+/// <summary>A single ability use for the action history.</summary>
 public sealed record CombatAction(int Id, double GameTime, string Name, string IconUrl, CombatActionKind Kind, int Amount);
 
-/// <summary>Aggregierte Werte einer Quelle (Ability oder Auto Attack) für das Damage Meter.</summary>
+/// <summary>Aggregated values of one source (ability or auto attack) for the damage meter.</summary>
 public sealed record MeterRow(string Name, string IconUrl, CombatActionKind Kind, long Total, int Count, int Max);
 
 public sealed record MeterSnapshot(
@@ -21,8 +21,8 @@ public sealed record MeterSnapshot(
 }
 
 /// <summary>
-/// Sammelt Schaden/Heilung des Spielers. Wird vom Engine-Timer-Thread beschrieben
-/// und von der UI per <see cref="GetSnapshot"/> gelesen – daher durchgehend gelockt.
+/// Collects damage/healing of the player. Written by the engine timer thread
+/// and read by the UI via <see cref="GetSnapshot"/> – hence locked throughout.
 /// </summary>
 public sealed class CombatMeter
 {
@@ -58,11 +58,11 @@ public sealed class CombatMeter
     public void RecordAbility(Ability ability, CombatActionKind kind, int amount) =>
         Record(ability.Name, ability.IconUrl, kind, amount);
 
-    /// <summary>Benutzte Items (z. B. Dynamit) – eigene Zeile je Item.</summary>
+    /// <summary>Used items (e.g. dynamite) – own row per item.</summary>
     public void RecordItem(Item item, CombatActionKind kind, int amount) =>
         Record(item.Name, item.IconUrl, kind, amount);
 
-    /// <summary>Passive HP-Regeneration aus Spirit – erscheint als eigene Heal-Zeile.</summary>
+    /// <summary>Passive HP regeneration from Spirit – appears as its own heal row.</summary>
     public void RecordSpiritRegen(int amount) =>
         Record(SpiritRegenName, SpiritRegenIconUrl, CombatActionKind.Heal, amount);
 
@@ -71,7 +71,7 @@ public sealed class CombatMeter
         lock (_lock)
         {
             Accumulate(name, iconUrl, kind, amount);
-            // Zeitstempel relativ zum letzten Reset, passend zur Kampfzeit im Meter
+            // Timestamp relative to the last reset, matching the combat time in the meter
             _history.AddFirst(new CombatAction(_nextActionId++, _combatSeconds, name, iconUrl, kind, amount));
             while (_history.Count > MaxHistory)
                 _history.RemoveLast();

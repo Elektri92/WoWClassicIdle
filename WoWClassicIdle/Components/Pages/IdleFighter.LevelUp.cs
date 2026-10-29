@@ -1,4 +1,4 @@
-// Level-Up: goldene Lichtsäule um den Spieler-Frame plus Banner über dem Schlachtfeld.
+// Level-up: golden pillar of light around the player frame plus a banner above the battlefield.
 // Darstellung in wwwroot/css/level-up.css.
 using Models;
 
@@ -6,7 +6,7 @@ namespace WoWClassicIdle.Components.Pages;
 
 public partial class IdleFighter
 {
-    private static readonly TimeSpan LevelUpDuration = TimeSpan.FromSeconds(3.4); // = längste CSS-Animation
+    private static readonly TimeSpan LevelUpDuration = TimeSpan.FromSeconds(3.4); // = longest CSS animation
     private Character? _levelWatchPlayer;
     private CharacterClass _levelWatchClass;
     private int _lastSeenLevel;
@@ -15,8 +15,8 @@ public partial class IdleFighter
 
     private bool ShowLevelUp => DateTime.UtcNow - _levelUpAt < LevelUpDuration;
 
-    // Timer-Thread! Nur ein Anstieg beim selben Charakter/derselben Klasse zählt –
-    // Charakter- oder Klassenwechsel setzen lediglich die Vergleichsbasis neu.
+    // Timer thread! Only an increase on the same character/class counts –
+    // character or class switches merely reset the comparison baseline.
     private void DetectLevelUp()
     {
         var player = _engine.Player;
@@ -32,7 +32,7 @@ public partial class IdleFighter
         _lastSeenLevel = level;
     }
 
-    // Funken der Lichtsäule: (horizontale Position %, Verzögerung ms, Größe px)
+    // Sparks of the light pillar: (horizontal position %, delay ms, size px)
     private static readonly (int X, int Delay, int Size)[] LevelUpSparks =
     [
         (8, 0, 4), (18, 380, 3), (27, 120, 5), (36, 620, 3), (44, 260, 4), (52, 40, 6),

@@ -1,7 +1,7 @@
 // Models/Item.cs
 namespace Models
 {
-    /// <summary>Item-Qualität wie in WoW Classic (bestimmt Namens-/Rahmenfarbe).</summary>
+    /// <summary>Item quality like in WoW Classic (determines name/border color).</summary>
     public enum ItemQuality
     {
         Poor,
@@ -27,8 +27,8 @@ namespace Models
     }
 
     /// <summary>
-    /// Unveränderliche Item-Definition (Template). Mehrere Stacks können dieselbe Definition teilen.
-    /// <see cref="Icon"/> ist der Icon-Name auf wow.zamimg.com, z.B. "inv_misc_bag_08".
+    /// Immutable item definition (template). Several stacks can share the same definition.
+    /// <see cref="Icon"/> is the icon name on wow.zamimg.com, e.g. "inv_misc_bag_08".
     /// </summary>
     public record Item(
         int Id,
@@ -42,7 +42,7 @@ namespace Models
         public bool IsStackable => MaxStack > 1;
     }
 
-    /// <summary>Eine Tasche – kann in einen der 4 Taschenplätze ausgerüstet werden.</summary>
+    /// <summary>A bag – can be equipped into one of the 4 bag slots.</summary>
     public record BagItem(
         int Id,
         string Name,
@@ -53,8 +53,8 @@ namespace Models
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
     /// <summary>
-    /// Berufs-Item (Rohstoff oder hergestelltes Verbrauchsgut) – stapelt bis 9999.
-    /// <paramref name="IsCraftingReagent"/> = wird in Rezepten verarbeitet (Tooltip-Zeile "Crafting Reagent").
+    /// Profession item (raw material or crafted consumable) – stacks up to 9999.
+    /// <paramref name="IsCraftingReagent"/> = used in recipes (tooltip line "Crafting Reagent").
     /// </summary>
     public record TradeItem(
         int Id,
@@ -85,7 +85,7 @@ namespace Models
         Trinket,
     }
 
-    /// <summary>Anzeigename eines Rüstungsslots (WoW-Classic-Slotnamen fürs UI).</summary>
+    /// <summary>Display name of an armor slot (WoW Classic slot names for the UI).</summary>
     public static class ArmorSlots
     {
         public static string Label(ArmorSlot slot) => slot switch
@@ -106,8 +106,8 @@ namespace Models
     }
 
     /// <summary>
-    /// Ein Rüstungsteil das in einen Ausrüstungsslot angelegt werden kann.
-    /// <paramref name="RequiredClass"/> = nur für diese Klasse (hergestellte Klassen-Sets), <c>null</c> = alle Klassen.
+    /// An armor piece that can be equipped into an equipment slot.
+    /// <paramref name="RequiredClass"/> = only for this class (crafted class sets), <c>null</c> = all classes.
     /// </summary>
     public record ArmorItem(
         int Id,
@@ -137,10 +137,10 @@ namespace Models
         PrimaryStats? Bonuses = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
-    /// <summary>Anforderungen eines Items (Level/Klasse), die beim Anlegen geprüft werden.</summary>
+    /// <summary>Requirements of an item (level/class) that are checked when equipping.</summary>
     public static class ItemRequirements
     {
-        /// <summary>Gefordertes Level des Items (1 wenn das Item kein Level verlangt).</summary>
+        /// <summary>Required level of the item (1 if the item requires no level).</summary>
         public static int LevelOf(Item item) => item switch
         {
             ArmorItem      a => a.RequiredLevel,
@@ -151,7 +151,7 @@ namespace Models
 
         public static bool MatchesLevel(Item item, int level) => LevelOf(item) <= level;
 
-        /// <summary>Geforderte Klasse des Items (<c>null</c> = alle Klassen).</summary>
+        /// <summary>Required class of the item (<c>null</c> = all classes).</summary>
         public static CharacterClass? ClassOf(Item item) => item switch
         {
             ArmorItem  a => a.RequiredClass,
@@ -159,12 +159,12 @@ namespace Models
             _            => null,
         };
 
-        /// <summary>Klassenspezifische Waffen und hergestellte Klassen-Rüstung sind an ihre Klasse gebunden.</summary>
+        /// <summary>Class-specific weapons and crafted class armor are bound to their class.</summary>
         public static bool MatchesClass(Item item, CharacterClass cls) =>
             ClassOf(item) is not { } required || required == cls;
     }
 
-    /// <summary>Ein Stapel eines Items in einem Taschenslot.</summary>
+    /// <summary>A stack of an item in a bag slot.</summary>
     public class ItemStack
     {
         public Item Item { get; }
@@ -180,7 +180,7 @@ namespace Models
 
         public int SpaceLeft => Item.MaxStack - Count;
 
-        /// <summary>Legt bis zu <paramref name="amount"/> drauf und gibt die tatsächlich hinzugefügte Menge zurück.</summary>
+        /// <summary>Adds up to <paramref name="amount"/> and returns the amount actually added.</summary>
         public int Add(int amount)
         {
             int added = Math.Min(amount, SpaceLeft);
@@ -188,7 +188,7 @@ namespace Models
             return added;
         }
 
-        /// <summary>Nimmt bis zu <paramref name="amount"/> herunter und gibt die tatsächlich entfernte Menge zurück.</summary>
+        /// <summary>Takes off up to <paramref name="amount"/> and returns the amount actually removed.</summary>
         public int Remove(int amount)
         {
             int removed = Math.Min(amount, Count);

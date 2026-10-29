@@ -1,47 +1,47 @@
 // Models/ShapeshiftForm.cs
 namespace Models;
 
-/// <summary>Gestalt (Druide, Shadowform des Priesters, Warrior-Haltungen) – aktiv, solange die zugehörige Form-Fähigkeit ausgerüstet ist.</summary>
+/// <summary>Form (Druid, Priest Shadowform, Warrior stances) – active as long as the matching form ability is equipped.</summary>
 public enum DruidForm { None, Moonkin, Bear, Cat, Tree, Shadow, BattleStance, BerserkerStance, DefensiveStance }
 
-/// <summary>Ressource, die die Fähigkeiten des Charakters verbrauchen.</summary>
+/// <summary>Resource the character's abilities consume.</summary>
 public enum ResourceKind { Mana, Rage, Energy }
 
-/// <summary>Statische Werte einer Gestalt (Ressource, Portrait, passive Boni).</summary>
+/// <summary>Static values of a form (resource, portrait, passive bonuses).</summary>
 public sealed record ShapeshiftFormInfo
 {
     public DruidForm Form { get; init; }
     public string Name { get; init; } = "";
 
-    /// <summary>Ersetzt das Charakter-Portrait, solange die Form ausgerüstet ist.</summary>
+    /// <summary>Replaces the character portrait as long as the form is equipped.</summary>
     public string PortraitUrl { get; init; } = "";
 
     public ResourceKind Resource { get; init; } = ResourceKind.Mana;
 
-    /// <summary>Weniger erlittener Schaden (0.20 = −20 %).</summary>
+    /// <summary>Less damage taken (0.20 = −20 %).</summary>
     public double DamageTakenReduction { get; init; }
 
-    /// <summary>Mehr verursachte Heilung (0.20 = +20 %).</summary>
+    /// <summary>More healing done (0.20 = +20 %).</summary>
     public double HealingBonus { get; init; }
 
-    /// <summary>Mehr Manaregeneration aus Spirit (0.50 = +50 %).</summary>
+    /// <summary>More mana regeneration from Spirit (0.50 = +50 %).</summary>
     public double SpiritManaRegenBonus { get; init; }
 
-    /// <summary>Schadensbonus (Direkt + DoT) für die Zauber in <see cref="BoostedAbilityNames"/>.</summary>
+    /// <summary>Damage bonus (direct + DoT) for the spells in <see cref="BoostedAbilityNames"/>.</summary>
     public double BoostedAbilityDamageBonus { get; init; }
     public IReadOnlyList<string> BoostedAbilityNames { get; init; } = [];
 
     /// <summary>
-    /// Haltung (Warrior): kein echter Gestaltwechsel – Ressource, Portrait und Stats bleiben, alle Fähigkeiten bleiben nutzbar.
-    /// Dient nur als Voraussetzung für <see cref="Ability.RequiredForm"/> (Overpower → Battle Stance); die Boni kommen aus dem Aura-Buff.
+    /// Stance (Warrior): no real shapeshift – resource, portrait and stats stay, all abilities remain usable.
+    /// Only serves as a prerequisite for <see cref="Ability.RequiredForm"/> (Overpower → Battle Stance); the bonuses come from the aura buff.
     /// </summary>
     public bool IsStance { get; init; }
 }
 
-/// <summary>Gestalt-Daten und Regeln, welche Fähigkeiten in welcher Gestalt nutzbar sind.</summary>
+/// <summary>Form data and rules for which abilities are usable in which form.</summary>
 public static class ShapeshiftForms
 {
-    /// <summary>Größe des Rage-/Energie-Pools (wie Warrior/Rogue).</summary>
+    /// <summary>Size of the rage/energy pool (like Warrior/Rogue).</summary>
     public const int NonManaPoolSize = 100;
 
     private static readonly Dictionary<DruidForm, ShapeshiftFormInfo> Forms = new()
@@ -52,7 +52,7 @@ public static class ShapeshiftForms
             Name                      = "Moonkin Form",
             PortraitUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_nature_forceofnature.jpg",
             BoostedAbilityDamageBonus = 0.15,
-            // Starfire ergänzt – ab Lv 20 ersetzt Starfire Wrath im Loadout, Moonkin brachte nur noch +2,4 %
+            // Starfire added – from Lv 20 Starfire replaces Wrath in the loadout, Moonkin only gave +2.4 %
             BoostedAbilityNames       = ["Wrath", "Starfire", "Moonfire"],
         },
         [DruidForm.Bear] = new ShapeshiftFormInfo
@@ -61,7 +61,7 @@ public static class ShapeshiftForms
             Name                 = "Bear Form",
             PortraitUrl          = "https://wow.zamimg.com/images/wow/icons/large/ability_racial_bearform.jpg",
             Resource             = ResourceKind.Rage,
-            DamageTakenReduction = 0.06,   // war 0.20 – Bear lag Lv 20 bei +21 % XP/h
+            DamageTakenReduction = 0.06,   // was 0.20 – Bear was at +21 % XP/h at Lv 20
         },
         [DruidForm.Cat] = new ShapeshiftFormInfo
         {
@@ -77,8 +77,8 @@ public static class ShapeshiftForms
             PortraitUrl          = "https://wow.zamimg.com/images/wow/icons/large/ability_druid_treeoflife.jpg",
             HealingBonus         = 0.20,
             SpiritManaRegenBonus = 0.50,
-            // Tree Form brachte im Sim nur +1,8 % – Resto-Druiden kämpfen mit Naturzaubern.
-            // Insect Swarm entfernt: mit beiden DoTs lag Resto Lv 20 bei +34 % XP/h (vor Balance)
+            // Tree Form only gave +1.8 % in the sim – Resto Druids fight with nature spells.
+            // Insect Swarm removed: with both DoTs Resto was at +34 % XP/h at Lv 20 (before balancing)
             BoostedAbilityDamageBonus = 0.10,
             BoostedAbilityNames       = ["Wrath", "Moonfire"],
         },
@@ -88,7 +88,7 @@ public static class ShapeshiftForms
             Name                      = "Shadowform",
             PortraitUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowform.jpg",
             DamageTakenReduction      = 0.15,
-            // war +15 % nur Mind Blast/SW:P – bis Mind Blast (Lv 18) wirkungslos, Shadow lag bei −24 bis −31 % XP/h
+            // was +15 % on Mind Blast/SW:P only – useless until Mind Blast (Lv 18), Shadow was at −24 to −31 % XP/h
             BoostedAbilityDamageBonus = 0.25,
             BoostedAbilityNames       = ["Smite", "Mind Blast", "Shadow Word: Pain"],
         },
@@ -114,7 +114,7 @@ public static class ShapeshiftForms
         _                   => "Mana",
     };
 
-    /// <summary>Erste ausgerüstete Form-Fähigkeit bestimmt die Gestalt (es kann nur eine geben).</summary>
+    /// <summary>The first equipped form ability determines the form (there can be only one).</summary>
     public static DruidForm FormOf(IEnumerable<Ability> equipped) =>
         equipped.FirstOrDefault(a => a.IsForm)?.Form ?? DruidForm.None;
 
@@ -122,8 +122,8 @@ public static class ShapeshiftForms
         FormOf(ResolveAbilities(loadout));
 
     /// <summary>
-    /// Form-gebundene Fähigkeiten (Maul, Claw) nur in ihrer Gestalt; in Rage-/Energie-Gestalten
-    /// keine Fähigkeiten, die Mana kosten – außer sie haben dort eigene <see cref="Ability.FormCosts"/>.
+    /// Form-bound abilities (Maul, Claw) only in their form; in rage/energy forms
+    /// no abilities that cost mana – unless they have their own <see cref="Ability.FormCosts"/> there.
     /// </summary>
     public static bool IsUsableIn(Ability ability, DruidForm form)
     {
@@ -133,7 +133,7 @@ public static class ShapeshiftForms
         return Forms[form].IsStance || Forms[form].Resource == ResourceKind.Mana;
     }
 
-    /// <summary>Entfernt alle Fähigkeiten, die in der ausgerüsteten Gestalt nicht nutzbar sind. Gibt sie zurück.</summary>
+    /// <summary>Removes all abilities not usable in the equipped form. Returns them.</summary>
     public static List<Ability> PurgeIncompatible(ClassLoadout loadout)
     {
         var equipped = ResolveAbilities(loadout);

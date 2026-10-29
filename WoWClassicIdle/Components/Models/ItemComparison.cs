@@ -1,7 +1,7 @@
 // Models/ItemComparison.cs
 namespace Models
 {
-    /// <summary>Eine einzelne Stat-Änderung beim Tausch eines Items (positiv = Gewinn).</summary>
+    /// <summary>A single stat change when swapping an item (positive = gain).</summary>
     public record StatDelta(string Label, double Amount, string Format = "0")
     {
         public bool IsGain => Amount > 0;
@@ -10,8 +10,8 @@ namespace Models
     }
 
     /// <summary>
-    /// Berechnet die Stat-Differenzen zwischen einem Kandidaten und dem aktuell
-    /// ausgerüsteten Item (Kandidat − ausgerüstet). Nullwerte werden weggelassen.
+    /// Calculates the stat differences between a candidate and the currently
+    /// equipped item (candidate − equipped). Zero values are omitted.
     /// </summary>
     public static class ItemComparison
     {
@@ -25,7 +25,7 @@ namespace Models
         {
             var deltas = new List<StatDelta>();
 
-            // Auf zwei Nachkommastellen runden, damit Rundungsrauschen nicht als Änderung erscheint
+            // Round to two decimal places so rounding noise doesn't show up as a change
             double dps = Math.Round(Dps(candidate) - Dps(equipped), 2);
             if (dps != 0) deltas.Add(new("Damage per second", dps, "0.00"));
 

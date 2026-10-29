@@ -146,7 +146,7 @@
         font-weight: 700;
     }
 
-    /* HP-Liste kompakt nebeneinander */
+    /* HP list compactly side by side */
     .hp-list {
         display: flex;
         flex-wrap: wrap;
@@ -218,7 +218,7 @@
 </style>
 
 @code {
-    // Alle Zonen-Templates, Zonen nach MinLevel sortiert
+    // All zone templates, zones sorted by MinLevel
     private static readonly IReadOnlyList<(CombatZone Zone, EnemyTemplate Template)> _rows =
         CombatZoneRegistry.All
             .SelectMany(z => CombatZoneRegistry.TemplatesFor(z).Select(t => (z, t)))

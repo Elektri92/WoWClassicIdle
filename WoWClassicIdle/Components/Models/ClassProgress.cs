@@ -15,15 +15,15 @@ public class ClassProgress
     }
 
     /// <summary>
-    /// Fügt XP hinzu und levelt so oft auf, wie nötig.
-    /// Gibt an, wie viele Level-Steigerungen erfolgt sind.
+    /// Adds XP and levels up as often as needed.
+    /// Returns how many level-ups occurred.
     /// </summary>
     public int GainXp(int amount)
     {
         Xp += amount;
         int levelsGained = 0;
 
-        // XpToNextLevel == 0 → Max-Level erreicht
+        // XpToNextLevel == 0 → max level reached
         while (XpToNextLevel > 0 && Xp >= XpToNextLevel)
         {
             Xp -= XpToNextLevel;
@@ -32,16 +32,16 @@ public class ClassProgress
             levelsGained++;
         }
 
-        // Auf Max-Level sammeln sich keine XP an
+        // No XP accumulates at max level
         if (XpToNextLevel == 0) Xp = 0;
 
         return levelsGained;
     }
 
     /// <summary>
-    /// Zieht einen Anteil der aktuellen XP ab (z. B. beim Tod).
-    /// Ein Level-Verlust ist ausgeschlossen – XP fallen höchstens auf 0.
-    /// Gibt die tatsächlich verlorenen XP zurück.
+    /// Deducts a share of the current XP (e.g. on death).
+    /// Losing a level is impossible – XP drops to 0 at most.
+    /// Returns the XP actually lost.
     /// </summary>
     public int LoseXpPercent(double percent)
     {
@@ -51,7 +51,7 @@ public class ClassProgress
     }
 
     /// <summary>
-    /// Setzt die Klasse direkt auf ein Level (XP = 0), z. B. für Simulationen.
+    /// Sets the class directly to a level (XP = 0), e.g. for simulations.
     /// </summary>
     public void SetLevel(int level)
     {
@@ -61,7 +61,7 @@ public class ClassProgress
     }
 
     /// <summary>
-    /// Setzt Level und XP direkt (für Spielstand-Wiederherstellung).
+    /// Sets level and XP directly (for restoring a save).
     /// </summary>
     internal void Restore(int level, int xp)
     {
@@ -71,7 +71,7 @@ public class ClassProgress
     }
 
     /// <summary>
-    /// Reset auf Level 1 (z. B. für eine nie gespielte Klasse).
+    /// Reset to level 1 (e.g. for a class never played).
     /// </summary>
     public void ResetToLevelOne()
     {

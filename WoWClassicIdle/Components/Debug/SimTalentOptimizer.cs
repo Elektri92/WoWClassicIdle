@@ -1,27 +1,27 @@
-// Debug/SimTalentOptimizer.cs – wird nur im DEBUG-Build kompiliert (siehe .csproj)
+// Debug/SimTalentOptimizer.cs – only compiled in the DEBUG build (see .csproj)
 namespace DebugTools;
 
 using Models;
 
 /// <summary>
-/// Ein investierter Talentpunkt mit gemessenem Effekt: <see cref="GainPct"/> = XP/h gegenüber
-/// dem Stand ohne diesen Punkt (0.05 = +5 %). NaN = nicht gemessen (einzige Wahl ohne neue Fähigkeit).
+/// An invested talent point with measured effect: <see cref="GainPct"/> = XP/h compared to
+/// the state without this point (0.05 = +5 %). NaN = not measured (only choice without a new ability).
 /// </summary>
 public sealed record TalentPick(int Level, string TalentId, string Name, int Rank, int MaxRanks, double GainPct);
 
 /// <summary>
-/// Verteilt Talentpunkte empirisch: Für jeden Punkt wird jedes investierbare Talent in einem Probe-Kampf getestet
-/// und das mit den meisten XP pro Stunde genommen. Talente, die Fähigkeiten freischalten,
-/// werden mit dem besten Loadout inklusive der neuen Fähigkeit gemessen.
+/// Distributes talent points empirically: for each point every investable talent is tested in a trial fight
+/// and the one with the most XP per hour is taken. Talents that unlock abilities
+/// are measured with the best loadout including the new ability.
 /// </summary>
 public static class SimTalentOptimizer
 {
     /// <summary>
-    /// Investiert alle verfügbaren Punkte in <paramref name="talents"/>. Die Reihenfolge der Liste entscheidet
-    /// nur bei Gleichstand (z. B. Talente ohne messbaren Effekt wie Manakosten-Reduktionen).
-    /// Schaltet das gewählte Talent eine Fähigkeit frei, wird der dazu gemessene Loadout übernommen.
+    /// Invests all available points into <paramref name="talents"/>. The order of the list only decides
+    /// on ties (e.g. talents without measurable effect such as mana cost reductions).
+    /// If the chosen talent unlocks an ability, the loadout measured for it is adopted.
     /// </summary>
-    /// <returns>Die in diesem Aufruf investierten Punkte in Reihenfolge.</returns>
+    /// <returns>The points invested in this call, in order.</returns>
     public static List<TalentPick> InvestPoints(Player player, IReadOnlyList<TalentDefinition> talents, int specIndex, CancellationToken ct = default)
     {
         var cls   = player.ActiveClass;
@@ -35,7 +35,7 @@ public static class SimTalentOptimizer
             TalentDefinition best        = candidates[0];
             List<string>?    bestLoadout = null;
             double           bestScore   = double.MinValue;
-            // Nur eine Wahl und keine neue Fähigkeit → Messung überflüssig
+            // Only one choice and no new ability → measuring is unnecessary
             bool measure = candidates.Count > 1 || candidates[0].GrantedAbilityIds.Any();
             double baseline = measure
                 ? SimLoadoutOptimizer.Evaluate(player, player.GetCurrentLoadout().EquippedAbilityIds.ToList(), ct)
@@ -62,13 +62,13 @@ public static class SimTalentOptimizer
         return picks;
     }
 
-    /// <summary>XP pro Sekunde mit einem zusätzlichen Rang in <paramref name="talent"/> und der dafür beste Loadout.</summary>
+    /// <summary>XP per second with one additional rank in <paramref name="talent"/> and the best loadout for it.</summary>
     private static (double Score, List<string> Loadout) Measure(Player player, TalentDefinition talent, int specIndex, CancellationToken ct)
     {
         var current = player.GetCurrentLoadout().EquippedAbilityIds.ToList();
         var trials  = new List<List<string>> { current };
 
-        // Gestalt-Talente (Shadowform, Moonkin …): Gestalt ist Pflicht, gemessen wird nur, welcher Slot dafür weicht
+        // Form talents (Shadowform, Moonkin …): the form is mandatory, only which slot gives way is measured
         var formGrant = talent.GrantedAbilityIds.Select(ClassAbilityRegistry.FindById)
             .FirstOrDefault(a => a is { IsForm: true } && a.LevelRequired <= player.Level);
         if (formGrant is not null && current.Count >= ClassAbilityRegistry.MaxSlotsPerClass)
@@ -82,7 +82,7 @@ public static class SimTalentOptimizer
             .ToList();
         if (granted.Count > 0)
         {
-            // Neue Fähigkeit in einen freien Slot bzw. anstelle jeder bisherigen ausprobieren
+            // Try the new ability in a free slot or in place of each existing one
             foreach (var ability in granted.Where(a => !a.IsForm))
             {
                 if (current.Count < ClassAbilityRegistry.MaxSlotsPerClass)
@@ -92,7 +92,7 @@ public static class SimTalentOptimizer
                         trials.Add(current.Select((id, j) => j == i ? ability.Id : id).ToList());
             }
 
-            // Heuristik-Loadout mit dem neuen Talent – deckt Gestalten ab (Bear Form + Maul)
+            // Heuristic loadout with the new talent – covers forms (Bear Form + Maul)
             var unlocked = new HashSet<string>(ClassSimulator.GetUnlockedTalentAbilityIds(player, player.ActiveClass));
             unlocked.UnionWith(talent.GrantedAbilityIds);
             trials.Add(ClassAbilityRegistry.GetDefaultLoadoutIds(player.ActiveClass, player.Level, specIndex, unlocked));
@@ -115,7 +115,7 @@ public static class SimTalentOptimizer
         return (bestScore, best);
     }
 
-    /// <summary>Stellt sicher, dass <paramref name="form"/> im Loadout ist; in der Gestalt unbrauchbare Fähigkeiten fallen raus.</summary>
+    /// <summary>Ensures <paramref name="form"/> is in the loadout; abilities unusable in the form are dropped.</summary>
     private static List<string> WithForm(List<string> ids, Ability form)
     {
         var result = ids.Contains(form.Id) ? ids.ToList() : ids.Prepend(form.Id).ToList();

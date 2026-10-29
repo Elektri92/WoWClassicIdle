@@ -2,12 +2,12 @@ using System.Reflection;
 
 namespace WoWClassicIdle.Components;
 
-// Wird in Program.cs via Initialize() gesetzt – basiert auf IWebHostEnvironment, nicht auf der Build-Konfiguration.
+// Set in Program.cs via Initialize() – based on IWebHostEnvironment, not on the build configuration.
 public static class BuildInfo
 {
     public static bool IsDebug { get; private set; }
 
-    // App-Version aus Assembly-Metadaten (gesetzt über <Version> in der .csproj)
+    // App version from assembly metadata (set via <Version> in the .csproj)
     public static Version AppVersion =>
         Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0);
 

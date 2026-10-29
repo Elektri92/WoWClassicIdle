@@ -2,7 +2,7 @@ using Models;
 
 namespace Services;
 
-// Erkundungs-Erfolge: entdeckte Zonen, Kontinente, Zonen-Ziele und Mastery – accountweit über alle Charaktere
+// Exploration achievements: discovered zones, continents, zone objectives and mastery – account-wide across all characters
 public partial class AchievementService
 {
     private static readonly int[] DiscoveredZoneMilestones = { 5, 10, 20, 30 };
@@ -14,21 +14,21 @@ public partial class AchievementService
     private static IEnumerable<CombatZone> ContinentZones(bool easternKingdoms) =>
         CombatZoneRegistry.All.Where(z => (z.Landmass == Landmass.EasternKingdoms) == easternKingdoms);
 
-    // ToArray kopiert per Array.Copy – kein Enumerationsfehler, wenn der UI-Thread parallel Charaktere anlegt
+    // ToArray copies via Array.Copy – no enumeration error if the UI thread creates characters in parallel
     private CharacterSlot[] RosterSnapshot() => _engine.CharacterRoster.ToArray();
 
-    /// <summary>Von irgendeinem Charakter entdeckte Zonen.</summary>
+    /// <summary>Zones discovered by any character.</summary>
     private HashSet<string> DiscoveredZones() =>
         RosterSnapshot().SelectMany(s => s.DiscoveredZoneIds).ToHashSet();
 
     private static bool IsDone(CharacterSlot slot, ZoneObjective objective) =>
         slot.ZoneObjectiveProgress.GetValueOrDefault(objective.Id) >= objective.Required;
 
-    /// <summary>Erledigte Zonen-Ziele, über alle Charaktere summiert.</summary>
+    /// <summary>Completed zone objectives, summed across all characters.</summary>
     private long CompletedObjectives() =>
         RosterSnapshot().Sum(s => CombatZoneRegistry.All.Sum(z => ZoneObjectiveRegistry.For(z).Count(o => IsDone(s, o))));
 
-    /// <summary>Zonen, die mindestens ein Charakter gemeistert hat.</summary>
+    /// <summary>Zones mastered by at least one character.</summary>
     private HashSet<string> MasteredZones()
     {
         var roster = RosterSnapshot();

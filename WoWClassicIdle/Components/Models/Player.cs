@@ -1,35 +1,35 @@
 // Models/Player.cs
 namespace Models
 {
-    // Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+    // Create new systems as their own partial file; keep files below 300 lines where possible.
     // Equipment → Player.Equipment.cs | Talente → Player.Talents.cs | Stats/Kampfhilfen → Player.Combat.cs
     public partial class Player : Character
     {
         public Faction Faction { get; private set; }
         public Race Race { get; private set; }
 
-        /// <summary>Die aktuell "ausgestattete" Klasse – XP fließt hier hinein.</summary>
+        /// <summary>The currently "equipped" class – XP flows into it.</summary>
         public CharacterClass ActiveClass { get; private set; }
 
-        /// <summary>Progression aller erlaubten Klassen dieser Rasse.</summary>
+        /// <summary>Progression of all allowed classes of this race.</summary>
         public Dictionary<CharacterClass, ClassProgress> ClassProgress { get; }
 
-        /// <summary>Gesamtes Geld in Kupfer (Anzeige als Gold/Silber/Kupfer über <see cref="Money"/>).</summary>
+        /// <summary>Total money in copper (displayed as gold/silver/copper via <see cref="Money"/>).</summary>
         public long Copper { get; set; }
 
-        /// <summary>Rucksack + 4 Taschenplätze (wird von der Engine auf das gemeinsame Inventar gesetzt).</summary>
+        /// <summary>Backpack + 4 bag slots (set to the shared inventory by the engine).</summary>
         public Inventory Inventory { get; internal set; } = new();
 
-        /// <summary>Talent-Punkte und investierte Ränge je Klasse.</summary>
+        /// <summary>Talent points and invested ranks per class.</summary>
         public TalentState TalentState { get; } = new();
 
-        /// <summary>Erlernte Berufe (ein Herstellungsberuf; Sammel-/Sekundärberufe sind accountweit).</summary>
+        /// <summary>Learned professions (one crafting profession; gathering/secondary professions are account-wide).</summary>
         public ProfessionState ProfessionState { get; } = new();
 
         /// <summary>Currently equipped weapon. Auto-set to class starter on creation.</summary>
         public WeaponItem? EquippedWeapon { get; private set; }
 
-        /// <summary>Ausgerüstete Rüstungsteile je Slot.</summary>
+        /// <summary>Equipped armor pieces per slot.</summary>
         public Dictionary<ArmorSlot, ArmorItem> EquippedArmor { get; } = new();
 
         // Equipped weapon saved per class so switching back restores the right weapon.
@@ -59,7 +59,7 @@ namespace Models
 
             CurrentMana = characterClass == CharacterClass.Warrior ? 0 : stats.MaxMana;
 
-            // Jede für die Rasse erlaubte Klasse bekommt einen Eintrag (Level 1).
+            // Every class allowed for the race gets an entry (level 1).
             ClassProgress = new Dictionary<CharacterClass, ClassProgress>();
             foreach (var cls in RaceClassInfo.GetAvailableClasses(race))
             {
@@ -71,8 +71,8 @@ namespace Models
         }
 
         /// <summary>
-        /// XP wird der aktiven Klasse gutgeschrieben.
-        /// Bei Level-Up: Stats werden neu berechnet.
+        /// XP is credited to the active class.
+        /// On level-up: stats are recalculated.
         /// </summary>
         public int GainXp(int amount)
         {
@@ -86,20 +86,20 @@ namespace Models
         }
 
         /// <summary>
-        /// Death penalty: Die aktive Klasse verliert einen Anteil ihrer aktuellen XP (kein Level-Verlust).
+        /// Death penalty: the active class loses a share of its current XP (no level loss).
         /// </summary>
         public int LoseXpPercent(double percent) => ActiveProgress.LoseXpPercent(percent);
 
         /// <summary>
-        /// Aktualisiert Rasse/Fraktion und stellt sicher, dass
-        /// ClassProgress-Einträge für die neue Rasse existieren.
+        /// Updates race/faction and ensures that
+        /// ClassProgress entries exist for the new race.
         /// </summary>
         public void ChangeCharacter(Faction newFaction, Race newRace)
         {
             Faction = newFaction;
             Race = newRace;
 
-            // Neue Klassen der Rasse ergänzen (ohne bestehende zu löschen)
+            // Add new classes of the race (without deleting existing ones)
             foreach (var cls in RaceClassInfo.GetAvailableClasses(newRace))
             {
                 if (!ClassProgress.ContainsKey(cls))
@@ -108,7 +108,7 @@ namespace Models
         }
 
         /// <summary>
-        /// Wechselt die aktive Klasse (muss für die Rasse verfügbar sein).
+        /// Switches the active class (must be available for the race).
         /// Saves the current weapon for the outgoing class and restores the weapon
         /// for the incoming class (or gives the starter weapon the first time).
         /// </summary>
@@ -137,7 +137,7 @@ namespace Models
         }
 
         /// <summary>
-        /// Prüft, ob der aktive Charakter die Level- und Klassen-Voraussetzungen eines Items erfüllt.
+        /// Checks whether the active character meets the level and class requirements of an item.
         /// </summary>
         public bool MeetsItemRequirements(Item item) =>
             ItemRequirements.MatchesLevel(item, Level) && ItemRequirements.MatchesClass(item, ActiveClass);

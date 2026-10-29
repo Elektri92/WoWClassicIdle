@@ -1,10 +1,10 @@
 /* ============================================
-   Berufslehrer (NPC im Kopf der Unterseite + Lehrerfenster), Suche, Karten hinter den Berufsblöcken
-   Sprechblase (.inv-speech), NPC-Texte (.inv-npc-*) und Porträt-Wackeln kommen aus inventory.css,
-   Liste/Details (.craft-*) aus professions.css
+   Profession trainer (NPC in the subpage header + trainer window), search, maps behind the profession blocks
+   Speech bubble (.inv-speech), NPC texts (.inv-npc-*) and portrait wiggle come from inventory.css,
+   list/details (.craft-*) from professions.css
    ============================================ */
 
-/* ── Transparente Karte: Hauptstadt (Herstellen) bzw. zufälliges Gebiet (Sammeln) ── */
+/* ── Transparent map: capital (crafting) or random zone (gathering) ── */
 .prof-map-bg > :not(.prof-map) { position: relative; z-index: 1; }
 .prof-map {
     position: absolute;
@@ -17,7 +17,7 @@
     pointer-events: none;
     animation: inv-map-in 1.2s ease-out .3s backwards;
 }
-/* Vignette: Karte läuft zu den Rändern hin ins UI-Braun aus */
+/* Vignette: the map fades out into the UI brown towards the edges */
 .prof-map::after {
     content: "";
     position: absolute;
@@ -28,7 +28,7 @@
         linear-gradient(180deg, var(--wow-panel-top) 0%, transparent 20%, transparent 80%, var(--wow-panel-bottom) 100%);
 }
 
-/* Berufskarten halbtransparent, damit die Karte durchscheint */
+/* Profession cards semi-transparent so the map shines through */
 .prof-layout .prof-map-bg .prof-card {
     background:
         linear-gradient(110deg, var(--prof-tint, transparent) 0%, transparent 70%),
@@ -40,7 +40,7 @@
         rgba(12, 10, 6, .72);
 }
 
-/* ── Lehrer-NPC rechts im Kopf ── */
+/* ── Trainer NPC on the right of the header ── */
 .prof-header .prof-card-body { flex: 1 1 auto; }
 .trainer-npc-col {
     position: relative;
@@ -75,7 +75,7 @@
 .trainer-npc-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .trainer-npc-text .inv-npc-cta { margin-top: 4px; }
 
-/* Sprechblase links neben dem Lehrer – der Kopf schneidet wegen des Lichtscheins (overflow: hidden) alles darüber ab */
+/* Speech bubble to the left of the trainer – the header clips everything above it because of the light glow (overflow: hidden) */
 .inv-speech.trainer-speech {
     bottom: auto;
     left: auto;
@@ -97,11 +97,11 @@
     .trainer-npc-col { flex-basis: 100%; }
 }
 
-/* ── Lehrerfenster: Rahmen/Titelleiste/Geldleiste vom Händlerfenster (.inv-merchant-window, .mw-*) ── */
+/* ── Trainer window: frame/title bar/money bar from the merchant window (.inv-merchant-window, .mw-*) ── */
 .trainer-window { margin: 22px 0 0 12px; padding-bottom: 0; }
 .trainer-window .mw-titlebar { margin-bottom: 10px; }
 
-/* Innenflächen neutral-dunkel statt braun, passend zum Händlerfenster */
+/* Inner surfaces neutral dark instead of brown, matching the merchant window */
 .trainer-window .wow-inset,
 .trainer-window .craft-reagent,
 .trainer-window .trainer-msg {
@@ -118,7 +118,7 @@
 
 .trainer-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
 
-/* Suchfeld (Lehrer, Herstellungsfenster, Übersicht) */
+/* Search field (trainer, crafting window, overview) */
 .trainer-search {
     flex: 1 1 180px;
     min-width: 0;
@@ -134,7 +134,7 @@
 .trainer-search::placeholder { color: var(--wow-muted); }
 .craft-filter .trainer-search { flex-basis: 100%; margin-bottom: 2px; }
 
-/* Einträge: grün = lernbar, rot = Voraussetzungen fehlen (wie im Original) */
+/* Entries: green = learnable, red = requirements missing (like in the original) */
 .trainer-entry.available .craft-list-name { color: #40c040; }
 .trainer-entry.unavailable .craft-list-name { color: #e04040; }
 .trainer-entry.unavailable { opacity: .75; }
@@ -162,11 +162,11 @@
 }
 .trainer-msg.failed { color: #ff6060; animation: al-toast-in .3s cubic-bezier(.2, .8, .2, 1) both, al-shake .4s ease-in-out .1s; }
 
-/* Geldleiste wie beim Händler; Buttons rechts, Geld links */
+/* Money bar like the merchant's; buttons on the right, money on the left */
 .trainer-footer { align-items: center; gap: 6px; }
 .trainer-money { margin-right: auto; display: flex; align-items: center; }
 
-/* ── Berufsübergreifende Suche (Übersicht) ── */
+/* ── Cross-profession search (overview) ── */
 .prof-search { margin-bottom: 12px; padding: 8px 10px; }
 .prof-search .trainer-search { width: 100%; }
 .prof-search-results { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }

@@ -2,11 +2,11 @@
 @using WoWClassicIdle.Components.Pages
 @inject IdleGameEngine Engine
 
-@* Handelsfenster im Stil des Classic-Händlerfensters (Raster, Tabs „Merchant“/„Buyback“).
-   Kauf/Verkauf/Rückkauf-Logik liegt in Pages/Inventory.Merchant.cs; hier nur Darstellung und Effekte. *@
+@* Trade window in the style of the Classic merchant window (grid, tabs "Merchant"/"Buyback").
+   Buy/sell/buyback logic lives in Pages/Inventory.Merchant.cs; only presentation and effects here. *@
 @{ var buyback = Engine.MerchantBuyback; }
 <div class="inv-merchant-window">
-    @* ── Titelleiste mit überlappendem Porträt ── *@
+    @* ── Title bar with overlapping portrait ── *@
     <div class="mw-titlebar">
         <div @key="SpeechKey" class="al-portrait mw-portrait @(SpeechKey > 0 ? "talking" : "")">
             <img class="al-race-portrait" src="@MerchantRegistry.PortraitUrl" alt="@MerchantRegistry.Name" onerror="this.style.display='none'" />
@@ -58,7 +58,7 @@
                 <span class="sell-zone-label">Right-click or drag items here to sell</span>
                 @if (Fx is { Kind: MerchantFxKind.Sell } sellFx)
                 {
-                    @* Verkauf: Item wird „geschluckt“, Münzen sprudeln heraus, Erlös schwebt golden nach oben *@
+                    @* Sale: item gets "swallowed", coins burst out, proceeds float up in gold *@
                     <div @key="FxKey" class="inv-fx inv-fx-sell" aria-hidden="true">
                         <span class="inv-fx-flash"></span>
                         <img class="inv-fx-item" src="@sellFx.IconUrl" alt="" />
@@ -72,7 +72,7 @@
                     </div>
                 }
             </div>
-            @* Zuletzt verkauftes Item – Klick kauft es direkt zurück (wie im Original) *@
+            @* Last sold item – click buys it back directly (like in the original) *@
             @if (buyback.Count > 0)
             {
                 @BuybackCell(buyback[0], 0, true)
@@ -136,21 +136,21 @@
     [Parameter] public EventCallback<MerchantOffer> OnBuy { get; set; }
     [Parameter] public EventCallback<int> OnBuyback { get; set; }
     [Parameter] public bool DragActive { get; set; }
-    // Letzte Kauf-/Verkaufsmeldung – gemeinsam mit der Seite, damit Verkäufe per Rechtsklick hier erscheinen
+    // Last buy/sell message – shared with the page so right-click sales show up here
     [Parameter] public string? Message { get; set; }
     [Parameter] public bool MessageFailed { get; set; }
     [Parameter] public MerchantFx? Fx { get; set; }
     [Parameter] public int FxKey { get; set; }
     [Parameter] public int SpeechKey { get; set; }
 
-    // Flugbahnen der Münzen beim Verkauf (Ziel relativ zur Mitte der Verkaufsfläche)
+    // Coin trajectories on sale (target relative to the center of the sell area)
     private static readonly (int Dx, int Dy)[] CoinBurst =
         [(-60, -38), (-32, -58), (0, -66), (32, -58), (60, -38), (-46, -12), (46, -12)];
 
     private static string FormatCountdown(TimeSpan left) =>
         left <= TimeSpan.Zero ? "0:00" : $"{(int)left.TotalMinutes}:{left.Seconds:00}";
 
-    // Kauf/Rückkauf: Zelle leuchtet auf, Item fliegt Richtung Taschen, Preis schwebt rot nach oben
+    // Buy/buyback: cell lights up, item flies towards the bags, price floats up in red
     private RenderFragment BuyFx(MerchantFx fx) =>
         @<div @key="FxKey" class="inv-fx inv-fx-buy" aria-hidden="true">
             <span class="inv-fx-flash"></span>
@@ -158,7 +158,7 @@
             <span class="inv-fx-amount">−<MoneyFrame Copper="fx.Copper" /></span>
         </div>;
 
-    // Rückkauf-Zelle; der neueste Eintrag ploppt nach einem Verkauf kurz auf
+    // Buyback cell; the newest entry pops briefly after a sale
     private RenderFragment BuybackCell(MerchantBuybackEntry entry, int index, bool isLastSold)
     {
         var item = entry.Stack.Item;

@@ -4,8 +4,8 @@ namespace Services;
 using Models;
 
 /// <summary>
-/// In-Memory-Implementation. In Produktion durch eine DB- oder Storage-basierte
-/// Implementation ersetzen (z. B. JSON-Datei, SQLite, etc.).
+/// In-memory implementation. In production replace it with a DB- or storage-based
+/// implementation (e.g. JSON file, SQLite, etc.).
 /// </summary>
 public class AbilityLoadoutService : IAbilityLoadoutService
 {
@@ -18,7 +18,7 @@ public class AbilityLoadoutService : IAbilityLoadoutService
         {
             if (!_store.TryGetValue(cls, out var loadout))
             {
-                // Erstauswahl: alle für Klasse + Level verfügbaren Abilities ausrüsten
+                // Initial selection: equip all abilities available for class + level
                 loadout = new ClassLoadout
                 {
                     Class = cls,

@@ -11,11 +11,11 @@
     <p class="wow-hint inv-hint">Your equipment, bags and character stats. @BagUnlockHint</p>
     @if (_useMessage is not null)
     {
-        @* Rückmeldung nach Rechtsklick auf ein benutzbares Verbrauchsgut *@
+        @* Feedback after right-clicking a usable consumable *@
         <div @key="_useMessage" class="wow-alert @(_useFailed ? "warning" : "info") inv-status">@_useMessage</div>
     }
 
-    @* ── Kopf: Charakter auf der Szene seiner aktuellen Zone ── *@
+    @* ── Header: character on the scene of its current zone ── *@
     <div class="al-header inv-header @(_engine.Faction == Faction.Alliance ? "alliance" : "horde") @(CombatZoneRegistry.IsNightTheme(HeaderTheme) ? "night" : "day")">
         <div class="al-scenery" aria-hidden="true">
             <div class="al-sky zone-theme-@HeaderTheme"></div>
@@ -47,7 +47,7 @@
 
     <div class="inv-layout">
         @* ── Charakter: Paperdoll + Werte ── *@
-        @* Farbschema je Volkswappen: wwwroot/css/inventory-crest.css *@
+        @* Color scheme per race crest: wwwroot/css/inventory-crest.css *@
         <div class="al-panel inv-char race-@_engine.Player.Race.ToString().ToLowerInvariant()" style="--i: 0">
             <h4>Character</h4>
             <div class="paperdoll">
@@ -59,7 +59,7 @@
                 </div>
 
                 <div class="model-area @(_engine.Faction == Faction.Alliance ? "alliance" : "horde")">
-                    @* Volkswappen statt 3D-Modell; Übergang zum Panel per Glow + Maske (inventory.css) *@
+                    @* Race crest instead of a 3D model; transition to the panel via glow + mask (inventory.css) *@
                     <img class="model-crest" src="@IconUrls.RaceCrestUrl(_engine.Player.Race)" alt="@_engine.Player.Race" onerror="this.style.display='none'" />
                 </div>
 
@@ -134,7 +134,7 @@
         </div>
 
         @* ── Taschen ── *@
-        @* Hintergrund: Karte der Fraktionshauptstadt (Stormwind / Orgrimmar) *@
+        @* Background: map of the faction capital (Stormwind / Orgrimmar) *@
         <div class="al-panel inv-bags @(_merchantOpen ? "selling" : "")" style="--i: 1">
             <div class="inv-bags-map" aria-hidden="true" style="background-image: url('@IconUrls.CapitalMapUrl(_engine.Faction)')"></div>
             <h4>Bags</h4>
@@ -177,7 +177,7 @@
                 </button>
             </div>
 
-            @* Rucksack immer links, weitere Taschen rechts daneben in einem 2er-Raster *@
+            @* Backpack always on the left, further bags to the right of it in a 2-column grid *@
             <div class="bags-area">
                 @if (OpenContainers.Contains(BackpackIndex))
                 {
@@ -195,11 +195,11 @@
             </div>
         </div>
 
-        @* ── Händler rechts: erst anklicken, dann öffnet sich das Handelsfenster ── *@
+        @* ── Merchant on the right: click first, then the trade window opens ── *@
         <aside class="inv-merchant-col @(_merchantOpen ? "trading" : "")" style="--i: 2">
             @if (_speech is not null)
             {
-                @* Sprechblase: neu gemountet je Spruch (@key) → Pop-in, kurz stehen, ausblenden *@
+                @* Speech bubble: remounted per line (@key) → pop-in, stay briefly, fade out *@
                 <div @key="_speechKey" class="inv-speech" role="status">
                     <span class="inv-speech-text">@_speech</span>
                 </div>
@@ -257,7 +257,7 @@
 }
 
 @code {
-    // Paperdoll-Slot (Rüstung): Rechtsklick legt ab, Ziehen aus der Tasche legt an
+    // Paperdoll slot (armor): right-click unequips, dragging from the bag equips
     private RenderFragment PaperdollSlot(EquipSlot slot)
     {
         var gear = EquippedIn(slot);
@@ -276,7 +276,7 @@
                </ArmorTooltip>;
     }
 
-    // Wechsel-Effekt im Slot: Lichtring + altes Icon löst sich auf (nur im zuletzt gewechselten Slot)
+    // Swap effect in the slot: light ring + old icon dissolves (only in the most recently changed slot)
     private RenderFragment SwapFx(string? slotKey) => __builder =>
     {
         if (!IsSwapping(slotKey)) return;
@@ -287,14 +287,14 @@
         }
     };
 
-    // Schwebende Stat-Änderung (+/−) nach einem Gear-Wechsel
+    // Floating stat change (+/−) after a gear swap
     private RenderFragment StatDelta(string stat) => __builder =>
     {
         if (!_statDeltas.TryGetValue(stat, out var delta)) return;
         <span @key="_swapKey" class="stat-delta @(delta > 0 ? "up" : "down")">@FormatDelta(stat, delta)</span>
     };
 
-    // Taschenfenster mit Kopfzeile, Slot-Raster und (nur beim Rucksack) Geldanzeige
+    // Bag window with header, slot grid and (only for the backpack) money display
     private RenderFragment BagFrame(int containerIndex) => __builder =>
     {
         var bag = ContainerAt(containerIndex);
@@ -335,7 +335,7 @@
         </div>
     };
 
-    // Taschenplatz: Rechtsklick verkauft bei offenem Händler, sonst Anlegen/Benutzen
+    // Bag slot: right-click sells when the merchant is open, otherwise equip/use
     private RenderFragment BagSlot(int containerIndex, int si, ItemStack? stack)
     {
         if (stack is null) return @<div class="bag-slot empty"></div>;

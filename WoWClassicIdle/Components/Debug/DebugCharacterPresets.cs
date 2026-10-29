@@ -1,11 +1,11 @@
-// Debug/DebugCharacterPresets.cs – wird nur im DEBUG-Build kompiliert (siehe .csproj)
+// Debug/DebugCharacterPresets.cs – only compiled in the DEBUG build (see .csproj)
 namespace DebugTools;
 
 using Models;
 
 /// <summary>
-/// Legt beim Start im Debug-Modus für jede Klasse einen vordefinierten Charakter an,
-/// damit nicht jedes Mal manuell über die Charakterauswahl erstellt werden muss.
+/// On startup in debug mode creates a predefined character for every class,
+/// so they don't have to be created manually via character selection every time.
 /// </summary>
 internal static class DebugCharacterPresets
 {
@@ -24,13 +24,13 @@ internal static class DebugCharacterPresets
 
     public static void Apply(IdleGameEngine engine)
     {
-        // Nur auf leerem Roster anwenden – vorhandene Charaktere nie überschreiben
+        // Only apply to an empty roster – never overwrite existing characters
         if (engine.CharacterRoster.Count > 0) return;
 
         foreach (var (name, race, cls, gender) in Presets)
             engine.CreateCharacter(name, RaceClassInfo.RaceToFaction[race], race, cls, gender);
 
-        // Ersten Preset-Charakter (Mage) aktiv setzen
+        // Make the first preset character (Mage) active
         engine.SelectCharacter(engine.CharacterRoster[0].Id);
     }
 }

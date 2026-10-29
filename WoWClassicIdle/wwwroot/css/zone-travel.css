@@ -1,7 +1,7 @@
 /* ============================================
-   Reise-Animation zwischen Kampfzonen (ZoneTravelScene.razor)
-   --pace skaliert alle Scroll-Dauern: kleiner = schnellere Fortbewegung.
-   Landschafts-Layer sind 200 % breit und wiederholen sich ab 50 % → nahtlose Endlosschleife.
+   Travel animation between combat zones (ZoneTravelScene.razor)
+   --pace scales all scroll durations: smaller = faster movement.
+   Landscape layers are 200 % wide and repeat from 50 % → seamless endless loop.
    ============================================ */
 
 .travel-scene {
@@ -55,7 +55,7 @@
     box-shadow: 0 0 30px 6px rgba(220, 225, 255, .35);
 }
 
-/* ----- Land: Berge, Hügel, Weg ----- */
+/* ----- Land: mountains, hills, path ----- */
 .travel-mountains,
 .travel-hills,
 .travel-ground-far,
@@ -99,7 +99,7 @@
 }
 .travel-scene.night .travel-road { filter: brightness(.6); }
 
-/* ----- Luft: Wolken, ferne Landschaft ----- */
+/* ----- Air: clouds, distant landscape ----- */
 .travel-ground-far {
     bottom: var(--footer);
     height: 56px;
@@ -132,13 +132,13 @@
     background-image:
         radial-gradient(ellipse 110px 28px at 120px 40px, rgba(255, 255, 255, .85), transparent 70%),
         radial-gradient(ellipse 80px 22px at 520px 110px, rgba(255, 255, 255, .75), transparent 70%);
-    background-size: 780px 100%; /* Teiler von 1560 px (Keyframe) → nahtlos */
+    background-size: 780px 100%; /* Divisor of 1560 px (keyframe) → seamless */
     animation-duration: calc(6s * var(--pace));
     z-index: 3;
 }
 .travel-scene.night .travel-clouds { opacity: .35; }
 
-/* ----- Meer: Küste und Wellen ----- */
+/* ----- Sea: coast and waves ----- */
 .travel-coast {
     bottom: calc(var(--footer) + 50px);
     height: 44px;
@@ -190,7 +190,7 @@
     background: #000;
 }
 
-/* Zu Fuß: großes Portrait, schnelles Wippen */
+/* On foot: large portrait, fast bobbing */
 .traveler-portrait.walker {
     left: 26px;
     bottom: 6px;
@@ -199,7 +199,7 @@
     animation: travel-walk calc(.55s * var(--pace) + .15s) ease-in-out infinite;
 }
 
-/* Reittier / Gestalt: Reittier unten, Portrait sitzt darauf */
+/* Mount / form: mount below, portrait sits on it */
 .traveler-steed {
     left: 18px;
     bottom: 4px;
@@ -229,7 +229,7 @@
 .travel-dust i:nth-child(2) { animation-delay: .37s; bottom: 4px; }
 .travel-dust i:nth-child(3) { animation-delay: .74s; bottom: -2px; }
 
-/* Flug: Greif/Windreiter mit Flügelschlag, schwebt im Wind */
+/* Flight: gryphon/wind rider with wing beats, hovering in the wind */
 .scene-air .traveler { bottom: calc(var(--footer) + 90px); animation: travel-hover 3.2s ease-in-out infinite; }
 .traveler-steed.flyer {
     width: 84px;

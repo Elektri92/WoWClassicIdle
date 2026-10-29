@@ -1,4 +1,4 @@
-// Ausrüsten/Ablegen auf /inventory inkl. Wechsel-Animation (Paperdoll-Slot + Stat-Differenzen)
+// Equip/unequip on /inventory incl. change animation (paperdoll slot + stat differences)
 using Models;
 
 namespace WoWClassicIdle.Components.Pages;
@@ -7,7 +7,7 @@ public partial class Inventory
 {
     private const string WeaponSlotKey = "Weapon";
 
-    // Letzter Gear-Wechsel; Zähler als @key, damit die Animation bei jedem Wechsel neu startet
+    // Last gear change; counter as @key so the animation restarts on every change
     private int _swapKey;
     private string? _swapSlot;
     private bool _swapEquipped;
@@ -23,7 +23,7 @@ public partial class Inventory
                 ? armor
                 : null;
 
-    // Werte der Übersicht, deren Änderung nach einem Wechsel kurz eingeblendet wird
+    // Overview values whose change is briefly shown after a swap
     private Dictionary<string, double> SnapshotStats()
     {
         var stats = _engine.Player.Stats;
@@ -44,7 +44,7 @@ public partial class Inventory
         };
     }
 
-    /// <summary>Führt einen Wechsel aus und startet die Animation, falls sich der Slot tatsächlich geändert hat.</summary>
+    /// <summary>Performs a swap and starts the animation if the slot actually changed.</summary>
     private void Swap(string slotKey, Action change)
     {
         var before = EquippedFor(slotKey);
@@ -65,7 +65,7 @@ public partial class Inventory
 
     private bool IsSwapping(string? slotKey) => slotKey is not null && slotKey == _swapSlot;
 
-    // @key des Slots: wechselt nur beim animierten Slot, damit nur dieser neu gemountet wird
+    // @key of the slot: only changes for the animated slot so only that one is remounted
     private string SlotRenderKey(string? slotKey) =>
         IsSwapping(slotKey) ? $"{slotKey}-{_swapKey}" : slotKey ?? "";
 
@@ -88,7 +88,7 @@ public partial class Inventory
             Swap(WeaponSlotKey, () => _engine.Player.EquipWeapon(weapon, bag, src.slotIndex));
     }
 
-    /// <summary>Legt ein auf einen Paperdoll-Slot gezogenes Rüstungsteil an.</summary>
+    /// <summary>Equips an armor piece dragged onto a paperdoll slot.</summary>
     private void DropOnArmorSlot(ArmorSlot? armorSlot)
     {
         if (armorSlot is null || _dragSource is not { } src) return;
@@ -116,7 +116,7 @@ public partial class Inventory
     private void UnequipWeapon() =>
         Swap(WeaponSlotKey, () => _engine.Player.UnequipWeapon());
 
-    /// <summary>Rechtsklick auf einen Paperdoll-Slot: getragenes Rüstungsteil zurück ins Inventar.</summary>
+    /// <summary>Right-click on a paperdoll slot: worn armor piece back into the inventory.</summary>
     private void UnequipArmorSlot(ArmorSlot? armorSlot)
     {
         if (armorSlot is null) return;

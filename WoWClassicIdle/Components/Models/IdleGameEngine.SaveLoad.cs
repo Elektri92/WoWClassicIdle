@@ -1,6 +1,6 @@
 using Models;
 
-// Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+// Create new systems as their own partial file; keep files below 300 lines where possible.
 public partial class IdleGameEngine
 {
     // ─── Spielstand-Wiederherstellung ───
@@ -36,7 +36,7 @@ public partial class IdleGameEngine
             RestoreFeatureIntros(save);
             RestoreMerchantStock(save);
 
-            // Gemeinsames Inventar befüllen – Rucksack
+            // Fill the shared inventory – backpack
             foreach (var itemData in save.SharedInventoryItems ?? [])
             {
                 Item? item = ResolveSavedItem(itemData.ItemId);
@@ -56,7 +56,7 @@ public partial class IdleGameEngine
                 ? _roster.FirstOrDefault(s => s.Id == _activeSlotId.Value)
                 : null;
 
-            // Virtuelle Taschen auf Basis des aktiven Charakters erzeugen, dann Items einfüllen
+            // Create virtual bags based on the active character, then fill in the items
             if (activeSlot is not null)
                 _sharedInventory.UpdateBagsForLevel(activeSlot.Player.Level);
 
@@ -93,7 +93,7 @@ public partial class IdleGameEngine
         TickUpdated?.Invoke();
     }
 
-    /// <summary>Accountweite Berufe und passive Slots wiederherstellen (nach dem Roster).</summary>
+    /// <summary>Restore account-wide professions and passive slots (after the roster).</summary>
     private void RestoreProfessions(SaveData save)
     {
         foreach (var profData in save.SecondaryProfessions ?? [])
@@ -106,7 +106,7 @@ public partial class IdleGameEngine
         {
             if (!Enum.TryParse<Profession>(data.Profession, out var profession)) continue;
             if (_passiveAssignments.Any(a => a.CharacterId == data.CharacterId || a.Matches(profession, data.Group, data.Index))) continue;
-            if (!HasPassiveCapacity(profession, data.CharacterId)) continue; // Altstand mit mehr Slots je Beruf als erlaubt
+            if (!HasPassiveCapacity(profession, data.CharacterId)) continue; // Legacy save with more slots per profession than allowed
             _passiveAssignments.Add(new PassiveAssignment
             {
                 Profession  = profession,
@@ -127,7 +127,7 @@ public partial class IdleGameEngine
         UnlockSharedProfessions();
     }
 
-    /// <summary>Übernimmt einen accountweiten Beruf – bei mehrfachen Altständen gewinnt der höchste Skill.</summary>
+    /// <summary>Takes over an account-wide profession – with multiple legacy entries the highest skill wins.</summary>
     private void RestoreSharedProfession(Profession profession, int skill, int rankIndex)
     {
         var current = _sharedProfessions.GetValueOrDefault(profession);
@@ -154,7 +154,7 @@ public partial class IdleGameEngine
 
         player.Copper = p.Copper;
 
-        // ClassProgress wiederherstellen
+        // Restore ClassProgress
         foreach (var (clsName, progressData) in p.ClassProgress)
         {
             if (Enum.TryParse<CharacterClass>(clsName, out var cls)
@@ -164,7 +164,7 @@ public partial class IdleGameEngine
             }
         }
 
-        // Ausgerüstete Waffen pro Klasse wiederherstellen
+        // Restore equipped weapons per class
         var weaponsByClass = new Dictionary<CharacterClass, WeaponItem?>();
         foreach (var (clsName, weaponId) in p.EquippedWeaponIdByClass)
         {
@@ -173,7 +173,7 @@ public partial class IdleGameEngine
         }
         player.RestoreEquippedWeapons(weaponsByClass);
 
-        // Getragene Rüstung wiederherstellen
+        // Restore worn armor
         var armorBySlot = new Dictionary<ArmorSlot, ArmorItem>();
         foreach (var (slotName, itemId) in p.EquippedArmorIdBySlot)
         {
@@ -187,25 +187,25 @@ public partial class IdleGameEngine
         if (armorBySlot.Count > 0)
             player.RestoreEquippedArmor(armorBySlot);
 
-        // Talente wiederherstellen (vor SetActiveClass, damit CritBonus in Stats einfließt)
+        // Restore talents (before SetActiveClass so CritBonus flows into the stats)
         foreach (var (talentId, ranks) in p.TalentInvestedPoints)
             player.TalentState.RestoreRanks(talentId, ranks);
 
-        // Berufe wiederherstellen
+        // Restore professions
         foreach (var profData in p.Professions ?? [])
         {
             if (!Enum.TryParse<Profession>(profData.Profession, out var profession)) continue;
             if (Professions.Get(profession).IsPrimary)
                 player.ProfessionState.Restore(profession, profData.Skill, profData.RankIndex, profData.KnownRecipes, player.ActiveClass);
             else
-                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex); // Altstand migrieren
+                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex); // migrate legacy save
         }
 
-        // Aktive Klasse setzen (berechnet Stats neu, stellt Waffe wieder her)
+        // Set the active class (recalculates stats, restores the weapon)
         player.SetClass(p.ActiveClass);
         player.SetActiveClass(p.ActiveClass);
 
-        // Loadout der aktiven Klasse in den Charakter laden
+        // Load the loadout of the active class into the character
         if (p.LoadoutAbilityIdsByClass.TryGetValue(p.ActiveClass.ToString(), out var activeIds))
             player.ApplyLoadout(new ClassLoadout { Class = p.ActiveClass, EquippedAbilityIds = activeIds.ToList() });
 
@@ -221,7 +221,7 @@ public partial class IdleGameEngine
             Gender  = data.Gender,
             Player  = player,
         };
-        RestoreExploration(characterSlot, data); // vor der Reise: Route hängt an bekannten Flugpunkten
+        RestoreExploration(characterSlot, data); // before the travel: the route depends on known flight points
         RestoreCombatZone(characterSlot, data);
         return characterSlot;
     }

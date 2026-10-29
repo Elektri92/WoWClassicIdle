@@ -39,7 +39,7 @@
     font-weight: 700;
 }
 
-/* Handwerksmaterial – hellblau wie in WoW */
+/* Crafting material – light blue like in WoW */
 .tt-reagent {
     color: #66bbff;
 }
@@ -60,7 +60,7 @@
     font-style: italic;
 }
 
-/* ── Verbrauchsgüter ── */
+/* ── Consumables ── */
 .tt-consumable { color: #ffd100; font-size: .75rem; }
 .tt-use        { color: #1eff00; }
 .tt-req-level  { color: #ff8000; font-size: .75rem; }

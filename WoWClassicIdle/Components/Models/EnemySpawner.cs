@@ -7,7 +7,7 @@ public class EnemySpawner
     private readonly Random _rng;
     private readonly IReadOnlyList<EnemyTemplate> _extraTemplates;
 
-    /// <param name="extraTemplates">Zusätzliche Templates für jede Zone (Debug-Monster), sofern ihr Levelbereich passt.</param>
+    /// <param name="extraTemplates">Additional templates for every zone (debug monsters), provided their level range fits.</param>
     public EnemySpawner(IReadOnlyList<EnemyTemplate>? extraTemplates = null, Random? rng = null)
     {
         _extraTemplates = extraTemplates ?? [];
@@ -16,11 +16,11 @@ public class EnemySpawner
 
     public Enemy Spawn(int playerLevel, CombatZone zone)
     {
-        // 1) Gegner-Level: Spieler-Level ± 2, auf den Levelbereich der Zone begrenzt
-        //    (über dem Maxlevel der Zone spawnen nur noch Gegner der Maximalstufe)
+        // 1) Enemy level: player level ± 2, clamped to the level range of the zone
+        //    (above the zone's max level only enemies of the max level spawn)
         var enemyLevel = Math.Clamp(playerLevel + _rng.Next(-2, 3), zone.MinLevel, zone.MaxLevel);
 
-        // 2) Gegnerarten der Zone (+ passende Extra-Templates)
+        // 2) Enemy types of the zone (+ matching extra templates)
         var candidates = CombatZoneRegistry.TemplatesFor(zone)
             .Concat(_extraTemplates.Where(t => enemyLevel >= t.MinLevel && enemyLevel <= t.MaxLevel))
             .ToList();
@@ -41,7 +41,7 @@ public class EnemySpawner
             }
         }
 
-        // 10 % Chance auf Rare – nur wenn sowohl Spieler als auch Gegner mind. Level 3
+        // 10 % chance for a rare – only if both player and enemy are at least level 3
         bool isRare = playerLevel >= 3 && enemyLevel >= 3 && _rng.NextDouble() < 0.10;
 
         int baseHp      = template.GetMaxHp(enemyLevel);
@@ -71,7 +71,7 @@ public class EnemySpawner
         };
     }
 
-    // Wenige Kupfer pro Kill: Spanne aus dem Template, +1 Kupfer je Level über MinLevel
+    // A few copper per kill: range from the template, +1 copper per level above MinLevel
     private int RollCopper(EnemyTemplate template, int enemyLevel)
     {
         int min = Math.Max(0, template.MinCopperReward);

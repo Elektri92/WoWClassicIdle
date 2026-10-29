@@ -15,7 +15,7 @@ public static partial class TalentRegistry
     public static IReadOnlyList<TalentDefinition> GetTalents(CharacterClass cls) =>
         _talents.TryGetValue(cls, out var list) ? list : Array.Empty<TalentDefinition>();
 
-    /// <summary>Talente, die die Fähigkeit <paramref name="abilityId"/> freischalten (leer = keine Talent-Fähigkeit).</summary>
+    /// <summary>Talents that unlock the ability <paramref name="abilityId"/> (empty = not a talent ability).</summary>
     public static IEnumerable<TalentDefinition> GetGrantingTalents(CharacterClass cls, string abilityId) =>
         GetTalents(cls).Where(t => t.GrantedAbilityIds.Contains(abilityId));
 
@@ -36,7 +36,7 @@ public static partial class TalentRegistry
         _ => new[] { "Tree 1", "Tree 2", "Tree 3" },
     };
 
-    // Thematischer Hintergrund je Spec (wwwroot/images/talents/{klasse}-{baum}.jpg)
+    // Themed background per spec (wwwroot/images/talents/{class}-{tree}.jpg)
     public static string GetTreeBackgroundUrl(CharacterClass cls, int treeIndex)
     {
         var tree = GetTreeNames(cls)[treeIndex].ToLowerInvariant().Replace(' ', '-');

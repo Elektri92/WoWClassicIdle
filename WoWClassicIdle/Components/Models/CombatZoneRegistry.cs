@@ -2,7 +2,7 @@
 namespace Models;
 
 /// <summary>
-/// Alle Kampfgebiete (Daten in .EasternKingdoms.cs / .Kalimdor.cs) und ihre fertig skalierten Gegner-Templates.
+/// All combat zones (data in .EasternKingdoms.cs / .Kalimdor.cs) and their fully scaled enemy templates.
 /// </summary>
 public static partial class CombatZoneRegistry
 {
@@ -11,7 +11,7 @@ public static partial class CombatZoneRegistry
     private static ZoneMob Mob(string name, EnemyArchetype archetype, string icon, int weight = 3) =>
         new(name, archetype, Icon(icon), weight);
 
-    /// <summary>Alle Zonen, sortiert nach Mindestlevel (dann Maxlevel, Name).</summary>
+    /// <summary>All zones, sorted by minimum level (then max level, name).</summary>
     public static IReadOnlyList<CombatZone> All { get; } =
         EasternKingdoms().Concat(Kalimdor())
             .OrderBy(z => z.MinLevel).ThenBy(z => z.MaxLevel).ThenBy(z => z.Name)
@@ -28,13 +28,13 @@ public static partial class CombatZoneRegistry
 
     public static bool CanEnter(CombatZone zone, int playerLevel) => playerLevel >= zone.MinLevel;
 
-    // Dunkle Zonen-Themes: Kampf- und Reisehintergrund zeigen Nachthimmel
+    // Dark zone themes: combat and travel backgrounds show a night sky
     private static readonly HashSet<string> NightThemes =
         ["duskwood", "tirisfal", "teldrassil", "darkshore", "sorrows", "plague", "deadwind", "felwood", "blasted", "moonglade", "ashenvale", "silverpine"];
 
     public static bool IsNightTheme(string theme) => NightThemes.Contains(theme);
 
-    /// <summary>Startgebiet der Rasse wie in WoW Classic – neue Charaktere beginnen dort.</summary>
+    /// <summary>Starting zone of the race like in WoW Classic – new characters start there.</summary>
     public static CombatZone? StartZoneFor(Race race) => Get(race switch
     {
         Race.Human               => "elwynn_forest",
@@ -47,8 +47,8 @@ public static partial class CombatZoneRegistry
     });
 
     /// <summary>
-    /// Zone ohne Spielerwahl (Headless-Simulation): die erste Zone, deren Levelbereich das Level enthält –
-    /// bevorzugt mit dem niedrigsten Maxlevel, damit die Gegner möglichst nah am Spielerlevel liegen.
+    /// Zone without player choice (headless simulation): the first zone whose level range contains the level –
+    /// preferring the lowest max level so the enemies are as close to the player level as possible.
     /// </summary>
     public static CombatZone AutoZoneFor(int level) =>
         All.Where(z => z.MinLevel <= level && level <= z.MaxLevel).OrderBy(z => z.MaxLevel).FirstOrDefault()

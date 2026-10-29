@@ -2,8 +2,8 @@
 namespace Models;
 
 /// <summary>
-/// Starter-Waffen (Level 1) + klassenspezifische Tier-Waffen (grün Level 5–60, blau Level 10–60).
-/// Grün: 25 % Dropchance. Blau: 10 % Dropchance, doppelte Stats, +10 % Schaden.
+/// Starter weapons (level 1) + class-specific tier weapons (green level 5–60, blue level 10–60).
+/// Green: 25 % drop chance. Blue: 10 % drop chance, double stats, +10 % damage.
 /// </summary>
 public static class WeaponRegistry
 {
@@ -17,14 +17,14 @@ public static class WeaponRegistry
     public static readonly WeaponItem ShamanStarter  = new(5008, "Worn Mace",         "inv_hammer_05",     1, 3, 1.8, WeaponType.Mace,  SellPrice: 1, RequiredClass: CharacterClass.Shaman);
     public static readonly WeaponItem DruidStarter   = new(5009, "Worn Mace",         "inv_hammer_05",     1, 3, 1.9, WeaponType.Mace,  SellPrice: 1, RequiredClass: CharacterClass.Druid);
 
-    // Grüne Präfixe für Level 5, 10, 15 … 60 (12 Stufen)
+    // Green prefixes for level 5, 10, 15 … 60 (12 tiers)
     private static readonly string[] GreenPrefixes =
     [
         "Simple", "Fine", "Solid", "Reinforced", "Battle-Worn", "Honored",
         "Revered", "Exalted", "Champion's", "Warlord's", "Marshal's", "Grand Marshal's",
     ];
 
-    // Blaue Präfixe für Level 10, 15 … 60 (11 Stufen, Tier 2–12)
+    // Blue prefixes for level 10, 15 … 60 (11 tiers, tier 2–12)
     private static readonly string[] BluePrefixes =
     [
         "Gleaming", "Radiant", "Brilliant", "Lustrous", "Resplendent",
@@ -88,7 +88,7 @@ public static class WeaponRegistry
             [DruidStarter.Id]   = DruidStarter,
         };
 
-        // Grüne Tier-Waffen: 9 Klassen × 12 Stufen, IDs ab 5101
+        // Green tier weapons: 9 classes × 12 tiers, IDs from 5101
         int id = 5101;
         foreach (var cfg in ClassConfigs)
         {
@@ -113,17 +113,17 @@ public static class WeaponRegistry
         }
 
         // Blaue Tier-Waffen: 9 Klassen × 11 Stufen (Level 10–60), IDs ab 5301
-        // Doppelte Stats, +10 % Schaden gegenüber der grünen Stufe, 10 % Dropchance
+        // Double stats, +10 % damage compared to the green tier, 10 % drop chance
         id = 5301;
         foreach (var cfg in ClassConfigs)
         {
             var greenList = _tierByClass[cfg.Class];
             var blueList  = new List<WeaponItem>();
 
-            // tier 0 = grüne Stufe 2 (Level 10) bis tier 10 = grüne Stufe 12 (Level 60)
+            // tier 0 = green tier 2 (level 10) to tier 10 = green tier 12 (level 60)
             for (int blueIdx = 0; blueIdx < 11; blueIdx++)
             {
-                var green  = greenList[blueIdx + 1];   // grüne Waffe für Level 10, 15 … 60
+                var green  = greenList[blueIdx + 1];   // green weapon for level 10, 15 … 60
                 int minDmg = Math.Max(1, (int)Math.Round(green.MinDamage * 1.1));
                 int maxDmg = Math.Max(minDmg + 1, (int)Math.Round(green.MaxDamage * 1.1));
                 var blueBonuses = green.Bonuses is { } b
@@ -146,7 +146,7 @@ public static class WeaponRegistry
 
     public static WeaponItem? GetById(int id) => _byId.TryGetValue(id, out var w) ? w : null;
 
-    /// <summary>Alle Waffen (grün + blau) aller Klassen mit genau diesem RequiredLevel (für Debug-Seiten).</summary>
+    /// <summary>All weapons (green + blue) of all classes with exactly this RequiredLevel (for debug pages).</summary>
     public static IReadOnlyList<WeaponItem> GetWeaponsAtLevel(int reqLevel)
     {
         var result = new List<WeaponItem>();
@@ -177,7 +177,7 @@ public static class WeaponRegistry
         _                      => WarriorStarter,
     };
 
-    /// <summary>Höchste grüne Tier-Waffe mit RequiredLevel ≤ <paramref name="level"/>.</summary>
+    /// <summary>Highest green tier weapon with RequiredLevel ≤ <paramref name="level"/>.</summary>
     public static WeaponItem? GetTierWeaponForLevel(CharacterClass cls, int level)
     {
         if (!_tierByClass.TryGetValue(cls, out var list)) return null;
@@ -187,7 +187,7 @@ public static class WeaponRegistry
         return best;
     }
 
-    /// <summary>Höchste blaue Tier-Waffe mit RequiredLevel ≤ <paramref name="level"/> (ab Level 10).</summary>
+    /// <summary>Highest blue tier weapon with RequiredLevel ≤ <paramref name="level"/> (from level 10).</summary>
     public static WeaponItem? GetBlueTierWeaponForLevel(CharacterClass cls, int level)
     {
         if (!_blueTierByClass.TryGetValue(cls, out var list)) return null;

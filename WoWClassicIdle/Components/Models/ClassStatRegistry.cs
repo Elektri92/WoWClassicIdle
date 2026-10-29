@@ -2,13 +2,13 @@
 namespace Models
 {
     /// <summary>
-    /// Primärattribute je Klasse – angelehnt an die Werte aus WoW Classic.
+    /// Primary attributes per class – based on the values from WoW Classic.
     /// </summary>
     public static class ClassStatRegistry
     {
         private static readonly Dictionary<CharacterClass, ClassStatProfile> Profiles = new()
         {
-            // Basiswerte (Level 1): Str, Agi, Sta, Int, Spi  |  Zuwachs pro Level: Str, Agi, Sta, Int, Spi
+            // Base values (level 1): Str, Agi, Sta, Int, Spi  |  Growth per level: Str, Agi, Sta, Int, Spi
             { CharacterClass.Warrior, Profile(23, 20, 22, 20, 20, new StatGrowth(1.4, 0.9, 1.3, 0.2, 0.4)) },
             { CharacterClass.Paladin, Profile(22, 20, 22, 20, 21, new StatGrowth(1.2, 0.6, 1.1, 0.6, 0.7)) },
             { CharacterClass.Hunter,  Profile(20, 23, 21, 20, 21, new StatGrowth(0.4, 1.4, 1.0, 0.6, 0.6)) },
@@ -23,7 +23,7 @@ namespace Models
         public static ClassStatProfile GetProfile(CharacterClass characterClass) => Profiles[characterClass];
 
         /// <summary>
-        /// Berechnet die Primärattribute einer Klasse für das angegebene Level.
+        /// Calculates the primary attributes of a class for the given level.
         /// </summary>
         public static PrimaryStats GetPrimaryStats(CharacterClass characterClass, int level)
         {

@@ -2,7 +2,7 @@
 @inject IdleGameEngine Engine
 @inject NavigationManager Nav
 
-@* Berufsübergreifende Suche: wer stellt ein Item her bzw. wo wird es gesammelt? Styles: wwwroot/css/profession-trainer.css *@
+@* Cross-profession search: who crafts an item, or where is it gathered? Styles: wwwroot/css/profession-trainer.css *@
 <div class="al-panel prof-search" style="--i: 0">
     <input class="trainer-search" type="search" placeholder="Search items, recipes and gathering zones…"
            @bind="_query" @bind:event="oninput" />
@@ -50,7 +50,7 @@
 
     private bool Matches(string text) => text.Contains(Query, StringComparison.OrdinalIgnoreCase);
 
-    // Rezepte (Ergebnis-Name) und Sammelzonen (Drop-Name); Status aus Sicht des aktiven Charakters bzw. accountweit
+    // Recipes (result name) and gathering zones (drop name); status from the perspective of the active character or account-wide
     private IEnumerable<SearchHit> Hits =>
         ProfessionRegistry.Recipes
             .Where(r => Matches(r.Result.Name))

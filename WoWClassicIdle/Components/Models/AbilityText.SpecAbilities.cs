@@ -1,10 +1,10 @@
 // Models/AbilityText.SpecAbilities.cs
 namespace Models;
 
-// Tooltip-Texte für die Spezialisierungs-Fähigkeiten (Talent-Reihe 3): Auren, Haltungen, Synergien, Sonder-Buffs.
+// Tooltip texts for the specialization abilities (talent row 3): auras, stances, synergies, special buffs.
 public static partial class AbilityText
 {
-    /// <summary>Effekttext der Spezialisierungs-Mechaniken; null = nächste Regel prüfen.</summary>
+    /// <summary>Effect text of the specialization mechanics; null = check the next rule.</summary>
     private static string? SpecDescription(Ability ability)
     {
         if (ability.IsAura && !ability.IsForm)
@@ -38,7 +38,7 @@ public static partial class AbilityText
         return null;
     }
 
-    /// <summary>Einzeiler für die Spezialisierungs-Mechaniken; null = Standardtext.</summary>
+    /// <summary>One-liner for the specialization mechanics; null = default text.</summary>
     private static string? SpecShortSummary(Ability ability)
     {
         if (ability.IsAura && !ability.IsForm)
@@ -54,7 +54,7 @@ public static partial class AbilityText
         return null;
     }
 
-    /// <summary>Liste der Aura-/Haltungs-Effekte, z. B. „+20% healing done, +25% mana regeneration".</summary>
+    /// <summary>List of aura/stance effects, e.g. "+20% healing done, +25% mana regeneration".</summary>
     private static string AuraEffectText(Ability ability)
     {
         var parts = new List<string>();

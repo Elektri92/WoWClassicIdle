@@ -6,8 +6,8 @@ using Models;
 public interface IAbilityLoadoutService
 {
     /// <summary>
-    /// Liefert die Loadout der Klasse. Beim ersten Zugriff werden alle für
-    /// <paramref name="level"/> verfügbaren Abilities automatisch ausgerüstet.
+    /// Returns the loadout of the class. On first access all abilities available for
+    /// <paramref name="level"/> are equipped automatically.
     /// </summary>
     ClassLoadout GetLoadout(CharacterClass cls, int level);
     void SaveLoadout(ClassLoadout loadout);

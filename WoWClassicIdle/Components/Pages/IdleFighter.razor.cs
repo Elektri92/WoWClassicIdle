@@ -1,4 +1,4 @@
-// Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+// Create new systems as their own partial file; keep files below 300 lines where possible.
 using Models;
 using Services;
 using Microsoft.AspNetCore.Components;
@@ -9,9 +9,9 @@ namespace WoWClassicIdle.Components.Pages;
 public partial class IdleFighter
 {
     private bool _running;
-    // Zonenkarte geöffnet (Two-Way-Binding mit CombatZonePanel)
+    // Zone map open (two-way binding with CombatZonePanel)
     private bool _zoneMenuOpen;
-    /// <summary>Zonenkarte sichtbar – auch beim ersten Betreten ohne gewählte Zone.</summary>
+    /// <summary>Zone map visible – also on the first visit without a chosen zone.</summary>
     private bool ZoneMenuVisible => _zoneMenuOpen || _engine.NeedsCombatZone;
     private double _speedMultiplier = 1.0;
     private HashSet<string> _multiRankNames = new();
@@ -30,7 +30,7 @@ public partial class IdleFighter
     private int _nextNotifId;
 
     private const string SpiritHealerIconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_resurrection.jpg";
-    private const int MaxFloatsPerFrame = 12; // bei hoher Spielgeschwindigkeit nicht das Frame zuschütten
+    private const int MaxFloatsPerFrame = 12; // at high game speed don't flood the frame
     private static readonly TimeSpan FloatLifetime = TimeSpan.FromSeconds(1.7);
     private readonly List<CombatFloat> _playerFloats = new();
     private readonly List<CombatFloat> _enemyFloats = new();
@@ -41,7 +41,7 @@ public partial class IdleFighter
 
     protected override void OnInitialized()
     {
-        // Wurde in den Berufsfenstern der Charakter gewechselt, wieder den ursprünglichen spielen
+        // If the character was switched in the profession windows, play the original one again
         _engine.RestoreCharacterAfterProfessions();
         _engine.TickUpdated += OnTick;
         _engine.CombatTextRaised += OnCombatText;
@@ -57,7 +57,7 @@ public partial class IdleFighter
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        // Einmalige Einführung beim ersten Betreten (nicht im Prerendering)
+        // One-time introduction on the first visit (not during prerendering)
         _engine.RequestFeatureIntro(GameFeatureRegistry.IdleFighterIntroId);
         _selfRef = DotNetObjectReference.Create(this);
         try
@@ -98,7 +98,7 @@ public partial class IdleFighter
         if (current != _lastSeenClass)
         {
             _lastSeenClass = current;
-            _engine.Player.SetClass(current); // erzwingt frisches Loadout auf Character-Basis
+            _engine.Player.SetClass(current); // forces a fresh loadout based on the character
             ApplySavedLoadout();
         }
     }
@@ -172,7 +172,7 @@ public partial class IdleFighter
         if (!loadout.IsEquipped(n.Ability.Id))
         {
             var pool = ClassAbilityRegistry.GetAbilitiesFor(cls);
-            // Gleicher Spell-Name (anderer Rank): vorhandenen Rank in-place ersetzen
+            // Same spell name (different rank): replace the existing rank in place
             var sameSpell = pool.FirstOrDefault(a => a.Name == n.Ability.Name
                                                   && a.Id != n.Ability.Id
                                                   && loadout.IsEquipped(a.Id));
@@ -183,7 +183,7 @@ public partial class IdleFighter
             }
             else if (!string.IsNullOrEmpty(n.Ability.ExclusiveGroup))
             {
-                // Exklusiv-Gruppe: vorhandene Ability derselben Gruppe in-place ersetzen
+                // Exclusive group: replace the existing ability of the same group in place
                 var conflict = pool.FirstOrDefault(a => a.ExclusiveGroup == n.Ability.ExclusiveGroup
                                                       && loadout.IsEquipped(a.Id));
                 if (conflict != null)
@@ -200,7 +200,7 @@ public partial class IdleFighter
             {
                 loadout.EquippedAbilityIds.Add(n.Ability.Id);
             }
-            // Gestalt-Regeln: in Bear/Cat keine Mana-Zauber, Maul/Claw nur in ihrer Form
+            // Form rules: no mana spells in Bear/Cat, Maul/Claw only in their form
             ShapeshiftForms.PurgeIncompatible(loadout);
             _loadoutService.SaveLoadout(loadout);
             _engine.ApplyLoadout(loadout);
@@ -297,7 +297,7 @@ public partial class IdleFighter
 
     private void ResetMeter() => _engine.Meter.Reset();
 
-    // Action History ist standardmäßig ausgeblendet und lässt sich über den Meter-Header einblenden
+    // Action history is hidden by default and can be shown via the meter header
     private bool _showHistory;
     private void ToggleHistory() => _showHistory = !_showHistory;
 
@@ -314,13 +314,13 @@ public partial class IdleFighter
     private static int CalcPct(int current, int max) =>
         max <= 0 ? 0 : Math.Clamp(current * 100 / max, 0, 100);
 
-    /// <summary>Anteil (0..1) als kulturunabhängiger Prozentwert für Inline-Styles.</summary>
+    /// <summary>Share (0..1) as a culture-invariant percentage for inline styles.</summary>
     private static string PctStyle(double fraction) =>
         (Math.Clamp(fraction, 0, 1) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Anteil (0..1) als kulturunabhängiger Faktor für <c>transform: scaleX()</c>. Füllbalken über transform statt
-    /// width animieren: width erzwingt bei jedem Tick Layout + Repaint, was WebKitGTK (Linux) ins Ruckeln bringt.
+    /// Share (0..1) as a culture-invariant factor for <c>transform: scaleX()</c>. Animate fill bars via transform instead of
+    /// width: width forces layout + repaint on every tick, which makes WebKitGTK (Linux) stutter.
     /// </summary>
     private static string Scale(double fraction) =>
         Math.Clamp(fraction, 0, 1).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);

@@ -1,6 +1,6 @@
 @using Models
 
-@* Kleiner Slot im Zonen-Block (aktiv oder passiv): Charakter-Icon per Drag & Drop hinein-/herausziehen. *@
+@* Small slot in the zone block (active or passive): drag the character icon in/out. *@
 <div class="zone-slot @(IsActive ? "active" : "") @(Character is not null ? "filled" : "") @(IsPaused ? "paused" : "") @(IsLocked ? "locked" : "") @(DropReady ? "drop-ready" : "")"
      title="@Tooltip"
      @onclick:stopPropagation="true"
@@ -31,13 +31,13 @@
     [Parameter] public bool IsActive { get; set; }
     [Parameter] public bool IsPaused { get; set; }
 
-    /// <summary>Leerer passiver Slot, der wegen des Limits je Beruf nicht belegt werden kann.</summary>
+    /// <summary>Empty passive slot that cannot be filled because of the per-profession limit.</summary>
     [Parameter] public bool IsLocked { get; set; }
 
-    /// <summary>Gerade wird ein Charakter gezogen, der hier abgelegt werden darf → hervorheben.</summary>
+    /// <summary>A character that may be dropped here is currently being dragged → highlight.</summary>
     [Parameter] public bool DropReady { get; set; }
 
-    /// <summary>Fortschritt des laufenden Durchlaufs (0–1).</summary>
+    /// <summary>Progress of the running pass (0–1).</summary>
     [Parameter] public double Progress { get; set; }
     [Parameter] public string Tooltip { get; set; } = "";
 

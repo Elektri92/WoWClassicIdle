@@ -4,8 +4,8 @@ namespace Models;
 public enum ZoneObjectiveKind { SlayMob, SlayRare }
 
 /// <summary>
-/// Einmaliges Ziel einer Kampfzone (je Charakter), angelehnt an Classic-Quests.
-/// <paramref name="MobName"/> nur bei <see cref="ZoneObjectiveKind.SlayMob"/>.
+/// One-time objective of a combat zone (per character), based on Classic quests.
+/// <paramref name="MobName"/> only for <see cref="ZoneObjectiveKind.SlayMob"/>.
 /// </summary>
 public record ZoneObjective(string Id, string ZoneId, ZoneObjectiveKind Kind, string? MobName, string ImageUrl, int Required)
 {
@@ -15,8 +15,8 @@ public record ZoneObjective(string Id, string ZoneId, ZoneObjectiveKind Kind, st
 }
 
 /// <summary>
-/// Zonen-Ziele („Zone Mastery“) und Belohnungsformeln für Ziele und Entdeckung.
-/// Jede Zone: die beiden ersten Gegnerarten jagen + einen Rare besiegen; alle erledigt → garantiertes Item.
+/// Zone objectives ("Zone Mastery") and reward formulas for objectives and discovery.
+/// Every zone: hunt the first two enemy types + defeat a rare; all done → guaranteed item.
 /// </summary>
 public static class ZoneObjectiveRegistry
 {
@@ -35,20 +35,20 @@ public static class ZoneObjectiveRegistry
 
     public static IReadOnlyList<ZoneObjective> For(CombatZone zone) => ByZone[zone.Id];
 
-    /// <summary>Belohnungsstufe: Spielerlevel, auf den Levelbereich der Zone begrenzt (alte Zonen geben wenig).</summary>
+    /// <summary>Reward tier: player level, clamped to the level range of the zone (old zones give little).</summary>
     public static int RewardLevel(CombatZone zone, int playerLevel) => Math.Clamp(playerLevel, zone.MinLevel, zone.MaxLevel);
 
-    /// <summary>Entdeckungs-XP beim ersten Betreten: so viel wie 5 Kills auf Belohnungsstufe.</summary>
+    /// <summary>Discovery XP on the first visit: as much as 5 kills at reward tier.</summary>
     public static int DiscoveryXp(CombatZone zone, int playerLevel) =>
         StaticHelpers.GetEnemyXpReward(RewardLevel(zone, playerLevel)) * 5;
 
-    /// <summary>XP je erledigtem Ziel: so viel wie 12 Kills auf Belohnungsstufe.</summary>
+    /// <summary>XP per completed objective: as much as 12 kills at reward tier.</summary>
     public static int ObjectiveXp(CombatZone zone, int playerLevel) =>
         StaticHelpers.GetEnemyXpReward(RewardLevel(zone, playerLevel)) * 12;
 
-    /// <summary>Kupfer je erledigtem Ziel (≈ Beute aus 30–40 Kills).</summary>
+    /// <summary>Copper per completed objective (≈ loot from 30–40 kills).</summary>
     public static long ObjectiveCopper(CombatZone zone, int playerLevel) => 40L * RewardLevel(zone, playerLevel);
 
-    /// <summary>Chance, dass das Mastery-Item blau statt grün ist (sofern es eine blaue Tabelle gibt).</summary>
+    /// <summary>Chance that the mastery item is blue instead of green (if there is a blue table).</summary>
     public const double MasteryBlueChance = 0.25;
 }

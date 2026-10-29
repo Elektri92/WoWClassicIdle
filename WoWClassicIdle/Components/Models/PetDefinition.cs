@@ -6,12 +6,12 @@ public enum PetKind
     None,
     Cat,         // Hunter: Schadens-Pet
     Bear,        // Hunter: Tank-Pet
-    Voidwalker,  // Warlock: Tank-Dämon
+    Voidwalker,  // Warlock: tank demon
 }
 
 /// <summary>
-/// Statische Werte eines Begleittiers. Leben = Anteil der Spieler-HP,
-/// Schaden = <see cref="BaseDamage"/> + <see cref="DamagePerLevel"/> × Spielerlevel alle <see cref="AttackInterval"/> Sekunden.
+/// Static values of a pet. Health = share of the player HP,
+/// damage = <see cref="BaseDamage"/> + <see cref="DamagePerLevel"/> × player level every <see cref="AttackInterval"/> seconds.
 /// </summary>
 public sealed record PetDefinition(
     PetKind Kind,
@@ -25,10 +25,10 @@ public sealed record PetDefinition(
 
 public static class PetRegistry
 {
-    /// <summary>Anteil des Gegnerschadens, den ein lebendes Pet statt des Spielers abfängt (0.10 = 10 %).</summary>
+    /// <summary>Share of enemy damage a living pet absorbs instead of the player (0.10 = 10 %).</summary>
     public const double DamageShare = 0.10;
 
-    /// <summary>Cooldown der Beschwörung nach dem Tod des Pets in Sekunden.</summary>
+    /// <summary>Cooldown of the summon after the pet's death in seconds.</summary>
     public const double DeathCooldown = 10;
 
     private static readonly Dictionary<PetKind, PetDefinition> _pets = new()
@@ -46,7 +46,7 @@ public static class PetRegistry
 
     public static PetDefinition? Get(PetKind kind) => _pets.GetValueOrDefault(kind);
 
-    /// <summary>Durchschnittlicher Treffer des Pets auf einem Spielerlevel (ohne Varianz).</summary>
+    /// <summary>Average hit of the pet at a player level (without variance).</summary>
     public static int AverageHit(PetDefinition def, int ownerLevel) =>
         Math.Max(1, (int)Math.Round(def.BaseDamage + def.DamagePerLevel * ownerLevel));
 }

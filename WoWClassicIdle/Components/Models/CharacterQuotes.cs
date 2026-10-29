@@ -1,6 +1,6 @@
 namespace Models
 {
-    // Typische Sprüche je Rasse und Klasse für die Sprechblase in der Charaktererstellung (/character)
+    // Typical quotes per race and class for the speech bubble in character creation (/character)
     public static class CharacterQuotes
     {
         private static readonly Dictionary<Race, string[]> RaceQuotes = new()

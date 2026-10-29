@@ -1,9 +1,9 @@
-// Kampf-Effekte – Auto-Attacks: Nahkampf als Ausfallschritt + waffen-/kreaturabhängiger Treffer,
-// Bogen und Zauberstab als Geschoss. Gilt für Spieler und Gegner.
+// Combat effects – auto-attacks: melee as a lunge + weapon/creature-dependent hit,
+// bow and wand as a projectile. Applies to player and enemy.
 (() => {
     const { PLAYER, ENEMY, TRAIL_INTERVAL, canLaunch, centerOf, spawn,
             trailParticle, flash, ring, sparks, slash, hitReact, frameShake, fly, direction } = window.spellFx.fx;
-    const LUNGE_IMPACT = 0.4;    // Anteil des Ausfallschritts, an dem der Treffer landet
+    const LUNGE_IMPACT = 0.4;    // Share of the lunge at which the hit lands
     const STEEL = ['#e8eef5', '#8a9bb0', '#ffffff'];       // Auto-Attack Spieler
     const STEEL_CRIT = ['#ffe9a0', '#ffb020', '#ffffff'];
     const WAND = ['#e0c8ff', '#8a4dff', '#ffffff'];
@@ -13,7 +13,7 @@
     };
     const ENEMY_DEFAULT = ['#ff8a7a', '#c0281a', '#ffe0da'];
 
-    /** Ausfallschritt des Angreifers Richtung Ziel; Treffer landet nach impactMs. */
+    /** Lunge of the attacker towards the target; the hit lands after impactMs. */
     function lunge(from, dir, impactMs) {
         const dist = 22;
         from.el.animate([
@@ -25,7 +25,7 @@
     }
 
     /**
-     * opts: { attacker: 'player'|'enemy', style, crit, duration (ms bis zum Treffer), icon }
+     * opts: { attacker: 'player'|'enemy', style, crit, duration (ms until the hit), icon }
      * style: slash | chop | stab | blunt | claw | splash | arrow | wand
      */
     function swing(opts) {
@@ -51,43 +51,43 @@
     function meleeImpact(target, dir, style, colors, crit, byEnemy) {
         const { x, y } = target;
         const deg = dir.angle * 180 / Math.PI;
-        // Schlagwinkel: diagonal von oben in Laufrichtung
+        // Strike angle: diagonally from above in the direction of movement
         const diag = dir.x >= 0 ? -40 : 40;
         const k = crit ? 1.5 : 1;
 
         switch (style) {
-            case 'chop':    // Axt: schwerer, breiter Hieb von oben
+            case 'chop':    // Axe: heavy, wide blow from above
                 slash(x, y, colors, dir.x >= 0 ? -65 : 65, { cls: 'spellfx-slash heavy', duration: 340 });
                 if (crit) slash(x, y, colors, dir.x >= 0 ? -55 : 55, { cls: 'spellfx-slash heavy', offset: 10, delay: 60 });
                 sparks(x, y, colors, Math.round(7 * k), 25, 30, dir.angle);
                 hitReact(target, dir, colors, crit ? 10 : 7, true);
                 frameShake(target, crit ? 5 : 2.5);
                 break;
-            case 'stab':    // Dolch / Stachel: zwei schnelle Stiche in Angriffsrichtung
+            case 'stab':    // Dagger / stinger: two fast stabs in the attack direction
                 slash(x, y, colors, deg, { cls: 'spellfx-thrust', offset: -6, duration: 220 });
                 slash(x, y, colors, deg, { cls: 'spellfx-thrust', offset: 6, delay: 70, duration: 220 });
                 sparks(x, y, colors, Math.round(4 * k), 15, 25, dir.angle);
                 hitReact(target, dir, colors, crit ? 7 : 4);
                 break;
-            case 'blunt':   // Streitkolben / Stab / Eber: Wucht statt Klinge
+            case 'blunt':   // Mace / staff / boar: force instead of blade
                 ring(x, y, colors, crit ? 2.0 : 1.4, 380);
                 flash(x, y, colors, crit ? 1.2 : 0.8, 220);
                 sparks(x, y, colors, Math.round(8 * k), 20, 25, null, 'spellfx-dust');
                 hitReact(target, dir, colors, crit ? 11 : 8, true);
                 frameShake(target, crit ? 5 : 3);
                 break;
-            case 'claw':    // Bär / Wolf / Drache / Katzengestalt: drei parallele Krallenspuren
+            case 'claw':    // Bear / wolf / dragon / Cat Form: three parallel claw marks
                 for (const [i, off] of [-11, 0, 11].entries())
                     slash(x, y, colors, diag - 10, { cls: 'spellfx-claw', offset: off, delay: i * 35, duration: 300 });
                 sparks(x, y, colors, Math.round(5 * k), 18, 25, dir.angle);
                 hitReact(target, dir, colors, crit ? 8 : 5);
                 break;
-            case 'splash':  // Schleim: Säurespritzer
+            case 'splash':  // Slime: acid splashes
                 flash(x, y, colors, crit ? 1.2 : 0.9, 260);
                 sparks(x, y, colors, Math.round(10 * k), 18, 30, null, 'spellfx-droplet');
                 hitReact(target, dir, colors, crit ? 7 : 4, true);
                 break;
-            default:        // Schwert / Humanoide: ein sauberer Diagonalschnitt
+            default:        // Sword / humanoids: one clean diagonal slash
                 slash(x, y, colors, diag);
                 if (crit) slash(x, y, colors, -diag, { delay: 60 });
                 sparks(x, y, colors, Math.round(5 * k), 18, 28, dir.angle);
@@ -98,7 +98,7 @@
             flash(x, y, colors, 1.1, 240);
             frameShake(target, 4);
         }
-        // Gegnertreffer: kurzer roter Rand-Schimmer am Spieler-Frame
+        // Enemy hit: brief red edge shimmer on the player frame
         if (byEnemy) {
             target.el.closest('.unit-frame')?.animate([
                 { boxShadow: '0 0 0 0 rgba(255,40,20,0)' },
@@ -110,7 +110,7 @@
 
     function shootArrow(from, to, dir, colors, crit, duration) {
         if (!canLaunch()) return;
-        // Bogenschütze: kurzes Zurückziehen beim Abschuss
+        // Archer: brief pull-back on firing
         from.el.animate([
             { transform: 'translate(0, 0)' },
             { transform: `translate(${-dir.x * 5}px, ${-dir.y * 5}px)`, offset: 0.3 },

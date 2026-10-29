@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Models;
 using Timer = System.Timers.Timer;
 
-// Neue Systeme als eigene Partial-Datei anlegen; Dateien möglichst < 300 Zeilen halten.
+// Create new systems as their own partial file; keep files below 300 lines where possible.
 // Kampf → IdleGameEngine.Combat.cs | Roster → .Roster.cs | Talente → .Talent.cs | Save/Load → .SaveLoad.cs
 public partial class IdleGameEngine
 {
@@ -21,7 +21,7 @@ public partial class IdleGameEngine
     public double SpeedMultiplier { get; private set; } = 1.0;
     private const double MinSpeed = 0.1;
     private const double MaxSpeed = 10000.0;
-    private readonly double _baseDt; // fester Zeitschritt pro Sub-Step in Sekunden
+    private readonly double _baseDt; // fixed time step per sub-step in seconds
 
     // ─── Roster ───
     private readonly List<CharacterSlot> _roster = new();
@@ -44,9 +44,9 @@ public partial class IdleGameEngine
     public Player Player { get; private set; } = null!;
 
     public Enemy? CurrentEnemy { get; set; }
-    // Rare-Gegner, gegen den der Spieler gestorben ist – nach Respawn erneut bekämpfen
+    // Rare enemy the player died against – fight it again after respawn
     private Enemy? _pendingRareEnemy;
-    /// <summary>Rare nach Spielertod erneut in die Warteschlange stellen. Im Headless-Modus deaktivieren um Endlos-Loops zu vermeiden.</summary>
+    /// <summary>Requeue the rare after the player's death. Disable in headless mode to avoid endless loops.</summary>
     public bool EnableRareRequeue { get; set; } = true;
     public int TotalKills { get; private set; }
     public int TotalDeaths { get; private set; }
@@ -56,53 +56,53 @@ public partial class IdleGameEngine
     public int TotalRareItemsLooted { get; private set; }
     public string? LastLog { get; private set; }
 
-    /// <summary>Teilt einen Inventar-Stapel (Shift-Klick) – gesperrt gegen gleichzeitige Loot-/Berufs-Ticks.</summary>
+    /// <summary>Splits an inventory stack (shift-click) – locked against concurrent loot/profession ticks.</summary>
     public bool SplitInventoryStack(Bag bag, int index, int amount)
     {
         lock (_simLock) return _sharedInventory.SplitStack(bag, index, amount);
     }
 
-    /// <summary>Erhöht den Zähler für manuell verkaufte Items (z.B. per Drag-and-Drop an den Händler).</summary>
+    /// <summary>Increments the counter for manually sold items (e.g. via drag and drop onto the merchant).</summary>
     public void TrackItemSold(int count = 1) => TotalItemsSold += count;
 
-    /// <summary>Verbleibende Sekunden beim Geistheiler, bevor der nächste Gegner spawnt.</summary>
+    /// <summary>Remaining seconds at the spirit healer before the next enemy spawns.</summary>
     public double RespawnRemaining { get; private set; }
-    /// <summary>Gesamtdauer des aktuellen Geistheiler-Aufenthalts (10 s + 1 s pro Spielerlevel).</summary>
+    /// <summary>Total duration of the current spirit healer stay (10 s + 1 s per player level).</summary>
     public double RespawnDuration { get; private set; }
     public bool IsAtSpiritHealer => RespawnRemaining > 0;
     public CombatMeter Meter { get; } = new();
 
-    // Gemeinsames Inventar: alle Charaktere teilen einen Rucksack für nicht-klassengebundene Items
+    // Shared inventory: all characters share one backpack for non-class-bound items
     private Inventory _sharedInventory = new();
     public Inventory SharedInventory => _sharedInventory;
 
-    // Serialisiert Simulationsschritte mit Charakterwechseln (Timer-Thread vs. UI-Thread)
+    // Serializes simulation steps with character switches (timer thread vs. UI thread)
     private readonly object _simLock = new();
 
     public event Action? TickUpdated;
 
-    /// <summary>Wird ausgelöst wenn ein neuer Charakter zum Roster hinzugefügt wird.</summary>
+    /// <summary>Raised when a new character is added to the roster.</summary>
     public event Action? RosterChanged;
 
-    /// <summary>Wird für jeden Treffer/jede Heilung ausgelöst (Timer-Thread!).</summary>
+    /// <summary>Raised for every hit/heal (timer thread!).</summary>
     public event Action<CombatText>? CombatTextRaised;
 
-    /// <summary>Wird ausgelöst, sobald der Effekt einer aktiv gewirkten Fähigkeit eintritt (Timer-Thread!).</summary>
+    /// <summary>Raised as soon as the effect of an actively cast ability occurs (timer thread!).</summary>
     public event Action<Ability>? AbilityTriggered;
 
     /// <summary>Fires once per ability that becomes available on level-up (Timer-Thread!).</summary>
     public event Action<Ability>? AbilityUnlocked;
 
-    /// <summary>Wird ausgelöst wenn ein Item von einem Rare-Gegner gedroppt wird (Timer-Thread!).</summary>
+    /// <summary>Raised when an item is dropped by a rare enemy (timer thread!).</summary>
     public event Action<Item>? ItemDropped;
 
     /// <summary>
-    /// true = gedroppte Rüstung wird automatisch angelegt wenn sie eine Verbesserung ist
-    /// (genutzt vom Debug-Simulator). Normalerweise false: Items landen nur im Inventar.
+    /// true = dropped armor is equipped automatically if it is an upgrade
+    /// (used by the debug simulator). Normally false: items only go into the inventory.
     /// </summary>
     public bool AutoEquipDrops { get; set; }
 
-    /// <param name="seed">Fester Zufalls-Seed für reproduzierbare Kämpfe (Debug-Simulator); null = zufällig.</param>
+    /// <param name="seed">Fixed random seed for reproducible fights (debug simulator); null = random.</param>
     public IdleGameEngine(int intervalMs = 100, int? seed = null)
     {
         _rng = seed is { } s ? new Random(s) : new Random();
@@ -136,8 +136,8 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Setzt den Geschwindigkeitsmultiplikator und passt die Timer-Intervall entsprechend an.
-    /// Wert wird auf [0.1, 20.0] geklemmt.
+    /// Sets the speed multiplier and adjusts the timer interval accordingly.
+    /// The value is clamped to [0.1, 20.0].
     /// </summary>
     public void SetSpeed(double multiplier)
     {
@@ -145,7 +145,7 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Setzt das Level des aktiven Charakters direkt und spawnt sofort einen passenden Gegner.
+    /// Sets the level of the active character directly and immediately spawns a matching enemy.
     /// </summary>
     public void SetPlayerLevel(int level)
     {

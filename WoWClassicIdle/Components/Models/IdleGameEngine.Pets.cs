@@ -1,12 +1,12 @@
 using Models;
 
-// Begleittiere (Hunter-Pets, Warlock-Dämonen): Beschwörung, Angriffe, Schadensaufteilung, Tod und Wiederbelebung.
+// Pets (Hunter pets, Warlock demons): summoning, attacks, damage split, death and revival.
 public partial class IdleGameEngine
 {
-    /// <summary>Aktuell beschworenes, lebendes Pet (null = keins oder tot).</summary>
+    /// <summary>Currently summoned, living pet (null = none or dead).</summary>
     public ActivePet? Pet { get; private set; }
 
-    /// <summary>Beschwört das Pet der Fähigkeit mit voller HP (Anteil der Spieler-HP + Talente).</summary>
+    /// <summary>Summons the ability's pet with full HP (share of the player HP + talents).</summary>
     private void SummonPet(Ability ability)
     {
         var def = PetRegistry.Get(ability.SummonsPet);
@@ -16,12 +16,12 @@ public partial class IdleGameEngine
         LastLog = $"✦ {def.Name} summoned ({Pet.MaxHp} HP)";
     }
 
-    /// <summary>Pet greift im eigenen Takt an. Gibt den am Gegner verursachten Schaden zurück.</summary>
+    /// <summary>Pet attacks at its own pace. Returns the damage dealt to the enemy.</summary>
     private int UpdatePet(double dt, double enemyDmgTakenMult)
     {
         if (Pet is null) return 0;
 
-        // Beschwörung nicht mehr ausgerüstet (Loadout-/Klassenwechsel, Talent-Reset) → Pet verschwindet
+        // Summon no longer equipped (loadout/class change, talent reset) → pet disappears
         if (!Player.EquippedAbilities.Any(a => a.Id == Pet.SummonAbility.Id))
         {
             DismissPet();
@@ -37,7 +37,7 @@ public partial class IdleGameEngine
         while (Pet.AttackAcc >= def.AttackInterval && enemy.IsAlive)
         {
             Pet.AttackAcc -= def.AttackInterval;
-            double variance = 0.85 + _rng.NextDouble() * 0.30;   // 85–115 % wie bei Gegnertreffern
+            double variance = 0.85 + _rng.NextDouble() * 0.30;   // 85–115 % like enemy hits
             int dmg = Math.Max(1, (int)Math.Round(PetRegistry.AverageHit(def, Player.Level) * variance * enemyDmgTakenMult
                                                   * (1.0 + Player.PetDamageTalentBonus + Player.Buffs.PetDamageBonus)));
             Meter.RecordAbility(Pet.MeterSource, CombatActionKind.Damage, enemy.TakeDamage(dmg));
@@ -48,14 +48,14 @@ public partial class IdleGameEngine
     }
 
     /// <summary>
-    /// Ein lebendes Pet fängt <see cref="PetRegistry.DamageShare"/> des Gegnertreffers ab.
-    /// Gibt den Anteil zurück, den der Spieler noch erleidet.
+    /// A living pet absorbs <see cref="PetRegistry.DamageShare"/> of the enemy hit.
+    /// Returns the share the player still takes.
     /// </summary>
     private int SplitDamageWithPet(int damage)
     {
         if (Pet is not { IsAlive: true }) return damage;
-        // Mindestens 1 Schaden, auch wenn 10 % eines kleinen Treffers auf 0 runden würden
-        // Soul Link erhöht den Anteil
+        // At least 1 damage, even if 10 % of a small hit would round to 0
+        // Soul Link increases the share
         int share = Math.Max(1, (int)Math.Round(damage * (PetRegistry.DamageShare + Player.Buffs.PetDamageShareBonus)));
 
         Pet.TakeDamage(share);
@@ -64,7 +64,7 @@ public partial class IdleGameEngine
         return Math.Max(1, damage - share);
     }
 
-    /// <summary>Pet gestorben: Beschwörung geht auf Cooldown und wird danach automatisch neu gewirkt.</summary>
+    /// <summary>Pet died: the summon goes on cooldown and is recast automatically afterwards.</summary>
     private void OnPetDied()
     {
         var pet = Pet!;
@@ -73,6 +73,6 @@ public partial class IdleGameEngine
         Pet = null;
     }
 
-    /// <summary>Entfernt das Pet ohne Cooldown (Spielertod, Charakterwechsel).</summary>
+    /// <summary>Removes the pet without cooldown (player death, character switch).</summary>
     private void DismissPet() => Pet = null;
 }

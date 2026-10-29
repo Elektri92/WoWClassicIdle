@@ -1,15 +1,15 @@
-/* Einmalige Animationen tragen visibility im Start-Keyframe: dadurch laufen sie in WebKitGTK auf dem
-   Hauptthread statt im Compositor. Compositor-Animationen ignorieren dort den backwards-Startwert – das Element
-   blitzte vor dem Animationsstart einmal voll sichtbar auf (Seitenwechsel-Flackern). */
+/* One-time animations carry visibility in the start keyframe: that makes them run on the main thread
+   in WebKitGTK instead of in the compositor. Compositor animations ignore the backwards start value there – the element
+   flashed fully visible once before the animation start (page transition flicker). */
 /* ============================================
-   Ability Loadout (/ability-loadout) – Look der Unit-Frames und Zonen-Szenen aus /idle
-   Silhouetten (.battle-mountains/.battle-hills) und Zonen-Themes kommen aus combat-zones.css / professions.css
+   Ability Loadout (/ability-loadout) – look of the unit frames and zone scenes from /idle
+   Silhouettes (.battle-mountains/.battle-hills) and zone themes come from combat-zones.css / professions.css
    ============================================ */
 
 .ability-loadout-page .al-title { animation: al-fade-down .5s ease-out both; }
 .ability-loadout-page .al-hint  { animation: al-fade-down .5s ease-out .08s both; }
 
-/* ── Kopf: Charakter auf der Szene seiner Zone ── */
+/* ── Header: character on the scene of its zone ── */
 .al-header {
     position: relative;
     display: flex;
@@ -46,7 +46,7 @@
 .al-header.night .battle-mountains { filter: brightness(.3) saturate(.6); }
 .al-header.night .battle-hills     { filter: brightness(.22) saturate(.6); }
 
-/* Volkswappen transparent im rechten Bereich der Szene (über der Abdunklung, unter dem Inhalt) */
+/* Race crest transparent in the right area of the scene (above the darkening, below the content) */
 .al-header-crest {
     position: absolute;
     right: 4%;
@@ -110,7 +110,7 @@
 .al-class { font-weight: 700; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, .95); }
 .al-level { font-size: .85rem; color: var(--wow-gold-pale); text-shadow: 0 1px 2px #000; }
 
-/* Belegte Slots als Leiste */
+/* Occupied slots as a bar */
 .al-slot-meter {
     position: relative;
     max-width: 320px;
@@ -140,7 +140,7 @@
     text-shadow: 0 1px 2px #000;
 }
 
-/* ── Aufbau: Aktionsleiste oben, Zauberbuch darunter ── */
+/* ── Layout: action bar on top, spellbook below ── */
 .ability-loadout-page .loadout-grid {
     display: flex;
     flex-direction: column;
@@ -162,11 +162,11 @@
     margin-bottom: 10px;
 }
 
-/* ── Ausgerüstete Slots als steinerne Aktionsleiste ── */
+/* ── Equipped slots as a stone action bar ── */
 .ability-loadout-page .action-bar-wrap {
     --gryphon-overlap: 30px;
     position: relative;
-    margin-top: 18px;              /* Platz für die über die Leiste ragenden Greifen */
+    margin-top: 18px;              /* Space for the gryphons sticking out over the bar */
     padding: 0 130px;
     animation: al-card-in .5s cubic-bezier(.2, .8, .2, 1) .2s backwards;
 }
@@ -184,7 +184,7 @@
                 inset 0 1px 0 rgba(255, 255, 255, .1), inset 0 -2px 6px rgba(0, 0, 0, .6);
 }
 
-/* Greifen liegen hinter den Leistenenden, damit ihre gerade Schnittkante verdeckt bleibt */
+/* Gryphons sit behind the bar ends so their straight cut edge stays hidden */
 .ability-loadout-page .al-gryphon {
     position: absolute;
     z-index: 0;
@@ -255,7 +255,7 @@
     transition: color .2s, border-color .2s;
 }
 
-/* Rotes Kreuz über dem Icon beim Hovern = Entfernen */
+/* Red cross over the icon on hover = remove */
 .ability-loadout-page .slot-remove {
     position: absolute;
     inset: 0;
@@ -306,7 +306,7 @@
 }
 .ability-loadout-page .slot-placeholder { font-style: italic; font-size: .72rem; }
 
-/* Upgrade-Knopf oben rechts am Slot */
+/* Upgrade button top right on the slot */
 .ability-loadout-page .slot-upgrade {
     position: absolute;
     z-index: 1;
@@ -339,7 +339,7 @@
 }
 .ability-loadout-page .slot-label .rank-badge { margin-left: 0; font-size: .6rem; }
 
-/* ── Filter: Suche und Kategorien in einer Zeile ── */
+/* ── Filter: search and categories in one row ── */
 .ability-loadout-page .pool-filters {
     display: flex;
     flex-wrap: wrap;
@@ -419,7 +419,7 @@
 .ability-loadout-page .spell-card.equipped .spell-icon img { border-color: var(--wow-gold); }
 .ability-loadout-page .spell-card.locked .spell-icon img { filter: grayscale(1); }
 
-/* Slot-Nummer für ausgerüstete Zauber */
+/* Slot number for equipped spells */
 .ability-loadout-page .spell-slot-badge {
     position: absolute;
     left: -5px;
@@ -459,7 +459,7 @@
 .ability-loadout-page .spell-card.equipped:hover .pool-action { color: #ff8a7a; border-color: #b32121; }
 .locked-badge { color: #c06060 !important; border-color: #4a2020 !important; }
 
-/* ── Rangleiste: Knoten auf einer Linie, Gold = nutzbar, leuchtend = ausgerüstet, grau = gesperrt ── */
+/* ── Rank bar: nodes on a line, gold = usable, glowing = equipped, grey = locked ── */
 .ability-loadout-page .rank-track {
     position: relative;
     display: grid;
@@ -550,7 +550,7 @@
     color: #5a4a28;
 }
 
-/* Höchster nutzbarer, aber nicht ausgerüsteter Rang: grüner Rand als Hinweis */
+/* Highest usable but not equipped rank: green border as a hint */
 .ability-loadout-page .spell-card.upgradable .rank-node.best .rank-dot {
     border-color: #6fd05a;
     color: #c8f5bc;
@@ -611,7 +611,7 @@
     font-size: .85rem;
 }
 
-/* Statusmeldung fährt ein; Warnungen wackeln kurz */
+/* Status message slides in; warnings wiggle briefly */
 .al-status { margin-top: 12px; animation: al-toast-in .35s cubic-bezier(.2, .8, .2, 1) both; }
 .al-status.warning { animation: al-toast-in .35s cubic-bezier(.2, .8, .2, 1) both, al-shake .4s ease-in-out .1s; }
 

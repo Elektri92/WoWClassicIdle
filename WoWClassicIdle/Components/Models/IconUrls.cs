@@ -39,11 +39,11 @@ namespace Models
         public static string RaceCrestUrl(Race race) =>
             $"images/races/crest_{race.ToString().ToLowerInvariant()}.png";
 
-        // Stadtkarte der Fraktionshauptstadt (wwwroot/images/cities): Stormwind bzw. Orgrimmar
+        // City map of the faction capital (wwwroot/images/cities): Stormwind or Orgrimmar
         public static string CapitalMapUrl(Faction faction) =>
             faction == Faction.Horde ? "images/cities/orgrimmar.jpg" : "images/cities/stormwind.jpg";
 
-        // Gebietskarten (wwwroot/images/zones) als Hintergrund der Sammelberufe – zufällig gewählt
+        // Zone maps (wwwroot/images/zones) as background of the gathering professions – chosen randomly
         private static readonly string[] GatheringMaps =
             ["eastern_plaguelands", "winterspring", "burning_steppes", "stranglethorn", "duskwood", "ashenvale"];
 
@@ -53,7 +53,7 @@ namespace Models
         public static string ClassIconUrl(CharacterClass cls) =>
             ClassIcons.TryGetValue(cls, out var url) ? url : "";
 
-        // PvP-Banner als Fraktionswappen (Classic: _01 = Horde, _02 = Alliance)
+        // PvP banners as faction crests (Classic: _01 = Horde, _02 = Alliance)
         public static string FactionIconUrl(Faction faction) =>
             faction == Faction.Horde
                 ? "https://wow.zamimg.com/images/wow/icons/large/inv_bannerpvp_01.jpg"

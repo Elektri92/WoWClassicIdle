@@ -1,13 +1,13 @@
 // Models/ProfessionRegistry.cs
 namespace Models
 {
-    /// <summary>Möglicher Drop eines Sammel-Durchlaufs; <see cref="Chance"/> wird über alle Drops der Zone normiert.</summary>
+    /// <summary>Possible drop of a gathering pass; <see cref="Chance"/> is normalized across all drops of the zone.</summary>
     public record GatherDrop(TradeItem Item, double Chance, int Count = 1);
 
     /// <summary>
-    /// Farmgebiet eines Sammelberufs – jeder Durchlauf liefert immer genau einen Drop.
-    /// Jede Zone hat einen aktiven Slot und <see cref="PassiveSlotCount"/> passive Slots (mit Charakteren belegt;
-    /// bei Sammelberufen und Angeln). <see cref="Theme"/> wählt den Farbverlauf des Zonen-Blocks (CSS-Klasse zone-theme-*).
+    /// Farming zone of a gathering profession – each pass always yields exactly one drop.
+    /// Each zone has one active slot and <see cref="PassiveSlotCount"/> passive slots (filled with characters;
+    /// for gathering professions and fishing). <see cref="Theme"/> selects the gradient of the zone block (CSS class zone-theme-*).
     /// </summary>
     public record GatheringZone(
         string Id,
@@ -19,7 +19,7 @@ namespace Models
 
     public record Reagent(TradeItem Item, int Count);
 
-    /// <summary>Rezept; <see cref="Result"/> ist ein Handwerksgut (<see cref="TradeItem"/>) oder Rüstung (<see cref="ArmorItem"/>).</summary>
+    /// <summary>Recipe; <see cref="Result"/> is a trade good (<see cref="TradeItem"/>) or armor (<see cref="ArmorItem"/>).</summary>
     public record Recipe(
         string Id,
         Profession Profession,
@@ -28,12 +28,12 @@ namespace Models
         int RequiredSkill = 1,
         int ResultCount = 1);
 
-    /// <summary>Stoff-Drop im Kampf: <see cref="ProfessionRegistry.ClothDropChance"/> je Kill bei Gegnern im Levelbereich.</summary>
+    /// <summary>Cloth drop in combat: <see cref="ProfessionRegistry.ClothDropChance"/> per kill of enemies within the level range.</summary>
     public record ClothDrop(TradeItem Item, int MinEnemyLevel, int MaxEnemyLevel);
 
     /// <summary>
     /// Statische Berufsdaten: Handwerksmaterialien (IDs ab 9001), Stoff-Drops, Farmgebiete
-    /// (<c>ProfessionRegistry.Zones.cs</c>) und Rezepte (<c>ProfessionRegistry.Recipes.cs</c>).
+    /// (<c>ProfessionRegistry.Zones.cs</c>) and recipes (<c>ProfessionRegistry.Recipes.cs</c>).
     /// </summary>
     public static partial class ProfessionRegistry
     {
@@ -58,7 +58,7 @@ namespace Models
         public static readonly TradeItem SolidStone    = new(9025, "Solid Stone",    "inv_stone_10",          true);
         public static readonly TradeItem DenseStone    = new(9026, "Dense Stone",    "inv_stone_14",          true);
 
-        // ─── Kürschnerei ───
+        // ─── Skinning ───
         public static readonly TradeItem RuinedLeatherScraps = new(9027, "Ruined Leather Scraps", "inv_misc_pelt_bear_ruin_05", true, ItemQuality.Poor);
         public static readonly TradeItem LightLeather        = new(9002, "Light Leather",         "inv_misc_leatherscrap_03", true);
         public static readonly TradeItem MediumLeather       = new(9012, "Medium Leather",        "inv_misc_leatherscrap_05", true);
@@ -66,7 +66,7 @@ namespace Models
         public static readonly TradeItem ThickLeather        = new(9029, "Thick Leather",         "inv_misc_leatherscrap_08", true);
         public static readonly TradeItem RuggedLeather       = new(9030, "Rugged Leather",        "inv_misc_leatherscrap_02", true);
 
-        // ─── Kräuterkunde ───
+        // ─── Herbalism ───
         public static readonly TradeItem Peacebloom         = new(9004, "Peacebloom",          "inv_misc_flower_02",               true);
         public static readonly TradeItem Silverleaf         = new(9008, "Silverleaf",          "inv_misc_herb_10",                 true);
         public static readonly TradeItem Earthroot          = new(9009, "Earthroot",           "inv_misc_herb_07",                 true);
@@ -100,7 +100,7 @@ namespace Models
         public static readonly TradeItem StonescaleEel            = new(9052, "Stonescale Eel",              "inv_misc_fish_08", true);
         public static readonly TradeItem WinterSquid              = new(9053, "Winter Squid",                "inv_misc_fish_07", true);
 
-        // ─── Verzauberkunst (aus dem Entzaubern grüner Items, siehe EnchantingRegistry) ───
+        // ─── Enchanting (from disenchanting green items, see EnchantingRegistry) ───
         public static readonly TradeItem StrangeDust           = new(9060, "Strange Dust",            "inv_enchant_duststrange",          true, SellPrice: 20);
         public static readonly TradeItem GreaterMagicEssence   = new(9061, "Greater Magic Essence",   "inv_enchant_essencemagiclarge",    true, ItemQuality.Uncommon, SellPrice: 50);
         public static readonly TradeItem SoulDust              = new(9062, "Soul Dust",               "inv_enchant_dustsoul",             true, SellPrice: 60);
@@ -112,9 +112,9 @@ namespace Models
         public static readonly TradeItem IllusionDust          = new(9068, "Illusion Dust",           "inv_enchant_dustillusion",         true, SellPrice: 600);
         public static readonly TradeItem GreaterEternalEssence = new(9069, "Greater Eternal Essence", "inv_enchant_essenceeternallarge",  true, ItemQuality.Uncommon, SellPrice: 1500);
 
-        // Hergestellte Verbrauchsgüter (Tränke, Essen, Verbände) → ConsumableRegistry
+        // Crafted consumables (potions, food, bandages) → ConsumableRegistry
 
-        /// <summary>Alle Rohstoffe – fehlt ein Item hier (oder in ConsumableRegistry), geht es beim Laden verloren.</summary>
+        /// <summary>All raw materials – if an item is missing here (or in ConsumableRegistry), it is lost on load.</summary>
         public static readonly IReadOnlyList<TradeItem> AllItems =
         [
             LinenCloth, WoolCloth, SilkCloth, MageweaveCloth, Runecloth,
@@ -133,14 +133,14 @@ namespace Models
         public static TradeItem? GetById(int id) =>
             AllItems.FirstOrDefault(i => i.Id == id) ?? ConsumableRegistry.GetById(id);
 
-        // ─── Stoff-Drops im Kampf: je passendem Levelband, Levelbänder überlappen leicht ───
-        // Wie in Classic tragen vor allem Humanoide Stoff; alle anderen Gegner mit Grundchance,
-        // damit es auch in Levelbereichen ohne Humanoide (z. B. Lv 1–11) Stoff gibt
+        // ─── Cloth drops in combat: per matching level band, level bands overlap slightly ───
+        // Like in Classic mostly humanoids carry cloth; all other enemies with a base chance,
+        // so there is cloth even in level ranges without humanoids (e.g. Lv 1–11)
         public const double ClothDropChance         = 0.10;
         public const double HumanoidClothDropChance = 0.35;
         public const string HumanoidType            = "Humanoid";
 
-        /// <summary>Anzahl je Drop: Humanoide 1–2, seltene Gegner (immer Drop) 2–3, sonst 1.</summary>
+        /// <summary>Amount per drop: humanoids 1–2, rare enemies (always drop) 2–3, otherwise 1.</summary>
         public static (double Chance, int MinCount, int MaxCount) ClothDropFor(Enemy enemy) =>
             enemy.IsRare                  ? (1.0, 2, 3)
             : enemy.Type == HumanoidType  ? (HumanoidClothDropChance, 1, 2)
@@ -155,8 +155,8 @@ namespace Models
             new(Runecloth,      47, 63),
         ];
 
-        // Zonen erst nach allen Item-Feldern bauen (Feld-Initialisierer laufen vor dem statischen Konstruktor,
-        // ihre Reihenfolge über mehrere partial-Dateien ist aber nicht festgelegt)
+        // Build zones only after all item fields (field initializers run before the static constructor,
+        // but their order across several partial files is not defined)
         static ProfessionRegistry() => Zones = BuildZones();
     }
 }

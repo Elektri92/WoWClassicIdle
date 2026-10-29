@@ -152,7 +152,7 @@
         StateHasChanged();
     }
 
-    // Zweistufiges Löschen: erster Klick fragt nach, zweiter Klick innerhalb von 3 s löscht
+    // Two-step delete: first click asks, second click within 3 s deletes
     private async Task OnDeleteSave()
     {
         _deleteConfirmCts?.Cancel();

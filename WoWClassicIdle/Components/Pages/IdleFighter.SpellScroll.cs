@@ -1,4 +1,4 @@
-// Spell-Scroll: zuletzt ausgelöste Fähigkeiten fliegen als Icon links neben dem Spieler nach oben.
+// Spell scroll: most recently triggered abilities fly upwards as icons to the left of the player.
 using Models;
 
 namespace WoWClassicIdle.Components.Pages;
@@ -8,12 +8,12 @@ public partial class IdleFighter
     private record SpellFloat(int Id, Ability Ability, DateTime Created);
 
     private const string AutoAttackFallbackIcon = "https://wow.zamimg.com/images/wow/icons/large/inv_sword_04.jpg";
-    private const int MaxSpellFloats = 4; // bei hoher Spielgeschwindigkeit nur die letzten Icons zeigen
+    private const int MaxSpellFloats = 4; // at high game speed only show the latest icons
     private static readonly TimeSpan SpellFloatLifetime = TimeSpan.FromSeconds(1.5); // = CSS-Animation
     private readonly List<SpellFloat> _spellFloats = new();
     private int _nextSpellFloatId;
 
-    // Timer-Thread! Rendering erfolgt über den UI-Timer.
+    // Timer thread! Rendering happens via the UI timer.
     private void OnAbilityTriggered(Ability ability)
     {
         lock (_spellFloats)

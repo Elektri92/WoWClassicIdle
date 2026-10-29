@@ -1,10 +1,10 @@
 // Models/IdleGameEngine.ProfessionTrainer.cs
 using Models;
 
-/// <summary>Berufslehrer: Ausbildungsstufen und Rezepte gegen Kupfer des aktiven Charakters lernen.</summary>
+/// <summary>Profession trainer: learn training tiers and recipes for copper of the active character.</summary>
 public partial class IdleGameEngine
 {
-    /// <summary>Grund, warum die nächste Ausbildungsstufe nicht gelernt werden kann (UI-Text) – <c>null</c> wenn erlaubt.</summary>
+    /// <summary>Reason why the next training tier cannot be learned (UI text) – <c>null</c> if allowed.</summary>
     public string? RankTrainBlocker(Profession profession)
     {
         if (GetProfessionProgress(profession) is not { } progress) return "You have not learned this profession.";
@@ -15,7 +15,7 @@ public partial class IdleGameEngine
         return null;
     }
 
-    /// <summary>Grund, warum das Rezept nicht gelernt werden kann (UI-Text) – <c>null</c> wenn erlaubt.</summary>
+    /// <summary>Reason why the recipe cannot be learned (UI text) – <c>null</c> if allowed.</summary>
     public string? RecipeTrainBlocker(Recipe recipe)
     {
         if (GetProfessionProgress(recipe.Profession) is not { } progress) return "You have not learned this profession.";
@@ -25,7 +25,7 @@ public partial class IdleGameEngine
         return null;
     }
 
-    /// <summary>Kauft die nächste Ausbildungsstufe. Gibt bei Misserfolg eine englische Fehlermeldung zurück, sonst <c>null</c>.</summary>
+    /// <summary>Buys the next training tier. Returns an English error message on failure, otherwise <c>null</c>.</summary>
     public string? TrainProfessionRank(Profession profession)
     {
         lock (_simLock)
@@ -40,7 +40,7 @@ public partial class IdleGameEngine
         return null;
     }
 
-    /// <summary>Kauft ein Rezept beim Lehrer. Gibt bei Misserfolg eine englische Fehlermeldung zurück, sonst <c>null</c>.</summary>
+    /// <summary>Buys a recipe from the trainer. Returns an English error message on failure, otherwise <c>null</c>.</summary>
     public string? LearnProfessionRecipe(Recipe recipe)
     {
         lock (_simLock)

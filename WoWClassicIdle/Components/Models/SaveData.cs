@@ -14,18 +14,18 @@ public class SaveData
     public int TotalRareItemsLooted { get; set; }
     public List<SlotSaveData> Roster { get; set; } = new();
     public List<AchievementSaveData> Achievements { get; set; } = new();
-    // Gemeinsames klassenübergreifendes Inventar – Rucksack (ab Version 2)
+    // Shared cross-class inventory – backpack (from version 2)
     public List<ItemStackSaveData> SharedInventoryItems { get; set; } = new();
-    // Taschenplätze 0-3 (ab Version 3)
+    // Bag slots 0-3 (from version 3)
     public List<BagItemSaveData> SharedBagItems { get; set; } = new();
-    // Accountweite Berufe (Sammeln + Angeln) und passive Berufs-Slots (ab Version 4; Name aus Kompatibilitätsgründen)
+    // Account-wide professions (gathering + fishing) and passive profession slots (from version 4; name kept for compatibility)
     public List<ProfessionSaveData> SecondaryProfessions { get; set; } = new();
     public List<PassiveAssignmentSaveData> PassiveAssignments { get; set; } = new();
-    // Profession.ToString() → zuletzt gewählte Zone/Rezept
+    // Profession.ToString() → last chosen zone/recipe
     public Dictionary<string, string> LastProfessionTargets { get; set; } = new();
-    // Bereits gezeigte Feature-Intros; null = Altstand ohne dieses Feld
+    // Feature intros already shown; null = legacy save without this field
     public List<string>? SeenFeatureIntros { get; set; }
-    // Händlervorrat mit Auffüllzeitpunkt (Echtzeit); null = Altstand, Vorrat voll
+    // Merchant stock with restock time (real time); null = legacy save, stock full
     public List<MerchantStockSaveData>? MerchantStock { get; set; }
 }
 
@@ -40,17 +40,17 @@ public class SlotSaveData
 {
     public int Id { get; set; }
     public CharacterClass Class { get; set; }
-    // Fehlt in Altständen → leer, Anzeige fällt auf Rasse + Klasse zurück
+    // Missing in legacy saves → empty, display falls back to race + class
     public string? Name { get; set; }
     public Faction Faction { get; set; }
     public Race Race { get; set; }
     public Gender Gender { get; set; }
     public PlayerSaveData Player { get; set; } = new();
-    // Kampfgebiet (null = noch nicht gewählt) und laufende Reise
+    // Combat zone (null = not chosen yet) and ongoing travel
     public string? CombatZone { get; set; }
     public string? TravelTarget { get; set; }
     public double TravelElapsed { get; set; }
-    // Entdeckte Zonen (null = Altstand → nur aktuelle Zone) und Fortschritt der Zonen-Ziele
+    // Discovered zones (null = legacy save → only the current zone) and progress of the zone objectives
     public List<string>? DiscoveredZones { get; set; }
     public Dictionary<string, int>? ZoneObjectives { get; set; }
 }
@@ -59,16 +59,16 @@ public class PlayerSaveData
 {
     public CharacterClass ActiveClass { get; set; }
     public long Copper { get; set; }
-    // Schlüssel sind CharacterClass.ToString() für JSON-Kompatibilität
+    // Keys are CharacterClass.ToString() for JSON compatibility
     public Dictionary<string, ClassProgressSaveData> ClassProgress { get; set; } = new();
     public Dictionary<string, int?> EquippedWeaponIdByClass { get; set; } = new();
-    // ArmorSlot.ToString() → ItemId der getragenen Rüstung
+    // ArmorSlot.ToString() → ItemId of the worn armor
     public Dictionary<string, int> EquippedArmorIdBySlot { get; set; } = new();
     public List<ItemStackSaveData> BackpackItems { get; set; } = new();
     public Dictionary<string, List<string>> LoadoutAbilityIdsByClass { get; set; } = new();
-    // TalentId → investierte Ränge
+    // TalentId → invested ranks
     public Dictionary<string, int> TalentInvestedPoints { get; set; } = new();
-    // Hauptberuf (ab Version 4; ältere Stände enthalten hier auch Sammel-/Sekundärberufe → werden accountweit übernommen)
+    // Main profession (from version 4; older saves also contain gathering/secondary professions here → taken over account-wide)
     public List<ProfessionSaveData> Professions { get; set; } = new();
 }
 
@@ -78,11 +78,11 @@ public class ProfessionSaveData
     public string Profession { get; set; } = "";
     public int Skill { get; set; } = 1;
     public int RankIndex { get; set; }
-    // Beim Lehrer gelernte Rezept-IDs; null = Altstand (alle Rezepte bis zum Skill gelten als gelernt)
+    // Recipe IDs learned from the trainer; null = legacy save (all recipes up to the skill count as learned)
     public List<string>? KnownRecipes { get; set; }
 }
 
-/// <summary>Ein mit einem Charakter belegter passiver Berufs-Slot.</summary>
+/// <summary>A passive profession slot filled with a character.</summary>
 public class PassiveAssignmentSaveData
 {
     public string Profession { get; set; } = "";
@@ -104,7 +104,7 @@ public class ItemStackSaveData
     public int ItemId { get; set; }
     public int Count { get; set; }
     public int Slot { get; set; }
-    // 0 = Standardwert aus Registry verwenden; >0 überschreibt RequiredLevel (z. B. für Drops)
+    // 0 = use the default value from the registry; >0 overrides RequiredLevel (e.g. for drops)
     public int RequiredLevel { get; set; }
 }
 
@@ -114,7 +114,7 @@ public class AchievementSaveData
     public DateTime EarnedAt { get; set; }
 }
 
-/// <summary>Ein Item-Stack in einem der 4 Taschenplätze (BagIndex 0–3).</summary>
+/// <summary>An item stack in one of the 4 bag slots (BagIndex 0–3).</summary>
 public class BagItemSaveData : ItemStackSaveData
 {
     public int BagIndex { get; set; }

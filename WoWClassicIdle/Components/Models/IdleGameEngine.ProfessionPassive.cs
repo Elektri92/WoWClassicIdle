@@ -1,23 +1,23 @@
 using Models;
 
-// Passive Berufs-Slots (Sammelberufe + Angeln, je Zone): werden mit Charakteren belegt,
-// jeder Charakter übt höchstens einen Beruf passiv aus.
+// Passive profession slots (gathering professions + fishing, per zone): filled with characters,
+// each character practices at most one profession passively.
 public partial class IdleGameEngine
 {
     private readonly List<PassiveAssignment> _passiveAssignments = new();
 
     public IReadOnlyList<PassiveAssignment> PassiveAssignments => _passiveAssignments;
 
-    /// <summary>Anzeigename eines Charakters für Slots und Protokoll (Altstände ohne Namen: Rasse + Klasse).</summary>
+    /// <summary>Display name of a character for slots and log (legacy saves without a name: race + class).</summary>
     public static string CharacterName(CharacterSlot slot) =>
         string.IsNullOrWhiteSpace(slot.Name) ? $"{slot.Race} {slot.Class}" : slot.Name;
 
-    /// <summary>Anzeigename des aktiven Charakters (Kopfzeilen von Kampf, Inventar, Talenten, Loadout).</summary>
+    /// <summary>Display name of the active character (headers of combat, inventory, talents, loadout).</summary>
     public string ActiveCharacterName => ActiveCharacter is { } slot ? CharacterName(slot) : "Character";
 
     public CharacterSlot? GetCharacter(int id) => _roster.FirstOrDefault(s => s.Id == id);
 
-    /// <summary>Der aktuell gespielte Charakter (null ohne Roster).</summary>
+    /// <summary>The character currently being played (null without a roster).</summary>
     public CharacterSlot? ActiveCharacter => _activeSlotId is { } id ? GetCharacter(id) : null;
 
     public PassiveAssignment? GetPassiveAssignment(Profession profession, string zoneId, int index) =>
@@ -26,36 +26,35 @@ public partial class IdleGameEngine
     public PassiveAssignment? PassiveAssignmentOf(int characterId) =>
         _passiveAssignments.FirstOrDefault(a => a.CharacterId == characterId);
 
-    /// <summary>Belegte passive Slots des Berufs (über alle Zonen), max. <see cref="Professions.MaxPassiveWorkers"/>.</summary>
+    /// <summary>Occupied passive slots of the profession (across all zones), max. <see cref="Professions.MaxPassiveWorkers"/>.</summary>
     public int PassiveWorkerCount(Profession profession) =>
         _passiveAssignments.Count(a => a.Profession == profession);
 
     /// <summary>
-    /// Ist für den Charakter noch ein passiver Platz im Beruf frei? Sein eigener Slot und ein ersetzter Slot zählen nicht mit
-    /// (Verschieben/Tauschen bleibt beim Limit immer erlaubt).
+    /// Is there still a passive spot free in the profession for the character? Its own slot and a replaced slot don't count
+    /// (moving/swapping is always allowed at the limit).
     /// </summary>
     public bool HasPassiveCapacity(Profession profession, int characterId, PassiveAssignment? replaced = null) =>
         _passiveAssignments.Count(a => a.Profession == profession && a.CharacterId != characterId && a != replaced)
         < Professions.MaxPassiveWorkers;
 
-    /// <summary>Darf der Charakter den Beruf grundsätzlich passiv ausüben? (Sammelberuf/Angeln, ab Level 5)</summary>
+    /// <summary>May the character practice the profession passively at all? (gathering profession/fishing, from level 5)</summary>
     public static bool CanWorkPassive(CharacterSlot slot, Profession profession) =>
         Professions.Get(profession).HasPassiveSlots
         && slot.Player.Level >= Professions.MinCharacterLevel;
 
-    /// <summary>Grund, warum der Charakter nicht zugewiesen werden kann (UI-Text) – <c>null</c> wenn erlaubt.</summary>
+    /// <summary>Reason why the character cannot be assigned (UI text) – <c>null</c> if allowed.</summary>
     public string? PassiveAssignBlocker(CharacterSlot slot, Profession profession)
     {
         if (!Professions.Get(profession).HasPassiveSlots) return "No passive slots";
         if (slot.Player.Level < Professions.MinCharacterLevel) return $"Requires level {Professions.MinCharacterLevel}";
-        // Der aktive Charakter arbeitet im aktiven Slot – nicht zusätzlich passiv
-        if (slot.Id == _activeSlotId) return "Active character";
+        // The active character may also be assigned; its slot pauses while it works the same profession actively
         return null;
     }
 
     /// <summary>
-    /// Pausiert, solange derselbe Charakter diesen Beruf gerade aktiv ausübt
-    /// (z. B. nach einem Charakterwechsel auf einen passiv eingesetzten Charakter).
+    /// Paused while the same character is actively practicing this profession
+    /// (e.g. after switching to a character deployed passively).
     /// </summary>
     public bool IsPassivePaused(PassiveAssignment assignment) =>
         ActiveProfessionRun is { } run
@@ -63,8 +62,8 @@ public partial class IdleGameEngine
         && GetCharacter(assignment.CharacterId)?.Player == run.Player;
 
     /// <summary>
-    /// Belegt einen passiven Slot mit einem Charakter (<c>null</c> = Slot leeren).
-    /// Ein Charakter, der schon woanders passiv arbeitet, wechselt in diesen Slot.
+    /// Fills a passive slot with a character (<c>null</c> = clear the slot).
+    /// A character already working passively elsewhere moves into this slot.
     /// </summary>
     public void AssignPassive(Profession profession, string zoneId, int index, int? characterId)
     {
@@ -97,7 +96,7 @@ public partial class IdleGameEngine
     {
         foreach (var assignment in _passiveAssignments.ToList())
         {
-            // Charakter gelöscht, Beruf ohne passive Slots oder Zone gesperrt (Altstand) → Slot frei
+            // Character deleted, profession without passive slots or zone locked (legacy) → slot free
             if (GetCharacter(assignment.CharacterId) is not { } character || !CanWorkPassive(character, assignment.Profession)
                 || !IsZoneUnlocked(assignment.Profession, assignment.Group))
             {
@@ -106,7 +105,7 @@ public partial class IdleGameEngine
             }
             if (assignment.Target is null || IsPassivePaused(assignment)) continue;
 
-            // Accountweiter Fortschritt – passive Durchläufe geben ohnehin keine Skillpunkte
+            // Account-wide progress – passive runs give no skill points anyway
             var progress = _sharedProfessions.GetValueOrDefault(assignment.Profession)
                            ?? new ProfessionProgress(assignment.Profession);
 

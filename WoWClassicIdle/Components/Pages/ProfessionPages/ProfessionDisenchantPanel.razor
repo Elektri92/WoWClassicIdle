@@ -1,7 +1,7 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Entzaubern: grüne Items aus den Taschen zerstören → Staub/Essenz nach Item-Level. 1 s Zauberzeit je Item (aktiver Slot). *@
+@* Disenchanting: destroy green items from the bags → dust/essence by item level. 1 s cast time per item (active slot). *@
 <div class="al-panel">
     <div class="disenchant-head">
         <h4>Disenchant</h4>
@@ -33,7 +33,7 @@
     }
     else
     {
-        // Eingereihte Items je Wert zählen (gleiche Items können mehrfach in den Taschen liegen)
+        // Count queued items per value (identical items can be in the bags multiple times)
         var queued = Engine.DisenchantQueue.GroupBy(i => i).ToDictionary(g => g.Key, g => g.Count());
         <div class="wow-inset disenchant-list">
             @foreach (var candidate in Candidates)
@@ -112,7 +112,7 @@
         Engine.QueueDisenchant([item]);
     }
 
-    // Zweistufig: erster Klick fragt nach, zweiter reiht alle entzauberbaren (noch nicht eingereihten) Items ein
+    // Two-step: first click asks, second queues all disenchantable (not yet queued) items
     private void DisenchantAll()
     {
         if (!_confirmAll)

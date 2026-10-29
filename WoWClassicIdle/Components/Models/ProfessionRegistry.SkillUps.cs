@@ -1,9 +1,9 @@
 // Models/ProfessionRegistry.SkillUps.cs
 namespace Models
 {
-    // Skill-Range: Ein Rezept/eine Zone gibt nur Skillpunkte, bis die nächste Material-Stufe des Berufs
-    // freigeschaltet ist (nächsthöhere Skill-Anforderung unter allen Rezepten bzw. Zonen des Berufs).
-    // So gibt es nie eine Lücke ohne Skillpunkte, alte Stufen werden aber "grau", sobald bessere Materialien nutzbar sind.
+    // Skill range: a recipe/zone only gives skill points until the next material tier of the profession
+    // is unlocked (next higher skill requirement among all recipes or zones of the profession).
+    // That way there is never a gap without skill points, but old tiers turn "grey" as soon as better materials are usable.
     public static partial class ProfessionRegistry
     {
         private static readonly Lazy<Dictionary<Profession, int[]>> _skillSteps = new(BuildSkillSteps);
@@ -15,13 +15,13 @@ namespace Models
         {
             if (def.IsGathering) return GetZones(def.Profession).Select(ZoneRequiredSkill);
             var recipes = GetRecipes(def.Profession).Select(r => r.RequiredSkill);
-            // Entzaubern zählt bei Verzauberkunst wie eine eigene Rezeptreihe
+            // For Enchanting, disenchanting counts as its own recipe line
             return def.Profession == Profession.Enchanting
                 ? recipes.Concat(EnchantingRegistry.Bands.Select(b => b.RequiredSkill))
                 : recipes;
         }
 
-        /// <summary>Ab diesem Skill gibt eine Stufe mit <paramref name="requiredSkill"/> keine Skillpunkte mehr (<c>null</c> = nie).</summary>
+        /// <summary>From this skill a tier with <paramref name="requiredSkill"/> gives no more skill points (<c>null</c> = never).</summary>
         public static int? TrivialSkill(Profession profession, int requiredSkill) =>
             _skillSteps.Value.TryGetValue(profession, out var steps) && steps.FirstOrDefault(s => s > requiredSkill) is > 0 and var next
                 ? next
@@ -30,7 +30,7 @@ namespace Models
         public static bool GivesSkillUp(Profession profession, int requiredSkill, int skill) =>
             TrivialSkill(profession, requiredSkill) is not { } trivial || skill < trivial;
 
-        /// <summary>Skill-Anforderung des Ziels eines Durchlaufs (Zone bzw. Rezept); <c>null</c> wenn unbekannt.</summary>
+        /// <summary>Skill requirement of the target of a pass (zone or recipe); <c>null</c> if unknown.</summary>
         public static int? TargetRequiredSkill(Profession profession, string target) =>
             Professions.Get(profession).IsGathering
                 ? GetZone(profession, target) is { } zone ? ZoneRequiredSkill(zone) : null

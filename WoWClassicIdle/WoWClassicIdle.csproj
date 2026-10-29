@@ -6,11 +6,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
         <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
-        <!-- App-Version – Fallback für Debug-Builds. Publish setzt Version via CI (-p:Version=X.Y.Z). -->
+        <!-- App version – fallback for Debug builds. Publish sets the version via CI (-p:Version=X.Y.Z). -->
         <Version>0.0.1</Version>
     </PropertyGroup>
 
-    <!-- Debug-Tools (Klassen-Simulation) nur im Debug-Build ausliefern -->
+    <!-- Ship debug tools (class simulation) only in the Debug build -->
     <ItemGroup Condition="'$(Configuration)' != 'Debug'">
       <Compile Remove="Components\Debug\**" />
       <Content Remove="Components\Pages\Debug\**" />
@@ -26,15 +26,15 @@
       <PackageReference Include="Photino.NET" Version="4.0.16" />
     </ItemGroup>
 
-    <!-- appsettings landen sonst lose neben der Binary. ContentRoot ist aber das Entpackverzeichnis des Bundles –
-         ohne Bündelung fehlt dort appsettings.Production.json (Urls/Logging) und Kestrel fällt auf Port 5000 zurück. -->
+    <!-- Otherwise appsettings end up loose next to the binary. But the ContentRoot is the bundle's extraction directory –
+         without bundling, appsettings.Production.json (Urls/Logging) is missing there and Kestrel falls back to port 5000. -->
     <ItemGroup>
       <Content Update="appsettings*.json" ExcludeFromSingleFile="false" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
 
-    <!-- Static Web Assets kopiert das SDK lose neben die Binary, am Single-File-Bundle vorbei. Das Auto-Update
-         ersetzt nur die Binary – ohne Bündelung bekämen bestehende Installationen nie neue CSS/Bilder.
-         Daher vor dem Bundling berechnen, ins Bundle aufnehmen und das lose Kopieren unterbinden. -->
+    <!-- The SDK copies static web assets loose next to the binary, bypassing the single-file bundle. The auto-update
+         only replaces the binary – without bundling existing installations would never get new CSS/images.
+         Therefore compute them before bundling, include them in the bundle and prevent the loose copying. -->
     <Target Name="BundleWwwrootIntoSingleFile"
             BeforeTargets="_ComputeFilesToBundle"
             DependsOnTargets="$(CopyStaticWebAssetsToPublishDirectoryDependsOn);_SplitPublishStaticWebAssetsByCopyOptions"

@@ -2,15 +2,15 @@
 namespace Models
 {
     /// <summary>
-    /// Herstellbare Rüstung: je Klasse ein Set pro Stufe, an die Klasse gebunden.
-    /// Schneiderei → Stoff (Magier, Priester, Hexenmeister), Lederverarbeitung → Leder/Kette (Schurke, Druide, Jäger, Schamane),
+    /// Craftable armor: one set per class per tier, bound to the class.
+    /// Tailoring → cloth (Mage, Priest, Warlock), Leatherworking → leather/mail (Rogue, Druid, Hunter, Shaman),
     /// Schmiedekunst → Platte (Krieger, Paladin).
-    /// Stat-Budget liegt leicht über den nutzbaren Stats grüner Drops derselben Stufe (nur Klassen-Stats),
-    /// blaue Drops bleiben besser. IDs ab 9501.
+    /// stat budget is slightly above the usable stats of green drops of the same tier (class stats only),
+    /// blue drops stay better. IDs from 9501.
     /// </summary>
     public static class CraftedGearRegistry
     {
-        /// <summary>Stufe: Item-Level, benötigter Berufs-Skill, Stat-Budget (Kopf/Brust/Beine), Basis-Materialmenge, Slots.</summary>
+        /// <summary>Tier: item level, required profession skill, stat budget (head/chest/legs), base material amount, slots.</summary>
         private record GearTier(int Level, int Skill, int Budget, int BaseReagents, ArmorSlot[] Slots);
 
         private static readonly GearTier[] Tiers =
@@ -23,13 +23,13 @@ namespace Models
             new(55, 250, 35, 10, [ArmorSlot.Head, ArmorSlot.Chest, ArmorSlot.Legs, ArmorSlot.Hands, ArmorSlot.Belt, ArmorSlot.Feet, ArmorSlot.Wrists]),
         ];
 
-        /// <summary>Material einer Stufe: Item + Anteil an der Basismenge.</summary>
+        /// <summary>Material of a tier: item + share of the base amount.</summary>
         private record TierMaterial(string Name, (TradeItem Item, double Share)[] Reagents);
 
-        /// <summary>Teile-Namen und Icons je Slot (Stoff, Leder, Kette, Platte).</summary>
+        /// <summary>Piece names and icons per slot (cloth, leather, mail, plate).</summary>
         private record ArmorStyle(Dictionary<ArmorSlot, (string Piece, string Icon)> Pieces);
 
-        /// <summary>Klassen-Set: Name im Item, Stil und Stat-Gewichtung (Summe 1).</summary>
+        /// <summary>Class set: name in the item, style and stat weighting (sum 1).</summary>
         private record ClassSet(
             CharacterClass Class, string SetName, ArmorStyle Style,
             double Str = 0, double Agi = 0, double Sta = 0, double Int = 0, double Spi = 0);
@@ -140,7 +140,7 @@ namespace Models
             var recipes = new List<Recipe>();
             int id = 9501;
 
-            // Reihenfolge nicht ändern – IDs (Spielstand) und Rezept-IDs hängen daran
+            // Do not change the order – IDs (save game) and recipe IDs depend on it
             foreach (var gear in Definitions())
             {
                 for (int t = 0; t < Tiers.Length; t++)
@@ -173,7 +173,7 @@ namespace Models
             Recipes = recipes;
         }
 
-        /// <summary>Anteil am Stat-Budget je Slot (große Teile mehr, Armschienen am wenigsten).</summary>
+        /// <summary>Share of the stat budget per slot (large pieces more, bracers the least).</summary>
         private static double SlotWeight(ArmorSlot slot) => slot switch
         {
             ArmorSlot.Head or ArmorSlot.Chest or ArmorSlot.Legs   => 1.0,
@@ -181,7 +181,7 @@ namespace Models
             _                                                     => 0.55,
         };
 
-        /// <summary>Verteilt das Budget nach der Klassen-Gewichtung; der Hauptstat bekommt mindestens 1.</summary>
+        /// <summary>Distributes the budget by class weighting; the main stat gets at least 1.</summary>
         private static PrimaryStats Stats(double budget, ClassSet set)
         {
             int Part(double share) => (int)Math.Round(budget * share);

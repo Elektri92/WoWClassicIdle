@@ -2,8 +2,9 @@
 namespace Models;
 
 /// <summary>
-/// Ein per Level freigeschaltetes Spielfeature samt Kurzerklärung für das Freischalt-Popup.
-/// <paramref name="Background"/> liefert das (transparent hinterlegte) Hintergrundbild, optional abhängig von der Klasse.
+/// A game feature unlocked by level, including a short explanation for the unlock popup.
+/// <paramref name="Background"/> provides the (translucent) background image, optionally depending on the class.
+/// <paramref name="OncePerAccount"/>: shown only for the first character reaching the level, not again for others.
 /// </summary>
 public sealed record GameFeature(
     string Id,
@@ -14,25 +15,26 @@ public sealed record GameFeature(
     IReadOnlyList<string> Points,
     string? Href = null,
     string? LinkLabel = null,
-    Func<CharacterClass, string>? Background = null);
+    Func<CharacterClass, string>? Background = null,
+    bool OncePerAccount = false);
 
 /// <summary>
-/// Statische Liste aller Features, die beim Levelaufstieg freigeschaltet werden.
-/// Level-Schwellen kommen aus den jeweiligen Systemen, damit sie nie auseinanderlaufen.
+/// Static list of all features unlocked on level-up.
+/// Level thresholds come from the respective systems so they never drift apart.
 /// </summary>
 public static class GameFeatureRegistry
 {
-    /// <summary>Ab diesem Level erhält der Charakter Talentpunkte (siehe Player.Talents).</summary>
+    /// <summary>From this level the character receives talent points (see Player.Talents).</summary>
     public const int TalentUnlockLevel = 10;
 
-    /// <summary>Ab diesem Level können Rare-Gegner spawnen (siehe EnemySpawner).</summary>
+    /// <summary>From this level rare enemies can spawn (see EnemySpawner).</summary>
     public const int RareEnemyUnlockLevel = 3;
 
     public const string IdleFighterIntroId = "idle_fighter";
 
     public static IReadOnlyList<GameFeature> All { get; } = Build();
 
-    /// <summary>Einmalige Einführungen beim ersten Betreten einer Seite (UnlockLevel 0 = ohne Levelanzeige).</summary>
+    /// <summary>One-time introductions when first visiting a page (UnlockLevel 0 = without level display).</summary>
     private static readonly Dictionary<string, GameFeature> _intros = new()
     {
         [IdleFighterIntroId] = new(IdleFighterIntroId, 0, "Idle Fighter",
@@ -48,18 +50,18 @@ public static class GameFeatureRegistry
             Background: Art("warrior-arms")),
     };
 
-    /// <summary>Hintergrund, falls ein Feature keinen eigenen hat.</summary>
+    /// <summary>Background in case a feature has none of its own.</summary>
     public const string DefaultBackgroundUrl = "images/talents/warrior-arms.jpg";
 
     public static string BackgroundUrlFor(GameFeature f, CharacterClass cls) =>
         f.Background?.Invoke(cls) ?? DefaultBackgroundUrl;
 
-    // Fester Hintergrund aus wwwroot/images/talents
+    // Fixed background from wwwroot/images/talents
     private static Func<CharacterClass, string> Art(string name) => _ => $"images/talents/{name}.jpg";
 
     public static GameFeature? GetIntro(string id) => _intros.GetValueOrDefault(id);
 
-    /// <summary>Features, deren Schwelle beim Aufstieg von <paramref name="oldLevel"/> auf <paramref name="newLevel"/> überschritten wurde.</summary>
+    /// <summary>Features whose threshold was crossed when going from <paramref name="oldLevel"/> to <paramref name="newLevel"/>.</summary>
     public static IEnumerable<GameFeature> UnlockedBetween(int oldLevel, int newLevel) =>
         All.Where(f => f.UnlockLevel > oldLevel && f.UnlockLevel <= newLevel);
 
@@ -98,11 +100,11 @@ public static class GameFeatureRegistry
                     "Some talents grant powerful new abilities for your loadout.",
                 ],
                 "talents", "Open Talents",
-                // Talentbaum-Artwork der eigenen Klasse (erster Baum)
+                // Talent tree artwork of the own class (first tree)
                 cls => TalentRegistry.GetTreeBackgroundUrl(cls, 0)),
         };
 
-        // Taschenplätze: erste Freischaltung ausführlich, weitere nur kurz; je Platz ein eigenes Stadt-/Burg-Motiv
+        // Bag slots: first unlock in detail, further ones only briefly; each slot has its own city/castle motif
         var bagLevels = Inventory.BagUnlockLevels;
         string[] bagArt = ["paladin-protection", "priest-discipline", "rogue-combat", "warrior-protection"];
         for (int i = 0; i < bagLevels.Length; i++)
@@ -116,15 +118,15 @@ public static class GameFeatureRegistry
                         $"Each bag starts with {Inventory.BaseBagSlotSize} slots and grows by one every 5 levels.",
                         "More space means fewer full-bag interruptions while idling.",
                     ],
-                    "inventory", "Open Inventory", Art(bagArt[i % bagArt.Length]))
+                    "inventory", "Open Inventory", Art(bagArt[i % bagArt.Length]), OncePerAccount: true)
                 : new GameFeature($"bag_slot_{i + 1}", bagLevels[i], "New Bag Slot",
                     "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_07.jpg",
                     $"Bag slot {i + 1} of {Inventory.BagSlotCount} is now available.",
                     [$"You now have {Inventory.BaseBagSlotSize + bagLevels[i] / 5} additional inventory slots."],
-                    "inventory", "Open Inventory", Art(bagArt[i % bagArt.Length])));
+                    "inventory", "Open Inventory", Art(bagArt[i % bagArt.Length]), OncePerAccount: true));
         }
 
-        // Pro Level höchstens ein Freischalt-Popup – Schwellen der Systeme entsprechend wählen
+        // At most one unlock popup per level – choose the systems' thresholds accordingly
         System.Diagnostics.Debug.Assert(
             list.GroupBy(f => f.UnlockLevel).All(g => g.Count() == 1),
             "GameFeatureRegistry: multiple features unlock at the same level.");

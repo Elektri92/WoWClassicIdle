@@ -3,16 +3,16 @@ namespace Models;
 
 public enum TravelMode { Foot, Form, Mount, Flight, Ship, Zeppelin }
 
-/// <summary>Ein Reiseabschnitt; <see cref="Theme"/> = Farbwelt des Ziels (CSS zone-theme-*).</summary>
+/// <summary>A travel leg; <see cref="Theme"/> = color scheme of the destination (CSS zone-theme-*).</summary>
 public record TravelLeg(TravelMode Mode, string From, string To, double Seconds, string Theme);
 
-/// <summary>Komplette Route; <see cref="Seconds"/> = Summe aller Abschnitte.</summary>
+/// <summary>Complete route; <see cref="Seconds"/> = sum of all legs.</summary>
 public record TravelRoute(IReadOnlyList<TravelLeg> Legs)
 {
     public double Seconds => Legs.Sum(l => l.Seconds);
 }
 
-/// <summary>Laufende Reise eines Charakters (Fortschritt in Spielsekunden).</summary>
+/// <summary>Ongoing travel of a character (progress in game seconds).</summary>
 public class ZoneTravelState
 {
     public required string FromZoneId { get; init; }
@@ -25,7 +25,7 @@ public class ZoneTravelState
     public double Progress  => Duration > 0 ? Math.Clamp(Elapsed / Duration, 0, 1) : 1;
     public bool IsArrived   => Elapsed >= Duration;
 
-    /// <summary>Aktueller Abschnitt und Fortschritt darin (0–1).</summary>
+    /// <summary>Current leg and progress within it (0–1).</summary>
     public (TravelLeg Leg, double Progress)? CurrentLeg
     {
         get
@@ -42,25 +42,25 @@ public class ZoneTravelState
     }
 }
 
-/// <summary>Wie sich der Charakter am Boden fortbewegt (Laufen, Klassen-Gestalt oder Reittier).</summary>
+/// <summary>How the character moves on the ground (walking, class form or mount).</summary>
 public record GroundTravel(TravelMode Mode, string Name, string? IconUrl, double SpeedMultiplier);
 
 /// <summary>
-/// Reisezeiten zwischen Kampfzonen, angelehnt an echte WoW-Classic-Wege: auf derselben Landmasse laufen/reiten
-/// oder Greifen/Windreiter fliegen (das Schnellere), zwischen Landmassen per Schiff oder Zeppelin (je nach Fraktion).
+/// Travel times between combat zones, based on real WoW Classic routes: on the same landmass walk/ride
+/// or fly by gryphon/wind rider (whichever is faster), between landmasses by ship or zeppelin (depending on faction).
 /// </summary>
 public static class ZoneTravel
 {
-    private const double RunSpeed       = 7.0;   // Yards/s zu Fuß (100 %)
-    private const double GroundDetour   = 1.25;  // Wege sind keine Luftlinie
+    private const double RunSpeed       = 7.0;   // Yards/s on foot (100 %)
+    private const double GroundDetour   = 1.25;  // Paths are not a straight line
     private const double FlightSpeed    = 32.0;  // Yards/s Flugroute
     private const double FlightDetour   = 1.15;
-    private const double FlightOverhead = 15.0;  // Start und Landung
-    private const double ZoneApproach   = 350;   // Yards vom Jagdgebiet zum Flugmeister der Zone (Häfen haben ihn direkt am Dock)
+    private const double FlightOverhead = 15.0;  // Takeoff and landing
+    private const double ZoneApproach   = 350;   // Yards from the hunting ground to the zone's flight master (harbors have it right at the dock)
 
     private static string Icon(string name) => $"https://wow.zamimg.com/images/wow/icons/large/{name}.jpg";
 
-    /// <summary>Hafen bzw. Zeppelinturm; <see cref="ZoneId"/> = Zone, in der er liegt (für Farbe/Beschriftung).</summary>
+    /// <summary>Harbor or zeppelin tower; <see cref="ZoneId"/> = zone it is located in (for color/label).</summary>
     private record Port(string Name, string ZoneId, Landmass Landmass, double X, double Y);
 
     private static readonly Port Menethil  = new("Menethil Harbor",  "wetlands",           Landmass.EasternKingdoms, -3700,  -600);
@@ -73,7 +73,7 @@ public static class ZoneTravel
     private static readonly Port Orgrimmar = new("Orgrimmar",        "durotar",            Landmass.Kalimdor,        1350, -4650);
     private static readonly Port Ruttheran = new("Rut'theran Village", "teldrassil",       Landmass.Teldrassil,      8550,  1000);
 
-    /// <summary>Schiffs-/Zeppelinlinie; Dauer inkl. durchschnittlicher Wartezeit. Faction null = neutral.</summary>
+    /// <summary>Ship/zeppelin line; duration incl. average waiting time. Faction null = neutral.</summary>
     private record Transport(Port A, Port B, TravelMode Mode, double Seconds, Faction? Faction);
 
     private static readonly Transport[] Transports =
@@ -88,7 +88,7 @@ public static class ZoneTravel
 
     private static readonly Port[] Ports = [Menethil, BootyBay, GromGol, Undercity, Theramore, Auberdine, Ratchet, Orgrimmar, Ruttheran];
 
-    // ─── Bodenreise je Charakter ───
+    // ─── Ground travel per character ───
 
     private static string RaceMountIcon(Race race) => race switch
     {
@@ -103,8 +103,8 @@ public static class ZoneTravel
     };
 
     /// <summary>
-    /// Schnellste Bodenreise des Charakters: Reittier ab 40 (60 %, episch ab 60 mit 100 %), Paladin/Hexenmeister
-    /// mit Klassen-Reittier, davor Reisegestalt (Druide 30), Geisterwolf (Schamane 20) bzw. Aspekt des Geparden (Jäger 20).
+    /// Fastest ground travel of the character: mount from 40 (60 %, epic from 60 with 100 %), Paladin/Warlock
+    /// with class mount, before that Travel Form (Druid 30), Ghost Wolf (Shaman 20) or Aspect of the Cheetah (Hunter 20).
     /// </summary>
     public static GroundTravel GroundFor(CharacterClass cls, Race race, int level)
     {
@@ -136,15 +136,15 @@ public static class ZoneTravel
 
     // ─── Routensuche ───
 
-    /// <summary>Wegpunkt; <see cref="ZoneId"/> = Zone des Flugpunkts (Flug nur, wenn beide Enden bekannt sind).</summary>
+    /// <summary>Waypoint; <see cref="ZoneId"/> = zone of the flight point (flying only if both ends are known).</summary>
     private record Node(string Name, string ZoneId, string Theme, Landmass Landmass, double X, double Y, double Approach);
 
     private static Node ZoneNode(CombatZone z) => new(z.Name, z.Id, z.Theme, z.Landmass, z.X, z.Y, ZoneApproach);
 
     /// <summary>
-    /// Schnellste Route von <paramref name="from"/> nach <paramref name="to"/> (Dijkstra über Zonen + Häfen).
-    /// Geflogen wird nur zwischen bekannten Flugpunkten (<paramref name="flightPoints"/> = entdeckte Zonen);
-    /// entdeckte Zonen dienen als Zwischenstationen, z. B. Flug zum nächsten bekannten Punkt und von dort reiten.
+    /// Fastest route from <paramref name="from"/> to <paramref name="to"/> (Dijkstra over zones + harbors).
+    /// Flying is only possible between known flight points (<paramref name="flightPoints"/> = discovered zones);
+    /// discovered zones serve as stopovers, e.g. fly to the next known point and ride from there.
     /// </summary>
     public static TravelRoute Route(CombatZone from, CombatZone to, Faction faction, GroundTravel ground, IReadOnlySet<string> flightPoints)
     {
@@ -193,9 +193,9 @@ public static class ZoneTravel
     }
 
     /// <summary>
-    /// Direkter Weg zwischen zwei Knoten: auf derselben Landmasse Boden oder Flugroute (das Schnellere; zum Flugmeister
-    /// und vom Landeplatz ins Jagdgebiet geht es zu Fuß bzw. per Reittier), sonst Schiff/Zeppelin zwischen zwei Häfen.
-    /// Flugrouten gibt es nur, wenn beide Flugpunkte bekannt sind.
+    /// Direct path between two nodes: on the same landmass ground or flight route (whichever is faster; to the flight master
+    /// and from the landing spot into the hunting ground on foot or by mount), otherwise ship/zeppelin between two harbors.
+    /// Flight routes only exist if both flight points are known.
     /// </summary>
     private static IReadOnlyList<TravelLeg>? Hop(Node a, Node b, List<Transport> transports, GroundTravel ground, IReadOnlySet<string> flightPoints)
     {
