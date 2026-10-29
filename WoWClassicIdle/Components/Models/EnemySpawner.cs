@@ -64,6 +64,7 @@ public class EnemySpawner
         return new Enemy(stats)
         {
             Name     = name,
+            MobName  = template.Name,
             Type     = template.Type,
             ImageUrl = template.ImageUrl,
             IsRare   = isRare,

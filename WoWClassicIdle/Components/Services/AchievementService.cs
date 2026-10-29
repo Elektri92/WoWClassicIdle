@@ -70,6 +70,7 @@ public partial class AchievementService : IAchievementService
         CheckRareItemsLooted();
         CheckGeneral();
         CheckInventory();
+        CheckExploration();
     }
 
     private static readonly int[] ProfessionSkillMilestones = { 75, 150, 225, 300 };
@@ -95,7 +96,7 @@ public partial class AchievementService : IAchievementService
             if (!player.ClassProgress.TryGetValue(cls, out var progress)) continue;
 
             int current = progress.Level;
-            int last    = _lastKnownLevels[cls];
+            int last    = _lastKnownLevels.GetValueOrDefault(cls, 1);
 
             if (current > last)
             {
@@ -266,10 +267,13 @@ public partial class AchievementService : IAchievementService
         }
 
         // Tracking-State auf aktuellen Stand setzen, damit keine Achievements doppelt feuern
+        _lastKnownLevels.Clear();
         foreach (var cls in Enum.GetValues<CharacterClass>())
         {
-            if (engine.Player.ClassProgress.TryGetValue(cls, out var progress))
-                _lastKnownLevels[cls] = progress.Level;
+            // Ohne Charakter (oder ohne Fortschritt) bei Level 1 starten, sonst fehlt der Schlüssel in CheckClassLevels
+            _lastKnownLevels[cls] = engine.HasActiveCharacter && engine.Player.ClassProgress.TryGetValue(cls, out var progress)
+                ? progress.Level
+                : 1;
         }
         _lastKnownKills             = engine.TotalKills;
         _lastKnownDeaths            = engine.TotalDeaths;
@@ -373,6 +377,7 @@ public partial class AchievementService : IAchievementService
         list.Add(new() { Id = "sold_100", Category = AchievementCategory.Inventory, Points = 20, Title = "Vendor",             Description = "Sell 100 items.",                             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_coin_01.jpg" });
         list.Add(new() { Id = "sold_500", Category = AchievementCategory.Inventory, Points = 30, Title = "Azeroth Auctioneer", Description = "Sell 500 items.",                             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_coin_01.jpg" });
 
+        AddExplorationAchievements(list);
         return list;
     }
 }

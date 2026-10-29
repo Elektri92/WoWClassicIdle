@@ -7,4 +7,5 @@ public interface ISaveGameService
     void Save(string? path = null);
     bool TryLoad(string? path = null);
     bool TryAutoLoad();
+    void DeleteSave();
 }

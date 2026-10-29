@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Models
 {
     public class CharacterSlot
@@ -14,5 +16,10 @@ namespace Models
         public string? CombatZoneId { get; internal set; }
         /// <summary>Laufende Reise in ein anderes Kampfgebiet (während der Reise wird nicht gekämpft).</summary>
         public ZoneTravelState? Travel { get; internal set; }
+        // Unveränderliche Sammlungen: der Sim-Thread ersetzt sie komplett, die UI liest ohne Lock
+        /// <summary>Bereits betretene Zonen – dort kennt der Charakter den Flugpunkt.</summary>
+        public ImmutableHashSet<string> DiscoveredZoneIds { get; internal set; } = ImmutableHashSet<string>.Empty;
+        /// <summary>Fortschritt der Zonen-Ziele (<see cref="ZoneObjective.Id"/> → Zähler).</summary>
+        public ImmutableDictionary<string, int> ZoneObjectiveProgress { get; internal set; } = ImmutableDictionary<string, int>.Empty;
     }
 }

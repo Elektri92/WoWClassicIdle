@@ -65,6 +65,23 @@
 .wow-btn.czone-toggle { margin: 0; padding: 5px 14px; font-size: .8rem; }
 .czone-xp-hint { color: #ffb070; font-size: .78rem; font-weight: 600; }
 
+/* Zonen-Ziele im Banner */
+.czone-objectives { display: flex; gap: 6px; }
+.czone-objective {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px 2px 2px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .55);
+    color: #e8e2c8;
+    font-size: .76rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.czone-objective img { width: 20px; height: 20px; border: 1px solid #000; border-radius: 3px; }
+.czone-objective.done { color: #1eff00; }
+
 /* ----- Weltkarte: Kalimdor links, Östliche Königreiche rechts ----- */
 .czone-map {
     display: grid;
@@ -284,6 +301,20 @@
 .czone-status.traveling { color: #8fd0ff; }
 .czone-status.locked    { color: #ff8a7a; }
 .czone-status.xp        { color: #ffb070; }
+
+/* Erkundung + Zonen-Ziele auf der Kachel */
+.czone-tile-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.czone-badge {
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .5);
+    color: #e8e2c8;
+    font-size: .68rem;
+    font-weight: 600;
+}
+.czone-badge.new      { color: #1eff00; }
+.czone-badge.flight   { color: #8fd0ff; }
+.czone-badge.mastered { color: var(--wow-gold); }
 
 /* Reisezeit – fährt beim Hovern von unten ein */
 .czone-travel {
@@ -697,3 +728,9 @@
 .zt-error { margin-top: 4px; color: #ff2020; }
 .zt-good  { color: #1eff00; }
 .zt-hint  { margin-top: 4px; color: #1eff00; }
+
+.zt-obj { display: flex; align-items: center; gap: 6px; color: #e8e8e8; font-size: .76rem; }
+.zt-obj img { width: 16px; height: 16px; border: 1px solid #000; border-radius: 3px; }
+.zt-obj.done { color: #9d9d9d; }
+.zt-obj-count { margin-left: auto; padding-left: 10px; color: #ffd100; font-variant-numeric: tabular-nums; }
+.zt-obj.done .zt-obj-count { color: #1eff00; }

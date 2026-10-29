@@ -14,8 +14,6 @@
     @* ── Existing characters (ausgeblendet, solange die Erstellung offen ist) ── *@
     @if (Engine.CharacterRoster.Count > 0 && !showCreation)
     {
-        <div class="char-section-label">Your Characters</div>
-
         @* Fraktionen nebeneinander: Alliance links, Horde rechts – jeweils auf ihrem Banner *@
         <div class="cs-factions">
         @foreach (var side in new[] { Faction.Alliance, Faction.Horde })
@@ -37,6 +35,7 @@
             @foreach (var slot in sideSlots)
             {
                 bool isActive = slot.Id == Engine.ActiveCharacter?.Id;
+                bool isPicked = slot.Id == PickedSlot?.Id;
                 var zone = CombatZoneRegistry.Get(slot.CombatZoneId);
                 string theme = zone?.Theme ?? StartZone(slot.Race)?.Theme ?? "grassland";
                 int xpPct = slot.Player.XpToNextLevel > 0
@@ -44,15 +43,19 @@
                     : 100;
 
                 <div @key="slot.Id"
-                     class="cs-card @(slot.Faction == Faction.Alliance ? "alliance-card" : "horde-card") @(isActive ? "active-card" : "") @(CombatZoneRegistry.IsNightTheme(theme) ? "night" : "day")"
+                     class="cs-card @(slot.Faction == Faction.Alliance ? "alliance-card" : "horde-card") @(isActive ? "active-card" : "") @(isPicked ? "picked-card" : "") @(CombatZoneRegistry.IsNightTheme(theme) ? "night" : "day")"
                      style="--i: @(index++)"
-                     @onclick="() => SelectCharacter(slot)">
+                     title="Double-click to play"
+                     @onclick="() => PickCharacter(slot)"
+                     @ondblclick="() => PlayCharacter(slot)">
                     <div class="cs-scenery" aria-hidden="true">
                         <div class="cs-sky zone-theme-@theme"></div>
                         <div class="battle-mountains zone-theme-@theme"></div>
                         <div class="battle-hills zone-theme-@theme"></div>
                     </div>
                     <div class="cs-sheen" aria-hidden="true"></div>
+                    @* Volkswappen als Wasserzeichen rechts auf der Karte *@
+                    <img class="cs-card-crest" src="@IconUrls.RaceCrestUrl(slot.Race)" alt="" aria-hidden="true" onerror="this.remove()" />
 
                     <div class="cs-frame">
                         <div class="portrait-area">
@@ -98,21 +101,37 @@
                                 }
                             </div>
                         </div>
-                        <div class="char-card-actions">
-                            <button class="wow-btn char-edit-btn"
-                                    title="Edit Character"
-                                    @onclick:stopPropagation="true"
-                                    @onclick="() => EditCharacter(slot)">
-                                <img class="btn-icon" src="@IconUrls.EditIcon" alt="" aria-hidden="true" onerror="this.remove()" />
-                            </button>
-                            <img class="char-card-arrow" src="@IconUrls.PlayIcon" alt="Play" title="Play" onerror="this.remove()" />
-                        </div>
                     </div>
                 </div>
             }
                 </div>
             </div>
         }
+        </div>
+
+        @* Aktionen für den per Klick gewählten Charakter; @key spielt beim Wechsel die Einblendung neu ab *@
+        @if (PickedSlot is { } picked)
+        {
+            <div @key="picked.Id" class="cs-pick-bar @(picked.Faction == Faction.Alliance ? "alliance" : "horde") race-@picked.Race.ToString().ToLowerInvariant()">
+                <img class="cs-pick-crest" src="@IconUrls.RaceCrestUrl(picked.Race)" alt="" aria-hidden="true" onerror="this.remove()" />
+                <div class="cs-pick-info">
+                    <span class="cs-pick-name">@IdleGameEngine.CharacterName(picked)</span>
+                    <span class="cs-pick-sub">
+                        Level @picked.Player.Level @picked.Race
+                        <span class="class-@picked.Class.ToString().ToLowerInvariant()">@picked.Class</span>
+                    </span>
+                </div>
+                <div class="cs-pick-actions">
+                    <button class="wow-btn cs-pick-edit" @onclick="() => EditCharacter(picked)">Edit</button>
+                    <button class="wow-btn primary cs-pick-play" @onclick="() => PlayCharacter(picked)">Play</button>
+                </div>
+            </div>
+        }
+
+        <div class="new-char-toggle-row">
+            <button class="wow-btn primary new-char-toggle" @onclick="ToggleCreation">
+                <span>Create New Character</span>
+            </button>
         </div>
 
         @if (BuildInfo.IsDebug)
@@ -129,66 +148,21 @@
                 }
             </div>
         }
-
-        <div class="new-char-toggle-row">
-            <button class="wow-btn primary new-char-toggle" @onclick="ToggleCreation">
-                <img class="btn-icon" src="@IconUrls.NewCharacterIcon" alt="" aria-hidden="true" onerror="this.remove()" />
-                <span>Create New Character</span>
-            </button>
-        </div>
     }
 
-    @* ── Creation form: Bühne im Look des Kampf-Hintergrunds, Thema = Startgebiet der gewählten Rasse ── *@
+    @* ── Creation form: Panels in den Wappenfarben der gewählten Rasse (Palette aus inventory-crest.css) ── *@
     @if (showCreation)
     {
-        var start = StartZone(selectedRace);
-        string stageTheme = start?.Theme ?? "grassland";
         var faction = GetFactionForRace(selectedRace);
+        string raceCss = selectedRace.ToString().ToLowerInvariant();
 
-        <div class="cs-stage">
-            @* Vorschau wie eine Charakterkarte: Szene des Startgebiets direkt als Hintergrund *@
-            <div class="cs-preview @(faction == Faction.Alliance ? "alliance-card" : "horde-card") @(CombatZoneRegistry.IsNightTheme(stageTheme) ? "night" : "day")">
-                <div class="cs-scenery" aria-hidden="true">
-                    @* @key: Beim Wechsel des Startgebiets wird die Szene neu aufgebaut und blendet weich ein *@
-                    <div @key="stageTheme" class="cs-scene-layer">
-                        <div class="cs-sky zone-theme-@stageTheme"></div>
-                        <div class="battle-mountains zone-theme-@stageTheme"></div>
-                        <div class="battle-hills zone-theme-@stageTheme"></div>
-                    </div>
-                    <div class="cs-embers">
-                        @for (int i = 0; i < 10; i++)
-                        {
-                            <span></span>
-                        }
-                    </div>
-                </div>
+        <div class="cs-stage @(faction == Faction.Alliance ? "alliance" : "horde") race-@raceCss">
+            @* @key: Bei jeder Rassenwahl neu erzeugt – der Schimmer läuft einmal über die Bühne *@
+            <div @key="selectedRace" class="cs-pick-wave" aria-hidden="true"></div>
 
-                <div class="portrait-area">
-                    <img @key="(selectedRace, selectedGender)" class="race-portrait cs-pop"
-                         src="@IconUrls.RaceIconUrl(selectedRace, selectedGender)" alt="" onerror="this.style.display='none'" />
-                    <img @key="selectedClass" class="class-badge cs-pop"
-                         src="@IconUrls.ClassIconUrl(selectedClass)" alt="" onerror="this.style.display='none'" />
-                </div>
-                <div class="cs-frame-info">
-                    <div class="cs-name-line">
-                        <span class="char-name @(string.IsNullOrWhiteSpace(characterName) ? "placeholder" : "")">@PreviewName</span>
-                        <span class="char-race">@selectedRace</span>
-                        <span class="char-class class-@selectedClass.ToString().ToLowerInvariant()">@selectedClass</span>
-                        <span class="cs-level">Lv. 1</span>
-                    </div>
-                    <div class="char-card-sub">
-                        <img class="cs-faction-icon" src="@IconUrls.FactionIconUrl(faction)" alt="" aria-hidden="true" onerror="this.remove()" />
-                        <span class="@(faction == Faction.Alliance ? "alliance-color" : "horde-color")">@faction</span>
-                        &nbsp;·&nbsp; @selectedGender
-                        @if (start is not null)
-                        {
-                            <span>&nbsp;·&nbsp; Starts in <span class="cs-zone">@start.Name</span></span>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <div class="unit-frame cs-panel" style="--i: 0">
+            <div class="unit-frame cs-panel cs-map" style="--i: 0">
+                @* Hauptstadt der Fraktion; @key blendet beim Fraktionswechsel die neue Karte ein *@
+                <div @key="faction" class="cs-map-layer capital-@(faction == Faction.Alliance ? "stormwind" : "orgrimmar")" aria-hidden="true"></div>
                 <h4>Name</h4>
                 <div class="cs-name-input-row">
                     <input type="text" class="cs-name-input @(nameError is not null ? "invalid" : "")"
@@ -204,13 +178,14 @@
                 }
             </div>
 
-            <div class="unit-frame cs-panel" style="--i: 1">
+            <div class="unit-frame cs-panel cs-map" style="--i: 1">
+                <div class="cs-map-layer world" aria-hidden="true"></div>
                 <h4>Race</h4>
                 <div class="race-row">
                     @foreach (var (side, races) in new[] { (Faction.Alliance, AllianceRaces), (Faction.Horde, HordeRaces) })
                     {
                         string sideCss = side == Faction.Alliance ? "alliance" : "horde";
-                        <div class="race-column">
+                        <div class="race-column @sideCss">
                             <h3 class="race-column-title @(sideCss)-title">
                                 <img src="@IconUrls.FactionIconUrl(side)" alt="" aria-hidden="true" onerror="this.remove()" />
                                 @side
@@ -222,6 +197,11 @@
                                             @onclick="() => SetRace(race)">
                                         <img src="@IconUrls.RaceIconUrl(race, selectedGender)" alt="" onerror="this.remove()" />
                                         <span>@race</span>
+                                        <img class="race-btn-crest" src="@IconUrls.RaceCrestUrl(race)" alt="" aria-hidden="true" onerror="this.remove()" />
+                                        @if (selectedRace == race && quoteText is not null && !quoteFromClass)
+                                        {
+                                            <span @key="quoteKey" class="cs-quote">@quoteText</span>
+                                        }
                                     </button>
                                 }
                             </div>
@@ -255,6 +235,10 @@
                                 @onclick="() => SetClass(cls)">
                             <img src="@IconUrls.ClassIconUrl(cls)" alt="" onerror="this.remove()" />
                             <span class="class-@cls.ToString().ToLowerInvariant()">@cls</span>
+                            @if (selectedClass == cls && quoteText is not null && quoteFromClass)
+                            {
+                                <span @key="quoteKey" class="cs-quote">@quoteText</span>
+                            }
                         </button>
                     }
                 </div>
@@ -283,119 +267,3 @@
     }
 </div>
 
-@code {
-    private Race selectedRace = Race.Human;
-    private CharacterClass selectedClass = CharacterClass.Warrior;
-    private Gender selectedGender = Gender.Male;
-    private string characterName = "";
-    private string? nameError;
-    private string? errorMsg;
-    private bool showCreation;
-
-    protected override void OnInitialized()
-    {
-        Engine.TickUpdated += OnEngineTick;
-        showCreation = Engine.CharacterRoster.Count == 0;
-    }
-
-    public void Dispose()
-    {
-        Engine.TickUpdated -= OnEngineTick;
-    }
-
-    private void OnEngineTick() => InvokeAsync(StateHasChanged);
-
-    private void SelectCharacter(CharacterSlot slot)
-    {
-        if (Engine.IsGameRunning)
-            Engine.Stop();
-        Engine.SelectCharacter(slot.Id);
-        Nav.NavigateTo("/idle");
-    }
-
-    private void EditCharacter(CharacterSlot slot)
-    {
-        selectedRace = slot.Race;
-        selectedClass = slot.Class;
-        selectedGender = slot.Gender;
-        characterName = slot.Name;
-        nameError = null;
-        errorMsg = null;
-        showCreation = true;
-    }
-
-    private void ToggleCreation()
-    {
-        showCreation = !showCreation;
-        characterName = "";
-        nameError = null;
-        errorMsg = null;
-    }
-
-    // Vorschau zeigt den Namen bereits in der endgültigen Schreibweise
-    private string PreviewName =>
-        string.IsNullOrWhiteSpace(characterName) ? "Unnamed" : CharacterNames.Normalize(characterName);
-
-    private void OnNameChanged()
-    {
-        // Fehler erst nach Eingabe anzeigen – ein leeres Feld bei Formularstart ist kein Fehler
-        nameError = string.IsNullOrEmpty(characterName) ? null : CharacterNames.Validate(characterName);
-        errorMsg = null;
-    }
-
-    private void OnNameKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") ConfirmAndPlay();
-    }
-
-    private Race[] AllianceRaces => new[]
-    {
-        Race.Human, Race.Dwarf, Race.NightElf, Race.Gnome
-    };
-
-    private Race[] HordeRaces => new[]
-    {
-        Race.Orc, Race.Undead, Race.Tauren, Race.Troll
-    };
-
-    // Startgebiet je Rasse – liefert Hintergrund-Thema für Vorschau und Charaktere ohne gewählte Zone
-    private static CombatZone? StartZone(Race race) => CombatZoneRegistry.StartZoneFor(race);
-
-    private Faction GetFactionForRace(Race race) =>
-        RaceClassInfo.RaceToFaction.TryGetValue(race, out var f) ? f : Faction.Alliance;
-
-    private void SetRace(Race value)
-    {
-        selectedRace = value;
-        var classes = RaceClassInfo.GetAvailableClasses(value);
-        if (!classes.Contains(selectedClass))
-            selectedClass = classes.First();
-        errorMsg = null;
-    }
-
-    private void SetClass(CharacterClass value)
-    {
-        selectedClass = value;
-        errorMsg = null;
-    }
-
-    private void SetGender(Gender value) => selectedGender = value;
-
-    private void ConfirmAndPlay()
-    {
-        nameError = CharacterNames.Validate(characterName);
-        if (nameError is not null) return;
-        try
-        {
-            var faction = GetFactionForRace(selectedRace);
-            if (Engine.IsGameRunning)
-                Engine.Stop();
-            Engine.CreateCharacter(characterName, faction, selectedRace, selectedClass, selectedGender);
-            Nav.NavigateTo("/idle");
-        }
-        catch (ArgumentException ex)
-        {
-            errorMsg = ex.Message;
-        }
-    }
-}

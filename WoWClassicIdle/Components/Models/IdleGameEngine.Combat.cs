@@ -446,6 +446,21 @@ public partial class IdleGameEngine
         }
     }
 
+    /// <summary>XP gutschreiben und dabei freigeschaltete Fähigkeiten melden; Rückgabe = gewonnene Level.</summary>
+    private int GrantXp(int amount)
+    {
+        int oldLevel = Player.Level;
+        int levelsGained = Player.GainXp(amount);
+        for (int l = oldLevel + 1; l <= Player.Level; l++)
+        {
+            // Talent-Fähigkeiten melden sich beim Skillen (InvestTalentPoint), nicht beim Level-Up
+            foreach (var ability in ClassAbilityRegistry.GetAbilitiesFor(Player.ActiveClass)
+                         .Where(a => a.LevelRequired == l && !a.TalentUnlockOnly))
+                AbilityUnlocked?.Invoke(ability);
+        }
+        return levelsGained;
+    }
+
     private void HandleEnemyDeath()
     {
         var deadEnemy = CurrentEnemy!;
@@ -519,24 +534,16 @@ public partial class IdleGameEngine
 
         // Zu niedrige Gegner (3+ Level unter dem Spieler) geben stark reduzierte bzw. keine XP
         int xpReward = StaticHelpers.GetKillXp(Player.Level, deadEnemy.Stats.Level);
-        int oldLevel = Player.Level;
-        int levelsGained = Player.GainXp(xpReward);
 
-        if (levelsGained > 0)
-        {
-            for (int l = oldLevel + 1; l <= Player.Level; l++)
-            {
-                // Talent-Fähigkeiten melden sich beim Skillen (InvestTalentPoint), nicht beim Level-Up
-                foreach (var ability in ClassAbilityRegistry.GetAbilitiesFor(Player.ActiveClass)
-                             .Where(a => a.LevelRequired == l && !a.TalentUnlockOnly))
-                    AbilityUnlocked?.Invoke(ability);
-            }
+        if (GrantXp(xpReward) > 0)
             LastLog = $"⬆ {Player.ActiveClass} → Lv. {Player.Level}";
-        }
         else
             LastLog = xpReward > 0
                 ? $"💀 {deadEnemy.Name} defeated (+{xpReward} XP)"
                 : $"💀 {deadEnemy.Name} defeated (no XP – too low level)";
+
+        // Zonen-Ziele zählen (überschreibt LastLog, wenn ein Ziel erledigt wurde)
+        TrackZoneObjectives(deadEnemy);
 
         TotalKills++;
         if (deadEnemy.IsRare) TotalRareKills++;

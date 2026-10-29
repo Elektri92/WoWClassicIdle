@@ -47,7 +47,8 @@
 
     <div class="inv-layout">
         @* ── Charakter: Paperdoll + Werte ── *@
-        <div class="al-panel inv-char" style="--i: 0">
+        @* Farbschema je Volkswappen: wwwroot/css/inventory-crest.css *@
+        <div class="al-panel inv-char race-@_engine.Player.Race.ToString().ToLowerInvariant()" style="--i: 0">
             <h4>Character</h4>
             <div class="paperdoll">
                 <div class="slot-column">

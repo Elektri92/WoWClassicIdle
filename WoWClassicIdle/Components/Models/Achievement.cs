@@ -7,6 +7,7 @@ public enum AchievementCategory
     Kills,
     Deaths,
     Loot,
+    Exploration,
     Inventory,
     Professions
 }

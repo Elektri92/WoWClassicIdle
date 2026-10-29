@@ -1,134 +1,119 @@
 ﻿@page "/"
 @using Models
+@inject IdleGameEngine Engine
 
 <PageTitle>Home</PageTitle>
 
-<div class="wow-page narrow home-page">
-    <div class="text-center pt-4">
-        <img src="images/wow_idle_game_logo.png" alt="WoW Classic Idle" class="wow-logo mb-3" style="max-width:250px; height:auto;" />
-        <div class="mb-2">
-            <span class="home-alpha-badge">ALPHA</span>
+@* Styles: wwwroot/css/home.css – Kartenhintergründe, Fraktionswappen und Glut wie in /character *@
+<div class="wow-page home-page">
+    <section class="home-hero">
+        <div class="home-hero-bg" aria-hidden="true">
+            <div class="home-map"></div>
+            <div class="home-capital alliance"></div>
+            <div class="home-capital horde"></div>
+            <div class="home-rays"></div>
+            <div class="home-crest alliance"></div>
+            <div class="home-crest horde"></div>
+            <div class="home-embers">
+                @for (int i = 0; i < EmberCount; i++)
+                {
+                    <i style="@EmberStyle(i)"></i>
+                }
+            </div>
+            <div class="home-vignette"></div>
         </div>
-        <p class="wow-subtitle mb-1">
-            An idle RPG inspired by World of Warcraft: Classic.
-        </p>
-        <p class="home-tagline">
-            Pick a class, level up, loot gear – your hero fights while you watch.
-        </p>
-        <div class="home-level-cap">Level cap: @StaticHelpers.MaxLevel</div>
-    </div>
+
+        <div class="home-hero-content">
+            <div class="home-logo-wrap">
+                <img src="images/wow_idle_game_logo.png" alt="WoW Classic Idle" class="home-logo" />
+            </div>
+            <div class="home-badges">
+                <span class="home-alpha-badge">Alpha</span>
+                <span class="home-level-cap">Level cap @StaticHelpers.MaxLevel</span>
+            </div>
+            <p class="home-subtitle">An idle RPG inspired by World of Warcraft: Classic.</p>
+            <p class="home-tagline">Pick a class, level up, loot gear – your hero fights while you watch.</p>
+
+            <div class="home-cta">
+                @if (Engine.ActiveCharacter is { } active)
+                {
+                    <a class="wow-btn primary home-cta-main" href="idle">
+                        <img src="@IconUrls.ClassIconUrl(active.Class)" alt="" aria-hidden="true" onerror="this.remove()" />
+                        Continue as <span class="class-@active.Class.ToString().ToLowerInvariant()">@active.Name</span>
+                        <span class="home-cta-level">Lv. @active.Player.Level</span>
+                    </a>
+                    <a class="wow-btn" href="character">Characters</a>
+                }
+                else
+                {
+                    <a class="wow-btn primary home-cta-main" href="character">Create Your Hero</a>
+                }
+            </div>
+        </div>
+    </section>
+
+    <div class="home-divider"><span>Adventures Await</span></div>
 
     <div class="home-features">
-        <div class="wow-card">
-            <h4>⚔️ Classes &amp; Abilities</h4>
-            <p class="mb-0">
-                Choose from nine classic classes and keep a roster of characters. Each class unlocks unique abilities as you level up and lets you build a custom combat loadout.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>🌿 Talents</h4>
-            <p class="mb-0">
-                Spend talent points starting at level 10 to specialise your character, unlock talent abilities and boost its combat performance.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>🐾 Pets &amp; Forms</h4>
-            <p class="mb-0">
-                Hunters fight alongside a Cat or Bear, Warlocks summon a Voidwalker. Druids shift into Bear, Cat, Moonkin or Tree form, Priests embrace Shadowform and Warriors switch stances.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>🎒 Loot &amp; Equipment</h4>
-            <p class="mb-0">
-                Collect drops from every enemy you defeat. Hunt ★ rare enemies for better gear and blue class weapons – tooltips compare each item with what you have equipped.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>⚒️ Professions</h4>
-            <p class="mb-0">
-                From level 5, pick a crafting profession per character and level shared gathering and secondary skills like Mining, Herbalism, Skinning, Fishing, First Aid and Cooking – actively or in passive slots.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>🧪 Consumables</h4>
-            <p class="mb-0">
-                Craft and use food, flasks, bandages and explosives to give your character an edge in combat.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>📊 Combat Meter</h4>
-            <p class="mb-0">
-                Track your damage and healing per ability to see which loadout performs best.
-            </p>
-        </div>
-        <div class="wow-card">
-            <h4>🏆 Achievements</h4>
-            <p class="mb-0">
-                Complete challenges across combat, exploration and collection categories to earn achievement points.
+        @for (int i = 0; i < Features.Length; i++)
+        {
+            var f = Features[i];
+            <div class="home-feature" style="--i: @i">
+                @* Bild inline statt als CSS-Variable: url() in Variablen löst relativ zu css/ auf *@
+                <div class="home-feature-art" style="background-image: url('images/talents/@(f.Art).jpg')" aria-hidden="true"></div>
+                <div class="home-feature-head">
+                    <img class="home-feature-icon" src="@IconUrl(f.Icon)" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" />
+                    <h4>@f.Title</h4>
+                </div>
+                <p>@f.Text</p>
+            </div>
+        }
+    </div>
+
+    <div class="home-notice">
+        <img class="home-notice-icon" src="@IconUrl("inv_scroll_03")" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" />
+        <div>
+            <strong>Early Access – Alpha</strong>
+            <p>
+                This game is in active development. Content, balance and features will change frequently.
+                Characters are currently capped at level @StaticHelpers.MaxLevel – higher levels will follow in future updates.
             </p>
         </div>
     </div>
 
-    <div class="home-alpha-notice wow-card mt-4">
-        <strong>Early Access – Alpha</strong>
-        <p class="mb-0 mt-1">
-            This game is in active development. Content, balance and features will change frequently.
-            Characters are currently capped at level @StaticHelpers.MaxLevel – higher levels will follow in future updates.
-        </p>
-    </div>
-
-    <p class="mt-4 text-center wow-footer">
-        Your progress is saved automatically, and the game keeps itself up to date.
-    </p>
+    <p class="home-footer">Your progress is saved automatically, and the game keeps itself up to date.</p>
 </div>
 
-<style>
-    .home-features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 0 16px;
-        margin-top: 1.5rem;
-    }
+@code {
+    private const int EmberCount = 18;
+    private const string IconBase = "https://wow.zamimg.com/images/wow/icons/large/";
 
-    .home-features p { color: #d4c9a8; }
+    private static string IconUrl(string name) => $"{IconBase}{name}.jpg";
 
-    .home-alpha-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #c8860a, #7a3d00);
-        color: #ffe8a0;
-        font-size: 0.65rem;
-        font-weight: 800;
-        letter-spacing: 0.2em;
-        padding: 3px 12px;
-        border-radius: 3px;
-        text-transform: uppercase;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    }
+    // Feste Werte je Index statt Zufall: kein Springen bei erneutem Rendern
+    private static string EmberStyle(int i) =>
+        $"--x: {(i * 37 + 11) % 100}%; --d: {6 + i * 7 % 6}s; --t: -{i * 1300 % 9000}ms; --s: {2 + i % 3}px";
 
-    .home-tagline {
-        color: #a89060;
-        font-size: 0.95rem;
-        margin-top: 0.25rem;
-    }
-
-    .home-level-cap {
-        display: inline-block;
-        margin-top: 0.5rem;
-        padding: 2px 10px;
-        border: 1px solid #c8860a;
-        border-radius: 3px;
-        color: #ffd100;
-        font-size: 0.8rem;
-        letter-spacing: 0.05em;
-    }
-
-    .home-alpha-notice {
-        border-left: 3px solid #c8860a;
-        color: #d4c9a8;
-        font-size: 0.9rem;
-    }
-
-    .home-alpha-notice strong {
-        color: #ffe8a0;
-    }
-</style>
+    // Art = Talentbaum-Hintergrund aus wwwroot/images/talents
+    private static readonly (string Title, string Icon, string Art, string Text)[] Features =
+    [
+        ("Classes & Abilities", "inv_sword_04", "warrior-arms",
+            "Choose from nine classic classes and keep a roster of characters. Each class unlocks unique abilities as you level up and lets you build a custom combat loadout."),
+        ("Talents", "ability_marksmanship", "mage-arcane",
+            "Spend talent points starting at level 10 to specialise your character, unlock talent abilities and boost its combat performance."),
+        ("Pets & Forms", "ability_hunter_pet_cat", "druid-feral-combat",
+            "Hunters fight alongside a Cat or Bear, Warlocks summon a Voidwalker. Druids shift into Bear, Cat, Moonkin or Tree form, Priests embrace Shadowform and Warriors switch stances."),
+        ("Zones & Exploration", "inv_misc_map_01", "hunter-marksmanship",
+            "Travel across Azeroth on foot, by mount, flight path, ship or zeppelin. Discover new zones for bonus XP and complete zone objectives for guaranteed rewards."),
+        ("Loot & Equipment", "inv_chest_chain_08", "paladin-retribution",
+            "Collect drops from every enemy you defeat. Hunt ★ rare enemies for better gear and blue class weapons – tooltips compare each item with what you have equipped."),
+        ("Professions", "trade_blacksmithing", "shaman-enhancement",
+            "From level 5, pick a crafting profession per character and level shared gathering and secondary skills like Mining, Herbalism, Skinning, Fishing, First Aid and Cooking – actively or in passive slots."),
+        ("Consumables", "inv_misc_food_30", "priest-holy",
+            "Craft and use food, flasks, bandages and explosives to give your character an edge in combat."),
+        ("Combat Meter", "spell_fire_fireball", "mage-fire",
+            "Track your damage and healing per ability to see which loadout performs best."),
+        ("Achievements", "achievement_general", "paladin-holy",
+            "Complete challenges across combat, exploration and collection categories to earn achievement points."),
+    ];
+}

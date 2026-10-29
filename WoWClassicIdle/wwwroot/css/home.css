@@ -1,0 +1,438 @@
+/* ============================================
+   Startseite (/) – Kopfbereich mit Azeroth-Karte, Hauptstädten und Fraktionswappen wie in /character,
+   darunter Feature-Karten auf Talentbaum-Hintergründen.
+   Einmalige Animationen tragen visibility im Start-Keyframe (WebKitGTK-Flackern, siehe character-select.css);
+   Endlos-Animationen nutzen nur transform/opacity und bleiben im Compositor.
+   ============================================ */
+
+.wow-page.home-page { max-width: 1060px; }
+
+/* ── Kopfbereich ── */
+.home-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 460px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px 30px;
+    border: 2px solid var(--wow-border);
+    border-radius: 10px;
+    background: radial-gradient(ellipse at 50% 40%, #2b2418 0%, #120e08 70%, #0a0805 100%);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .65), inset 0 0 0 1px var(--wow-border-inner);
+    animation: home-fade-in .6s ease-out both;
+}
+
+.home-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+.home-hero-bg > * { position: absolute; }
+
+/* Weltkarte: übergroß, driftet langsam (transform statt background-position → Compositor) */
+.home-map {
+    inset: -8%;
+    background: url("../images/azeroth-map.png") center / cover no-repeat;
+    opacity: .3;
+    filter: sepia(.4) saturate(.8) brightness(.85);
+    animation: home-map-drift 48s ease-in-out infinite alternate;
+}
+
+/* Hauptstädte: Stormwind links, Orgrimmar rechts, zur Mitte hin ausgeblendet */
+.home-capital {
+    top: 0;
+    bottom: 0;
+    width: 52%;
+    background: center / cover no-repeat;
+    opacity: .28;
+    filter: sepia(.35) saturate(.85) brightness(.8);
+}
+.home-capital.alliance {
+    left: 0;
+    background-image: url("../images/cities/stormwind.jpg");
+    -webkit-mask-image: linear-gradient(90deg, #000 20%, transparent 95%);
+    mask-image: linear-gradient(90deg, #000 20%, transparent 95%);
+}
+.home-capital.horde {
+    right: 0;
+    background-image: url("../images/cities/orgrimmar.jpg");
+    -webkit-mask-image: linear-gradient(270deg, #000 20%, transparent 95%);
+    mask-image: linear-gradient(270deg, #000 20%, transparent 95%);
+}
+
+/* Goldener Strahlenkranz hinter dem Logo */
+.home-rays {
+    top: 50%;
+    left: 50%;
+    width: 760px;
+    aspect-ratio: 1;
+    margin: -400px 0 0 -380px;
+    background:
+        radial-gradient(circle, rgba(255, 209, 0, .3) 0%, rgba(197, 165, 90, .1) 30%, transparent 60%),
+        repeating-conic-gradient(from 0deg, rgba(255, 209, 0, .1) 0deg 3deg, transparent 3deg 14deg);
+    -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 64%);
+    mask-image: radial-gradient(circle, #000 12%, transparent 64%);
+    animation: home-rays-spin 160s linear infinite;
+}
+
+/* Fraktionswappen an den Rändern (Horde links, Allianz rechts), schweben gegenläufig */
+.home-crest {
+    top: 50%;
+    width: 330px;
+    background: center / contain no-repeat;
+    opacity: .5;
+    animation: home-crest-float 8s ease-in-out infinite alternate;
+}
+.home-crest.alliance {
+    right: -70px;
+    aspect-ratio: 579 / 640;
+    margin-top: -182px;
+    background-image: url("../images/factions/crest_alliance.png");
+    filter: drop-shadow(0 0 16px rgba(74, 144, 217, .55));
+}
+.home-crest.horde {
+    left: -60px;
+    aspect-ratio: 512 / 640;
+    width: 300px;
+    margin-top: -188px;
+    background-image: url("../images/factions/crest_horde.png");
+    filter: drop-shadow(0 0 16px rgba(208, 58, 42, .55));
+    animation-delay: -4s;
+}
+
+/* Aufsteigende Glut */
+.home-embers { inset: 0; overflow: hidden; }
+.home-embers i {
+    position: absolute;
+    bottom: -10px;
+    left: var(--x);
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: #ffcf6a;
+    box-shadow: 0 0 6px 2px rgba(255, 140, 30, .75);
+    opacity: 0;
+    animation: home-ember var(--d) linear var(--t) infinite;
+}
+
+/* Abdunkeln zur Mitte und zu den Rändern: Text bleibt lesbar */
+.home-vignette {
+    inset: 0;
+    background:
+        radial-gradient(ellipse 38% 55% at 50% 48%, rgba(10, 8, 5, .55), transparent 100%),
+        radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(5, 4, 2, .85) 100%),
+        linear-gradient(180deg, transparent 70%, rgba(10, 8, 5, .7) 100%);
+}
+
+/* ── Inhalt des Kopfbereichs ── */
+.home-hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 680px;
+}
+
+.home-logo-wrap {
+    position: relative;
+    animation: home-logo-in 1s cubic-bezier(.2, .8, .2, 1) .1s both;
+}
+/* Pulsierender Schein hinter dem Logo (opacity statt filter → Compositor) */
+.home-logo-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 8%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 190, 60, .55) 0%, rgba(255, 120, 20, .2) 45%, transparent 70%);
+    animation: home-glow-pulse 3.6s ease-in-out infinite alternate;
+}
+.home-logo {
+    display: block;
+    width: 230px;
+    height: auto;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .8));
+    animation: home-logo-float 6s ease-in-out 1.1s infinite alternate;
+}
+
+.home-badges {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 6px;
+    animation: home-fade-up .5s ease-out .5s both;
+}
+.home-alpha-badge,
+.home-level-cap {
+    font-family: var(--wow-font-title);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    padding: 3px 12px;
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+}
+.home-alpha-badge {
+    background: linear-gradient(135deg, #c8860a, #7a3d00);
+    color: #ffe8a0;
+}
+.home-level-cap {
+    background: rgba(12, 10, 6, .75);
+    border: 1px solid #c8860a;
+    color: var(--wow-gold);
+}
+
+.home-subtitle {
+    margin: 14px 0 2px;
+    font-family: var(--wow-font-title);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--wow-gold);
+    text-shadow: 0 2px 3px #000, 0 0 12px #000;
+    animation: home-fade-up .5s ease-out .6s both;
+}
+.home-tagline {
+    margin: 0;
+    color: var(--wow-text);
+    font-size: .95rem;
+    text-shadow: 0 1px 2px #000, 0 0 8px #000;
+    animation: home-fade-up .5s ease-out .7s both;
+}
+
+.home-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+    animation: home-fade-up .5s ease-out .85s both;
+}
+.home-cta .wow-btn { text-decoration: none; }
+.home-cta .wow-btn:not(.primary) { background: rgba(20, 16, 10, .8); }
+.home-cta-main {
+    font-size: 1.05rem;
+    padding: 9px 26px;
+}
+.home-cta-main > img {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    border: 1px solid #000;
+}
+.home-cta-main > span { text-shadow: 1px 1px 0 #000, 0 0 4px #000; }
+.home-cta-level {
+    font-size: .8rem;
+    color: var(--wow-gold-pale);
+    opacity: .85;
+}
+/* Wandernder Lichtschimmer über dem Hauptknopf */
+.home-cta-main::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 236, 155, .28) 50%, transparent 65%);
+    background-size: 250% 100%;
+    pointer-events: none;
+    animation: home-shine 3.4s ease-in-out 1.5s infinite;
+}
+
+/* ── Trenner ── */
+.home-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 28px 0 4px;
+    font-family: var(--wow-font-title);
+    font-size: .82rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--wow-gold-soft);
+    animation: home-fade-up .5s ease-out .9s both;
+}
+.home-divider::before,
+.home-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--wow-gold-soft));
+}
+.home-divider::after { background: linear-gradient(270deg, transparent, var(--wow-gold-soft)); }
+
+/* ── Feature-Karten ── */
+.home-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.home-feature {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: 14px 16px 16px;
+    background: linear-gradient(180deg, rgba(43, 36, 24, .9) 0%, rgba(26, 21, 13, .95) 100%);
+    border: 2px solid var(--wow-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+    transition: border-color .25s ease, box-shadow .25s ease, translate .25s ease;
+    animation: home-card-in .55s cubic-bezier(.2, .8, .2, 1) calc(1s + var(--i) * .07s) both;
+}
+.home-feature:hover {
+    translate: 0 -3px;
+    border-color: var(--wow-gold-soft);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .6), 0 0 12px rgba(255, 209, 0, .18), inset 0 0 0 1px var(--wow-gold-soft);
+}
+
+/* Talentbaum-Bild als Hintergrund, nach unten ausgeblendet; zoomt beim Hover */
+.home-feature-art {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: center 30% / cover no-repeat;
+    opacity: .32;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .35) 70%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .35) 70%, transparent 100%);
+    transition: opacity .35s ease, scale .6s ease;
+}
+.home-feature:hover .home-feature-art {
+    opacity: .5;
+    scale: 1.08;
+}
+
+.home-feature-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.home-feature-icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: 2px solid var(--wow-border-inner);
+    box-shadow: 0 0 0 1px #000, 0 2px 6px rgba(0, 0, 0, .7);
+    transition: border-color .25s ease, box-shadow .25s ease;
+}
+.home-feature:hover .home-feature-icon {
+    border-color: var(--wow-gold);
+    box-shadow: 0 0 0 1px #000, 0 0 10px rgba(255, 209, 0, .45);
+}
+.wow-page .home-feature h4 {
+    margin: 0;
+    text-shadow: 0 1px 2px #000, 0 0 8px #000;
+}
+.home-feature p {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.45;
+    color: #d4c9a8;
+    text-shadow: 0 1px 2px #000;
+}
+
+/* ── Alpha-Hinweis ── */
+.home-notice {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-top: 22px;
+    padding: 14px 16px;
+    background: linear-gradient(180deg, #2e2414 0%, #1c150b 100%);
+    border: 2px solid var(--wow-border);
+    border-left: 4px solid #c8860a;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+    color: #d4c9a8;
+    font-size: .9rem;
+    animation: home-fade-up .5s ease-out 1.6s both;
+}
+.home-notice strong {
+    font-family: var(--wow-font-title);
+    color: #ffe8a0;
+}
+.home-notice p { margin: 4px 0 0; }
+.home-notice-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: 2px solid var(--wow-border-inner);
+    box-shadow: 0 0 0 1px #000;
+}
+
+.home-footer {
+    margin: 20px 0 8px;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--wow-muted);
+    animation: home-fade-up .5s ease-out 1.7s both;
+}
+
+/* ── Keyframes ── */
+@keyframes home-fade-in {
+    from { visibility: visible; opacity: 0; }
+}
+@keyframes home-fade-up {
+    from { visibility: visible; opacity: 0; transform: translateY(8px); }
+}
+@keyframes home-card-in {
+    from { visibility: visible; opacity: 0; transform: translateY(14px) scale(.97); }
+}
+@keyframes home-logo-in {
+    from { visibility: visible; opacity: 0; transform: scale(.7); }
+    60%  { transform: scale(1.04); }
+}
+@keyframes home-logo-float {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-7px); }
+}
+@keyframes home-glow-pulse {
+    from { opacity: .45; transform: scale(.92); }
+    to   { opacity: 1;   transform: scale(1.06); }
+}
+@keyframes home-map-drift {
+    from { transform: scale(1) translate(0, 0); }
+    to   { transform: scale(1.08) translate(-2.5%, 1.5%); }
+}
+@keyframes home-rays-spin {
+    to { transform: rotate(360deg); }
+}
+@keyframes home-crest-float {
+    from { transform: translateY(0) rotate(-1deg); }
+    to   { transform: translateY(-12px) rotate(1deg); }
+}
+@keyframes home-ember {
+    0%   { opacity: 0; transform: translate(0, 0) scale(1); }
+    12%  { opacity: .9; }
+    50%  { transform: translate(18px, -230px) scale(.85); }
+    80%  { opacity: .5; }
+    100% { opacity: 0; transform: translate(-10px, -470px) scale(.4); }
+}
+@keyframes home-shine {
+    0%, 55% { background-position: 120% 0; }
+    100%    { background-position: -120% 0; }
+}
+
+/* Schmale Fenster: Wappen dezenter und weiter am Rand, Städte ausgeblendet */
+@media (max-width: 760px) {
+    .home-hero { min-height: 400px; }
+    .home-crest { opacity: .22; }
+    .home-crest.alliance { right: -150px; }
+    .home-crest.horde { left: -140px; }
+    .home-capital { display: none; }
+    .home-logo { width: 180px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-page *,
+    .home-page *::before,
+    .home-page *::after { animation: none !important; }
+    .home-embers { display: none; }
+}

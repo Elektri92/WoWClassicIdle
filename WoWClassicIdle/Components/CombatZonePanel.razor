@@ -22,6 +22,18 @@
                     <span class="czone-xp-hint">@hint</span>
                 }
             </div>
+            <WowTooltip Title="@ObjectivesTitle(current)" TitleColor="#ffd100" Body="ObjectivesBody(current)">
+                <div class="czone-objectives">
+                    @foreach (var objective in ZoneObjectiveRegistry.For(current))
+                    {
+                        bool done = Engine.IsObjectiveDone(objective);
+                        <span class="czone-objective @(done ? "done" : "")">
+                            <img src="@objective.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
+                            @(done ? "✓" : $"{Engine.ObjectiveProgress(objective)}/{objective.Required}")
+                        </span>
+                    }
+                </div>
+            </WowTooltip>
             <div class="czone-banner-mobs">
                 @foreach (var mob in current.Mobs)
                 {
@@ -45,6 +57,7 @@
             <span class="czone-legend-title">@(needsZone ? "Choose your hunting grounds" : "Choose a new zone")</span>
             <span class="czone-chip">⚔ Enemies near your level</span>
             <span class="czone-chip">@(needsZone ? "⚡ First pick is instant" : "🧭 Travel takes time – no fighting")</span>
+            <span class="czone-chip">🦅 Fly only to discovered zones</span>
             <span class="czone-legend-levels">
                 <span class="czone-level lvl-yellow">Full XP</span>
                 <span class="czone-level lvl-green">Reduced</span>
@@ -86,6 +99,22 @@
                             <span class="czone-level @LevelClass(zone, level)">@zone.LevelRange</span>
                         </div>
                         <div class="czone-tile-desc">@zone.Description</div>
+                        @if (!locked)
+                        {
+                            <div class="czone-tile-badges">
+                                @if (!Engine.IsZoneDiscovered(zone))
+                                {
+                                    <span class="czone-badge new">✦ Undiscovered</span>
+                                }
+                                else
+                                {
+                                    <span class="czone-badge flight">🦅 Flight point</span>
+                                }
+                                <span class="czone-badge @(Engine.IsZoneMastered(zone) ? "mastered" : "")">
+                                    @(Engine.IsZoneMastered(zone) ? "🏆 Mastered" : $"📜 {Engine.CompletedObjectives(zone)}/{ZoneObjectiveRegistry.For(zone).Count}")
+                                </span>
+                            </div>
+                        }
                         <div class="czone-tile-mobs">
                             @foreach (var mob in zone.Mobs)
                             {
@@ -194,7 +223,8 @@
 
     // Nur neu zeichnen, wenn sich Charakter, Zone, Reise oder Level ändern (TickUpdated kommt 10× pro Sekunde)
     private string Signature() =>
-        $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}";
+        $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}"
+        + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}";
 
     private void OnTick()
     {
@@ -254,6 +284,20 @@
         {
             <span class="zt-warn">@hint</span>
         }
+        @if (level >= zone.MinLevel)
+        {
+            @if (Engine.IsZoneDiscovered(zone))
+            {
+                <span class="zt-sub">🦅 Flight point known</span>
+            }
+            else
+            {
+                <span class="zt-good">✦ Undiscovered – first visit: +@Engine.DiscoveryXpFor(zone) XP</span>
+                <span class="zt-sub">Discover it to unlock its flight point</span>
+            }
+            <span class="zt-section">@ObjectivesTitle(zone)</span>
+            @ObjectivesBody(zone)
+        }
         @if (route is { Legs.Count: > 0 })
         {
             <span class="zt-section">Travel time <b>@ZoneTravel.FormatDuration(route.Seconds)</b></span>
@@ -277,6 +321,31 @@
         else
         {
             <span class="zt-hint">Click to travel here – no fighting on the road</span>
+        }
+    </text>;
+
+    private string ObjectivesTitle(CombatZone zone) =>
+        $"Zone objectives ({Engine.CompletedObjectives(zone)}/{ZoneObjectiveRegistry.For(zone).Count})";
+
+    // Ziele mit Fortschritt + Belohnung je Ziel und für die Mastery
+    private RenderFragment ObjectivesBody(CombatZone zone) => @<text>
+        @foreach (var objective in ZoneObjectiveRegistry.For(zone))
+        {
+            bool done = Engine.IsObjectiveDone(objective);
+            <span class="zt-obj @(done ? "done" : "")">
+                <img src="@objective.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
+                <span>@objective.Label</span>
+                <span class="zt-obj-count">@(done ? "✓" : $"{Engine.ObjectiveProgress(objective)}/{objective.Required}")</span>
+            </span>
+        }
+        @if (Engine.IsZoneMastered(zone))
+        {
+            <span class="zt-good">🏆 Zone mastered</span>
+        }
+        else
+        {
+            <span class="zt-sub">Each: +@ZoneObjectiveRegistry.ObjectiveXp(zone, Engine.Player.Level) XP, @Money.Format(ZoneObjectiveRegistry.ObjectiveCopper(zone, Engine.Player.Level))</span>
+            <span class="zt-sub">All done: guaranteed green or blue item</span>
         }
     </text>;
 

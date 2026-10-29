@@ -1,0 +1,92 @@
+/* ============================================
+   Fraktionswappen hinter den Bannern in /character
+   Je Spalte ein ruhiger Fraktions-Schein (::before) und das freigestellte Wappen (::after),
+   mittig hinter der Flagge und gedämpft, damit es im durchscheinenden Tuch nur leicht durchschimmert.
+   ============================================ */
+
+/* Wappen ragen über den Seitenrand hinaus: kein horizontaler Scrollbalken im Hauptbereich */
+main:has(.character-selection .cs-factions) { overflow-x: hidden; }
+
+.wow-page.narrow.character-selection:has(.cs-factions) { max-width: 1040px; }
+.character-selection .cs-factions { gap: 96px; }
+
+/* Spalten sind positioniert und würden sonst über Überschrift, Hinweistext und Knöpfe gemalt */
+.character-selection > .cs-title,
+.character-selection > .cs-hint,
+.character-selection .debug-all-level-row,
+.character-selection .new-char-toggle-row {
+    position: relative;
+    z-index: 1;
+}
+
+.cs-faction-col {
+    position: relative;
+    isolation: isolate;
+    --crest-width: 118%;
+}
+.cs-faction-col.alliance {
+    --crest-url: url("../images/factions/crest_alliance.png");
+    --crest-ratio: 579 / 640;
+    --crest-glow: 74, 144, 217;
+}
+.cs-faction-col.horde {
+    --crest-url: url("../images/factions/crest_horde.png");
+    --crest-ratio: 512 / 640;
+    --crest-glow: 208, 58, 42;
+    /* Das Horde-Wappen ist schmaler und höher: gleich breit wirken lassen */
+    --crest-width: 110%;
+}
+
+/* ── Ruhiger Schein in Fraktionsfarbe hinter dem Wappen ── */
+.cs-faction-col::before {
+    content: "";
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    width: 140%;
+    aspect-ratio: 1;
+    translate: -50% 0;
+    z-index: -2;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(var(--crest-glow), .2) 0%, transparent 60%);
+    animation: cs-crest-in 1.2s ease-out both;
+}
+
+/* ── Wappen: vollständig, gedämpft, mit schmalem Leuchtsaum ── */
+.cs-faction-col::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: var(--crest-width);
+    max-width: 600px;
+    aspect-ratio: var(--crest-ratio);
+    translate: -50% 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--crest-url) center top / contain no-repeat;
+    opacity: .5;
+    filter: saturate(.8) drop-shadow(0 0 10px rgba(var(--crest-glow), .3));
+    animation: cs-crest-in 1.2s cubic-bezier(.2, .8, .2, 1) calc(var(--col, 0) * .12s) both;
+}
+
+/* Titel über dem Wappen lesbar halten */
+.cs-faction-col .cs-faction-title {
+    text-shadow: 0 2px 3px #000, 0 0 12px #000;
+}
+
+@keyframes cs-crest-in {
+    from { visibility: visible; opacity: 0; scale: .92; }
+}
+
+/* Schmalere Fenster: weniger Spaltenabstand, Wappen kaum breiter als die Flagge */
+@media (max-width: 1500px) {
+    .character-selection .cs-factions { gap: 56px; }
+    .cs-faction-col          { --crest-width: 106%; }
+    .cs-faction-col.horde    { --crest-width: 98%; }
+}
+
+@media (max-width: 760px) {
+    .character-selection .cs-factions { gap: 40px; }
+    .cs-faction-col::after { opacity: .35; }
+}

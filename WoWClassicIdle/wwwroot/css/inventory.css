@@ -451,7 +451,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     animation: al-card-in .5s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i, 0) * .1s) backwards;
 }
 
-/* Geschlossen: NPC zum Anklicken (Links- oder Rechtsklick) */
+/* Geschlossen: NPC zum Anklicken (Links- oder Rechtsklick); Farben wie das geöffnete Händlerfenster */
 .inv-merchant-npc {
     width: 100%;
     display: flex;
@@ -459,10 +459,10 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
     align-items: center;
     gap: 4px;
     padding: 18px 12px 14px;
-    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
-    border: 2px solid var(--wow-border);
+    background: linear-gradient(180deg, #1c1a17 0%, #111010 100%);
+    border: 2px solid #6e6a62;
     border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px #2a2724;
     color: var(--wow-text);
     font-family: var(--wow-font-body);
     cursor: pointer;
@@ -470,7 +470,7 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 }
 .inv-merchant-npc:hover {
     border-color: var(--wow-gold-soft);
-    box-shadow: 0 6px 20px rgba(255, 209, 0, .18), inset 0 0 0 1px var(--wow-border-inner);
+    box-shadow: 0 6px 20px rgba(255, 209, 0, .18), inset 0 0 0 1px #2a2724;
     transform: translateY(-2px);
 }
 .inv-npc-portrait { width: 80px; height: 80px; margin-bottom: 6px; }

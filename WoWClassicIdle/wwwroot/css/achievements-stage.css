@@ -1,0 +1,82 @@
+/* ============================================
+   Erfolge (/achievements) – Bühne um das Fenster: vertikal zentriert, dezenter Hintergrund
+   (Azeroth-Karte + goldener Schein, ruhiger als die Startseite).
+   Einmalige Animationen tragen visibility im Start-Keyframe (WebKitGTK-Flackern, siehe character-select.css).
+   ============================================ */
+
+.ach-stage {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Inhaltsbereich abzüglich Padding von article.content */
+    min-height: calc(100vh - 2.6rem);
+    padding: 1.5rem 0;
+}
+
+.ach-stage .ach-window {
+    width: 100%;
+    margin: 0;
+    /* backwards statt both: ein bleibender transform würde fixed-Tooltips im Fenster verschieben */
+    animation: ach-window-in .5s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+
+/* Maske auf dem ruhenden Container: closest-side → an jeder Kante vollständig transparent, keine harten Ränder,
+   auch während die Karte darin driftet */
+.ach-stage-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0, 0, 0, .55) 35%, rgba(0, 0, 0, .15) 65%, transparent 88%);
+    mask-image: radial-gradient(closest-side, #000 0%, rgba(0, 0, 0, .55) 35%, rgba(0, 0, 0, .15) 65%, transparent 88%);
+}
+.ach-stage-bg > * { position: absolute; }
+
+/* Weltkarte: schwach, driftet sehr langsam (Ausblenden übernimmt .ach-stage-bg) */
+.ach-stage-map {
+    inset: -4%;
+    background: url("../images/azeroth-map.png") center / cover no-repeat;
+    opacity: .16;
+    filter: sepia(.45) saturate(.7) brightness(.8);
+    animation: ach-map-in 1.2s ease-out both, ach-map-drift 60s ease-in-out 1.2s infinite alternate;
+}
+
+/* Warmer Schein hinter dem Fenster */
+.ach-stage-glow {
+    top: 50%;
+    left: 50%;
+    width: min(1100px, 120%);
+    aspect-ratio: 1.6;
+    translate: -50% -50%;
+    background: radial-gradient(ellipse, rgba(255, 190, 70, .14) 0%, rgba(197, 165, 90, .05) 40%, transparent 68%);
+    animation: ach-glow-pulse 7s ease-in-out infinite alternate;
+}
+
+@keyframes ach-window-in {
+    from { visibility: visible; opacity: 0; transform: translateY(12px) scale(.985); }
+}
+@keyframes ach-map-in {
+    from { visibility: visible; opacity: 0; }
+}
+@keyframes ach-map-drift {
+    from { transform: scale(1); }
+    to   { transform: scale(1.05) translate(-1.5%, 1%); }
+}
+@keyframes ach-glow-pulse {
+    from { opacity: .7; }
+    to   { opacity: 1; }
+}
+
+/* Einspaltiges Layout: Navigation steht oben, Zentrieren würde nur eine Lücke erzeugen */
+@media (max-width: 640.98px) {
+    .ach-stage { min-height: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ach-stage .ach-window,
+    .ach-stage-map,
+    .ach-stage-glow { animation: none; }
+}

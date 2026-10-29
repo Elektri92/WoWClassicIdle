@@ -5,6 +5,8 @@ public class Enemy
 {
     public Stats Stats { get; }
     public string Name { get; set; } = "";
+    /// <summary>Name der Gegnerart ohne Level/Rare-Markierung (für Zonen-Ziele).</summary>
+    public string MobName { get; init; } = "";
     public string Type { get; set; } = "";
     public string? ImageUrl { get; set; }
     public bool IsRare { get; init; }

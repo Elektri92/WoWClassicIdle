@@ -46,6 +46,7 @@ public partial class AchievementService
         int classCount = Enum.GetValues<CharacterClass>().Length;
         map["general_all_classes_10"] = (() => _engine.Player.ClassProgress.Values.Count(p => p.Level >= 10), classCount);
 
+        AddExplorationTrackers(map);
         return map;
     }
 

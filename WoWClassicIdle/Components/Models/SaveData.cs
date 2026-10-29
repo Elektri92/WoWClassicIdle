@@ -50,6 +50,9 @@ public class SlotSaveData
     public string? CombatZone { get; set; }
     public string? TravelTarget { get; set; }
     public double TravelElapsed { get; set; }
+    // Entdeckte Zonen (null = Altstand → nur aktuelle Zone) und Fortschritt der Zonen-Ziele
+    public List<string>? DiscoveredZones { get; set; }
+    public Dictionary<string, int>? ZoneObjectives { get; set; }
 }
 
 public class PlayerSaveData

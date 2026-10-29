@@ -1,0 +1,295 @@
+/* ============================================
+   Charaktererstellung in /character
+   Alle Panels tragen die Wappenfarben der gewählten Rasse (--crest-1/2/text, Palette und
+   @property-Registrierung in inventory-crest.css) und blenden beim Rassenwechsel weich über.
+   Karten im Hintergrund nur je einmal: Name = Hauptstadt der Fraktion, Rasse = Azeroth.
+   Hinter den Rassenbannern stehen klein die Fraktionswappen wie in der Charakterübersicht.
+   Rasse und Klasse sagen bei der Wahl einen Spruch (Sprechblase, Texte in Models/CharacterQuotes.cs).
+   ============================================ */
+
+/* ── Größere Haupt-Buttons (ohne Icon) ── */
+.character-selection .new-char-toggle {
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    min-width: 340px;
+    padding: 14px 44px;
+}
+.character-selection .cs-back-btn {
+    font-size: 1.05rem;
+    padding: 13px 30px;
+}
+.character-selection .confirm-btn {
+    font-size: 1.1rem;
+    padding: 13px 38px;
+}
+
+/* ── Bühne: Farbwechsel der Rasse überblenden (registrierte Properties sind animierbar) ── */
+.cs-stage {
+    position: relative;
+    transition: --crest-1 .8s ease, --crest-2 .8s ease, --crest-text .8s ease;
+}
+
+/* Leichter Schimmer in Wappenfarbe bei jeder Rassenwahl */
+.cs-pick-wave {
+    position: absolute;
+    inset: -12px -12px auto;
+    height: 60%;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(ellipse 60% 70% at 50% 0%, color-mix(in srgb, var(--crest-1) 18%, transparent) 0%, transparent 70%);
+    animation: cs-pick-wave 1.1s ease-out both;
+}
+
+/* ── Panels: Wappenfarbe nur als leichter Ton oben und im Rahmen ── */
+.cs-stage .cs-panel {
+    position: relative;
+    isolation: isolate;
+    padding: 14px 18px 18px;
+    background:
+        radial-gradient(ellipse 80% 70% at 50% 0%, color-mix(in srgb, var(--crest-1) 10%, transparent) 0%, transparent 70%),
+        linear-gradient(180deg,
+            color-mix(in srgb, var(--crest-1) 6%, rgba(43, 36, 24, .96)) 0%,
+            rgba(26, 21, 13, .96) 100%);
+    border-color: color-mix(in srgb, var(--crest-1) 30%, var(--wow-border));
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--wow-border-inner);
+}
+
+/* Überschrift in Wappen-Textfarbe mit auslaufenden Zierlinien links und rechts */
+.character-selection .cs-stage .cs-panel h4 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    color: var(--wow-gold);
+    text-shadow: 0 1px 2px #000;
+}
+.character-selection .cs-stage .cs-panel h4::before,
+.character-selection .cs-stage .cs-panel h4::after {
+    content: "";
+    flex: 0 1 140px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--crest-1) 60%, var(--wow-gold-soft)));
+}
+.character-selection .cs-stage .cs-panel h4::after {
+    background: linear-gradient(270deg, transparent, color-mix(in srgb, var(--crest-1) 60%, var(--wow-gold-soft)));
+}
+
+/* ── Karten: je Panel eine eigene, weich ausgeblendet und leicht entsättigt ── */
+.cs-map-layer {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: center / cover no-repeat;
+    opacity: .14;
+    filter: sepia(.35) saturate(.85) brightness(.9);
+    -webkit-mask-image: radial-gradient(ellipse 75% 95% at 50% 50%, #000 25%, transparent 100%);
+    mask-image: radial-gradient(ellipse 75% 95% at 50% 50%, #000 25%, transparent 100%);
+    animation: cs-map-in 1s ease-out both;
+}
+.cs-map-layer.capital-stormwind { background-image: url("../images/cities/stormwind.jpg"); }
+.cs-map-layer.capital-orgrimmar { background-image: url("../images/cities/orgrimmar.jpg"); }
+.cs-map-layer.world             { background-image: url("../images/azeroth-map.png"); opacity: .18; }
+
+/* ── Auswahlknöpfe: halbtransparent, aktive Wahl in Wappenfarbe ── */
+.cs-stage .wow-btn-icon {
+    position: relative;
+    background: rgba(12, 10, 6, .72);
+    transition: border-color .3s ease, box-shadow .3s ease, background-color .3s ease, transform .15s ease;
+}
+.cs-stage .wow-btn-icon:not(.disabled):hover {
+    border-color: color-mix(in srgb, var(--crest-1) 70%, var(--wow-border));
+}
+.cs-stage .wow-btn-icon.active,
+.cs-stage .race-buttons.alliance .wow-btn-icon.active,
+.cs-stage .race-buttons.horde .wow-btn-icon.active {
+    border-color: var(--crest-1);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--crest-1) 20%, #0c0a06) 0%,
+        #0a0805 100%);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--crest-1) 35%, transparent);
+    color: var(--crest-text);
+}
+.character-selection .cs-stage .wow-btn-icon.active img {
+    border-color: var(--crest-text);
+    box-shadow: 0 0 0 1px #000;
+}
+
+/* Ring, der beim Auswählen einmal vom Knopf wegpulsiert (startet, sobald .active gesetzt wird) */
+.cs-stage .wow-btn-icon.active::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    border: 1px solid var(--crest-text);
+    pointer-events: none;
+    opacity: 0;
+    animation: cs-pick-ring .5s ease-out both;
+}
+
+.cs-stage input.cs-name-input {
+    background: rgba(8, 6, 3, .78);
+    transition: border-color .3s ease, box-shadow .3s ease;
+}
+.character-selection .cs-stage input.cs-name-input:focus {
+    border-color: var(--crest-1);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--crest-1) 55%, transparent);
+}
+
+/* ── Sprechblase über der gewählten Rasse bzw. Klasse: springt auf, bleibt kurz, blendet aus ── */
+.cs-quote {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    translate: -50% 0;
+    z-index: 20;
+    padding: 7px 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    font-family: var(--wow-font-body);
+    font-size: .85rem;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: .2px;
+    text-transform: none;
+    color: var(--crest-text);
+    border: 1px solid color-mix(in srgb, var(--crest-1) 70%, var(--wow-gold-soft));
+    border-radius: 12px;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--crest-1) 28%, #17120a) 0%,
+        color-mix(in srgb, var(--crest-1) 10%, #0c0905) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .7);
+    text-shadow: 0 1px 2px #000;
+    transform-origin: 50% 100%;
+    opacity: 0;
+    animation: cs-quote 3.8s ease-out both;
+}
+/* Spitze der Blase zeigt auf den Knopf */
+.cs-quote::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    translate: -50% -5px;
+    rotate: 45deg;
+    background: color-mix(in srgb, var(--crest-1) 10%, #0c0905);
+    border-right: 1px solid color-mix(in srgb, var(--crest-1) 70%, var(--wow-gold-soft));
+    border-bottom: 1px solid color-mix(in srgb, var(--crest-1) 70%, var(--wow-gold-soft));
+}
+
+/* Rassen: Blase seitlich neben dem Banner (außen), damit sie weder Titel noch Nachbarknöpfe verdeckt */
+.race-buttons .cs-quote {
+    bottom: auto;
+    top: 50%;
+    translate: 0 -50%;
+    transform-origin: 100% 50%;
+}
+.race-buttons.alliance .cs-quote { left: auto; right: calc(100% + 26px); }
+.race-buttons.horde .cs-quote    { left: calc(100% + 26px); transform-origin: 0 50%; }
+.race-buttons .cs-quote::after {
+    top: 50%;
+    translate: 0 -50%;
+}
+.race-buttons.alliance .cs-quote::after {
+    left: 100%;
+    margin-left: -5px;
+    rotate: -45deg;
+}
+.race-buttons.horde .cs-quote::after {
+    left: auto;
+    right: 100%;
+    margin-right: -5px;
+    rotate: 135deg;
+}
+
+/* ── Volkswappen im Rassenknopf: gedämpft, die gewählte Rasse leuchtet auf ── */
+.race-buttons .wow-btn-icon { min-width: 180px; }
+.character-selection .race-buttons .wow-btn-icon img.race-btn-crest {
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    object-fit: contain;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    opacity: .4;
+    filter: grayscale(.6) drop-shadow(0 1px 2px #000);
+    transition: opacity .35s ease, filter .35s ease, scale .35s cubic-bezier(.3, 1.6, .5, 1);
+}
+.character-selection .race-buttons .wow-btn-icon:hover img.race-btn-crest { opacity: .75; filter: grayscale(0) drop-shadow(0 1px 2px #000); }
+.character-selection .race-buttons .wow-btn-icon.active img.race-btn-crest {
+    opacity: 1;
+    filter: drop-shadow(0 1px 2px #000);
+}
+
+/* ── Rassenspalten: Fraktionswappen hinter dem Banner, auf die Spaltenhöhe begrenzt (Panel schneidet wegen der Sprechblasen nicht ab) ── */
+.race-column.alliance,
+.race-column.horde {
+    position: relative;
+    isolation: isolate;
+}
+.race-column.alliance { --side-crest: url("../images/factions/crest_alliance.png"); --side-glow: 74, 144, 217; }
+.race-column.horde    { --side-crest: url("../images/factions/crest_horde.png");    --side-glow: 208, 58, 42; }
+
+.race-column.alliance::after,
+.race-column.horde::after {
+    content: "";
+    position: absolute;
+    top: 30px;
+    bottom: 0;
+    left: 50%;
+    width: 175%;
+    translate: -50% 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--side-crest) center top / contain no-repeat;
+    opacity: .3;
+    filter: saturate(.7);
+    transition: opacity .6s ease, filter .6s ease;
+    animation: cs-crest-in 1.1s cubic-bezier(.2, .8, .2, 1) .25s both;
+}
+/* Wappen der gewählten Fraktion leuchtet auf, das andere tritt zurück */
+.cs-stage.alliance .race-column.alliance::after,
+.cs-stage.horde .race-column.horde::after {
+    opacity: .45;
+    filter: saturate(.9) drop-shadow(0 0 8px rgba(var(--side-glow), .3));
+}
+.cs-stage.alliance .race-column.horde::after,
+.cs-stage.horde .race-column.alliance::after {
+    opacity: .2;
+    filter: saturate(.4) brightness(.8);
+}
+
+/* Banner leicht abgesetzt, damit die Wappen in der Mitte nicht kollidieren */
+.character-selection .race-row { gap: 120px; }
+
+@keyframes cs-pick-wave {
+    0%   { visibility: visible; opacity: 0; transform: translateY(-30px); }
+    25%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(40px); }
+}
+@keyframes cs-pick-ring {
+    0%   { visibility: visible; opacity: .6; scale: 1; }
+    100% { opacity: 0; scale: 1.12; }
+}
+@keyframes cs-quote {
+    0%   { visibility: visible; opacity: 0; transform: translateY(4px) scale(.9); }
+    8%   { opacity: 1; transform: translateY(0) scale(1); }
+    82%  { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-6px) scale(.96); }
+}
+@keyframes cs-map-in {
+    from { visibility: visible; opacity: 0; scale: 1.06; }
+}
+
+@media (max-width: 760px) {
+    .character-selection .race-row { gap: 36px; }
+    .character-selection .new-char-toggle { min-width: 0; width: 100%; }
+}

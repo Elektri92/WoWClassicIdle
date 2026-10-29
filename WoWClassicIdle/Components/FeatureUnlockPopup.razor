@@ -8,6 +8,7 @@
     <div class="feature-unlock-backdrop" @onclick="Dismiss">
         <div @key="f.Id" class="feature-unlock-dialog" role="dialog" aria-modal="true" aria-labelledby="feature-unlock-title"
              @onclick:stopPropagation="true">
+            <div class="fu-bg" style="background-image: url('@BackgroundUrl(f)')" aria-hidden="true"></div>
             <div class="fu-rays" aria-hidden="true"></div>
 
             <div class="fu-header">@(f.UnlockLevel > 0 ? "New Feature Unlocked!" : "New Feature")</div>
@@ -76,6 +77,8 @@
         background: linear-gradient(180deg, #2c1f0a 0%, #1a1205 45%, #0e0b07 100%);
         border: 2px solid #c5a55a;
         border-radius: 8px;
+        /* Eigener Stacking-Context: .fu-bg (z-index -1) liegt über dem Verlauf, aber unter dem Inhalt */
+        isolation: isolate;
         box-shadow:
             0 0 0 1px #8a7444,
             0 0 40px rgba(255, 209, 0, 0.35),
@@ -89,6 +92,20 @@
         height: 3px;
         margin: 0 -26px;
         background: linear-gradient(90deg, transparent, #ffd100, #c5a55a, #ffd100, transparent);
+    }
+
+    /* Thematisches Artwork, transparent hinterlegt und nach unten ausgeblendet (Lesbarkeit der Texte) */
+    .fu-bg {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-size: cover;
+        background-position: center top;
+        opacity: 0.38;
+        -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 45%, rgba(0, 0, 0, 0.15) 100%);
+        mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 45%, rgba(0, 0, 0, 0.15) 100%);
+        animation: fuBgDrift 18s ease-in-out infinite alternate;
+        pointer-events: none;
     }
 
     /* Rotierender Lichtkranz hinter dem Icon */
@@ -156,6 +173,8 @@
     }
 
     .fu-summary {
+        position: relative;
+        text-shadow: 0 1px 3px #000;
         margin: 14px 0 10px;
         font-size: 0.92rem;
         line-height: 1.45;
@@ -167,7 +186,7 @@
         margin: 0 0 18px;
         padding: 12px 14px;
         text-align: left;
-        background: rgba(0, 0, 0, 0.35);
+        background: rgba(0, 0, 0, 0.55);
         border: 1px solid #3d3220;
         border-radius: 5px;
     }
@@ -235,6 +254,11 @@
         100% { transform: scale(1); }
     }
 
+    @@keyframes fuBgDrift {
+        from { background-position: center top; }
+        to   { background-position: center 30%; }
+    }
+
     @@keyframes fuSpin {
         to { transform: rotate(360deg); }
     }
@@ -245,7 +269,7 @@
     }
 
     @@media (prefers-reduced-motion: reduce) {
-        .feature-unlock-backdrop, .feature-unlock-dialog, .fu-rays, .fu-icon-wrap { animation: none; }
+        .feature-unlock-backdrop, .feature-unlock-dialog, .fu-bg, .fu-rays, .fu-icon-wrap { animation: none; }
     }
 </style>
 
@@ -259,6 +283,9 @@
 
     private GameFeature? Current { get { lock (_queue) return _queue.TryPeek(out var f) ? f : null; } }
     private int QueueCount { get { lock (_queue) return _queue.Count; } }
+
+    private string BackgroundUrl(GameFeature f) =>
+        GameFeatureRegistry.BackgroundUrlFor(f, Engine.HasActiveCharacter ? Engine.Player.ActiveClass : CharacterClass.Warrior);
 
     protected override void OnInitialized()
     {

@@ -5,20 +5,21 @@ public static partial class StaticHelpers
 {
     // Tabellen reichen bis Level 60; im Release ist das Spiel vorerst auf ReleaseLevelCap begrenzt.
     private const int TableMaxLevel   = 60;
-    public  const int ReleaseLevelCap = 20;
+    public  const int ReleaseLevelCap = 10;
 
     public static int MaxLevel =>
         WoWClassicIdle.Components.BuildInfo.IsDebug ? TableMaxLevel : ReleaseLevelCap;
 
     // XP needed to go from level N to level N+1 (index 0 = level 1 → 2)
+    // Classic-Werte × 1,1 (auf 100 gerundet) – gleicht Entdeckungs-XP und Zonen-Ziele aus (≈ +10 % XP je Levelbereich)
     private static readonly int[] XpTable =
     {
-         400,   900,  1400,  2100,  2800,  3600,  4500,  5400,  6500,  7600,
-        8800, 10100, 11400, 12900, 14400, 16000, 17700, 19400, 21300, 23200,
-       25200, 27300, 29400, 31700, 34000, 36400, 38900, 41400, 44300, 47400,
-       50800, 54500, 58600, 62800, 67100, 71600, 76100, 80800, 85700, 90700,
-       95800,101000,106300,111800,117500,123200,129100,135100,141200,147500,
-      153900,160400,167100,173900,180800,187900,195000,202300,209800
+         400,  1000,  1500,  2300,  3100,  4000,  5000,  5900,  7200,  8400,
+        9700, 11100, 12500, 14200, 15800, 17600, 19500, 21300, 23400, 25500,
+       27700, 30000, 32300, 34900, 37400, 40000, 42800, 45500, 48700, 52100,
+       55900, 60000, 64500, 69100, 73800, 78800, 83700, 88900, 94300, 99800,
+      105400,111100,116900,123000,129300,135500,142000,148600,155300,162200,
+      169300,176400,183800,191300,198900,206700,214500,222500,230800
     };
 
     // XP-Reward a defeated enemy of this level grants (index 0 = level 1)

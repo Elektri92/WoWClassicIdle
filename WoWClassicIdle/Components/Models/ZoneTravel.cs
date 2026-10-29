@@ -136,20 +136,26 @@ public static class ZoneTravel
 
     // ─── Routensuche ───
 
-    private record Node(string Name, string Theme, Landmass Landmass, double X, double Y, double Approach);
+    /// <summary>Wegpunkt; <see cref="ZoneId"/> = Zone des Flugpunkts (Flug nur, wenn beide Enden bekannt sind).</summary>
+    private record Node(string Name, string ZoneId, string Theme, Landmass Landmass, double X, double Y, double Approach);
 
-    /// <summary>Schnellste Route von <paramref name="from"/> nach <paramref name="to"/> (Dijkstra über Zonen + Häfen).</summary>
-    public static TravelRoute Route(CombatZone from, CombatZone to, Faction faction, GroundTravel ground)
+    private static Node ZoneNode(CombatZone z) => new(z.Name, z.Id, z.Theme, z.Landmass, z.X, z.Y, ZoneApproach);
+
+    /// <summary>
+    /// Schnellste Route von <paramref name="from"/> nach <paramref name="to"/> (Dijkstra über Zonen + Häfen).
+    /// Geflogen wird nur zwischen bekannten Flugpunkten (<paramref name="flightPoints"/> = entdeckte Zonen);
+    /// entdeckte Zonen dienen als Zwischenstationen, z. B. Flug zum nächsten bekannten Punkt und von dort reiten.
+    /// </summary>
+    public static TravelRoute Route(CombatZone from, CombatZone to, Faction faction, GroundTravel ground, IReadOnlySet<string> flightPoints)
     {
         if (from.Id == to.Id) return new TravelRoute([]);
 
-        var nodes = new List<Node>
-        {
-            new(from.Name, from.Theme, from.Landmass, from.X, from.Y, ZoneApproach),
-            new(to.Name,   to.Theme,   to.Landmass,   to.X,   to.Y,   ZoneApproach),
-        };
+        var nodes = new List<Node> { ZoneNode(from), ZoneNode(to) };
         foreach (var port in Ports)
-            nodes.Add(new(port.Name, CombatZoneRegistry.Get(port.ZoneId)?.Theme ?? to.Theme, port.Landmass, port.X, port.Y, 0));
+            nodes.Add(new(port.Name, port.ZoneId, CombatZoneRegistry.Get(port.ZoneId)?.Theme ?? to.Theme, port.Landmass, port.X, port.Y, 0));
+        foreach (var id in flightPoints)
+            if (id != from.Id && id != to.Id && CombatZoneRegistry.Get(id) is { } via)
+                nodes.Add(ZoneNode(via));
 
         var transports = Transports.Where(t => t.Faction is null || t.Faction == faction).ToList();
         int n = nodes.Count;
@@ -170,7 +176,7 @@ public static class ZoneTravel
             for (int v = 0; v < n; v++)
             {
                 if (done[v] || v == u) continue;
-                var hop = Hop(nodes[u], nodes[v], transports, ground);
+                var hop = Hop(nodes[u], nodes[v], transports, ground, flightPoints);
                 if (hop is null) continue;
                 double seconds = hop.Sum(l => l.Seconds);
                 if (best[u] + seconds >= best[v]) continue;
@@ -189,13 +195,15 @@ public static class ZoneTravel
     /// <summary>
     /// Direkter Weg zwischen zwei Knoten: auf derselben Landmasse Boden oder Flugroute (das Schnellere; zum Flugmeister
     /// und vom Landeplatz ins Jagdgebiet geht es zu Fuß bzw. per Reittier), sonst Schiff/Zeppelin zwischen zwei Häfen.
+    /// Flugrouten gibt es nur, wenn beide Flugpunkte bekannt sind.
     /// </summary>
-    private static IReadOnlyList<TravelLeg>? Hop(Node a, Node b, List<Transport> transports, GroundTravel ground)
+    private static IReadOnlyList<TravelLeg>? Hop(Node a, Node b, List<Transport> transports, GroundTravel ground, IReadOnlySet<string> flightPoints)
     {
         if (a.Landmass == b.Landmass)
         {
             double distance = Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
             var direct = GroundLeg(a.Name, b.Name, distance, b.Theme, ground);
+            if (!flightPoints.Contains(a.ZoneId) || !flightPoints.Contains(b.ZoneId)) return [direct];
 
             var viaFlight = new List<TravelLeg>();
             if (a.Approach > 0) viaFlight.Add(GroundLeg(a.Name, FlightMaster, a.Approach, a.Theme, ground));

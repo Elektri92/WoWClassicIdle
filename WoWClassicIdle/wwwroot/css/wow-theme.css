@@ -153,7 +153,7 @@
     text-shadow: 0 0 6px rgba(255,236,155,.4);
 }
 
-/* Red "action" button with gold rim – gleicher Look wie die Buttons der Navigation (wow-classic-navmenu.css) */
+/* Red "action" button with gold rim – klassischer Classic-UI-Button (Navigation nutzt eine mattere Variante) */
 .wow-btn.primary {
     position: relative;
     font-weight: 700;

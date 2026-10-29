@@ -3,6 +3,7 @@ namespace Models;
 
 /// <summary>
 /// Ein per Level freigeschaltetes Spielfeature samt Kurzerklärung für das Freischalt-Popup.
+/// <paramref name="Background"/> liefert das (transparent hinterlegte) Hintergrundbild, optional abhängig von der Klasse.
 /// </summary>
 public sealed record GameFeature(
     string Id,
@@ -12,7 +13,8 @@ public sealed record GameFeature(
     string Summary,
     IReadOnlyList<string> Points,
     string? Href = null,
-    string? LinkLabel = null);
+    string? LinkLabel = null,
+    Func<CharacterClass, string>? Background = null);
 
 /// <summary>
 /// Statische Liste aller Features, die beim Levelaufstieg freigeschaltet werden.
@@ -42,8 +44,18 @@ public static class GameFeatureRegistry
                 "Loot goes straight into your inventory; duplicate items are sold automatically.",
                 "If you die, you resurrect at the Spirit Healer after a short delay and keep fighting.",
                 "Combat only runs while this page is open and the window is visible.",
-            ]),
+            ],
+            Background: Art("warrior-arms")),
     };
+
+    /// <summary>Hintergrund, falls ein Feature keinen eigenen hat.</summary>
+    public const string DefaultBackgroundUrl = "images/talents/warrior-arms.jpg";
+
+    public static string BackgroundUrlFor(GameFeature f, CharacterClass cls) =>
+        f.Background?.Invoke(cls) ?? DefaultBackgroundUrl;
+
+    // Fester Hintergrund aus wwwroot/images/talents
+    private static Func<CharacterClass, string> Art(string name) => _ => $"images/talents/{name}.jpg";
 
     public static GameFeature? GetIntro(string id) => _intros.GetValueOrDefault(id);
 
@@ -63,7 +75,8 @@ public static class GameFeatureRegistry
                     "Rares have double health and hit 50 % harder.",
                     "Defeating one guarantees an uncommon armor piece.",
                     "There is also a 25 % chance for a class weapon and 15 % for rare (blue) armor from level 11.",
-                ]),
+                ],
+                Background: Art("hunter-beast-mastery")),
 
             new("professions", Professions.MinCharacterLevel, "Professions",
                 "https://wow.zamimg.com/images/wow/icons/large/trade_blacksmithing.jpg",
@@ -74,7 +87,7 @@ public static class GameFeatureRegistry
                     "Assign idle characters to gathering zones to collect materials passively.",
                     "Consumables like potions and food are used automatically during combat.",
                 ],
-                "professions", "Open Professions"),
+                "professions", "Open Professions", Art("mage-arcane")),
 
             new("talents", TalentUnlockLevel, "Talents",
                 "https://wow.zamimg.com/images/wow/icons/large/ability_rogue_slicedice.jpg",
@@ -84,11 +97,14 @@ public static class GameFeatureRegistry
                     "Investing points in a tree unlocks its deeper talent rows.",
                     "Some talents grant powerful new abilities for your loadout.",
                 ],
-                "talents", "Open Talents"),
+                "talents", "Open Talents",
+                // Talentbaum-Artwork der eigenen Klasse (erster Baum)
+                cls => TalentRegistry.GetTreeBackgroundUrl(cls, 0)),
         };
 
-        // Taschenplätze: erste Freischaltung ausführlich, weitere nur kurz
+        // Taschenplätze: erste Freischaltung ausführlich, weitere nur kurz; je Platz ein eigenes Stadt-/Burg-Motiv
         var bagLevels = Inventory.BagUnlockLevels;
+        string[] bagArt = ["paladin-protection", "priest-discipline", "rogue-combat", "warrior-protection"];
         for (int i = 0; i < bagLevels.Length; i++)
         {
             list.Add(i == 0
@@ -100,13 +116,18 @@ public static class GameFeatureRegistry
                         $"Each bag starts with {Inventory.BaseBagSlotSize} slots and grows by one every 5 levels.",
                         "More space means fewer full-bag interruptions while idling.",
                     ],
-                    "inventory", "Open Inventory")
+                    "inventory", "Open Inventory", Art(bagArt[i % bagArt.Length]))
                 : new GameFeature($"bag_slot_{i + 1}", bagLevels[i], "New Bag Slot",
                     "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_07.jpg",
                     $"Bag slot {i + 1} of {Inventory.BagSlotCount} is now available.",
                     [$"You now have {Inventory.BaseBagSlotSize + bagLevels[i] / 5} additional inventory slots."],
-                    "inventory", "Open Inventory"));
+                    "inventory", "Open Inventory", Art(bagArt[i % bagArt.Length])));
         }
+
+        // Pro Level höchstens ein Freischalt-Popup – Schwellen der Systeme entsprechend wählen
+        System.Diagnostics.Debug.Assert(
+            list.GroupBy(f => f.UnlockLevel).All(g => g.Count() == 1),
+            "GameFeatureRegistry: multiple features unlock at the same level.");
 
         return list.OrderBy(f => f.UnlockLevel).ToList();
     }

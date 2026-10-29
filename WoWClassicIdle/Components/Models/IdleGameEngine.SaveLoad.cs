@@ -221,6 +221,7 @@ public partial class IdleGameEngine
             Gender  = data.Gender,
             Player  = player,
         };
+        RestoreExploration(characterSlot, data); // vor der Reise: Route hängt an bekannten Flugpunkten
         RestoreCombatZone(characterSlot, data);
         return characterSlot;
     }

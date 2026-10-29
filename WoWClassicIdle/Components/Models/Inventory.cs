@@ -10,8 +10,9 @@ namespace Models
         public const int BackpackSlotCount = 32;
         public const int BagSlotCount = 4;
 
-        /// <summary>Level-Schwellen, bei denen die einzelnen Taschenplätze freigeschaltet werden (Platz 0-3).</summary>
-        public static readonly int[] BagUnlockLevels = { 3, 5, 8, 12 };
+        /// <summary>Level-Schwellen, bei denen die einzelnen Taschenplätze freigeschaltet werden (Platz 0-3).
+        /// Bewusst nicht auf Levels anderer Features (siehe GameFeatureRegistry) – ein Freischalt-Popup pro Level.</summary>
+        public static readonly int[] BagUnlockLevels = { 2, 4, 8, 12 };
 
         /// <summary>Basisgröße einer neu freigeschalteten Tasche.</summary>
         public const int BaseBagSlotSize = 12;

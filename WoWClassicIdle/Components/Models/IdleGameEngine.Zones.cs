@@ -23,8 +23,8 @@ public partial class IdleGameEngine
 
     /// <summary>Route von der aktuellen Zone in <paramref name="target"/>; null ohne Startzone (erste Wahl ist sofort).</summary>
     public TravelRoute? RouteTo(CombatZone target) =>
-        CurrentCombatZone is { } from && ActiveCharacter is not null
-            ? ZoneTravel.Route(from, target, Faction, GroundTravel)
+        CurrentCombatZone is { } from && ActiveCharacter is { } slot
+            ? ZoneTravel.Route(from, target, Faction, GroundTravel, slot.DiscoveredZoneIds)
             : null;
 
     /// <summary>Grund, warum die Zone nicht gewählt werden kann (null = wählbar).</summary>
@@ -51,6 +51,7 @@ public partial class IdleGameEngine
                 slot.CombatZoneId = zone.Id;
                 LeaveCombat();
                 LastLog = $"🗺 Entered {zone.Name}";
+                DiscoverZone(slot, zone, grantXp: true);
             }
             else
             {
@@ -58,7 +59,7 @@ public partial class IdleGameEngine
                 {
                     FromZoneId   = from.Id,
                     TargetZoneId = zone.Id,
-                    Route        = ZoneTravel.Route(from, zone, slot.Faction, GroundTravel),
+                    Route        = ZoneTravel.Route(from, zone, slot.Faction, GroundTravel, slot.DiscoveredZoneIds),
                 };
                 LeaveCombat();
                 LastLog = $"🧭 Traveling to {zone.Name} ({ZoneTravel.FormatDuration(slot.Travel.Duration)})";
@@ -106,6 +107,8 @@ public partial class IdleGameEngine
         slot.CombatZoneId = travel.TargetZoneId;
         slot.Travel = null;
         LastLog = $"🗺 Arrived in {CombatZoneRegistry.Get(travel.TargetZoneId)?.Name}";
+        if (CombatZoneRegistry.Get(travel.TargetZoneId) is { } arrived)
+            DiscoverZone(slot, arrived, grantXp: true);
         return true;
     }
 
@@ -134,7 +137,7 @@ public partial class IdleGameEngine
         {
             FromZoneId   = zone.Id,
             TargetZoneId = target.Id,
-            Route        = ZoneTravel.Route(zone, target, slot.Faction, ground),
+            Route        = ZoneTravel.Route(zone, target, slot.Faction, ground, slot.DiscoveredZoneIds),
             Elapsed      = Math.Max(0, data.TravelElapsed),
         };
     }

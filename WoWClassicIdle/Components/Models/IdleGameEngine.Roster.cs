@@ -69,6 +69,8 @@ public partial class IdleGameEngine
                 existing.Gender  = gender;
                 // Bereits gewählte Zone bleibt erhalten; sonst Startgebiet der (neuen) Rasse
                 existing.CombatZoneId ??= CombatZoneRegistry.StartZoneFor(race)?.Id;
+                if (CombatZoneRegistry.Get(existing.CombatZoneId) is { } zone)
+                    DiscoverZone(existing, zone, grantXp: false);
                 existing.Player.ChangeCharacter(faction, race);
                 existing.Player.SetActiveClass(characterClass); // recalculates stats for new race
             }
@@ -90,6 +92,9 @@ public partial class IdleGameEngine
             Player = newPlayer,
             CombatZoneId = CombatZoneRegistry.StartZoneFor(race)?.Id
         };
+        // Startgebiet ist bekannt, gibt aber keine Entdeckungs-XP
+        if (CombatZoneRegistry.Get(slot.CombatZoneId) is { } startZone)
+            DiscoverZone(slot, startZone, grantXp: false);
         _roster.Add(slot);
         RosterChanged?.Invoke();
         ActivateSlot(slot);

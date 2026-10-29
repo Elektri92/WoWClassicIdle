@@ -98,6 +98,28 @@ public class SaveGameService : ISaveGameService, IDisposable
 
     public bool TryAutoLoad() => TryLoad();
 
+    /// <summary>Löscht die Speicherdatei und setzt Engine, Loadouts und Achievements auf einen leeren Stand zurück.</summary>
+    public void DeleteSave()
+    {
+        // Erst den Speicherzustand leeren, sonst schreibt Autosave/Beenden den alten Stand zurück
+        _tickCount = 0;
+        var empty = new SaveData { SeenFeatureIntros = new() };
+        _engine.RestoreFromSave(empty);
+
+        foreach (var cls in Enum.GetValues<CharacterClass>())
+            _loadout.ClearLoadout(cls);
+
+        if (_achievements is AchievementService achievementService)
+            achievementService.RestoreFromSave(empty.Achievements, _engine);
+
+        try
+        {
+            if (File.Exists(DefaultSavePath))
+                File.Delete(DefaultSavePath);
+        }
+        catch { /* Löschfehler still ignorieren */ }
+    }
+
     private SaveData BuildSaveData()
     {
         var save = new SaveData
@@ -243,6 +265,8 @@ public class SaveGameService : ISaveGameService, IDisposable
         CombatZone    = slot.CombatZoneId,
         TravelTarget  = slot.Travel?.TargetZoneId,
         TravelElapsed = slot.Travel?.Elapsed ?? 0,
+        DiscoveredZones = slot.DiscoveredZoneIds.Order().ToList(),
+        ZoneObjectives  = slot.ZoneObjectiveProgress.ToDictionary(),
     };
 
     public void Dispose()

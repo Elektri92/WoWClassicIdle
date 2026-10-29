@@ -2,6 +2,7 @@
 @inject IdleGameEngine Engine
 @inject Services.ISaveGameService SaveGame
 @inject Services.UpdateService UpdateSvc
+@inject NavigationManager Nav
 @implements IDisposable
 
 <div class="nav-wrapper">
@@ -16,7 +17,8 @@
 
         <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
             <nav class="nav flex-column">
-                <div class="nav-item px-3">
+                <div class="nav-section-label">Adventure</div>
+                <div class="nav-item">
                     <NavLink class="nav-link" href="character">
                         <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_head_human_01.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Character
                     </NavLink>
@@ -24,19 +26,29 @@
 
                 @if (Engine.CharacterRoster.Count > 0)
                 {
-                    <div class="nav-item px-3">
+                    <div class="nav-item">
                         <NavLink class="nav-link" href="idle">
                             <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_sword_04.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Idle Fighter
                         </NavLink>
                     </div>
 
-                    <div class="nav-item px-3">
+                    <div class="nav-item">
                         <NavLink class="nav-link" href="ability-loadout">
                             <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_book_09.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Ability Loadout
                         </NavLink>
                     </div>
 
-                    <div class="nav-item px-3">
+                    @if (_playerLevelAtLeastTen)
+                    {
+                    <div class="nav-item">
+                        <NavLink class="nav-link" href="talents">
+                            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/ability_rogue_slicedice.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Talents
+                        </NavLink>
+                    </div>
+                    }
+
+                    <div class="nav-section-label">Collection</div>
+                    <div class="nav-item">
                         <NavLink class="nav-link" href="inventory">
                             <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_bag_08.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Inventory
                         </NavLink>
@@ -44,23 +56,14 @@
 
                     @if (_professionsUnlocked)
                     {
-                    <div class="nav-item px-3">
+                    <div class="nav-item">
                         <NavLink class="nav-link" href="professions">
                             <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/trade_blacksmithing.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Professions
                         </NavLink>
                     </div>
                     }
 
-                    @if (_playerLevelAtLeastTen)
-                    {
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="talents">
-                            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/ability_rogue_slicedice.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Talents
-                        </NavLink>
-                    </div>
-                    }
-
-                    <div class="nav-item px-3">
+                    <div class="nav-item">
                         <NavLink class="nav-link" href="achievements">
                             <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/achievement_general.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Achievements
                         </NavLink>
@@ -74,27 +77,27 @@
     {
         <div class="nav-debug-area">
             <span class="nav-debug-label">DEBUG</span>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="debug/simulation">
                     <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_gear_01.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Simulation
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="debug/abilities">
                     <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_book_09.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Abilities
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="debug/talents">
                     <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/ability_marksmanship.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Talents
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="debug/loot-tables">
                     <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_chest_cloth_05.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Loot Tables
                 </NavLink>
             </div>
-            <div class="nav-item px-3">
+            <div class="nav-item">
                 <NavLink class="nav-link" href="debug/enemy-spawns">
                     <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/ability_hunter_pet_wolf.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Enemy Spawns
                 </NavLink>
@@ -102,42 +105,26 @@
         </div>
     }
 
-    <div class="nav-version-area">
-        <span class="nav-version-text">v@(Services.UpdateService.AppVersion)</span>
-    </div>
+    <div class="nav-version">v@(Services.UpdateService.AppVersion)</div>
 
-    <div class="nav-save-area">
-        <div class="nav-item px-3">
-            <button class="nav-link w-100 text-start border-0 bg-transparent" @onclick="OnSave">
-                <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_note_06.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" />
-                @if (_saveMessage is not null)
-                {
-                    <span style="color: #1eff00;">@_saveMessage</span>
-                }
-                else
-                {
-                    <span>Save</span>
-                }
-            </button>
-        </div>
+    <div class="nav-footer">
+        <button class="nav-footer-btn @(_saveMessage is not null ? "saved" : "")" @onclick="OnSave">
+            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_note_06.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" />
+            <span>@(_saveMessage ?? "Save")</span>
+        </button>
+        <button class="nav-footer-btn danger @(_confirmDelete ? "confirm" : "")" @onclick="OnDeleteSave"
+                title="@(_confirmDelete ? "Click again to delete your save" : "Delete save")">
+            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_misc_bone_humanskull_01.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" />
+            <span>@(_confirmDelete ? "Confirm?" : "Delete")</span>
+        </button>
     </div>
 </div>
-
-<style>
-    .nav-version-area {
-        padding: 4px 12px 2px;
-        text-align: center;
-    }
-    .nav-version-text {
-        font-size: 0.7rem;
-        color: #5a5040;
-        letter-spacing: 0.05em;
-    }
-</style>
 
 @code {
     private string? _saveMessage;
     private System.Threading.CancellationTokenSource? _saveMsgCts;
+    private bool _confirmDelete;
+    private System.Threading.CancellationTokenSource? _deleteConfirmCts;
     private bool _playerLevelAtLeastTen;
     private bool _professionsUnlocked;
 
@@ -165,6 +152,30 @@
         StateHasChanged();
     }
 
+    // Zweistufiges Löschen: erster Klick fragt nach, zweiter Klick innerhalb von 3 s löscht
+    private async Task OnDeleteSave()
+    {
+        _deleteConfirmCts?.Cancel();
+        if (_confirmDelete)
+        {
+            _confirmDelete = false;
+            SaveGame.DeleteSave();
+            Nav.NavigateTo("/character");
+            return;
+        }
+
+        _confirmDelete = true;
+        _deleteConfirmCts = new System.Threading.CancellationTokenSource();
+        StateHasChanged();
+        try
+        {
+            await Task.Delay(3000, _deleteConfirmCts.Token);
+        }
+        catch (TaskCanceledException) { return; }
+        _confirmDelete = false;
+        StateHasChanged();
+    }
+
     private void OnRosterChanged() => InvokeAsync(StateHasChanged);
 
     private void OnTickUpdated()
@@ -184,6 +195,7 @@
         Engine.RosterChanged -= OnRosterChanged;
         Engine.TickUpdated -= OnTickUpdated;
         _saveMsgCts?.Cancel();
+        _deleteConfirmCts?.Cancel();
     }
 }
         
