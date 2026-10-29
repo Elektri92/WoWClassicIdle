@@ -19,6 +19,8 @@ public class ZoneTravelState
     public required string TargetZoneId { get; init; }
     public required TravelRoute Route { get; init; }
     public double Elapsed { get; internal set; }
+    /// <summary>Time since the last out-of-combat regen tick (every 5 s while traveling).</summary>
+    internal double RegenAcc { get; set; }
 
     public double Duration  => Route.Seconds;
     public double Remaining => Math.Max(0, Duration - Elapsed);

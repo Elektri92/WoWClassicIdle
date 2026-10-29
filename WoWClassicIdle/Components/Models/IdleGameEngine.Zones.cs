@@ -3,8 +3,6 @@ using Models;
 // Combat zones: zone choice per character, travel between zones, enemy spawn from the active zone.
 public partial class IdleGameEngine
 {
-    private double _travelRegenAcc;
-
     /// <summary>
     /// Zone being fought in. Without a roster character (headless simulation) automatically matched to the level.
     /// </summary>
@@ -95,33 +93,39 @@ public partial class IdleGameEngine
         _enemyAttackAcc  = 0;
     }
 
-    /// <summary>Travel progress for one step; true = character is traveling (no combat).</summary>
-    private bool AdvanceTravel(double dt)
+    /// <summary>Travel progress of the active character for one combat step; true = character is traveling (no combat).</summary>
+    private bool AdvanceTravel(double dt) => ActiveCharacter is { } slot && AdvanceTravel(slot, dt);
+
+    /// <summary>Travel progress of any character; true = it was traveling during this step.</summary>
+    private bool AdvanceTravel(CharacterSlot slot, double dt)
     {
-        if (ActiveCharacter is not { Travel: { } travel } slot) return false;
+        if (slot.Travel is not { } travel) return false;
 
         travel.Elapsed += dt;
-        RegenWhileTraveling(dt);
+        RegenWhileTraveling(slot.Player, travel, dt);
         if (!travel.IsArrived) return true;
 
         slot.CombatZoneId = travel.TargetZoneId;
         slot.Travel = null;
-        LastLog = $"🗺 Arrived in {CombatZoneRegistry.Get(travel.TargetZoneId)?.Name}";
-        if (CombatZoneRegistry.Get(travel.TargetZoneId) is { } arrived)
+        var arrived = CombatZoneRegistry.Get(travel.TargetZoneId);
+        LastLog = slot.Player == Player
+            ? $"🗺 Arrived in {arrived?.Name}"
+            : $"🗺 {slot.Name} arrived in {arrived?.Name}";
+        if (arrived is not null)
             DiscoverZone(slot, arrived, grantXp: true);
         return true;
     }
 
     // While traveling the character recovers like out of combat (HP + mana every 5 s)
-    private void RegenWhileTraveling(double dt)
+    private static void RegenWhileTraveling(Player player, ZoneTravelState travel, double dt)
     {
-        _travelRegenAcc += dt;
-        while (_travelRegenAcc >= 5.0)
+        travel.RegenAcc += dt;
+        while (travel.RegenAcc >= 5.0)
         {
-            _travelRegenAcc -= 5.0;
-            Player.RegenHp(Player.Stats.HpRegenPer5);
-            if (Player.Resource == ResourceKind.Mana)
-                Player.RegenMana(Player.Stats.ManaRegenPer5);
+            travel.RegenAcc -= 5.0;
+            player.RegenHp(player.Stats.HpRegenPer5);
+            if (player.Resource == ResourceKind.Mana)
+                player.RegenMana(player.Stats.ManaRegenPer5);
         }
     }
 

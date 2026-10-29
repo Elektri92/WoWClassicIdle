@@ -56,6 +56,8 @@ BuildInfo.Initialize(app.Environment);
 
 // Professions run in real time independent of the combat timer
 app.Services.GetRequiredService<IdleGameEngine>().StartProfessionTimer();
+// Zone travel continues outside /idle; combat does not
+app.Services.GetRequiredService<IdleGameEngine>().StartTravelTimer();
 
 #if DEBUG
 // Debug start: create preset characters for all classes

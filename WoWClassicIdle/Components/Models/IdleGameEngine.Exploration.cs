@@ -29,7 +29,16 @@ public partial class IdleGameEngine
     {
         if (slot.DiscoveredZoneIds.Contains(zone.Id)) return;
         slot.DiscoveredZoneIds = slot.DiscoveredZoneIds.Add(zone.Id);
-        if (!grantXp || slot.Player != Player) return;
+        if (!grantXp) return;
+
+        if (slot.Player != Player)
+        {
+            // Arrived in the background as an inactive character: XP without unlock notifications
+            int slotXp = ZoneObjectiveRegistry.DiscoveryXp(zone, slot.Player.Level);
+            slot.Player.GainXp(slotXp);
+            LastLog = $"🗺 {slot.Name} discovered {zone.Name}: +{slotXp} XP, flight point learned";
+            return;
+        }
 
         int xp = ZoneObjectiveRegistry.DiscoveryXp(zone, Player.Level);
         bool levelUp = GrantXp(xp) > 0;

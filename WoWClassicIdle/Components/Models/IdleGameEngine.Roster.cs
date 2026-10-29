@@ -156,7 +156,6 @@ public partial class IdleGameEngine
             ResetCastState();
             DismissPet();
             _pendingRareEnemy = null;
-            _travelRegenAcc  = 0;
             CurrentEnemy = SpawnEnemy();
         }
         TickUpdated?.Invoke();
