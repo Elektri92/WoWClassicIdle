@@ -132,7 +132,9 @@ else
         }
     }
 
-    await app.StartAsync();
+    // Bewusst synchron: Ein await würde Main in einen async-Main verwandeln und die Fortsetzung auf einen
+    // Thread-Pool-Thread verlagern – Photino braucht aber auf macOS den Main-Thread und auf Windows einen STA-Thread.
+    app.Start();
 
     // Tatsächlich gebundene URL lesen — app.Urls enthält noch Port 0, IServerAddressesFeature den echten Port
     var serverUrl = app.Services
@@ -145,19 +147,37 @@ else
 
     var iconPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "wow_idle_game_logo.png");
 
-    var window = new PhotinoWindow()
-        .SetTitle("WoW Classic Idle")
-        .SetIconFile(File.Exists(iconPath) ? iconPath : null!)
-        .SetMaximized(true)
-        .SetResizable(true)
-        .RegisterWindowClosingHandler((_, _) =>
-        {
-            // Spielstand beim Schließen speichern
-            app.Services.GetRequiredService<ISaveGameService>().Save();
-            return false; // false = Schließen erlauben
-        })
-        .Load(new Uri(serverUrl));
+    void RunWindow()
+    {
+        var window = new PhotinoWindow()
+            .SetTitle("WoW Classic Idle")
+            .SetIconFile(File.Exists(iconPath) ? iconPath : null!)
+            .SetMaximized(true)
+            .SetResizable(true)
+            .RegisterWindowClosingHandler((_, _) =>
+            {
+                // Spielstand beim Schließen speichern
+                app.Services.GetRequiredService<ISaveGameService>().Save();
+                return false; // false = Schließen erlauben
+            })
+            .Load(new Uri(serverUrl));
 
-    window.WaitForClose();
-    await app.StopAsync();
+        window.WaitForClose();
+    }
+
+    // WebView2 (Windows) läuft nur in einem STA-Thread – im MTA-Main-Thread bleibt das Fenster weiß.
+    // [STAThread] ist bei Top-Level-Statements nicht möglich, daher eigener Thread.
+    if (OperatingSystem.IsWindows())
+    {
+        var uiThread = new Thread(RunWindow);
+        uiThread.SetApartmentState(ApartmentState.STA);
+        uiThread.Start();
+        uiThread.Join();
+    }
+    else
+    {
+        RunWindow();
+    }
+
+    app.StopAsync().GetAwaiter().GetResult();
 }

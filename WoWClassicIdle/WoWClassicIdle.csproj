@@ -26,6 +26,12 @@
       <PackageReference Include="Photino.NET" Version="4.0.16" />
     </ItemGroup>
 
+    <!-- appsettings landen sonst lose neben der Binary. ContentRoot ist aber das Entpackverzeichnis des Bundles –
+         ohne Bündelung fehlt dort appsettings.Production.json (Urls/Logging) und Kestrel fällt auf Port 5000 zurück. -->
+    <ItemGroup>
+      <Content Update="appsettings*.json" ExcludeFromSingleFile="false" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
     <!-- Static Web Assets kopiert das SDK lose neben die Binary, am Single-File-Bundle vorbei. Das Auto-Update
          ersetzt nur die Binary – ohne Bündelung bekämen bestehende Installationen nie neue CSS/Bilder.
          Daher vor dem Bundling berechnen, ins Bundle aufnehmen und das lose Kopieren unterbinden. -->
