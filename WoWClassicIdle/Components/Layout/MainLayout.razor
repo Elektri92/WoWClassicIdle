@@ -1,4 +1,8 @@
 ﻿@inherits LayoutComponentBase
+@using Services
+@implements IDisposable
+@inject NavigationManager Nav
+@inject ISaveGameService SaveGame
 
 <UpdateOverlay />
 <AchievementToast />
@@ -22,3 +26,23 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        RememberRoute(Nav.Uri);
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => RememberRoute(e.Location);
+
+    // Error pages are not worth coming back to
+    private void RememberRoute(string uri)
+    {
+        var route = new Uri(uri).PathAndQuery;
+        if (route is not ("/Error" or "/not-found"))
+            SaveGame.LastRoute = route;
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

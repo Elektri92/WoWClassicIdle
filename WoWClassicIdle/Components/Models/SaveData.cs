@@ -27,6 +27,8 @@ public class SaveData
     public List<string>? SeenFeatureIntros { get; set; }
     // Merchant stock with restock time (real time); null = legacy save, stock full
     public List<MerchantStockSaveData>? MerchantStock { get; set; }
+    // Page shown when the game was last saved; null = legacy save → start page
+    public string? LastRoute { get; set; }
 }
 
 public class MerchantStockSaveData

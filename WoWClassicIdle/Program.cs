@@ -145,7 +145,8 @@ else
         .Addresses.First();
 
     // Load the save game on startup, if present
-    app.Services.GetRequiredService<ISaveGameService>().TryAutoLoad();
+    var saveGame = app.Services.GetRequiredService<ISaveGameService>();
+    saveGame.TryAutoLoad();
 
     var iconPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "images", "wow_idle_game_logo.png");
 
@@ -159,10 +160,11 @@ else
             .RegisterWindowClosingHandler((_, _) =>
             {
                 // Save the game on close
-                app.Services.GetRequiredService<ISaveGameService>().Save();
+                saveGame.Save();
                 return false; // false = allow closing
             })
-            .Load(new Uri(serverUrl));
+            // Reopen the page that was open when the game was closed
+            .Load(new Uri(new Uri(serverUrl), saveGame.LastRoute ?? "/"));
 
         window.WaitForClose();
     }

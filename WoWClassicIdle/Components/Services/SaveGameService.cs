@@ -18,6 +18,8 @@ public class SaveGameService : ISaveGameService, IDisposable
 
     public bool SaveExists => File.Exists(DefaultSavePath);
 
+    public string? LastRoute { get; set; }
+
     private static string DefaultSavePath
     {
         get
@@ -97,6 +99,8 @@ public class SaveGameService : ISaveGameService, IDisposable
             if (_achievements is AchievementService achievementService)
                 achievementService.RestoreFromSave(save.Achievements, _engine);
 
+            LastRoute = IsLocalRoute(save.LastRoute) ? save.LastRoute : null;
+
             return true;
         }
         catch
@@ -104,6 +108,10 @@ public class SaveGameService : ISaveGameService, IDisposable
             return false;
         }
     }
+
+    // The save file is user-editable and the route ends up in the window's URL – it must stay on our server
+    private static bool IsLocalRoute(string? route) =>
+        route is not null && route.StartsWith('/') && !route.StartsWith("//") && !route.Contains('\\');
 
     public bool TryAutoLoad() => TryLoad();
 
@@ -141,6 +149,7 @@ public class SaveGameService : ISaveGameService, IDisposable
             TotalItemsSold       = _engine.TotalItemsSold,
             TotalUncommonLooted  = _engine.TotalUncommonLooted,
             TotalRareItemsLooted = _engine.TotalRareItemsLooted,
+            LastRoute            = LastRoute,
         };
 
         foreach (var slot in _engine.CharacterRoster)
