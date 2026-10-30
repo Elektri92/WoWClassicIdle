@@ -443,7 +443,8 @@ else if (!_engine.NeedsCombatZone)
                         }
                     </span>
                 </div>
-                <span class="notif-close">×</span>
+                <span class="notif-close" title="Dismiss"
+                      @onclick="() => DismissNotification(n.Id)" @onclick:stopPropagation="true">×</span>
             </div>
         }
     </div>
@@ -1978,6 +1979,11 @@ else if (!_engine.NeedsCombatZone)
         color: #9a8a64;
         flex-shrink: 0;
         line-height: 1;
+        padding: 4px 6px;
+    }
+
+    .notif-close:hover {
+        color: #ffd100;
     }
 
     @@keyframes notifIn {

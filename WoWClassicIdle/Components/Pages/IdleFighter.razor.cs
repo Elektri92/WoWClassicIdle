@@ -23,9 +23,8 @@ public partial class IdleFighter
     private IJSObjectReference? _visibilityHandle;
 
     private record CombatFloat(int Id, CombatTextKind Kind, bool OnPlayer, int Amount, int XOffset, int YOffset, DateTime Created, bool IsCrit = false, int DelayMs = 0);
-    private record AbilityNotification(int Id, Ability Ability, DateTime Created);
+    private record AbilityNotification(int Id, Ability Ability);
 
-    private static readonly TimeSpan NotificationLifetime = TimeSpan.FromSeconds(8);
     private readonly List<AbilityNotification> _abilityNotifications = new();
     private int _nextNotifId;
 
@@ -156,7 +155,7 @@ public partial class IdleFighter
     {
         lock (_abilityNotifications)
             _abilityNotifications.Add(new AbilityNotification(
-                Interlocked.Increment(ref _nextNotifId), ability, DateTime.UtcNow));
+                Interlocked.Increment(ref _nextNotifId), ability));
 
         _ = InvokeAsync(() =>
         {
@@ -242,10 +241,6 @@ public partial class IdleFighter
             _playerFloats.RemoveAll(f => f.Created.AddMilliseconds(f.DelayMs) < cutoff);
         lock (_enemyFloats)
             _enemyFloats.RemoveAll(f => f.Created.AddMilliseconds(f.DelayMs) < cutoff);
-
-        var notifCutoff = DateTime.UtcNow - NotificationLifetime;
-        lock (_abilityNotifications)
-            _abilityNotifications.RemoveAll(n => n.Created < notifCutoff);
     }
 
     private static CombatFloat[] SnapshotFloats(List<CombatFloat> list)
