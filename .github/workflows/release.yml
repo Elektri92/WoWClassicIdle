@@ -89,3 +89,14 @@ jobs:
             publish/linux/WoWClassicIdle-linux-x64
             publish/win/WoWClassicIdle-win-x64.exe
             publish/mac/WoWClassicIdle-osx-x64
+
+      # Runs only after the new release exists, so a failed build keeps the old ones.
+      # Keeps the git tags: the changelog step needs them to find the previous release.
+      - name: Delete old releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_TAG: v${{ steps.version.outputs.value }}
+        run: |
+          gh release list --limit 1000 --json tagName --jq '.[].tagName' \
+            | grep -vxF "$CURRENT_TAG" \
+            | xargs -r -n1 gh release delete --yes

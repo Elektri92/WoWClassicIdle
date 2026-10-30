@@ -98,7 +98,7 @@ Static assets (`wwwroot`) are bundled into the single-file binary. That way an a
 
 ### Releases
 
-Every push to `master` triggers a GitHub Actions workflow (`.github/workflows/release.yml`). It bumps the version in `version.json`, builds for Windows, Linux and macOS, and publishes a GitHub release. The auto-updater reads `version.json`.
+Every push to `master` triggers a GitHub Actions workflow (`.github/workflows/release.yml`). It bumps the version in `version.json`, builds for Windows, Linux and macOS, publishes a GitHub release, and then deletes all older releases (their git tags stay). The auto-updater reads `version.json`.
 
 ---
 
