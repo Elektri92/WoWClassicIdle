@@ -8,11 +8,13 @@ namespace Services;
 
 public enum UpdateStatus { Idle, Checking, UpToDate, Downloading, Restarting, Error }
 
-// Singleton – checks for a new version on app start and replaces the binary automatically.
+// Singleton – checks for a new version on app start and then every minute, and replaces the binary automatically.
 // Progress is reported to the UI via the Changed event.
-public class UpdateService
+public class UpdateService(ISaveGameService saveGame)
 {
     private const string ManifestUrl = "https://raw.githubusercontent.com/Elektri92/WoWClassicIdle/master/version.json";
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan DownloadStallTimeout = TimeSpan.FromSeconds(30);
 
     private bool _hasStarted;
 
@@ -35,7 +37,7 @@ public class UpdateService
     // Fires on every state change – UI components subscribe and call StateHasChanged
     public event Action? Changed;
 
-    // Starts the update check once in the background
+    // Starts the periodic update check in the background (first check immediately)
     public void StartCheckInBackground()
     {
         if (_hasStarted) return;
@@ -45,7 +47,17 @@ public class UpdateService
         if (WoWClassicIdle.Components.BuildInfo.IsDebug) return;
 
         CleanupStagingDir();
-        _ = Task.Run(CheckAndApplyAsync);
+        _ = Task.Run(CheckLoopAsync);
+    }
+
+    // Checks right away, then once per CheckInterval; runs sequentially so checks never overlap
+    private async Task CheckLoopAsync()
+    {
+        using var timer = new PeriodicTimer(CheckInterval);
+        do
+        {
+            await CheckAndApplyAsync();
+        } while (await timer.WaitForNextTickAsync());
     }
 
     // Deletes leftover staging files from the last update
@@ -122,22 +134,28 @@ public class UpdateService
             var stagedBinary = Path.Combine(stagingDir, Path.GetFileName(appPath));
 
             Console.WriteLine($"[Update] Downloading to {stagedBinary} ...");
-            SetStatus(UpdateStatus.Downloading);
 
             using var response = await http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+            // CI commits version.json shortly before the release assets exist – a 404 here is retried by the next check
             response.EnsureSuccessStatusCode();
 
             TotalBytes      = response.Content.Headers.ContentLength ?? -1;
             DownloadedBytes = 0;
-            Notify();
+            SetStatus(UpdateStatus.Downloading);
 
             await using (var srcStream  = await response.Content.ReadAsStreamAsync())
             await using (var destStream = File.Create(stagedBinary))
             {
                 var buffer = new byte[81920];
                 int read;
-                while ((read = await srcStream.ReadAsync(buffer)) > 0)
+                // HttpClient.Timeout does not cover the body – without this a stalled download would keep the overlay up forever
+                using var stallCts = new CancellationTokenSource();
+                while (true)
                 {
+                    stallCts.CancelAfter(DownloadStallTimeout);
+                    read = await srcStream.ReadAsync(buffer, stallCts.Token);
+                    if (read <= 0) break;
+
                     await destStream.WriteAsync(buffer.AsMemory(0, read));
                     DownloadedBytes += read;
                     Notify();
@@ -146,6 +164,9 @@ public class UpdateService
 
             Console.WriteLine($"[Update] Download complete ({DownloadedBytes / 1024.0 / 1024.0:F1} MB). Launching restart...");
             SetStatus(UpdateStatus.Restarting);
+
+            // Environment.Exit skips the window closing handler, so save progress explicitly
+            saveGame.Save();
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 LaunchWindowsRestart(stagedBinary, appPath);
