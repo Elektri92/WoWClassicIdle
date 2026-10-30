@@ -2,16 +2,16 @@ using System.Diagnostics;
 using Models;
 using Timer = System.Timers.Timer;
 
-/// <summary>Running pass in the active slot – only exists while the profession subpage is open.</summary>
+/// <summary>Running pass in the active slot (crafting, disenchanting) – only exists while the profession subpage is open.</summary>
 public class ActiveProfessionRun
 {
     public required Player Player { get; init; }
     public required Profession Profession { get; init; }
-    /// <summary>Zone ID (gathering) or recipe ID (crafting).</summary>
+    /// <summary>Recipe ID or <see cref="IdleGameEngine.DisenchantTarget"/>.</summary>
     public required string Target { get; init; }
-    /// <summary>Remaining crafts; <c>null</c> = endless (gathering).</summary>
+    /// <summary>Remaining crafts; <c>null</c> = endless.</summary>
     public int? Remaining { get; set; }
-    /// <summary>Duration of a pass (seconds) – disenchanting is shorter than gathering/crafting.</summary>
+    /// <summary>Duration of a pass (seconds) – disenchanting is shorter than crafting.</summary>
     public double Duration { get; init; } = Professions.ActiveDurationSeconds;
     /// <summary>Queue when disenchanting (<see cref="IdleGameEngine.DisenchantTarget"/>), otherwise <c>null</c>.</summary>
     public Queue<Item>? DisenchantQueue { get; init; }
@@ -133,6 +133,13 @@ public partial class IdleGameEngine
             _sharedProfessions.TryAdd(def.Profession, new ProfessionProgress(def.Profession));
     }
 
+    /// <summary>True once any character on the account has reached the profession unlock level.</summary>
+    public bool ProfessionsUnlockedOnAccount
+    {
+        // Polled from the tick thread by the nav menu, so the roster must not change mid-enumeration
+        get { lock (_simLock) return _roster.Any(s => s.Player.Level >= Professions.MinCharacterLevel); }
+    }
+
     /// <summary>Character who learned the main profession – each main profession may only be learned by one character at a time.</summary>
     public CharacterSlot? ProfessionOwner(Profession profession) =>
         _roster.FirstOrDefault(s => s.Player.ProfessionState.IsLearned(profession));
@@ -176,13 +183,13 @@ public partial class IdleGameEngine
 
     // ─── Aktiver Slot ───
 
-    /// <summary>Starts the active slot (replaces a running pass). <paramref name="count"/> only when crafting.</summary>
+    /// <summary>Starts the active slot (replaces a running pass). Gathering professions only have passive slots.</summary>
     public void StartActiveProfession(Profession profession, string target, int? count = null)
     {
         lock (_simLock)
         {
             if (GetProfessionProgress(profession) is null) return;
-            if (Professions.Get(profession).IsGathering && !IsZoneUnlocked(profession, target)) return;
+            if (Professions.Get(profession).IsGathering) return;
             ActiveProfessionRun = new ActiveProfessionRun
             {
                 Player = Player, Profession = profession, Target = target, Remaining = count,
@@ -232,7 +239,7 @@ public partial class IdleGameEngine
                 continue;
             }
 
-            if (!ExecuteProfession(progress, run.Target, isActive: true, source: null))
+            if (!ExecuteProfession(progress, run.Target, Professions.SkillUpChance, source: null))
             {
                 ActiveProfessionRun = null;
                 return;
@@ -253,26 +260,26 @@ public partial class IdleGameEngine
     // ─── Execution ───
 
     /// <summary>
-    /// Executes one pass (gathering or crafting). Skill points are only given in the active slot.
+    /// Executes one pass (gathering or crafting) and rolls <paramref name="skillUpChance"/> for a skill point.
     /// <paramref name="source"/> = name of the passive character for the log.
     /// </summary>
-    private bool ExecuteProfession(ProfessionProgress progress, string target, bool isActive, string? source)
+    private bool ExecuteProfession(ProfessionProgress progress, string target, double skillUpChance, string? source)
     {
         bool success = progress.Definition.IsGathering
             ? ExecuteGathering(progress, target, source)
             : ExecuteCrafting(progress, target, source);
 
-        if (success && isActive && ProfessionRegistry.TargetRequiredSkill(progress.Profession, target) is { } required)
-            RollSkillUp(progress, required);
+        if (success && ProfessionRegistry.TargetRequiredSkill(progress.Profession, target) is { } required)
+            RollSkillUp(progress, required, skillUpChance);
 
         return success;
     }
 
     /// <summary>Skill-up chance – only while the tier is within its own skill range (<see cref="ProfessionRegistry.GivesSkillUp"/>).</summary>
-    private void RollSkillUp(ProfessionProgress progress, int requiredSkill)
+    private void RollSkillUp(ProfessionProgress progress, int requiredSkill, double chance = Professions.SkillUpChance)
     {
         if (!ProfessionRegistry.GivesSkillUp(progress.Profession, requiredSkill, progress.Skill)) return;
-        if (_professionRng.NextDouble() < Professions.SkillUpChance && progress.TrySkillUp())
+        if (_professionRng.NextDouble() < chance && progress.TrySkillUp())
             LogProfession(progress.Profession, $"{progress.Definition.Name} {progress.Skill}", ProfessionLogKind.SkillUp);
     }
 

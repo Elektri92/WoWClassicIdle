@@ -226,14 +226,13 @@
     border: 2px solid var(--wow-border-dark);
     border-radius: 8px;
     background: var(--wow-bg-deep);
-    cursor: pointer;
+    cursor: default;
     overflow: hidden;
     text-shadow: 0 1px 3px #000;
     transition: border-color .12s, box-shadow .12s, transform .12s;
 }
 
 .zone-block:hover { border-color: var(--wow-border-inner); transform: translateY(-1px); }
-.zone-block.selected { border-color: var(--wow-gold); box-shadow: 0 0 12px rgba(255,209,0,.4), inset 0 0 0 1px rgba(255,236,155,.3); }
 
 .zone-block-name { font-family: var(--wow-font-title); color: var(--wow-gold-pale); font-size: 1.25rem; font-weight: 700; }
 .zone-block-desc { color: #e8e2c8; font-size: .78rem; font-style: italic; }
@@ -338,7 +337,7 @@
 .prof-drop img,
 .craft-reagent img { width: 28px; height: 28px; border-radius: 4px; }
 
-/* ----- Slots in the zone block (active + passive, drag and drop) ----- */
+/* ----- Passive slots in the zone block (drag and drop) ----- */
 .zone-block.locked { cursor: not-allowed; filter: grayscale(.75) brightness(.6); }
 .zone-block.locked:hover { transform: none; border-color: var(--wow-border-dark); }
 
@@ -379,9 +378,6 @@
 }
 
 .zone-slot.filled        { border-style: solid; border-color: #a8893a; }
-.zone-slot.active        { border-color: #4fa83a; }
-.zone-slot.active.filled { box-shadow: 0 0 6px rgba(79,168,58,.6); }
-.zone-slot.paused        { opacity: .6; }
 .zone-slot.locked        { opacity: .35; border-style: dotted; }
 .zone-slot.drop-ready    { border-color: var(--wow-gold); box-shadow: 0 0 8px rgba(255,209,0,.45); }
 
@@ -397,8 +393,6 @@
     font-family: var(--wow-font-title);
     font-size: 1rem;
 }
-
-.zone-slot.active .zone-slot-placeholder { color: #7ddc6f; }
 
 .zone-slot-level {
     position: absolute;

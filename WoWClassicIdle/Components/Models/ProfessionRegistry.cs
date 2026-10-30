@@ -6,7 +6,7 @@ namespace Models
 
     /// <summary>
     /// Farming zone of a gathering profession – each pass always yields exactly one drop.
-    /// Each zone has one active slot and <see cref="PassiveSlotCount"/> passive slots (filled with characters;
+    /// Each zone has <see cref="PassiveSlotCount"/> passive slots (filled with characters;
     /// for gathering professions and fishing). <see cref="Theme"/> selects the gradient of the zone block (CSS class zone-theme-*).
     /// </summary>
     public record GatheringZone(

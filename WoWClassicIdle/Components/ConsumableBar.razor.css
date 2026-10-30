@@ -52,6 +52,21 @@
 .consumable-icon.active .consumable-frame { box-shadow: 0 0 6px rgba(125, 220, 111, .8); }
 .consumable-icon.empty img { filter: grayscale(1) brightness(.55); }
 
+/* Auto-use off: dimmed with grey border and marker */
+.consumable-icon.auto-off .consumable-frame { border-color: #6a6a6a; }
+.consumable-icon.auto-off img { filter: grayscale(.8) brightness(.6); }
+
+.consumable-off {
+    position: absolute;
+    left: 1px;
+    top: -1px;
+    font-size: .5rem;
+    font-weight: 700;
+    color: #ff6b5e;
+    text-shadow: 0 0 2px #000, 0 0 2px #000;
+    pointer-events: none;
+}
+
 /* Cooldown / remaining duration: dark clock-hand sector over the icon */
 .consumable-sweep {
     position: absolute;

@@ -37,7 +37,7 @@
     {
         <div class="wow-alert error">Unknown profession.</div>
     }
-    else if (!Engine.HasActiveCharacter || Engine.Player.Level < Professions.MinCharacterLevel)
+    else if (!Engine.HasActiveCharacter || !Engine.ProfessionsUnlockedOnAccount)
     {
         <h2>@_def.Name</h2>
         <div class="wow-alert warning">Professions unlock at level @Professions.MinCharacterLevel.</div>
@@ -126,9 +126,12 @@
                 }
             }
 
-            <p class="wow-hint">
-                Skill-ups (@((Professions.SkillUpChance * 100).ToString("0"))% chance per run) only happen in the active slot while this page is open.
-            </p>
+            @if (!_def.IsGathering)
+            {
+                <p class="wow-hint">
+                    Skill-ups (@((Professions.SkillUpChance * 100).ToString("0"))% chance per run) only happen in the active slot while this page is open.
+                </p>
+            }
 
             <ProfessionFloatingText Profession="_def.Profession" />
         }

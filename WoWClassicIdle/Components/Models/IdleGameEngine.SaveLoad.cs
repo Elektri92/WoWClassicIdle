@@ -153,6 +153,7 @@ public partial class IdleGameEngine
         var p = data.Player;
 
         player.Copper = p.Copper;
+        player.RestoreDisabledAutoUse(p.DisabledAutoUseConsumables);
 
         // Restore ClassProgress
         foreach (var (clsName, progressData) in p.ClassProgress)

@@ -1,10 +1,26 @@
 // Models/Player.Consumables.cs
+using System.Collections.Immutable;
+
 namespace Models
 {
     // Active consumable buffs (elixirs, flasks, food): one slot per BuffKey, stronger ones overwrite weaker ones.
     public partial class Player
     {
         private readonly Dictionary<string, ActiveConsumable> _consumables = new();
+
+        // Immutable: replaced on the UI thread under the sim lock, the UI reads without a lock
+        /// <summary>BuffKeys of the consumable kinds this character must not use on their own.</summary>
+        public ImmutableHashSet<string> DisabledAutoUse { get; private set; } = ImmutableHashSet<string>.Empty;
+
+        public bool IsAutoUseEnabled(ConsumableItem item) => !DisabledAutoUse.Contains(item.BuffKey);
+
+        public void ToggleAutoUse(ConsumableItem item) =>
+            DisabledAutoUse = IsAutoUseEnabled(item)
+                ? DisabledAutoUse.Add(item.BuffKey)
+                : DisabledAutoUse.Remove(item.BuffKey);
+
+        public void RestoreDisabledAutoUse(IEnumerable<string> buffKeys) =>
+            DisabledAutoUse = buffKeys.ToImmutableHashSet();
 
         /// <summary>Active disguise (Savory Deviate Delight) – purely cosmetic.</summary>
         public Costume Costume { get; private set; }

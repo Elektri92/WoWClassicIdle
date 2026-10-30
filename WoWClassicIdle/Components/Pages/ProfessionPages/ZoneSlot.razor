@@ -1,7 +1,7 @@
 @using Models
 
-@* Small slot in the zone block (active or passive): drag the character icon in/out. *@
-<div class="zone-slot @(IsActive ? "active" : "") @(Character is not null ? "filled" : "") @(IsPaused ? "paused" : "") @(IsLocked ? "locked" : "") @(DropReady ? "drop-ready" : "")"
+@* Small passive slot in the zone block: drag the character icon in/out. *@
+<div class="zone-slot @(Character is not null ? "filled" : "") @(IsLocked ? "locked" : "") @(DropReady ? "drop-ready" : "")"
      title="@Tooltip"
      @onclick:stopPropagation="true"
      @ondragover:preventDefault
@@ -21,15 +21,13 @@
     }
     else
     {
-        <span class="zone-slot-placeholder">@(IsActive ? "A" : IsLocked ? "–" : "+")</span>
+        <span class="zone-slot-placeholder">@(IsLocked ? "–" : "+")</span>
     }
     <div class="zone-slot-bar"><div style="width: @PercentText%"></div></div>
 </div>
 
 @code {
     [Parameter] public CharacterSlot? Character { get; set; }
-    [Parameter] public bool IsActive { get; set; }
-    [Parameter] public bool IsPaused { get; set; }
 
     /// <summary>Empty passive slot that cannot be filled because of the per-profession limit.</summary>
     [Parameter] public bool IsLocked { get; set; }

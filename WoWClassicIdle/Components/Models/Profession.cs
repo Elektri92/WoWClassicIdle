@@ -55,13 +55,16 @@ namespace Models
         public const double ActiveDurationSeconds = 3.0;
 
         /// <summary>Duration of a pass per passive slot (seconds).</summary>
-        public const double PassiveDurationSeconds = 120.0;
+        public const double PassiveDurationSeconds = 90.0;
 
         /// <summary>Max. passively occupied slots per profession – across all zones combined.</summary>
         public const int MaxPassiveWorkers = 3;
 
-        /// <summary>Chance for +1 skill per active pass.</summary>
+        /// <summary>Chance for +1 skill per active pass (crafting, disenchanting).</summary>
         public const double SkillUpChance = 0.01;
+
+        /// <summary>Chance for +1 skill per passive pass (gathering – the only source of gathering skill).</summary>
+        public const double PassiveSkillUpChance = 0.05;
 
         /// <summary>Apprentice is granted automatically when learning, higher tiers are bought from the trainer.</summary>
         public static readonly IReadOnlyList<ProfessionRank> Ranks =

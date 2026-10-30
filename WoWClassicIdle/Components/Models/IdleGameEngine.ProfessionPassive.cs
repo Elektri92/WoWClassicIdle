@@ -48,18 +48,9 @@ public partial class IdleGameEngine
     {
         if (!Professions.Get(profession).HasPassiveSlots) return "No passive slots";
         if (slot.Player.Level < Professions.MinCharacterLevel) return $"Requires level {Professions.MinCharacterLevel}";
-        // The active character may also be assigned; its slot pauses while it works the same profession actively
+        // Every class may gather, including the character being played
         return null;
     }
-
-    /// <summary>
-    /// Paused while the same character is actively practicing this profession
-    /// (e.g. after switching to a character deployed passively).
-    /// </summary>
-    public bool IsPassivePaused(PassiveAssignment assignment) =>
-        ActiveProfessionRun is { } run
-        && run.Profession == assignment.Profession
-        && GetCharacter(assignment.CharacterId)?.Player == run.Player;
 
     /// <summary>
     /// Fills a passive slot with a character (<c>null</c> = clear the slot).
@@ -103,9 +94,9 @@ public partial class IdleGameEngine
                 _passiveAssignments.Remove(assignment);
                 continue;
             }
-            if (assignment.Target is null || IsPassivePaused(assignment)) continue;
+            if (assignment.Target is null) continue;
 
-            // Account-wide progress – passive runs give no skill points anyway
+            // Account-wide progress
             var progress = _sharedProfessions.GetValueOrDefault(assignment.Profession)
                            ?? new ProfessionProgress(assignment.Profession);
 
@@ -113,7 +104,7 @@ public partial class IdleGameEngine
             while (assignment.Elapsed >= Professions.PassiveDurationSeconds)
             {
                 assignment.Elapsed -= Professions.PassiveDurationSeconds;
-                ExecuteProfession(progress, assignment.Target, isActive: false, source: CharacterName(character));
+                ExecuteProfession(progress, assignment.Target, Professions.PassiveSkillUpChance, source: CharacterName(character));
             }
         }
     }

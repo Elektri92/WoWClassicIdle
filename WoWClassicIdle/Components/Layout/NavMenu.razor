@@ -133,7 +133,7 @@
         Engine.RosterChanged += OnRosterChanged;
         Engine.TickUpdated += OnTickUpdated;
         _playerLevelAtLeastTen = Engine.HasActiveCharacter && Engine.Player.Level >= 10;
-        _professionsUnlocked   = Engine.HasActiveCharacter && Engine.Player.Level >= Professions.MinCharacterLevel;
+        _professionsUnlocked   = Engine.ProfessionsUnlockedOnAccount;
     }
 
     private async Task OnSave()
@@ -176,12 +176,17 @@
         StateHasChanged();
     }
 
-    private void OnRosterChanged() => InvokeAsync(StateHasChanged);
+    private void OnRosterChanged()
+    {
+        _playerLevelAtLeastTen = Engine.HasActiveCharacter && Engine.Player.Level >= 10;
+        _professionsUnlocked   = Engine.ProfessionsUnlockedOnAccount;
+        InvokeAsync(StateHasChanged);
+    }
 
     private void OnTickUpdated()
     {
         bool levelOk = Engine.HasActiveCharacter && Engine.Player.Level >= 10;
-        bool professionsOk = Engine.HasActiveCharacter && Engine.Player.Level >= Professions.MinCharacterLevel;
+        bool professionsOk = Engine.ProfessionsUnlockedOnAccount;
         if (levelOk != _playerLevelAtLeastTen || professionsOk != _professionsUnlocked)
         {
             _playerLevelAtLeastTen = levelOk;

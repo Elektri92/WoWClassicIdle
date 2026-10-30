@@ -95,7 +95,7 @@ public partial class IdleGameEngine
         // The starting zone is known but gives no discovery XP
         if (CombatZoneRegistry.Get(slot.CombatZoneId) is { } startZone)
             DiscoverZone(slot, startZone, grantXp: false);
-        _roster.Add(slot);
+        lock (_simLock) _roster.Add(slot);
         RosterChanged?.Invoke();
         ActivateSlot(slot);
         return slot;

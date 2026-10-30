@@ -87,7 +87,7 @@ public static class GameFeatureRegistry
                     "Mining, Herbalism, Skinning and Fishing are learned automatically and shared across your account.",
                     "Each character can learn one primary crafting profession.",
                     "Assign idle characters to gathering zones to collect materials passively.",
-                    "Consumables like potions and food are used automatically during combat.",
+                    "Consumables like potions and food are used automatically during combat – right-click one on the combat bar to turn that off.",
                 ],
                 "professions", "Open Professions", Art("mage-arcane")),
 

@@ -10,6 +10,7 @@ public class SaveGameService : ISaveGameService, IDisposable
     private readonly IAchievementService _achievements;
     private readonly IAbilityLoadoutService _loadout;
 
+    private readonly object _saveFileLock = new();
     private int _tickCount;
     private const int AutoSaveEveryTicks = 600; // ~1 minute at 100 ms interval
 
@@ -57,7 +58,15 @@ public class SaveGameService : ISaveGameService, IDisposable
         {
             var saveData = BuildSaveData();
             var json = JsonSerializer.Serialize(saveData, JsonOptions);
-            File.WriteAllText(path, json);
+
+            // Autosave (timer thread) and the updater can save concurrently, and the updater exits the process
+            // right after – write to a temp file and swap it in so save.json is never left truncated
+            lock (_saveFileLock)
+            {
+                var tempPath = path + ".tmp";
+                File.WriteAllText(tempPath, json);
+                File.Move(tempPath, path, overwrite: true);
+            }
         }
         catch { /* Speicherfehler still ignorieren */ }
     }
@@ -207,6 +216,7 @@ public class SaveGameService : ISaveGameService, IDisposable
         {
             ActiveClass = p.ActiveClass,
             Copper      = p.Copper,
+            DisabledAutoUseConsumables = p.DisabledAutoUse.ToList(),
         };
 
         foreach (var (cls, progress) in p.ClassProgress)

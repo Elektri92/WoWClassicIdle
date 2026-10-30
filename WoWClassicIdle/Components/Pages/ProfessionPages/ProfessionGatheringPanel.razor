@@ -1,15 +1,15 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Gathering profession: large zone blocks with a gradient. Each block contains its active and its passive slots;
+@* Gathering profession: large zone blocks with a gradient. Each block contains its passive slots;
    characters are dragged and dropped directly onto the zone (or a specific slot). *@
 <div class="al-panel">
     <h4>Zones</h4>
 
     <p class="wow-hint">
-        Drag characters onto a zone. Your current character works the active slot (A) and earns skill-ups;
-        up to @Professions.MaxPassiveWorkers other characters work passively, spread over any zones. Drag a character back to the bar to remove it.
-        Higher zones unlock with your @Definition.Name skill.
+        Drag characters of any class onto a zone. Up to @Professions.MaxPassiveWorkers characters work passively, spread over any zones,
+        and each run has a @((Professions.PassiveSkillUpChance * 100).ToString("0"))% chance for a skill-up.
+        Drag a character back to the bar to remove it. Higher zones unlock with your @Definition.Name skill.
     </p>
 
     @* Character bar: source for all assignments; dragging from a slot back here = clear the slot *@
@@ -19,10 +19,10 @@
         @foreach (var character in Engine.CharacterRoster)
         {
             bool isActive = character.Id == Engine.ActiveCharacter?.Id;
-            var blocker = DragBlocker(character, isActive);
+            var blocker = Engine.PassiveAssignBlocker(character, Profession);
             var busy = Engine.PassiveAssignmentOf(character.Id);
-            <div class="char-chip @(blocker is not null ? "blocked" : "") @(busy is not null || (isActive && Run is not null) ? "busy" : "") @(isActive ? "playing" : "")"
-                 title="@ChipTooltip(character, blocker, busy, isActive)"
+            <div class="char-chip @(blocker is not null ? "blocked" : "") @(busy is not null ? "busy" : "") @(isActive ? "playing" : "")"
+                 title="@ChipTooltip(character, blocker, busy)"
                  draggable="@((blocker is null).ToString().ToLowerInvariant())"
                  @ondragstart="() => StartDrag(character.Id, DragSource.Bar)"
                  @ondragend="EndDrag">
@@ -40,12 +40,10 @@
         @foreach (var zone in Zones)
         {
             double total = zone.Drops.Sum(d => d.Chance);
-            bool running = Run?.Target == zone.Id;
             bool unlocked = Engine.IsZoneUnlocked(Profession, zone.Id);
             int requiredSkill = ProfessionRegistry.ZoneRequiredSkill(zone);
-            <div class="zone-block zone-theme-@zone.Theme @(running ? "selected" : "") @(unlocked ? "" : "locked") @(CanDropOnZone(zone) ? "drop-ready" : "")"
-                 title="@(unlocked ? "Click or drag your character here to gather actively" : $"Requires {Definition.Name} {requiredSkill}")"
-                 @onclick="() => MoveActive(zone)"
+            <div class="zone-block zone-theme-@zone.Theme @(unlocked ? "" : "locked") @(CanDropOnZone(zone) ? "drop-ready" : "")"
+                 title="@(unlocked ? "Drag a character here to gather passively" : $"Requires {Definition.Name} {requiredSkill}")"
                  @ondragover:preventDefault
                  @ondrop="() => DropOnZone(zone)">
                 @if (requiredSkill > 1)
@@ -80,14 +78,6 @@
                 else
                 {
                 <div class="zone-slots">
-                    <ZoneSlot IsActive="true"
-                              Character="@(running ? Engine.ActiveCharacter : null)"
-                              Progress="@(running ? Run!.Progress : 0)"
-                              Tooltip="@ActiveTooltip(running)"
-                              DropReady="@(IsDraggingActiveCharacter && Progress is not null)"
-                              OnDrop="() => DropOnZone(zone)"
-                              OnDragStart="id => StartDrag(id, DragSource.Active)"
-                              OnDragEnd="EndDrag" />
                     @for (int i = 0; i < PassiveSlotsOf(zone); i++)
                     {
                         int index = i;
@@ -95,7 +85,6 @@
                         var character = assignment is not null ? Engine.GetCharacter(assignment.CharacterId) : null;
                         <ZoneSlot Character="character"
                                   IsLocked="@(assignment is null && !HasCapacityFor(null))"
-                                  IsPaused="@(assignment is not null && Engine.IsPassivePaused(assignment))"
                                   Progress="@(assignment is null ? 0 : assignment.Elapsed / Professions.PassiveDurationSeconds)"
                                   Tooltip="@PassiveTooltip(assignment, character, index)"
                                   DropReady="@(_dragCharacterId is { } dragId && (assignment is not null || HasCapacityFor(dragId)))"
@@ -114,12 +103,10 @@
 @code {
     [Parameter, EditorRequired] public Profession Profession { get; set; }
 
-    /// <summary>Progress of the active character; <c>null</c> = not learned → only passive slots usable.</summary>
+    /// <summary>Account-wide progress; <c>null</c> = not learned yet.</summary>
     [Parameter] public ProfessionProgress? Progress { get; set; }
 
-    private enum DragSource { Bar, Active, Passive }
-
-    private Profession? _initializedFor;
+    private enum DragSource { Bar, Passive }
 
     // Drag and drop of the character icons
     private int? _dragCharacterId;
@@ -131,42 +118,12 @@
     /// <summary>Professions without passive slots show none.</summary>
     private int PassiveSlotsOf(GatheringZone zone) => Definition.HasPassiveSlots ? zone.PassiveSlotCount : 0;
 
-    private ActiveProfessionRun? Run =>
-        Engine.ActiveProfessionRun is { } run && run.Profession == Profession ? run : null;
-
-    private bool IsDraggingActiveCharacter =>
-        _dragCharacterId is { } id && id == Engine.ActiveCharacter?.Id;
-
-    protected override void OnParametersSet()
-    {
-        // The component is reused when switching between profession subpages → initialize once per profession
-        if (_initializedFor == Profession) return;
-        _initializedFor = Profession;
-
-        // Automatically start the active slot in the last chosen (otherwise first unlocked) zone
-        string? last = Engine.GetLastProfessionTarget(Profession);
-        var zone = Engine.IsZoneUnlocked(Profession, last)
-            ? ProfessionRegistry.GetZone(Profession, last)
-            : Zones.FirstOrDefault(z => Engine.IsZoneUnlocked(Profession, z.Id));
-        // Not if the active character works this profession passively – that would pause its passive slot
-        if (zone is not null && Progress is not null && Run is null && !IsActiveCharacterPassiveHere)
-            Engine.StartActiveProfession(Profession, zone.Id);
-    }
-
-    private bool IsActiveCharacterPassiveHere =>
-        Engine.ActiveCharacter is { } active && Engine.PassiveAssignmentOf(active.Id)?.Profession == Profession;
-
     // ─── Tooltips ───
 
-    /// <summary>Why the character cannot be dragged – <c>null</c> if allowed.</summary>
-    private string? DragBlocker(CharacterSlot character, bool isActive) =>
-        isActive && Progress is not null ? null : Engine.PassiveAssignBlocker(character, Profession);
-
-    private string ChipTooltip(CharacterSlot character, string? blocker, PassiveAssignment? busy, bool isActive)
+    private string ChipTooltip(CharacterSlot character, string? blocker, PassiveAssignment? busy)
     {
         string name = IdleGameEngine.CharacterName(character) + $" (Lv. {character.Player.Level})";
         if (blocker is not null) return $"{name} – {blocker}";
-        if (isActive && busy is null) return $"{name} – playing: drag onto a zone to gather actively or onto a passive slot";
         if (busy is not null)
         {
             string zone = ProfessionRegistry.GetZone(busy.Profession, busy.Group)?.Name ?? busy.Group;
@@ -175,11 +132,6 @@
         return $"{name} – drag onto a zone to gather passively";
     }
 
-    private string ActiveTooltip(bool running) =>
-        running && Engine.ActiveCharacter is { } character
-            ? $"Active slot – {IdleGameEngine.CharacterName(character)} gathering ({Run!.Progress * 100:0}%)"
-            : "Active slot – drag your current character here";
-
     private string PassiveTooltip(PassiveAssignment? assignment, CharacterSlot? character, int index)
     {
         if (assignment is null || character is null)
@@ -187,19 +139,8 @@
                 ? $"Passive slot {index + 1} – drag a character here"
                 : $"All {Professions.MaxPassiveWorkers} passive workers of {Definition.Name} are in use";
         string name = IdleGameEngine.CharacterName(character);
-        if (Engine.IsPassivePaused(assignment)) return $"{name} – paused while working actively";
         var remaining = TimeSpan.FromSeconds(Math.Max(0, Professions.PassiveDurationSeconds - assignment.Elapsed));
         return $"{name} – next run in {remaining:m\\:ss}";
-    }
-
-    // ─── Aktiver Slot ───
-
-    private void MoveActive(GatheringZone zone)
-    {
-        if (!Engine.IsZoneUnlocked(Profession, zone.Id)) return;
-        Engine.RememberProfessionTarget(Profession, zone.Id);
-        if (Progress is not null && Run?.Target != zone.Id)
-            Engine.StartActiveProfession(Profession, zone.Id);
     }
 
     // ─── Drag & Drop ───
@@ -232,22 +173,14 @@
     private bool CanDropOnZone(GatheringZone zone)
     {
         if (_dragCharacterId is not { } id || !Engine.IsZoneUnlocked(Profession, zone.Id)) return false;
-        if (IsDraggingActiveCharacter) return Progress is not null && Run?.Target != zone.Id;
         return !IsPassiveIn(id, zone) && FreePassiveIndex(zone, id) is not null;
     }
 
-    /// <summary>Dropped on the zone: active character → active slot, otherwise the first free passive slot.</summary>
+    /// <summary>Dropped on the zone: first free passive slot.</summary>
     private void DropOnZone(GatheringZone zone)
     {
         if (_dragCharacterId is not { } id) return;
-        if (IsDraggingActiveCharacter)
-        {
-            // Moved from its passive slot into the active slot → the passive slot becomes free
-            if (_dragFrom == DragSource.Passive && Engine.PassiveAssignmentOf(id) is { } passive)
-                Engine.AssignPassive(passive.Profession, passive.Group, passive.Index, null);
-            MoveActive(zone);
-        }
-        else if (!IsPassiveIn(id, zone) && FreePassiveIndex(zone, id) is { } index)
+        if (!IsPassiveIn(id, zone) && FreePassiveIndex(zone, id) is { } index)
             Engine.AssignPassive(Profession, zone.Id, index, id);
         EndDrag();
     }
@@ -261,22 +194,14 @@
         Engine.AssignPassive(Profession, zone.Id, index, id);
         if (from is not null && displaced is { } other && other != id)
             Engine.AssignPassive(from.Profession, from.Group, from.Index, other);
-        // The played character moved into a passive slot → stop the active slot (it would pause the passive one)
-        if (IsDraggingActiveCharacter && Run is not null && Engine.PassiveAssignmentOf(id)?.Profession == Profession)
-            Engine.StopActiveProfession();
         EndDrag();
     }
 
-    /// <summary>From a slot back into the character bar: clear the passive slot or stop the active slot.</summary>
+    /// <summary>From a slot back into the character bar: clear the passive slot.</summary>
     private void DropOnBar()
     {
-        if (_dragCharacterId is { } id)
-        {
-            if (_dragFrom == DragSource.Active)
-                Engine.StopActiveProfession();
-            else if (_dragFrom == DragSource.Passive && Engine.PassiveAssignmentOf(id) is { } assignment)
-                Engine.AssignPassive(assignment.Profession, assignment.Group, assignment.Index, null);
-        }
+        if (_dragCharacterId is { } id && _dragFrom == DragSource.Passive && Engine.PassiveAssignmentOf(id) is { } assignment)
+            Engine.AssignPassive(assignment.Profession, assignment.Group, assignment.Index, null);
         EndDrag();
     }
 }

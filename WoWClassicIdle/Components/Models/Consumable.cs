@@ -4,8 +4,8 @@ namespace Models
     /// <summary>Kind of consumable – determines when and how it is used automatically in combat.</summary>
     public enum ConsumableKind
     {
-        HealthPotion,   // restores health (at low health, shared potion cooldown)
-        ManaPotion,     // restores mana (at low mana, shared potion cooldown)
+        HealthPotion,   // restores health (at low health, own cooldown)
+        ManaPotion,     // restores mana (at low mana, own cooldown)
         Elixir,         // Stat-Buff (Alchemie), 1 min
         Flask,          // stat buff (Alchemy), 1 h, persists through death
         Food,           // Stat-Buff (Kochkunst), 1 min
@@ -31,7 +31,7 @@ namespace Models
     }
 
     /// <summary>
-    /// Consumable (category "Consumable"): stackable profession item that is used automatically from the inventory in combat.
+    /// Consumable (category "Consumable"): stackable profession item that is used automatically from the inventory in combat while its auto-use toggle is on.
     /// <paramref name="Bonuses"/> = stat buff (elixir/flask/food) for <paramref name="DurationSeconds"/> combat seconds,
     /// <paramref name="Amount"/> = healing/mana or percent faster resurrection (bandage).
     /// </summary>

@@ -14,7 +14,7 @@
     {
         <div class="wow-alert info">Create a character first.</div>
     }
-    else if (Engine.Player.Level < Professions.MinCharacterLevel)
+    else if (!Engine.ProfessionsUnlockedOnAccount)
     {
         <div class="wow-alert warning">Professions unlock at level @Professions.MinCharacterLevel.</div>
     }

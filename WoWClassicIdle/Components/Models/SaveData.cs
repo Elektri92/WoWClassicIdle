@@ -68,6 +68,8 @@ public class PlayerSaveData
     public Dictionary<string, List<string>> LoadoutAbilityIdsByClass { get; set; } = new();
     // TalentId → invested ranks
     public Dictionary<string, int> TalentInvestedPoints { get; set; } = new();
+    // BuffKeys of consumable kinds with auto-use off (missing in legacy saves → all on)
+    public List<string> DisabledAutoUseConsumables { get; set; } = new();
     // Main profession (from version 4; older saves also contain gathering/secondary professions here → taken over account-wide)
     public List<ProfessionSaveData> Professions { get; set; } = new();
 }
