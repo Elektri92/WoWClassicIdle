@@ -6,7 +6,8 @@ namespace Models;
 /// <param name="Ranks">Visible ranks, ascending by rank.</param>
 /// <param name="Unlocked">Ranks of those already usable (level reached or unlocked by talent).</param>
 /// <param name="Equipped">Currently equipped rank or null.</param>
-public sealed record SpellRankGroup(string Name, IReadOnlyList<Ability> Ranks, IReadOnlyList<Ability> Unlocked, Ability? Equipped)
+/// <param name="SourceTalent">Talent still to be learned to unlock this spell, otherwise null.</param>
+public sealed record SpellRankGroup(string Name, IReadOnlyList<Ability> Ranks, IReadOnlyList<Ability> Unlocked, Ability? Equipped, TalentDefinition? SourceTalent = null)
 {
     /// <summary>Highest usable rank.</summary>
     public Ability? Best => Unlocked.Count > 0 ? Unlocked[^1] : null;

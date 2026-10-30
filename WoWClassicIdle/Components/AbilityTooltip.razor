@@ -27,7 +27,15 @@ else
                 <span>@AbilityText.TimingText(Ability)</span>
             </span>
             <span class="tt-line @(levelTooLow ? "tt-req-missing" : "")">Requires Level @Ability.LevelRequired</span>
+            @if (SourceTalent is not null)
+            {
+                <span class="tt-line tt-req-missing">Requires Talent: @SourceTalent.Name (@TalentRegistry.GetTreeName(SourceTalent))</span>
+            }
             <span class="tt-desc">@AbilityText.Description(Ability)</span>
+            @if (SourceTalent is not null && TalentRegistry.DescribeRequirements(SourceTalent) is { Length: > 0 } requirements)
+            {
+                <span class="tt-note">Talent needs: @requirements</span>
+            }
             @if (note != "")
             {
                 <span class="tt-note">@note</span>
@@ -46,6 +54,9 @@ else
 
     /// <summary>Player level – if it is too low, "Requires Level" is shown in red.</summary>
     [Parameter] public int? PlayerLevel { get; set; }
+
+    /// <summary>Talent that still has to be learned for this ability – shown as a missing requirement.</summary>
+    [Parameter] public TalentDefinition? SourceTalent { get; set; }
 
     /// <summary>Remaining duration, if the tooltip belongs to an active buff.</summary>
     [Parameter] public double? BuffRemaining { get; set; }

@@ -8,9 +8,9 @@
     string? exclusive = ExclusiveGroups.LabelOf(Group.Display);
     bool blocked = Conflict is not null && !Group.IsLocked;
 }
-<div class="spell-card @(Group.IsLocked ? "locked" : "") @(equipped ? "equipped" : "") @(Group.CanUpgrade ? "upgradable" : "") @(blocked ? "excluded" : "")"
+<div class="spell-card @(Group.IsLocked ? "locked" : "") @(Group.SourceTalent is not null ? "talent-locked" : "") @(equipped ? "equipped" : "") @(Group.CanUpgrade ? "upgradable" : "") @(blocked ? "excluded" : "")"
      style="--i: @Math.Min(Index, 12)">
-    <AbilityTooltip Ability="eff" PlayerLevel="Player.Level" Class="tt-block">
+    <AbilityTooltip Ability="eff" PlayerLevel="Player.Level" SourceTalent="Group.SourceTalent" Class="tt-block">
         <div class="spell-main" @onclick="Toggle">
             <span class="spell-icon">
                 <img src="@Group.Display.IconUrl" alt="@Group.Name" />
@@ -28,7 +28,11 @@
                     }
                 </strong>
                 @* Exclusive group: only one spell at a time; on conflict it says what would be replaced *@
-                @if (blocked)
+                @if (Group.SourceTalent is { } source)
+                {
+                    <small class="talent-source">✦ @source.Name · @TalentRegistry.GetTreeName(source)</small>
+                }
+                else if (blocked)
                 {
                     <small class="excl-line conflict" title="@($"Only one {exclusive} can be equipped at a time.")">
                         ⇄ Replaces @Conflict!.Name (Slot @ConflictSlot)
@@ -41,7 +45,11 @@
                     </small>
                 }
             </div>
-            @if (Group.IsLocked)
+            @if (Group.SourceTalent is not null)
+            {
+                <span class="pool-action talent-badge">Talent</span>
+            }
+            else if (Group.IsLocked)
             {
                 <span class="pool-action locked-badge">Lv. @Group.Display.LevelRequired</span>
             }

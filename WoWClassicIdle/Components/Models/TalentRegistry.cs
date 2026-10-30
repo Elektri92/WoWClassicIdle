@@ -22,6 +22,21 @@ public static partial class TalentRegistry
     public static TalentDefinition? GetById(CharacterClass cls, string id) =>
         GetTalents(cls).FirstOrDefault(t => t.Id == id);
 
+    public static string GetTreeName(TalentDefinition talent) => GetTreeNames(talent.Class)[talent.TreeIndex];
+
+    /// <summary>What it takes to learn the talent, e.g. "10 points in Arms, Level 20, Battle Stance". Empty = nothing.</summary>
+    public static string DescribeRequirements(TalentDefinition talent)
+    {
+        var parts = new List<string>();
+        if (talent.Row > 0)
+            parts.Add($"{talent.Row * 5} points in {GetTreeName(talent)}");
+        if (talent.LevelRequired > 0)
+            parts.Add($"Level {talent.LevelRequired}");
+        if (talent.RequiresTalentId is not null)
+            parts.Add(GetById(talent.Class, talent.RequiresTalentId)?.Name ?? talent.RequiresTalentId);
+        return string.Join(", ", parts);
+    }
+
     public static string[] GetTreeNames(CharacterClass cls) => cls switch
     {
         CharacterClass.Warrior  => new[] { "Arms", "Fury", "Protection" },

@@ -16,7 +16,7 @@ public partial class AbilityLoadout
     private int _statusVersion;
     private string _search = "";
     private AbilityCategory _categoryFilter = AbilityCategory.All;
-    private bool _comingUpExpanded = false;
+    private bool _comingUpExpanded = true;
 
     private CharacterClass SelectedClass => Engine.PlayerClass;
 
@@ -57,20 +57,24 @@ public partial class AbilityLoadout
         .Count();
 
     /// <summary>
-    /// Group ranks per spell. Visible are usable ranks and level-locked ranks
-    /// (talent-exclusive ones only after unlocking). Order = first occurrence in the pool.
+    /// Group ranks per spell. Visible are usable ranks, level-locked ranks and talent abilities
+    /// not learned yet (those regardless of the form: Maul shows up before Bear Form is learned).
+    /// Order = first occurrence in the pool.
     /// </summary>
     private IReadOnlyList<SpellRankGroup> BuildGroups()
     {
         var granted = TalentGrantedAbilityIds;
         return CurrentPool
-            .Where(a => IsUsableNow(a) && (IsUnlocked(a, granted) || (a.LevelRequired > Engine.Player.Level && !a.TalentUnlockOnly)))
+            .Where(a => IsUsableNow(a) || (a.TalentUnlockOnly && !IsUnlocked(a, granted)))
             .GroupBy(a => a.Name)
             .Select(g =>
             {
                 var ranks = g.OrderBy(a => a.Rank).ThenBy(a => a.LevelRequired).ToList();
                 var unlocked = ranks.Where(a => IsUnlocked(a, granted)).ToList();
-                return new SpellRankGroup(g.Key, ranks, unlocked, ranks.FirstOrDefault(a => CurrentLoadout.IsEquipped(a.Id)));
+                var source = unlocked.Count == 0 && ranks[0].TalentUnlockOnly && !granted.Contains(ranks[0].Id)
+                    ? TalentRegistry.GetGrantingTalents(SelectedClass, ranks[0].Id).FirstOrDefault()
+                    : null;
+                return new SpellRankGroup(g.Key, ranks, unlocked, ranks.FirstOrDefault(a => CurrentLoadout.IsEquipped(a.Id)), source);
             })
             .ToList();
     }
@@ -94,8 +98,14 @@ public partial class AbilityLoadout
     // Spells with at least one usable rank
     private IReadOnlyList<SpellRankGroup> FilteredKnown => FilteredGroups.Where(g => !g.IsLocked).ToList();
 
-    // "Coming Up": spells of which no rank is usable yet (higher ranks of known spells are on their rank bar)
-    private IReadOnlyList<SpellRankGroup> FilteredComingUp => FilteredGroups.Where(g => g.IsLocked).ToList();
+    // "Coming Up": spells of which no rank is usable yet (higher ranks of known spells are on their rank bar);
+    // level-locked spells first, then talent abilities by tree and row
+    private IReadOnlyList<SpellRankGroup> FilteredComingUp => FilteredGroups
+        .Where(g => g.IsLocked)
+        .OrderBy(g => g.SourceTalent is not null)
+        .ThenBy(g => g.SourceTalent?.TreeIndex ?? 0)
+        .ThenBy(g => g.SourceTalent?.Row ?? 0)
+        .ToList();
 
     /// <summary>1-based slot number of the equipped rank, 0 = not equipped.</summary>
     private int SlotNumberOf(Ability? a) =>

@@ -197,6 +197,24 @@
 .ability-loadout-page .spell-card.equipped:hover .equipped-tag .tag-hover { display: inline; }
 .ability-loadout-page .spellbook .locked-badge { color: #8a2a1a !important; border-color: rgba(138, 42, 26, .5) !important; }
 
+/* Talent abilities not learned yet: source must stay readable, so less faded than level-locked spells */
+.ability-loadout-page .spellbook .spell-card.talent-locked .spell-main { opacity: .85; }
+.ability-loadout-page .spellbook .spell-card.talent-locked .spell-icon img { filter: saturate(.35); }
+.ability-loadout-page .spellbook .talent-source {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #1f5a14;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+.ability-loadout-page .spellbook .pool-action.talent-badge {
+    border-color: rgba(47, 110, 30, .55);
+    color: #1f5a14;
+    font-weight: 700;
+}
+
 /* ── Rank bar on parchment ── */
 .ability-loadout-page .spellbook .rank-track {
     padding: 0 6px 4px;
