@@ -84,7 +84,10 @@
     box-shadow: inset 4px 0 0 #8a5a10, 0 0 0 1px rgba(255, 220, 90, .6), 0 0 10px rgba(255, 190, 40, .55);
 }
 .ability-loadout-page .spellbook .spell-card.upgradable { border-color: rgba(47, 110, 30, .55); }
-.ability-loadout-page .spellbook .spell-card.locked { opacity: .6; }
+.ability-loadout-page .spellbook .spell-card.locked { border-color: rgba(70, 40, 10, .27); }
+.ability-loadout-page .spellbook .spell-card.locked .spell-main,
+.ability-loadout-page .spellbook .spell-card.locked .rank-track-line,
+.ability-loadout-page .spellbook .spell-card.locked .rank-node { opacity: .6; }
 
 /* Icon in a dark, beveled frame like in the original */
 .ability-loadout-page .spellbook .spell-icon {

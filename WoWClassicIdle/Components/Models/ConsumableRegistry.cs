@@ -12,7 +12,7 @@ namespace Models
     /// </summary>
     public static class ConsumableRegistry
     {
-        private const double BuffSeconds  = 60;
+        private const double BuffSeconds  = 180;
         private const double FlaskSeconds = 3600;
 
         private static readonly int[] TierSkill = [1, 50, 100, 150, 200, 250];

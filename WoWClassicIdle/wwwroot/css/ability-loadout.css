@@ -389,7 +389,11 @@
                al-equipped-pulse .8s ease-out;
 }
 .ability-loadout-page .spell-card.upgradable { border-color: #3f8a2f; }
-.ability-loadout-page .spell-card.locked { opacity: .55; }
+/* Dim only the content: opacity on the card itself would also fade the tooltips inside it
+   and trap them in the card's stacking context, below the following cards. */
+.ability-loadout-page .spell-card.locked .spell-main,
+.ability-loadout-page .spell-card.locked .rank-track-line,
+.ability-loadout-page .spell-card.locked .rank-node { opacity: .55; }
 
 .ability-loadout-page .spell-main {
     display: flex;
@@ -601,7 +605,8 @@
 .ability-loadout-page .coming-up-toggle:hover { color: var(--wow-gold-soft); }
 .ability-loadout-page .toggle-arrow { font-size: .65rem; transition: transform .25s ease; }
 .ability-loadout-page .coming-up-toggle.open .toggle-arrow { transform: rotate(180deg); }
-.ability-loadout-page .coming-up-list { animation: al-fade-down .3s ease-out both; }
+/* backwards, not both: a filled transform would make the list the containing block of the fixed tooltips */
+.ability-loadout-page .coming-up-list { animation: al-fade-down .3s ease-out backwards; }
 
 .ability-loadout-page .pool-empty {
     padding: 12px 4px;
