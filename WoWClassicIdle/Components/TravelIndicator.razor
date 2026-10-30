@@ -1,0 +1,52 @@
+@using Models
+@inject IdleGameEngine Engine
+@inject NavigationManager Nav
+@implements IDisposable
+
+@* Small travel countdown in the sidebar (css/zone-travel.css). Hidden in /idle, where ZoneTravelScene shows the same.
+   Click leads to the travel scene. *@
+@if (!OnIdlePage && Engine.Travel is { } travel && travel.CurrentLeg is { } current)
+{
+    <a class="travel-indicator" href="idle">
+        <span class="travel-indicator-row">
+            <span class="travel-indicator-mode" aria-hidden="true">@CombatZonePanel.ModeEmoji(current.Leg.Mode)</span>
+            <span class="travel-indicator-target">@CombatZoneRegistry.Get(travel.TargetZoneId)?.Name</span>
+            <span class="travel-indicator-time">@ZoneTravel.FormatDuration(travel.Remaining)</span>
+        </span>
+        <span class="travel-indicator-bar">
+            <span style="width: @((travel.Progress * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+        </span>
+    </a>
+}
+
+@code {
+    private System.Threading.Timer? _refreshTimer;
+    private string _signature = "";
+
+    private bool OnIdlePage => Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0] == "idle";
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        // The engine does not raise TickUpdated for travel outside /idle → poll on our own
+        _refreshTimer = new System.Threading.Timer(_ => OnRefresh(), null, 500, 500);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => _ = InvokeAsync(StateHasChanged);
+
+    // Only re-render when the displayed time changes
+    private void OnRefresh()
+    {
+        var travel = Engine.Travel;
+        var signature = travel is null ? "" : $"{travel.TargetZoneId}|{ZoneTravel.FormatDuration(travel.Remaining)}";
+        if (signature == _signature) return;
+        _signature = signature;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        _refreshTimer?.Dispose();
+    }
+}

@@ -70,15 +70,10 @@
                     </div>
                 }
 
-                <div class="nav-section-label">Game</div>
-                <div class="nav-item">
-                    <NavLink class="nav-link" href="changelog">
-                        <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_scroll_03.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Changelog
-                    </NavLink>
-                </div>
-
             </nav>
         </div>
+
+    <TravelIndicator />
 
     @if (BuildInfo.IsDebug)
     {
@@ -111,6 +106,12 @@
             </div>
         </div>
     }
+
+    <div class="nav-item">
+        <NavLink class="nav-link" href="changelog">
+            <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/inv_scroll_03.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Changelog
+        </NavLink>
+    </div>
 
     <div class="nav-version">v@(Services.UpdateService.AppVersion)</div>
 
