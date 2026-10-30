@@ -2,7 +2,9 @@ using System.Text.Json;
 
 namespace Models;
 
-public sealed record ChangelogEntry(string Version, string Date, List<string> Changes);
+public sealed record ChangelogSection(string Category, List<string> Changes);
+
+public sealed record ChangelogEntry(string Version, string Date, List<ChangelogSection> Sections);
 
 // Release notes embedded in the binary, newest first. CI adds an entry per build (.github/scripts/update_changelog.py).
 public static class ChangelogRegistry

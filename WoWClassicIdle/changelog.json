@@ -2,71 +2,146 @@
   {
     "version": "0.0.38",
     "date": "2026-10-30",
-    "changes": [
-      "The sidebar now shows a travel countdown while you are on other pages. Click it to return to the travel scene.",
-      "New crafting materials now go to bags 1 and 3 first, consumables to bags 2 and 4. Existing stacks are always topped up before a new slot is used.",
-      "Added craftable level 10 gear (hands, belt, feet) for Tailoring, Leatherworking and Blacksmithing.",
-      "Crafting and disenchanting skill-up chance now rises by 0.2% per 10 levels across all your characters.",
-      "The Ability Loadout now lists talent abilities you haven't learned yet under Coming Up, including which talent unlocks them and what it requires.",
-      "The profession trainer window now keeps a fixed size, so the Train button no longer moves when you select a recipe."
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "The Ability Loadout now lists talent abilities you haven't learned yet under Coming Up, including which talent unlocks them and what it requires."
+        ]
+      },
+      {
+        "category": "Items",
+        "changes": [
+          "New crafting materials now go to bags 1 and 3 first, consumables to bags 2 and 4. Existing stacks are always topped up before a new slot is used."
+        ]
+      },
+      {
+        "category": "Professions",
+        "changes": [
+          "Added craftable level 10 gear (hands, belt, feet) for Tailoring, Leatherworking and Blacksmithing.",
+          "Crafting and disenchanting skill-up chance now rises by 0.2% per 10 levels across all your characters.",
+          "The profession trainer window now keeps a fixed size, so the Train button no longer moves when you select a recipe."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "The sidebar now shows a travel countdown while you are on other pages. Click it to return to the travel scene."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.37",
     "date": "2026-10-30",
-    "changes": [
-      "The game now reopens the page you were on when you last closed it.",
-      "Added hotkeys: B or C opens the Inventory, F the Idle Fighter, K Professions and N Talents.",
-      "Added a Changelog page to the menu that shows what changed in each build."
+    "sections": [
+      {
+        "category": "Interface",
+        "changes": [
+          "The game now reopens the page you were on when you last closed it.",
+          "Added hotkeys: B or C opens the Inventory, F the Idle Fighter, K Professions and N Talents.",
+          "Added a Changelog page to the menu that shows what changed in each build."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.36",
     "date": "2026-10-30",
-    "changes": [
-      "From level 10, each death costs 5% of your current XP. You never lose a level.",
-      "Current health and mana, rage or energy are now saved and restored on load."
+    "sections": [
+      {
+        "category": "Combat",
+        "changes": [
+          "From level 10, each death costs 5% of your current XP. You never lose a level."
+        ]
+      },
+      {
+        "category": "System",
+        "changes": [
+          "Current health and mana, rage or energy are now saved and restored on load."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.35",
     "date": "2026-10-30",
-    "changes": [
-      "The new ability popup in Idle Fighter now stays until you dismiss it. The × closes it without equipping the ability.",
-      "Elixirs and buff food now last 3 minutes instead of 1.",
-      "Fixed misplaced and see-through tooltips on upcoming abilities in the Ability Loadout."
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "The new ability popup in Idle Fighter now stays until you dismiss it. The × closes it without equipping the ability.",
+          "Fixed misplaced and see-through tooltips on upcoming abilities in the Ability Loadout."
+        ]
+      },
+      {
+        "category": "Items",
+        "changes": [
+          "Elixirs and buff food now last 3 minutes instead of 1."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.34",
     "date": "2026-10-30",
-    "changes": [
-      "Fixed dragging characters into zone slots on Linux."
+    "sections": [
+      {
+        "category": "Interface",
+        "changes": [
+          "Fixed dragging characters into zone slots on Linux."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.33",
     "date": "2026-10-30",
-    "changes": [
-      "Consumables can be toggled on the combat bar with a right-click.",
-      "Health and mana potions now have separate cooldowns.",
-      "Gathering professions: passive runs take 90 seconds instead of 120, and skill-ups only come from passive gathering.",
-      "Professions are now unlocked in the menu for the whole account.",
-      "Updates are now checked every minute while playing, and the game saves before restarting."
+    "sections": [
+      {
+        "category": "Items",
+        "changes": [
+          "Consumables can be toggled on the combat bar with a right-click.",
+          "Health and mana potions now have separate cooldowns."
+        ]
+      },
+      {
+        "category": "Professions",
+        "changes": [
+          "Gathering professions: passive runs take 90 seconds instead of 120, and skill-ups only come from passive gathering.",
+          "Professions are now unlocked in the menu for the whole account."
+        ]
+      },
+      {
+        "category": "System",
+        "changes": [
+          "Updates are now checked every minute while playing, and the game saves before restarting."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.32",
     "date": "2026-10-30",
-    "changes": [
-      "Items can be moved between inventory slots and bags with drag & drop."
+    "sections": [
+      {
+        "category": "Items",
+        "changes": [
+          "Items can be moved between inventory slots and bags with drag & drop."
+        ]
+      }
     ]
   },
   {
     "version": "0.0.31",
     "date": "2026-10-29",
-    "changes": [
-      "Travel now continues while you are on other pages."
+    "sections": [
+      {
+        "category": "World",
+        "changes": [
+          "Travel now continues while you are on other pages."
+        ]
+      }
     ]
   }
 ]

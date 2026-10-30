@@ -18,6 +18,16 @@
     text-shadow: none;
 }
 
+.changelog-category {
+    margin: .6rem 0 .25rem;
+    font-family: var(--wow-font-body);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--wow-gold-pale);
+}
+
 .changelog-list {
     margin: 0;
     padding-left: 1.25rem;

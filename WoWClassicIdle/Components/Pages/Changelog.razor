@@ -20,12 +20,16 @@
                 }
                 <span class="changelog-date">@entry.Date</span>
             </h4>
-            <ul class="changelog-list">
-                @foreach (var change in entry.Changes)
-                {
-                    <li>@change</li>
-                }
-            </ul>
+            @foreach (var group in entry.Sections)
+            {
+                <h5 class="changelog-category">@group.Category</h5>
+                <ul class="changelog-list">
+                    @foreach (var change in group.Changes)
+                    {
+                        <li>@change</li>
+                    }
+                </ul>
+            }
         </section>
     }
 </div>
