@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.0.38",
+    "date": "2026-10-30",
+    "changes": [
+      "The sidebar now shows a travel countdown while you are on other pages. Click it to return to the travel scene.",
+      "New crafting materials now go to bags 1 and 3 first, consumables to bags 2 and 4. Existing stacks are always topped up before a new slot is used.",
+      "Added craftable level 10 gear (hands, belt, feet) for Tailoring, Leatherworking and Blacksmithing.",
+      "Crafting and disenchanting skill-up chance now rises by 0.2% per 10 levels across all your characters.",
+      "The Ability Loadout now lists talent abilities you haven't learned yet under Coming Up, including which talent unlocks them and what it requires.",
+      "The profession trainer window now keeps a fixed size, so the Train button no longer moves when you select a recipe."
+    ]
+  },
+  {
     "version": "0.0.37",
     "date": "2026-10-30",
     "changes": [
