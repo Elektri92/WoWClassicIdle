@@ -94,6 +94,29 @@ namespace Models
         }
 
         /// <summary>
+        /// Moves a stack to another slot (also across containers): fills up a stack of the same item,
+        /// otherwise swaps with whatever is in the target slot. <c>false</c> if there is nothing to move.
+        /// </summary>
+        public bool MoveStack(Bag from, int fromIndex, Bag to, int toIndex)
+        {
+            if (from[fromIndex] is not { } moving) return false;
+            if (ReferenceEquals(from, to) && fromIndex == toIndex) return false;
+
+            if (to[toIndex] is { } existing && existing.Item.Id == moving.Item.Id && existing.SpaceLeft > 0)
+            {
+                moving.Remove(existing.Add(moving.Count));
+                if (moving.Count == 0) from.Take(fromIndex);
+                return true;
+            }
+
+            var displaced = to.Take(toIndex);
+            from.Take(fromIndex);
+            to.Put(toIndex, moving);
+            if (displaced is not null) from.Put(fromIndex, displaced);
+            return true;
+        }
+
+        /// <summary>
         /// Creates or enlarges virtual bags based on the player level.
         /// Bag slots with a manually equipped BagItem (Source != null) are not changed.
         /// </summary>
