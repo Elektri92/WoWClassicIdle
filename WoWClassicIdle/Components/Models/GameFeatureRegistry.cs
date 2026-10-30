@@ -16,7 +16,8 @@ public sealed record GameFeature(
     string? Href = null,
     string? LinkLabel = null,
     Func<CharacterClass, string>? Background = null,
-    bool OncePerAccount = false);
+    bool OncePerAccount = false,
+    string? Header = null);
 
 /// <summary>
 /// Static list of all features unlocked on level-up.
@@ -31,6 +32,7 @@ public static class GameFeatureRegistry
     public const int RareEnemyUnlockLevel = 3;
 
     public const string IdleFighterIntroId = "idle_fighter";
+    public const string DeathXpPenaltyIntroId = "death_xp_penalty";
 
     public static IReadOnlyList<GameFeature> All { get; } = Build();
 
@@ -48,6 +50,18 @@ public static class GameFeatureRegistry
                 "Combat only runs while this page is open and the window is visible.",
             ],
             Background: Art("warrior-arms")),
+
+        // An intro rather than a level unlock: characters already past the level must see it too
+        [DeathXpPenaltyIntroId] = new(DeathXpPenaltyIntroId, Player.DeathXpPenaltyMinLevel, "Death Penalty",
+            "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bone_humanskull_01.jpg",
+            "From now on, dying costs you experience.",
+            [
+                $"Each death removes {Player.DeathXpPenaltyShare * 100:0} % of your current XP towards the next level.",
+                "You can never lose a level – your XP drops to 0 at most.",
+                $"Characters below level {Player.DeathXpPenaltyMinLevel} are not affected.",
+            ],
+            Background: Art("warlock-affliction"),
+            Header: "Death Penalty Active"),
     };
 
     /// <summary>Background in case a feature has none of its own.</summary>

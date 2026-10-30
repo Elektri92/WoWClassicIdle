@@ -11,7 +11,7 @@
             <div class="fu-bg" style="background-image: url('@BackgroundUrl(f)')" aria-hidden="true"></div>
             <div class="fu-rays" aria-hidden="true"></div>
 
-            <div class="fu-header">@(f.UnlockLevel > 0 ? "New Feature Unlocked!" : "New Feature")</div>
+            <div class="fu-header">@(f.Header ?? (f.UnlockLevel > 0 ? "New Feature Unlocked!" : "New Feature"))</div>
 
             <div class="fu-icon-wrap">
                 <img class="fu-icon" src="@f.IconUrl" alt=""
@@ -331,6 +331,10 @@
     {
         if (!Engine.HasActiveCharacter) return;
         var player = Engine.Player;
+
+        // One-time; also covers characters that were already past the level before the penalty existed
+        if (player.Level >= Player.DeathXpPenaltyMinLevel)
+            Engine.RequestFeatureIntro(GameFeatureRegistry.DeathXpPenaltyIntroId);
 
         if (!ReferenceEquals(player, _trackedPlayer) || player.ActiveClass != _trackedClass)
         {

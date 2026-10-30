@@ -59,6 +59,9 @@ public class PlayerSaveData
 {
     public CharacterClass ActiveClass { get; set; }
     public long Copper { get; set; }
+    // Current health and resource (mana/rage/energy); null = legacy save → full as after a fresh start
+    public int? CurrentHp { get; set; }
+    public int? CurrentMana { get; set; }
     // Keys are CharacterClass.ToString() for JSON compatibility
     public Dictionary<string, ClassProgressSaveData> ClassProgress { get; set; } = new();
     public Dictionary<string, int?> EquippedWeaponIdByClass { get; set; } = new();

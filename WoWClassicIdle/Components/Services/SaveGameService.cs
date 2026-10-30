@@ -216,6 +216,8 @@ public class SaveGameService : ISaveGameService, IDisposable
         {
             ActiveClass = p.ActiveClass,
             Copper      = p.Copper,
+            CurrentHp   = p.CurrentHp,
+            CurrentMana = p.CurrentMana,
             DisabledAutoUseConsumables = p.DisabledAutoUse.ToList(),
         };
 

@@ -85,10 +85,18 @@ namespace Models
             return levelsGained;
         }
 
+        /// <summary>From this level on dying costs XP.</summary>
+        public const int DeathXpPenaltyMinLevel = 10;
+
+        /// <summary>Share of the current XP lost per death.</summary>
+        public const double DeathXpPenaltyShare = 0.05;
+
         /// <summary>
-        /// Death penalty: the active class loses a share of its current XP (no level loss).
+        /// Death penalty: from <see cref="DeathXpPenaltyMinLevel"/> on the active class loses
+        /// a share of its current XP (no level loss). Returns the XP actually lost.
         /// </summary>
-        public int LoseXpPercent(double percent) => ActiveProgress.LoseXpPercent(percent);
+        public int ApplyDeathXpPenalty() =>
+            Level >= DeathXpPenaltyMinLevel ? ActiveProgress.LoseXpPercent(DeathXpPenaltyShare) : 0;
 
         /// <summary>
         /// Updates race/faction and ensures that
@@ -141,5 +149,15 @@ namespace Models
         /// </summary>
         public bool MeetsItemRequirements(Item item) =>
             ItemRequirements.MatchesLevel(item, Level) && ItemRequirements.MatchesClass(item, ActiveClass);
+
+        /// <summary>
+        /// Restores health/resource from a save game, clamped to the maximums (consumable buffs are not saved).
+        /// Missing values and 0 HP keep the current value, so nobody loads in dead.
+        /// </summary>
+        internal void RestoreResources(int? hp, int? mana)
+        {
+            if (hp > 0) CurrentHp = Math.Min(hp.Value, Stats.MaxHp);
+            if (mana is { } value) CurrentMana = Math.Clamp(value, 0, Stats.MaxMana);
+        }
     }
 }

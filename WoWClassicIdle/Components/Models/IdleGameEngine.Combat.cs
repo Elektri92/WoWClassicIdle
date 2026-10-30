@@ -373,6 +373,9 @@ public partial class IdleGameEngine
             RespawnRemaining = RespawnDuration;
             LastLog = "Defeated! Resurrecting at the Spirit Healer…";
             HandleConsumablesOnDeath();
+            int xpLost = Player.ApplyDeathXpPenalty();
+            if (xpLost > 0)
+                LastLog += $" Lost {xpLost} XP.";
             ResetCastState();
             _playerAttackAcc = 0;
             _enemyAttackAcc  = 0;

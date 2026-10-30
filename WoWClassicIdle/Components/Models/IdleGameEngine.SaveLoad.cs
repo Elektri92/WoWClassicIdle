@@ -210,6 +210,9 @@ public partial class IdleGameEngine
         if (p.LoadoutAbilityIdsByClass.TryGetValue(p.ActiveClass.ToString(), out var activeIds))
             player.ApplyLoadout(new ClassLoadout { Class = p.ActiveClass, EquippedAbilityIds = activeIds.ToList() });
 
+        // Last: every stat recalculation above refills health and resource
+        player.RestoreResources(p.CurrentHp, p.CurrentMana);
+
         player.Name = CharacterNames.Normalize(data.Name);
 
         var characterSlot = new CharacterSlot
