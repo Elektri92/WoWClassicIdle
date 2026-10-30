@@ -1,5 +1,50 @@
 [
   {
+    "version": "0.0.39",
+    "date": "2026-10-30",
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "Every class now learns three new spec-themed abilities between levels 11 and 15.",
+          "Added a third talent row from level 20 with one talent per tree that improves these abilities.",
+          "Hunter: Mongoose Bite has a shorter cooldown, deals more damage and empowers your next Raptor Strike by 45%. Several talents were strengthened, and the Raptor Strike and Serpent Sting talents now add damage.",
+          "Mage: reduced Arcane damage. Arcane Missiles, Evocation, Arcane Instability and Improved Arcane Missiles are weaker.",
+          "Druid: Bear Form and Cat Form talents are now available from level 12.",
+          "Warrior: the Execute cooldown talent now reduces the cooldown by 20 seconds per rank.",
+          "Default loadouts now always keep your main no-cooldown attack, and ability tooltips describe debuffs, retaliation damage and pet bonuses."
+        ]
+      },
+      {
+        "category": "Combat",
+        "changes": [
+          "The combat meter now also counts healing from lifesteal, Smite, Critical Heal and potions."
+        ]
+      },
+      {
+        "category": "Professions",
+        "changes": [
+          "Added profession bonuses: rare drops from combat zones that improve skill-up chance, speed or double-item chance. Equip them account-wide in 3 slots per profession.",
+          "Crafting and disenchanting now run through one account-wide crafting queue. It survives character switches, is saved, and runs while the professions menu is open.",
+          "Blacksmithing recipes no longer need stone. Each reagent amount is 1 higher instead."
+        ]
+      },
+      {
+        "category": "World",
+        "changes": [
+          "Combat zones now show which profession bonuses drop there and which ones you have found."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "The Changelog page now groups changes by category.",
+          "Switching characters in the profession windows no longer changes your played character once you leave them."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.38",
     "date": "2026-10-30",
     "sections": [
