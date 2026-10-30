@@ -16,6 +16,7 @@ public sealed record SimulationResult(
     int Kills,
     int Deaths,
     int SpawnErrors,
+    int LevelsCompleted,
     long XpGained,
     long CopperGained,
     Stats Stats,
@@ -42,13 +43,13 @@ public sealed record SimulationResult(
     public double XpPerHour    => Hours > 0 ? XpGained / Hours : 0;
     public double CopperPerHour => Hours > 0 ? CopperGained / Hours : 0;
 
-    /// <summary>Play time until the next level in minutes (NaN = no XP gain / max level).</summary>
+    /// <summary>Play time until the next level in minutes (NaN = level never finished within the cap / max level).</summary>
     public double MinutesToLevel
     {
         get
         {
             int needed = StaticHelpers.GetXpForLevel(Level);
-            return needed > 0 && XpPerHour > 0 ? needed / XpPerHour * 60.0 : double.NaN;
+            return needed > 0 && LevelsCompleted > 0 ? needed / XpPerHour * 60.0 : double.NaN;
         }
     }
 }
@@ -123,6 +124,9 @@ public sealed record LevelingResult(
 /// </summary>
 public static class ClassSimulator
 {
+    /// <summary>A benchmark run stops here even if it never finished the level (death XP penalty can make that impossible).</summary>
+    private const double BenchmarkCapMinutes = 3000;
+
     /// <summary>
     /// Spec variants of a class to simulate: one per talent tree,
     /// for the Druid Feral is additionally split into Bear and Cat (4 variants).
@@ -207,7 +211,9 @@ public static class ClassSimulator
     }
 
     /// <summary>
-    /// Benchmark run: level is frozen, XP is counted but not credited.
+    /// Benchmark run: plays the level from 0 XP through to the level-up, death XP penalty included, and starts it
+    /// over until <paramref name="minutes"/> are reached. Only whole passes count, so the average covers the entire XP bar.
+    /// Stops at <see cref="BenchmarkCapMinutes"/> if the level cannot be finished. Gear is fixed, there are no gear drops.
     /// Talents are fully invested into the tree of <paramref name="spec"/>; the loadout
     /// prefers the talent abilities unlocked by that and spec-appropriate abilities.
     /// </summary>
@@ -244,8 +250,9 @@ public static class ClassSimulator
         engine.Meter.Reset();
         engine.CurrentEnemy = null;
 
-        // Auto-equip: rare items are equipped automatically if they are an upgrade
-        engine.AutoEquipDrops = true;
+        // Best green gear of the level for the final loadout; no drops afterwards
+        SimStarterGear.EquipBest(player, cls, level, ct);
+        engine.DisableGearDrops = true;
         // No rare requeue in headless mode – prevents endless death loops
         engine.EnableRareRequeue = false;
 
@@ -255,11 +262,15 @@ public static class ClassSimulator
         long xpGained    = 0;
         long copperStart = player.Copper;
         int  spawnErrors = 0;
-        int  steps       = (int)Math.Round(minutes * 60.0 / engine.StepSeconds);
+        int  needed      = StaticHelpers.GetXpForLevel(level);
+        int  completed   = 0;
+        int  minSteps    = (int)Math.Round(minutes * 60.0 / engine.StepSeconds);
+        int  maxSteps    = (int)Math.Round(Math.Max(minutes, BenchmarkCapMinutes) * 60.0 / engine.StepSeconds);
+        int  steps       = 0;
 
-        for (int i = 0; i < steps; i++)
+        while (steps < maxSteps && (steps < minSteps || (needed > 0 && completed == 0)))
         {
-            if ((i & 1023) == 0) ct.ThrowIfCancellationRequested();
+            if ((steps & 1023) == 0) ct.ThrowIfCancellationRequested();
 
             try
             {
@@ -270,14 +281,19 @@ public static class ClassSimulator
                 // Spawner has no template for the rolled enemy level
                 spawnErrors++;
             }
+            steps++;
 
-            // Freeze level: record XP and reset it
-            if (progress.Xp > 0 || progress.Level != level)
+            // Level finished: count it and play the same level again from 0 XP
+            if (progress.Level != level)
             {
-                xpGained += progress.Xp;
+                completed++;
+                xpGained += needed;
                 progress.SetLevel(level);
+                if (player.EquippedWeapon is { } weapon) player.ForceEquipWeapon(weapon);   // back to the stats of the level
+                if (steps >= minSteps) break;
             }
         }
+        xpGained += progress.Xp;
 
         var meter = engine.Meter.GetSnapshot();
         long auto = meter.Rows.FirstOrDefault(r => r.Name == CombatMeter.AutoAttackName)?.Total ?? 0;
@@ -293,6 +309,7 @@ public static class ClassSimulator
             Kills: engine.TotalKills,
             Deaths: engine.TotalDeaths,
             SpawnErrors: spawnErrors,
+            LevelsCompleted: completed,
             XpGained: xpGained,
             CopperGained: player.Copper - copperStart,
             Stats: player.Stats,
@@ -342,8 +359,9 @@ public static class ClassSimulator
         engine.Meter.Reset();
         engine.CurrentEnemy = null;
 
-        // Auto-equip: rare items are equipped automatically if they are an upgrade
-        engine.AutoEquipDrops = true;
+        // Best green gear of the level for the final loadout; no drops afterwards
+        SimStarterGear.EquipBest(player, cls, levelFrom, ct);
+        engine.DisableGearDrops = true;
         // No rare requeue in headless mode – prevents endless death loops
         engine.EnableRareRequeue = false;
 
@@ -354,6 +372,7 @@ public static class ClassSimulator
         int  spawnErrors = 0;
         int  maxSteps    = (int)Math.Round(maxMinutes * 60.0 / engine.StepSeconds);
         int  lastLevel   = levelFrom;
+        string gearKey   = SimStarterGear.AvailabilityKey(cls, levelFrom);
         double simSeconds = 0;
         var levelTimings   = new List<LevelTiming>();
         var loadoutHistory = new List<LoadoutSnapshot>();
@@ -384,6 +403,11 @@ public static class ClassSimulator
 
                 lastLevel = currentLevel;
 
+                // New green items: put them on before the talent trials, the final choice is measured below
+                string newGearKey = SimStarterGear.AvailabilityKey(cls, currentLevel);
+                if (newGearKey != gearKey)
+                    SimStarterGear.Equip(player, cls, specIndex, currentLevel, spec.Form);
+
                 // Invest talents first via trial fight (takes over new talent abilities into the loadout if any)
                 talentPicks.AddRange(AutoInvestTalentsForSpec(player, cls, spec, ct));
                 var seedIds = player.GetCurrentLoadout().EquippedAbilityIds.ToList();
@@ -406,6 +430,12 @@ public static class ClassSimulator
                 var newLoadout = new ClassLoadout { Class = cls };
                 newLoadout.EquippedAbilityIds = newAbilityIds;
                 player.ApplyLoadout(newLoadout);
+
+                if (newGearKey != gearKey)
+                {
+                    SimStarterGear.EquipBest(player, cls, currentLevel, ct);
+                    gearKey = newGearKey;
+                }
 
                 if (currentLevel >= levelTo) break;
             }

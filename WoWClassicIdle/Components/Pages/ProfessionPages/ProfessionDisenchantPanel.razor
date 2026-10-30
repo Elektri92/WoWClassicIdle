@@ -1,14 +1,10 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Disenchanting: destroy green items from the bags → dust/essence by item level. 1 s cast time per item (active slot). *@
+@* Disenchanting: destroy green items from the bags → dust/essence by item level. 1 s cast time per item, each one a position in the crafting queue. *@
 <div class="al-panel">
     <div class="disenchant-head">
         <h4>Disenchant</h4>
-        @if (Run is not null)
-        {
-            <button class="prof-mini-btn" @onclick="Engine.StopActiveProfession">Stop</button>
-        }
         @if (Candidates.Count > 0)
         {
             <button class="prof-mini-btn @(_confirmAll ? "danger" : "")" disabled="@(UsableCount == 0)" @onclick="DisenchantAll">
@@ -21,11 +17,6 @@
         }
     </div>
     <p class="wow-hint">Destroys an uncommon (green) item from your bags and extracts enchanting materials based on its level (@IdleGameEngine.DisenchantCastSeconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) s per item). Equipped items are not affected.</p>
-
-    <div class="wow-progress prof-run-bar">
-        <div class="bar" style="width: @RunPercent%"></div>
-        <span>@RunLabel</span>
-    </div>
 
     @if (Candidates.Count == 0)
     {
@@ -96,15 +87,6 @@
     private IReadOnlyList<DisenchantCandidate> Candidates => Engine.DisenchantCandidates();
 
     private int UsableCount => Candidates.Count(c => Engine.DisenchantBlocker(c.Item) is null);
-
-    private ActiveProfessionRun? Run =>
-        Engine.ActiveProfessionRun is { DisenchantQueue: not null } run && run.Profession == Progress.Profession ? run : null;
-
-    private string RunPercent => ((Run?.Progress ?? 0) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-
-    private string RunLabel => Run is { DisenchantQueue: { } queue } && queue.TryPeek(out var next)
-        ? $"Disenchanting {next.Name}… ({queue.Count} left)"
-        : "Idle";
 
     private void DisenchantOne(Item item)
     {

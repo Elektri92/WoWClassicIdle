@@ -15,7 +15,8 @@ public static class SimAiExport
 
     private const string MethodNote =
         "Talents and loadout are chosen per run by measured XP/h (10-minute trial fights, averaged over 3 fixed seeds; " +
-        "XP/h combines damage, survival and mana). Talent impact = XP/h with the point vs. without it.";
+        "XP/h combines damage, survival, mana and the death XP penalty). Talent impact = XP/h with the point vs. without it. " +
+        "Gear: best green items available at the level, measured by XP/h; no gear drops.";
 
     // ─── Level Benchmark ─────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ public static class SimAiExport
 
         sb.AppendLine("# WoW Classic Idle – Simulation: Level Benchmark");
         sb.AppendLine($"- Classes: {string.Join(", ", sorted.Select(r => r.Class).Distinct())}");
-        sb.AppendLine($"- Levels: {levels.First()}–{levels.Last()} (level frozen per run) · game time per run: {Num(minutesPerRun, "0")} min · outlier threshold: ±{outlierPercent}% vs. level median");
+        sb.AppendLine($"- Levels: {levels.First()}–{levels.Last()} (each level played through from 0 XP with the death XP penalty, repeated up to at least {Num(minutesPerRun, "0")} min; – under Min to level = never finished within 50 h) · outlier threshold: ±{outlierPercent}% vs. level median");
         sb.AppendLine($"- Method: {MethodNote}");
         sb.AppendLine();
 

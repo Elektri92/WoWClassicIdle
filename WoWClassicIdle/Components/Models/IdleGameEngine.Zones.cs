@@ -16,6 +16,9 @@ public partial class IdleGameEngine
     public ZoneTravelState? Travel => ActiveCharacter?.Travel;
     public bool IsTraveling => Travel is not null;
 
+    /// <summary>Travel of the played character, unaffected by a temporary switch in the profession windows.</summary>
+    public ZoneTravelState? CombatCharacterTravel => CombatSlotId is { } id ? GetCharacter(id)?.Travel : null;
+
     /// <summary>Ground travel of the active character (walking, form, mount).</summary>
     public GroundTravel GroundTravel => ZoneTravel.GroundFor(PlayerClass, Race, Player.Level);
 

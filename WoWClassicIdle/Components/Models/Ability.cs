@@ -201,6 +201,10 @@ public sealed partial record Ability
     public bool IsLifeTap => LifeTapHpCost > 0 && LifeTapManaGain > 0;
 
     public bool IsDamage => Damage > 0;
+
+    /// <summary>Damage ability without a real cooldown (Fireball, Smite, Sinister Strike) – keeps a default loadout attacking.</summary>
+    public bool IsFiller => IsDamage && Cooldown <= 1;
+
     public bool IsHeal => Heal > 0;
     public bool IsBuff => BuffDuration > 0;
     public bool IsHot => IsBuff && (HotTotalHeal > 0 || HotHealPct > 0);

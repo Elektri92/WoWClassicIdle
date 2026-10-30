@@ -8,7 +8,7 @@
 
     <p class="wow-hint">
         Drag characters of any class onto a zone. Up to @Professions.MaxPassiveWorkers characters work passively, spread over any zones,
-        and each run has a @Professions.FormatChance(Professions.PassiveSkillUpChance)% chance for a skill-up.
+        and each run has a @Professions.FormatChance(Engine.ProfessionSkillUpChance(Definition))% chance for a skill-up.
         Drag a character back to the bar to remove it. Higher zones unlock with your @Definition.Name skill.
     </p>
 
@@ -139,7 +139,7 @@
                 ? $"Passive slot {index + 1} – drag a character here"
                 : $"All {Professions.MaxPassiveWorkers} passive workers of {Definition.Name} are in use";
         string name = IdleGameEngine.CharacterName(character);
-        var remaining = TimeSpan.FromSeconds(Math.Max(0, Professions.PassiveDurationSeconds - assignment.Elapsed));
+        var remaining = TimeSpan.FromSeconds(Math.Max(0, Professions.PassiveDurationSeconds - assignment.Elapsed) / Engine.ProfessionSpeedFactor(Definition.Profession));
         return $"{name} – next run in {remaining:m\\:ss}";
     }
 

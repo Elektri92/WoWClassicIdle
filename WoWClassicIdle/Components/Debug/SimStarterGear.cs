@@ -4,111 +4,143 @@ namespace DebugTools;
 using Models;
 
 /// <summary>
-/// Equips a simulation character with level-appropriate green (Uncommon) gear.
-/// Stat values match the green loot tier levels; stats are chosen per spec.
-/// The generated items have negative IDs (never saved, simulator only).
+/// Equips a simulation character with the best green (Uncommon) gear available at its level:
+/// real items from the green loot tables and the crafted sets of its class. Weapon: best green tier weapon.
+/// The simulator has no gear drops, so the gear only changes through this class.
 /// </summary>
 internal static class SimStarterGear
 {
-    private static readonly (ArmorSlot Slot, string Name, string Icon)[] Slots =
+    private static readonly string[] StatNames = ["Strength", "Agility", "Stamina", "Spirit", "Intellect"];
+
+    /// <summary>Stat priorities measured per character: each single stat and each pair of two stats.</summary>
+    private static readonly PrimaryStats[] Priorities =
     [
-        (ArmorSlot.Head,    "Helm",      "inv_helmet_03"),
-        (ArmorSlot.Neck,    "Necklace",  "inv_jewelry_necklace_06"),
-        (ArmorSlot.Chest,   "Chestpiece","inv_chest_cloth_05"),
-        (ArmorSlot.Wrists,  "Bracers",   "inv_bracer_07"),
-        (ArmorSlot.Hands,   "Gloves",    "inv_gauntlets_04"),
-        (ArmorSlot.Belt,    "Belt",      "inv_belt_05"),
-        (ArmorSlot.Legs,    "Legguards", "inv_pants_03"),
-        (ArmorSlot.Feet,    "Boots",     "inv_boots_08"),
-        (ArmorSlot.Cape,    "Cloak",     "inv_misc_cape_18"),
-        (ArmorSlot.Ring,    "Ring",      "inv_jewelry_ring_03"),
-        (ArmorSlot.Trinket, "Trinket",   "inv_trinket_naxxramas01"),
+        .. Enumerable.Range(0, StatNames.Length).Select(a => StatsOf(a)),
+        .. Enumerable.Range(0, StatNames.Length)
+            .SelectMany(a => Enumerable.Range(a + 1, StatNames.Length - a - 1).Select(b => StatsOf(a, b))),
     ];
 
-    /// <summary>Equips the player with level-appropriate green starter gear for the given spec.</summary>
-    public static void Equip(Player player, CharacterClass cls, int specIndex, int level, DruidForm? form = null)
+    /// <summary>Equips the best green gear of the level with the spec's usual stats (starting point before talents and loadout).</summary>
+    public static PrimaryStats Equip(Player player, CharacterClass cls, int specIndex, int level, DruidForm? form = null)
     {
-        var weapon = WeaponRegistry.GetTierWeaponForLevel(cls, level);
-        if (weapon is not null)
-            player.ForceEquipWeapon(weapon);
-
-        int statVal       = StatValForLevel(level);
-        int reqLevel      = Math.Max(1, level - 4);
         // Bear tanks like a Protection Warrior → Str+Sta instead of the default Feral combination
-        var bonusFn       = form == DruidForm.Bear
-            ? (Func<int, PrimaryStats>)(v => new PrimaryStats { Strength = v, Stamina = v })
-            : BonusFn(cls, specIndex);
-        int fakeId        = -1;
-
-        foreach (var (slot, name, icon) in Slots)
-        {
-            var item = new ArmorItem(
-                fakeId--,
-                $"Worn {name}",
-                icon,
-                slot,
-                bonusFn(statVal),
-                reqLevel,
-                ItemQuality.Uncommon,
-                SellPrice: 0);
-            player.ForceEquipArmor(item);
-        }
+        var priority = form == DruidForm.Bear
+            ? new PrimaryStats { Strength = 1, Stamina = 1 }
+            : DefaultPriority(cls, specIndex);
+        EquipFor(player, cls, level, priority);
+        return priority;
     }
 
-    // Matches the loot tier levels of RareLootRegistry (green comboVal values)
-    private static int StatValForLevel(int level) => level switch
+    /// <summary>Equips the green gear of the level that yields the most XP/h with the current loadout.</summary>
+    public static void EquipBest(Player player, CharacterClass cls, int level, CancellationToken ct)
     {
-        <= 5  => 1,
-        <= 10 => 2,
-        <= 15 => 2,
-        <= 20 => 3,
-        <= 25 => 4,
-        <= 30 => 5,
-        <= 35 => 6,
-        <= 40 => 7,
-        <= 45 => 8,
-        <= 50 => 9,
-        <= 55 => 10,
-        _     => 11,
+        var ids = player.GetCurrentLoadout().EquippedAbilityIds.ToList();
+        var candidates = Priorities.Select(p => BuildSet(cls, level, p)).DistinctBy(SetKey).ToList();
+
+        IReadOnlyList<ArmorItem> best = candidates[0];
+        double bestScore = double.MinValue;
+        foreach (var set in candidates)
+        {
+            Apply(player, cls, level, set);
+            double score = SimLoadoutOptimizer.Evaluate(player, ids, ct);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best      = set;
+            }
+        }
+        Apply(player, cls, level, best);
+    }
+
+    /// <summary>Changes when a new level offers new green items – otherwise the gear does not need to be measured again.</summary>
+    public static string AvailabilityKey(CharacterClass cls, int level) =>
+        $"{AvailableItems(cls, level).Count}/{WeaponRegistry.GetTierWeaponForLevel(cls, level)?.Id}";
+
+    private static void EquipFor(Player player, CharacterClass cls, int level, PrimaryStats priority) =>
+        Apply(player, cls, level, BuildSet(cls, level, priority));
+
+    private static void Apply(Player player, CharacterClass cls, int level, IReadOnlyList<ArmorItem> set)
+    {
+        if (WeaponRegistry.GetTierWeaponForLevel(cls, level) is { } weapon)
+            player.ForceEquipWeapon(weapon);
+
+        player.EquippedArmor.Clear();
+        foreach (var item in set)
+            player.ForceEquipArmor(item);
+    }
+
+    /// <summary>Best item per slot for the priority: most prioritized stats, then most stats in total, then the widest spread.</summary>
+    private static IReadOnlyList<ArmorItem> BuildSet(CharacterClass cls, int level, PrimaryStats priority) =>
+        AvailableItems(cls, level)
+            .GroupBy(i => i.Slot)
+            .Select(slot => slot
+                .OrderByDescending(i => Score(i.Bonuses, priority))
+                .ThenByDescending(i => Sum(i.Bonuses))
+                .ThenByDescending(i => Covered(i.Bonuses, priority))
+                .ThenBy(i => i.Id)
+                .First())
+            .ToList();
+
+    private static List<ArmorItem> AvailableItems(CharacterClass cls, int level)
+    {
+        var drops = Enumerable.Range(1, Math.Max(1, level))
+            .Select(RareLootRegistry.GetLootTable)
+            .Distinct()
+            .SelectMany(table => table);
+        var crafted = CraftedGearRegistry.Items.Where(i => i.RequiredClass == cls);
+        return drops.Concat(crafted)
+            .Where(i => i.Quality == ItemQuality.Uncommon && i.RequiredLevel <= level)
+            .ToList();
+    }
+
+    private static string SetKey(IReadOnlyList<ArmorItem> set) =>
+        string.Join(",", set.Select(i => i.Id).Order());
+
+    private static int Score(PrimaryStats b, PrimaryStats p) =>
+        b.Strength * p.Strength + b.Agility * p.Agility + b.Stamina * p.Stamina + b.Spirit * p.Spirit + b.Intelligence * p.Intelligence;
+
+    private static int Sum(PrimaryStats b) =>
+        b.Strength + b.Agility + b.Stamina + b.Spirit + b.Intelligence;
+
+    private static int Covered(PrimaryStats b, PrimaryStats p) =>
+        (b.Strength > 0 && p.Strength > 0 ? 1 : 0) + (b.Agility > 0 && p.Agility > 0 ? 1 : 0) + (b.Stamina > 0 && p.Stamina > 0 ? 1 : 0)
+        + (b.Spirit > 0 && p.Spirit > 0 ? 1 : 0) + (b.Intelligence > 0 && p.Intelligence > 0 ? 1 : 0);
+
+    private static PrimaryStats StatsOf(params int[] stats) => new()
+    {
+        Strength     = stats.Contains(0) ? 1 : 0,
+        Agility      = stats.Contains(1) ? 1 : 0,
+        Stamina      = stats.Contains(2) ? 1 : 0,
+        Spirit       = stats.Contains(3) ? 1 : 0,
+        Intelligence = stats.Contains(4) ? 1 : 0,
     };
 
-    // Returns a spec-appropriate 2-stat combination
-    private static Func<int, PrimaryStats> BonusFn(CharacterClass cls, int specIndex) =>
+    // Spec-appropriate 2-stat combination as the starting point
+    private static PrimaryStats DefaultPriority(CharacterClass cls, int specIndex) =>
         (cls, specIndex) switch
         {
             // Warrior: Arms(0)/Fury(1) → Str+Agi; Protection(2) → Str+Sta
-            (CharacterClass.Warrior, 2) => v => new PrimaryStats { Strength = v, Stamina      = v },
-            (CharacterClass.Warrior, _) => v => new PrimaryStats { Strength = v, Agility      = v },
+            (CharacterClass.Warrior, 2) => new PrimaryStats { Strength = 1, Stamina      = 1 },
+            (CharacterClass.Warrior, _) => new PrimaryStats { Strength = 1, Agility      = 1 },
 
             // Paladin: Holy(0) → Int+Spi; Protection(1) → Str+Sta; Retribution(2) → Str+Agi
-            (CharacterClass.Paladin, 0) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
-            (CharacterClass.Paladin, 1) => v => new PrimaryStats { Strength = v, Stamina      = v },
-            (CharacterClass.Paladin, 2) => v => new PrimaryStats { Strength = v, Agility      = v },
+            (CharacterClass.Paladin, 0) => new PrimaryStats { Intelligence = 1, Spirit   = 1 },
+            (CharacterClass.Paladin, 1) => new PrimaryStats { Strength = 1, Stamina      = 1 },
+            (CharacterClass.Paladin, 2) => new PrimaryStats { Strength = 1, Agility      = 1 },
 
             // Hunter: Beast Mastery(0)/Marksmanship(1)/Survival(2) → Agi+Sta
-            (CharacterClass.Hunter,  _) => v => new PrimaryStats { Agility  = v, Stamina      = v },
+            (CharacterClass.Hunter,  _) => new PrimaryStats { Agility  = 1, Stamina      = 1 },
 
             // Rogue: all specs → Agi+Str
-            (CharacterClass.Rogue,   _) => v => new PrimaryStats { Agility  = v, Strength     = v },
+            (CharacterClass.Rogue,   _) => new PrimaryStats { Agility  = 1, Strength     = 1 },
 
-            // Priest: Discipline(0)/Holy(1) → Int+Spi; Shadow(2) → Int+Spi
-            (CharacterClass.Priest,  _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
+            // Shaman: Enhancement(1) → Str+Sta (before Windfury it casts like a caster without stamina)
+            (CharacterClass.Shaman,  1) => new PrimaryStats { Strength = 1, Stamina      = 1 },
 
-            // Mage: all specs → Int+Spi
-            (CharacterClass.Mage,    _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
+            // Druid: Feral Combat(1) → Agi+Str
+            (CharacterClass.Druid,   1) => new PrimaryStats { Agility  = 1, Strength     = 1 },
 
-            // Warlock: all specs → Int+Spi
-            (CharacterClass.Warlock, _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
-
-            // Shaman: Elemental(0) → Int+Spi; Enhancement(1) → Str+Sta; Restoration(2) → Int+Spi
-            // (Enhancement with Agi+Str died twice as often – before Windfury it casts like a caster without stamina)
-            (CharacterClass.Shaman, 1)  => v => new PrimaryStats { Strength = v, Stamina      = v },
-            (CharacterClass.Shaman,  _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
-
-            // Druid: Balance(0) → Int+Spi; Feral Combat(1) → Agi+Str; Restoration(2) → Int+Spi
-            (CharacterClass.Druid,  1)  => v => new PrimaryStats { Agility  = v, Strength     = v },
-            (CharacterClass.Druid,   _) => v => new PrimaryStats { Intelligence = v, Spirit   = v },
-
-            _ => v => new PrimaryStats { Strength = v, Stamina = v },
+            // Casters and the remaining specs → Int+Spi
+            _ => new PrimaryStats { Intelligence = 1, Spirit = 1 },
         };
 }

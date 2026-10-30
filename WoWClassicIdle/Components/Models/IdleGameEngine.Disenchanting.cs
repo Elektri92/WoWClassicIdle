@@ -4,12 +4,9 @@ using Models;
 public record DisenchantCandidate(Bag Bag, int Index, Item Item);
 
 // Enchanting: destroy green items from the inventory → dust/essence by item level (EnchantingRegistry).
-// Runs as an active slot with a queue, 1 s cast time per item.
+// Every item is its own position in the crafting queue, 1 s cast time per item.
 public partial class IdleGameEngine
 {
-    /// <summary>Target identifier of the active slot when disenchanting (no recipe).</summary>
-    public const string DisenchantTarget = "disenchant";
-
     public const double DisenchantCastSeconds = 1.0;
 
     /// <summary>All green armor pieces and weapons in the bags (equipped items don't count).</summary>
@@ -26,78 +23,59 @@ public partial class IdleGameEngine
         }
     }
 
-    /// <summary>Reason why the active character cannot disenchant the item (UI text) – <c>null</c> if allowed.</summary>
+    /// <summary>Reason why the Enchanting owner cannot disenchant the item (UI text) – <c>null</c> if allowed.</summary>
     public string? DisenchantBlocker(Item item)
     {
-        if (Player.ProfessionState.Get(Profession.Enchanting) is not { } progress) return "You have not learned Enchanting";
+        if (ProfessionOwner(Profession.Enchanting)?.Player.ProfessionState.Get(Profession.Enchanting) is not { } progress)
+            return "You have not learned Enchanting";
         if (!EnchantingRegistry.CanDisenchant(item)) return "Only uncommon gear can be disenchanted";
         int required = EnchantingRegistry.BandFor(item).RequiredSkill;
         return progress.Skill < required ? $"Requires Enchanting ({required})" : null;
     }
 
-    /// <summary>Running disenchant queue (empty if nothing is being disenchanted).</summary>
+    /// <summary>Items waiting in the crafting queue to be disenchanted.</summary>
     public IReadOnlyList<Item> DisenchantQueue
     {
-        get { lock (_simLock) return ActiveProfessionRun?.DisenchantQueue?.ToList() ?? []; }
+        get { lock (_simLock) return _craftingQueue.Where(e => e.IsDisenchant).Select(e => e.Item).ToList(); }
     }
 
-    /// <summary>
-    /// Queues items for disenchanting; if a disenchant queue is already running, they are appended,
-    /// otherwise it replaces a running pass (like crafting).
-    /// </summary>
+    /// <summary>Appends every disenchantable item as its own position to the crafting queue.</summary>
     public void QueueDisenchant(IEnumerable<Item> items)
     {
         lock (_simLock)
         {
-            if (Player.ProfessionState.Get(Profession.Enchanting) is null) return;
-            var valid = items.Where(i => DisenchantBlocker(i) is null).ToList();
-            if (valid.Count == 0) return;
-
-            if (ActiveProfessionRun is { DisenchantQueue: { } queue } run && run.Player == Player)
-            {
-                foreach (var item in valid) queue.Enqueue(item);
-                run.Remaining = queue.Count;
-            }
-            else
-            {
-                ActiveProfessionRun = new ActiveProfessionRun
-                {
-                    Player = Player, Profession = Profession.Enchanting, Target = DisenchantTarget,
-                    Duration = DisenchantCastSeconds, DisenchantQueue = new Queue<Item>(valid), Remaining = valid.Count,
-                };
-            }
+            foreach (var item in items.Where(i => DisenchantBlocker(i) is null))
+                _craftingQueue.Add(NewDisenchantEntry(item));
         }
         ProfessionUpdated?.Invoke();
     }
 
+    /// <summary>The item must still be in the bags (it may have been sold or equipped since it was queued).</summary>
+    private bool CanDisenchant(Item item) => DisenchantBlocker(item) is null && FindInBags(item) is not null;
+
     /// <summary>
-    /// Disenchants the next still existing item of the queue (vanished/locked ones are skipped).
+    /// Disenchants the item (<see cref="CanDisenchant"/> checked); <c>false</c> = inventory full, the item stays.
     /// Only under <c>_simLock</c> from the profession tick.
     /// </summary>
-    private void ExecuteNextDisenchant(ProfessionProgress progress, Queue<Item> queue)
+    private bool ExecuteDisenchant(ProfessionProgress progress, Item item)
     {
-        while (queue.TryDequeue(out var item))
+        var (bag, index) = FindInBags(item)!.Value;
+        var (material, count) = EnchantingRegistry.RollDisenchant(item, _professionRng);
+        if (RollDoubleYield(Profession.Enchanting)) count *= 2;
+
+        // Remove first – the freed slot is always enough for the material
+        bag.Take(index);
+        int leftover = _sharedInventory.TryAdd(material, count);
+        if (leftover == count)
         {
-            if (DisenchantBlocker(item) is not null || FindInBags(item) is not { } slot) continue;
-
-            var (bag, index) = slot;
-            var (material, count) = EnchantingRegistry.RollDisenchant(item, _professionRng);
-
-            // Remove first – the freed slot is always enough for the material
-            bag.Take(index);
-            int leftover = _sharedInventory.TryAdd(material, count);
-            if (leftover == count)
-            {
-                bag.Put(index, new ItemStack(item));
-                LogProfession(Profession.Enchanting, "Inventory is full", ProfessionLogKind.Error);
-                queue.Clear();
-                return;
-            }
-
-            LogProfession(Profession.Enchanting, material.Name, ProfessionLogKind.Loot, material, count - leftover);
-            RollSkillUp(progress, EnchantingRegistry.BandFor(item).RequiredSkill);
-            return;
+            bag.Put(index, new ItemStack(item));
+            LogProfession(Profession.Enchanting, "Inventory is full", ProfessionLogKind.Error);
+            return false;
         }
+
+        LogProfession(Profession.Enchanting, material.Name, ProfessionLogKind.Loot, material, count - leftover);
+        RollSkillUp(progress, EnchantingRegistry.BandFor(item).RequiredSkill);
+        return true;
     }
 
     private (Bag Bag, int Index)? FindInBags(Item item)

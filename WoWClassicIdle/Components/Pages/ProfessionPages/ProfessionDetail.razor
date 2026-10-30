@@ -25,6 +25,10 @@
                     {
                         <img class="prof-quick-owner" src="@IconUrls.ClassIconUrl(owner.Class)" alt="" onerror="this.remove()" />
                     }
+                    @if (Engine.CanImproveBonuses(def.Profession))
+                    {
+                        <span class="prof-bonus-dot"></span>
+                    }
                 </a>
             }
             <div class="prof-quick-sep"></div>
@@ -51,10 +55,16 @@
             @* Transparent map in the background: gathering professions a random zone, crafting professions the faction capital *@
             <div class="prof-map" aria-hidden="true"
                  style="background-image: url('@(_def.IsGathering ? _gatheringMap : IconUrls.CapitalMapUrl(Engine.Faction))')"></div>
+            <div class="prof-sweep" aria-hidden="true"></div>
             <img class="prof-icon large" src="@_def.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
             <div class="prof-card-body">
-                <h2>@_def.Name</h2>
-                <div class="prof-card-sub">@CategoryLabel(_def)</div>
+                <div class="prof-title-row">
+                    <div>
+                        <h2>@_def.Name</h2>
+                        <div class="prof-card-sub">@CategoryLabel(_def)</div>
+                    </div>
+                    <ProfessionBonusSlots @key="_def.Profession" Profession="_def.Profession" />
+                </div>
                 @if (progress is not null)
                 {
                     <ProfessionSkillBar Progress="progress" />
@@ -129,8 +139,9 @@
             @if (!_def.IsGathering)
             {
                 <p class="wow-hint">
-                    Skill-ups (@Professions.FormatChance(Professions.SkillUpChance + Engine.ProfessionSkillUpBonus)% chance per run) only happen in the active slot while this page is open.
+                    Skill-ups have a @Professions.FormatChance(Engine.ProfessionSkillUpChance(_def))% chance per run.
                     The chance rises by @Professions.FormatChance(Professions.SkillUpChancePerTenLevels)% per 10 levels across all your characters.
+                    The crafting queue only runs while you are in the Professions menu.
                 </p>
             }
 
@@ -138,6 +149,11 @@
         }
     }
     </div>
+
+    @if (_def is not null && Engine.HasActiveCharacter && Engine.ProfessionsUnlockedOnAccount)
+    {
+        <CraftingQueuePanel />
+    }
     </div>
 </div>
 
@@ -152,12 +168,7 @@
     protected override void OnParametersSet()
     {
         var def = Professions.FromSlug(Slug);
-        // Switch to another profession: the old profession's active slot ends when leaving the subpage
-        if (_def is not null && _def != def)
-        {
-            StopOwnActiveRun();
-            ResetTrainer();
-        }
+        if (_def is not null && _def != def) ResetTrainer();
         // New random map only when the profession changes, not on every render
         if (_def != def) _gatheringMap = IconUrls.RandomGatheringMapUrl();
         _def = def;
@@ -176,17 +187,7 @@
     private static string CategoryLabel(ProfessionDefinition def) =>
         (def.IsGathering ? "Gathering" : "Crafting") + (def.IsPrimary ? " · Primary Profession" : " · Shared by all characters");
 
-    private void StopOwnActiveRun()
-    {
-        if (_def is not null && Engine.ActiveProfessionRun?.Profession == _def.Profession)
-            Engine.StopActiveProfession();
-    }
-
     private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
 
-    public void Dispose()
-    {
-        Engine.ProfessionUpdated -= OnProfessionUpdated;
-        StopOwnActiveRun();
-    }
+    public void Dispose() => Engine.ProfessionUpdated -= OnProfessionUpdated;
 }

@@ -51,7 +51,7 @@ namespace Models
         public const int MinCharacterLevel = 5;
         public const int MaxSkill = 300;
 
-        /// <summary>Duration of a pass in the active slot (seconds).</summary>
+        /// <summary>Duration of a craft in the crafting queue (seconds).</summary>
         public const double ActiveDurationSeconds = 3.0;
 
         /// <summary>Duration of a pass per passive slot (seconds).</summary>

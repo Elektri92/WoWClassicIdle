@@ -15,12 +15,13 @@ public partial class IdleGameEngine
             _sharedInventory = new Inventory();
 
             _roster.Clear();
-            ActiveProfessionRun = null;
             _professionLog.Clear();
             _sharedProfessions.Clear();
             _passiveAssignments.Clear();
             _lastProfessionTargets.Clear();
-            TotalKills           = save.TotalKills;
+            _craftingQueue.Clear();
+            _craftingElapsed = 0;
+            TotalKills          = save.TotalKills;
             TotalDeaths          = save.TotalDeaths;
             TotalRareKills       = save.TotalRareKills;
             TotalItemsSold       = save.TotalItemsSold;
@@ -33,6 +34,7 @@ public partial class IdleGameEngine
                 _roster.Add(RestoreSlot(slotData));
 
             RestoreProfessions(save);
+            RestoreProfessionBonuses(save);
             RestoreFeatureIntros(save);
             RestoreMerchantStock(save);
 
@@ -129,6 +131,8 @@ public partial class IdleGameEngine
             if (Enum.TryParse<Profession>(name, out var profession))
                 _lastProfessionTargets[profession] = target;
         }
+
+        RestoreCraftingQueue(save.CraftingQueue ?? []);
 
         UnlockSharedProfessions();
     }

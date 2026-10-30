@@ -7,8 +7,8 @@
     <div class="item-toast-container">
         @foreach (var t in SnapshotToasts())
         {
-            <div @key="t.Id" class="item-toast" style="border-color: @ItemQualityColors.Hex(t.Item.Quality); box-shadow: 0 0 0 1px @ItemQualityColors.Hex(t.Item.Quality), 0 0 20px @(t.Item.Quality == ItemQuality.Rare ? "rgba(0,112,221,0.3)" : "rgba(30,255,0,0.3)"), 0 6px 24px rgba(0,0,0,0.8);" @onclick="() => Dismiss(t.Id)">
-                <div class="item-toast-header">Item Found!</div>
+            <div @key="t.Id" class="item-toast" style="border-color: @ItemQualityColors.Hex(t.Item.Quality); box-shadow: 0 0 0 1px @ItemQualityColors.Hex(t.Item.Quality), 0 0 20px @(t.Item.Quality switch { ItemQuality.Rare => "rgba(0,112,221,0.3)", ItemQuality.Epic => "rgba(163,53,238,0.35)", _ => "rgba(30,255,0,0.3)" }), 0 6px 24px rgba(0,0,0,0.8);" @onclick="() => Dismiss(t.Id)">
+                <div class="item-toast-header">@(t.Item is ProfessionBonus ? "Profession Bonus Found!" : "Item Found!")</div>
                 <div class="item-toast-body">
                     <div class="item-toast-icon-wrap" style="border-color: @ItemQualityColors.Hex(t.Item.Quality);">
                         <img class="item-toast-icon"
@@ -37,7 +37,16 @@
                                 }
                             }
                         }
-                        @if (t.Equipped)
+                        else if (t.Item is ProfessionBonus bonus)
+                        {
+                            <span class="item-toast-slot">@Professions.Get(bonus.Profession).Name Bonus</span>
+                            <span class="item-toast-stat">@bonus.Description</span>
+                        }
+                        @if (t.Item is ProfessionBonus)
+                        {
+                            <span class="item-toast-inventory">Added to your Bonus Bag</span>
+                        }
+                        else if (t.Equipped)
                         {
                             <span class="item-toast-equipped">Equipped!</span>
                         }

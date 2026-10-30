@@ -1,0 +1,63 @@
+@using Models
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+@* Crafting queue next to the profession windows. While this panel is open the queue runs (see IdleGameEngine.CraftingQueue.cs). Styles: wwwroot/css/crafting-queue.css *@
+<aside class="al-panel craft-queue" style="--i: 1">
+    <h4>Crafting Queue</h4>
+
+    @{ var queue = Engine.CraftingQueue; }
+    @if (queue.Count == 0)
+    {
+        <p class="wow-hint craft-queue-empty">Empty. Add recipes from any crafting profession.</p>
+    }
+    else
+    {
+        <div class="wow-progress prof-run-bar">
+            <div class="bar" style="width: @RunPercent%"></div>
+            <span>@(queue[0].IsDisenchant ? "Disenchanting…" : "Crafting…")</span>
+        </div>
+
+        <div class="craft-queue-list">
+            @foreach (var entry in queue)
+            {
+                var item = entry.Item;
+                var owner = Engine.ProfessionOwner(entry.Profession);
+                var def = Professions.Get(entry.Profession);
+                <div @key="entry.Id" class="craft-queue-entry @(entry == queue[0] ? "current" : "")" style="--quality: @ItemQualityColors.Hex(item.Quality)"
+                     title="@($"{def.Name}{(owner is null ? "" : $" – {IdleGameEngine.CharacterName(owner)}")}")">
+                    <img class="craft-list-icon" src="@item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span class="craft-queue-name">@item.Name</span>
+                    @if (entry.IsDisenchant)
+                    {
+                        <img class="craft-queue-kind" src="@def.IconUrl" alt="Disenchant" title="Disenchant" onerror="this.style.visibility='hidden'" />
+                    }
+                    else
+                    {
+                        <span class="craft-queue-count">×@entry.Remaining</span>
+                    }
+                    <button class="craft-queue-remove" title="Remove from queue" aria-label="Remove @item.Name from queue"
+                            @onclick="() => Engine.RemoveFromCraftingQueue(entry.Id)">✕</button>
+                </div>
+            }
+        </div>
+    }
+</aside>
+
+@code {
+    private string RunPercent => (Engine.CraftingProgress * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+    protected override void OnInitialized()
+    {
+        Engine.EnterCraftingMenu();
+        Engine.ProfessionUpdated += OnProfessionUpdated;
+    }
+
+    private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Engine.ProfessionUpdated -= OnProfessionUpdated;
+        Engine.LeaveCraftingMenu();
+    }
+}

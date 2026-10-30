@@ -39,7 +39,8 @@ namespace Models
             CharacterClass Class, string SetName, ArmorStyle Style,
             double Str = 0, double Agi = 0, double Sta = 0, double Int = 0, double Spi = 0);
 
-        private record ProfessionGear(Profession Profession, TierMaterial[] Materials, ClassSet[] Sets);
+        /// <param name="ExtraReagents">Added to the amount of every reagent of the profession.</param>
+        private record ProfessionGear(Profession Profession, TierMaterial[] Materials, ClassSet[] Sets, int ExtraReagents = 0);
 
         private static readonly ArmorStyle Cloth = new(new()
         {
@@ -122,18 +123,19 @@ namespace Models
 
             new(Profession.Blacksmithing,
             [
-                new("Copper",     [(ProfessionRegistry.CopperOre, 1.0), (ProfessionRegistry.RoughStone, 0.5)]),
-                new("Bronze",     [(ProfessionRegistry.CopperOre, 1.0), (ProfessionRegistry.TinOre, 0.5), (ProfessionRegistry.CoarseStone, 0.5)]),
-                new("Iron",       [(ProfessionRegistry.IronOre, 1.0), (ProfessionRegistry.HeavyStone, 0.5)]),
-                new("Mithril",    [(ProfessionRegistry.MithrilOre, 1.0), (ProfessionRegistry.SolidStone, 0.5)]),
-                new("Thorium",    [(ProfessionRegistry.ThoriumOre, 1.0), (ProfessionRegistry.DenseStone, 0.5)]),
-                new("Truesilver", [(ProfessionRegistry.ThoriumOre, 1.0), (ProfessionRegistry.TruesilverOre, 0.5), (ProfessionRegistry.DenseStone, 0.5)]),
-                new("Runed Copper", [(ProfessionRegistry.CopperOre, 1.0), (ProfessionRegistry.RoughStone, 0.5)]),
+                new("Copper",     [(ProfessionRegistry.CopperOre, 1.0)]),
+                new("Bronze",     [(ProfessionRegistry.CopperOre, 1.0), (ProfessionRegistry.TinOre, 0.5)]),
+                new("Iron",       [(ProfessionRegistry.IronOre, 1.0)]),
+                new("Mithril",    [(ProfessionRegistry.MithrilOre, 1.0)]),
+                new("Thorium",    [(ProfessionRegistry.ThoriumOre, 1.0)]),
+                new("Truesilver", [(ProfessionRegistry.ThoriumOre, 1.0), (ProfessionRegistry.TruesilverOre, 0.5)]),
+                new("Runed Copper", [(ProfessionRegistry.CopperOre, 1.0)]),
             ],
             [
                 new(CharacterClass.Warrior, "Vanguard",    Plate, Str: 0.45, Sta: 0.40, Agi: 0.15),
                 new(CharacterClass.Paladin, "Lightforged", Plate, Str: 0.40, Sta: 0.30, Int: 0.30),
-            ]),
+            ],
+            ExtraReagents: 1),
         ];
 
         public static readonly IReadOnlyList<ArmorItem> Items;
@@ -163,7 +165,7 @@ namespace Models
                             SellPrice: 12L * tier.Level * tier.Level, RequiredClass: set.Class);
 
                         var reagents = material.Reagents
-                            .Select(r => new Reagent(r.Item, Math.Max(1, (int)Math.Round(tier.BaseReagents * r.Share * weight))))
+                            .Select(r => new Reagent(r.Item, Math.Max(1, (int)Math.Round(tier.BaseReagents * r.Share * weight)) + gear.ExtraReagents))
                             .ToList();
 
                         items.Add(item);

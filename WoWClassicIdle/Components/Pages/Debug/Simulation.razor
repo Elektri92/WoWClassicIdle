@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="setting">
-            <label>@(_mode == "race" ? "Max game time per class (per spec)" : "Game time per run")</label>
+            <label>@(_mode == "race" ? "Max game time per class (per spec)" : "Min. game time per run (full levels, cap 50 h)")</label>
             <select @bind="_minutesPerRun" disabled="@_running">
                 <option value="10">10 min</option>
                 <option value="30">30 min</option>
@@ -206,7 +206,7 @@
         <!-- ═══ OUTLIERS ═══ -->
         var outliers = FindOutliers(results).ToList();
         <div class="wow-card">
-            <h4>Outliers (DPS · Kills/min · Deaths/h, ≥ @_outlierPercent %)</h4>
+            <h4>Outliers (XP/h · DPS · Kills/min · Deaths/h, ≥ @_outlierPercent %)</h4>
             <p class="wow-hint">+ = better than the level median, − = worse (for Deaths/h: + means fewer deaths).</p>
             @if (outliers.Count == 0)
             {
@@ -1121,7 +1121,7 @@
     /// <summary>Combines outliers per class/spec + metric across contiguous levels.</summary>
     private IEnumerable<Outlier> FindOutliers(List<SimulationResult> results)
     {
-        var keys   = new[] { "dps", "kpm", "dph" };
+        var keys   = new[] { "xph", "dps", "kpm", "dph" };
         var levels = results.Select(r => r.Level).Distinct().OrderBy(l => l).ToList();
 
         foreach (var key in keys)
@@ -1135,7 +1135,7 @@
                     var r = results.FirstOrDefault(x => x.Class == cls && x.SpecIndex == spec && x.Level == lv);
                     if (r is null) continue;
                     double dev = Deviation(metric, metric.Value(r), MedianFor(results, metric, lv));
-                    if (!double.IsNaN(dev) && Math.Abs(dev) >= OutlierThreshold)
+                    if (!double.IsNaN(dev) && Math.Abs(dev) >= OutlierThreshold && IsNotable(key, metric.Value(r), MedianFor(results, metric, lv)))
                         hits.Add((lv, dev));
                 }
 
@@ -1148,6 +1148,12 @@
             }
         }
     }
+
+    /// <summary>Deaths/h medians are small, so a few deaths are a huge percentage: require a real absolute gap.</summary>
+    private static bool IsNotable(string key, double value, double median) =>
+        key != "dph" || Math.Abs(value - median) >= MinDeathsPerHourGap;
+
+    private const double MinDeathsPerHourGap = 5;
 
     private static string FormatLevelList(List<int> levels)
     {

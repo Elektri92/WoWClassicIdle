@@ -64,7 +64,11 @@ public partial class IdleGameEngine
         if (!isCrit) return;
         double critHeal = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.CritHeal);
         if (critHeal > 0)
+        {
+            int hpBefore = Player.CurrentHp;
             Player.RegenHp((int)Math.Round(critHeal));
+            Meter.RecordTalentHeal("Critical Heal", Player.CurrentHp - hpBefore);
+        }
     }
 
     private void SimulateOneStep()
@@ -154,6 +158,7 @@ public partial class IdleGameEngine
                 int lifeHeal = (int)Math.Round(dotDmg * dot.Source.DebuffDotLifesteal);
                 int hpBefore = Player.CurrentHp;
                 Player.RegenHp(lifeHeal);
+                Meter.RecordAbilityHealing(dot.Source, Player.CurrentHp - hpBefore);
                 CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, Player.CurrentHp - hpBefore, dotCrit));
             }
         }
@@ -420,32 +425,10 @@ public partial class IdleGameEngine
     {
         if (!TryAutoSellIfDuplicate(item))
         {
-            // Track loot quality (only in normal mode, not in the debug simulator)
-            if (!AutoEquipDrops)
-            {
-                if (item.Quality == ItemQuality.Uncommon) TotalUncommonLooted++;
-                else if (item.Quality == ItemQuality.Rare) TotalRareItemsLooted++;
-            }
+            if (item.Quality == ItemQuality.Uncommon) TotalUncommonLooted++;
+            else if (item.Quality == ItemQuality.Rare) TotalRareItemsLooted++;
             Player.Inventory.TryAdd(item);
             ItemDropped?.Invoke(item);
-        }
-    }
-
-    /// <summary>Drop a weapon: equip it as an upgrade in AutoEquip mode, otherwise put it into the inventory normally.</summary>
-    private void AddWeaponLootOrSell(WeaponItem weapon)
-    {
-        if (AutoEquipDrops)
-        {
-            bool equipped = Player.EquipWeaponIfUpgrade(weapon, out var displaced);
-            if (!equipped)
-                Player.Inventory.TryAdd(weapon);
-            else if (displaced is not null)
-                Player.Inventory.TryAdd(displaced);
-            ItemDropped?.Invoke(weapon);
-        }
-        else
-        {
-            AddLootOrSell(weapon);
         }
     }
 
@@ -469,33 +452,16 @@ public partial class IdleGameEngine
         var deadEnemy = CurrentEnemy!;
         Player.Copper += deadEnemy.Stats.CopperReward;
         RollCombatTradeDrops(deadEnemy);
+        RollProfessionBonusDrop();
 
-        // Rare loot: armor + 25 % chance for a class weapon
-        if (deadEnemy.IsRare)
+        // Rare loot: armor + 25 % chance for a class weapon (the simulator equips fixed gear per level instead)
+        if (deadEnemy.IsRare && !DisableGearDrops)
         {
-            var rawTable  = RareLootRegistry.GetLootTable(deadEnemy.Stats.Level);
-            // In the simulator only drop class-appropriate items
-            IReadOnlyList<ArmorItem> lootTable = AutoEquipDrops
-                ? rawTable.Where(i => RareLootRegistry.IsUsefulForClass(i.Bonuses, Player.ActiveClass)).ToList()
-                : rawTable;
-
+            var lootTable = RareLootRegistry.GetLootTable(deadEnemy.Stats.Level);
             if (lootTable.Count > 0)
             {
                 var droppedItem = lootTable[_rng.Next(lootTable.Count)] with { RequiredLevel = deadEnemy.Stats.Level };
-                if (AutoEquipDrops)
-                {
-                    // Debug simulator: items are equipped automatically if they are an upgrade.
-                    bool equipped = Player.EquipArmorIfUpgrade(droppedItem, out var displaced);
-                    if (!equipped)
-                        Player.Inventory.TryAdd(droppedItem);
-                    else if (displaced is not null)
-                        Player.Inventory.TryAdd(displaced);
-                    ItemDropped?.Invoke(droppedItem);
-                }
-                else
-                {
-                    AddLootOrSell(droppedItem);
-                }
+                AddLootOrSell(droppedItem);
             }
             else
             {
@@ -508,30 +474,26 @@ public partial class IdleGameEngine
             {
                 var classWeapon = WeaponRegistry.GetTierWeaponForLevel(Player.ActiveClass, deadEnemy.Stats.Level);
                 if (classWeapon is not null)
-                    AddWeaponLootOrSell(classWeapon);
+                    AddLootOrSell(classWeapon);
             }
 
-            // Blue drops only in the normal game – no blue loot is rolled in the simulator
-            if (!AutoEquipDrops)
+            // 15 % chance for blue armor (from level 11)
+            if (_rng.NextDouble() < 0.15)
             {
-                // 15 % chance for blue armor (from level 11)
-                if (_rng.NextDouble() < 0.15)
+                var blueTable = RareLootRegistry.GetBlueLootTable(deadEnemy.Stats.Level);
+                if (blueTable.Count > 0)
                 {
-                    var blueTable = RareLootRegistry.GetBlueLootTable(deadEnemy.Stats.Level);
-                    if (blueTable.Count > 0)
-                    {
-                        var blueArmor = blueTable[_rng.Next(blueTable.Count)] with { RequiredLevel = deadEnemy.Stats.Level };
-                        AddLootOrSell(blueArmor);
-                    }
+                    var blueArmor = blueTable[_rng.Next(blueTable.Count)] with { RequiredLevel = deadEnemy.Stats.Level };
+                    AddLootOrSell(blueArmor);
                 }
+            }
 
-                // 10 % chance for a blue class weapon (from level 10)
-                if (_rng.NextDouble() < 0.10)
-                {
-                    var blueWeapon = WeaponRegistry.GetBlueTierWeaponForLevel(Player.ActiveClass, deadEnemy.Stats.Level);
-                    if (blueWeapon is not null)
-                        AddWeaponLootOrSell(blueWeapon);
-                }
+            // 10 % chance for a blue class weapon (from level 10)
+            if (_rng.NextDouble() < 0.10)
+            {
+                var blueWeapon = WeaponRegistry.GetBlueTierWeaponForLevel(Player.ActiveClass, deadEnemy.Stats.Level);
+                if (blueWeapon is not null)
+                    AddLootOrSell(blueWeapon);
             }
         }
 

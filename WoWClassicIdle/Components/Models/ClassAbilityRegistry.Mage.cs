@@ -169,7 +169,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             CastTime = 2.5,     // 2.5 s cast time; no cooldown
             ManaCost = 22,
-            Damage = 19,        // +4 compared to Rank 1; highest damage of the bolt group without slow
+            Damage = 17,        // +2 compared to Rank 1; highest damage of the bolt group without slow
             LevelRequired = 10,
             Rank = 2,
             ExclusiveGroup = "mage_bolt",
@@ -201,7 +201,7 @@ public static partial class ClassAbilityRegistry
             BuffDuration         = 8,
             MotManaRestorePct    = 0.80,
             MotTickInterval      = 2.0,
-            BuffDamageBonus      = 0.20,        // +20 % damage during Evocation
+            BuffDamageBonus      = 0.10,        // +10 % damage during Evocation (was 20 % – Arcane at +25 % XP/h at Lv 15–20)
             LevelRequired        = 1,
             TalentUnlockOnly     = true,
         },

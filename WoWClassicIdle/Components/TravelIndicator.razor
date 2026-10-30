@@ -5,7 +5,7 @@
 
 @* Small travel countdown in the sidebar (css/zone-travel.css). Hidden in /idle, where ZoneTravelScene shows the same.
    Click leads to the travel scene. *@
-@if (!OnIdlePage && Engine.Travel is { } travel && travel.CurrentLeg is { } current)
+@if (!OnIdlePage && Engine.CombatCharacterTravel is { } travel && travel.CurrentLeg is { } current)
 {
     <a class="travel-indicator" href="idle">
         <span class="travel-indicator-row">
@@ -37,7 +37,7 @@
     // Only re-render when the displayed time changes
     private void OnRefresh()
     {
-        var travel = Engine.Travel;
+        var travel = Engine.CombatCharacterTravel;
         var signature = travel is null ? "" : $"{travel.TargetZoneId}|{ZoneTravel.FormatDuration(travel.Remaining)}";
         if (signature == _signature) return;
         _signature = signature;

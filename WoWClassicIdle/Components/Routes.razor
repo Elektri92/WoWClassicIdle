@@ -1,6 +1,19 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+﻿@using Models
+@inject IdleGameEngine Engine
+
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)" OnNavigateAsync="OnNavigate">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
 </Router>
+
+@code {
+    // Character switches in the profession windows stay there. Runs before the target page renders,
+    // so every other page starts with the character last selected for combat.
+    private void OnNavigate(NavigationContext context)
+    {
+        if (!context.Path.StartsWith("professions", StringComparison.OrdinalIgnoreCase))
+            Engine.RestoreCharacterAfterProfessions();
+    }
+}

@@ -185,12 +185,12 @@ public static partial class ClassAbilityRegistry
             Id                  = "Mongoose_Bite_r1",
             Name                = "Mongoose Bite",
             IconUrl             = "https://wow.zamimg.com/images/wow/icons/large/ability_hunter_swiftstrike.jpg",
-            Cooldown            = 10,
+            Cooldown            = 8,
             ManaCost            = 15,
-            Damage              = 8,
+            Damage              = 12,
             AddsWeaponDamage    = true,
             EmpowersAbilityName = "Raptor Strike",
-            EmpowerDamageBonus  = 0.30,         // next Raptor Strike +30 % damage (was 50 %)
+            EmpowerDamageBonus  = 0.45,         // next Raptor Strike +45 % damage (was 30 %, Survival at -10 % XP/h)
             EmpowerDuration     = 10,
             LevelRequired       = 1,
             Rank                = 1,

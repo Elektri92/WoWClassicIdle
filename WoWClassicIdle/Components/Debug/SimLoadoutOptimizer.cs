@@ -6,7 +6,7 @@ using Models;
 /// <summary>
 /// Improves the simulator loadout empirically: instead of a fixed heuristic, abilities
 /// are swapped in trial fights and kept if they yield more XP per hour.
-/// XP/h weighs damage, survival (resurrection time, lost enemies) and mana (idle time) together.
+/// XP/h weighs damage, survival (resurrection time, lost enemies, death XP penalty) and mana (idle time) together.
 /// </summary>
 public static class SimLoadoutOptimizer
 {
@@ -26,6 +26,26 @@ public static class SimLoadoutOptimizer
     /// but no lucky outlier of a single fight (a single seed yielded e.g. +13.8 % for +2 % haste).
     /// </summary>
     private static readonly int[] TrialSeeds = [1337, 7331, 4242];
+
+    /// <summary>
+    /// XP rate after the death penalty. Trials run far shorter than a level, so the penalty cannot occur in them;
+    /// it is derived from the measured rates instead. With a share p of the current XP lost per death,
+    /// XP follows dX/dt = r − p·d·X, which gives the time to reach the XP needed for the level.
+    /// Where X never gets there (x ≥ 1) the score keeps falling, so hopeless variants can still be ranked.
+    /// </summary>
+    internal static double NetXpRate(double xpPerSecond, double deathsPerSecond, int level)
+    {
+        int needed = StaticHelpers.GetXpForLevel(level);
+        if (level < Player.DeathXpPenaltyMinLevel || needed <= 0 || deathsPerSecond <= 0 || xpPerSecond <= 0)
+            return xpPerSecond;
+
+        const double Limit = 0.95;
+        double x = Player.DeathXpPenaltyShare * deathsPerSecond * needed / xpPerSecond;
+        double factor = x < Limit
+            ? x / -Math.Log(1 - x)
+            : Limit / -Math.Log(1 - Limit) * (Limit / x);
+        return xpPerSecond * factor;
+    }
 
     /// <summary>
     /// Candidate pool of the player: per ability the highest available rank (incl. talent abilities),
@@ -138,10 +158,14 @@ public static class SimLoadoutOptimizer
     /// so the value doesn't jump in whole kills.
     /// <paramref name="extraTalent"/> is additionally raised by one rank (talent trial).
     /// </summary>
-    internal static double Evaluate(Player template, List<string> ids, CancellationToken ct, TalentDefinition? extraTalent = null) =>
-        TrialSeeds.Average(seed => EvaluateOnce(template, ids, seed, ct, extraTalent));
+    internal static double Evaluate(Player template, List<string> ids, CancellationToken ct, TalentDefinition? extraTalent = null)
+    {
+        // Rates over all seeds together: a single trial is too short for its deaths to mean much on their own
+        var trials = TrialSeeds.Select(seed => EvaluateOnce(template, ids, seed, ct, extraTalent)).ToList();
+        return NetXpRate(trials.Average(t => t.XpPerSecond), trials.Average(t => t.DeathsPerSecond), template.Level);
+    }
 
-    private static double EvaluateOnce(Player template, List<string> ids, int seed, CancellationToken ct, TalentDefinition? extraTalent)
+    private static (double XpPerSecond, double DeathsPerSecond) EvaluateOnce(Player template, List<string> ids, int seed, CancellationToken ct, TalentDefinition? extraTalent)
     {
         var cls   = template.ActiveClass;
         int level = template.Level;
@@ -149,6 +173,7 @@ public static class SimLoadoutOptimizer
         var engine = new IdleGameEngine(seed: seed);
         engine.SetCharacter(RaceClassInfo.RaceToFaction[template.Race], template.Race, cls, Gender.Male);
         engine.EnableRareRequeue = false;
+        engine.DisableGearDrops  = true;
 
         var player   = engine.Player;
         var progress = player.ClassProgress[cls];
@@ -192,6 +217,7 @@ public static class SimLoadoutOptimizer
         double partialXp = engine.CurrentEnemy is { IsAlive: true } enemy && enemy.Stats.MaxHp > 0
             ? StaticHelpers.GetEnemyXpReward(enemy.Stats.Level) * (1.0 - (double)enemy.CurrentHp / enemy.Stats.MaxHp)
             : 0;
-        return (xpGained + partialXp) / (steps * engine.StepSeconds);
+        double seconds = steps * engine.StepSeconds;
+        return ((xpGained + partialXp) / seconds, engine.TotalDeaths / seconds);
     }
 }

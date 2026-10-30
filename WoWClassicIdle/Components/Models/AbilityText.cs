@@ -108,7 +108,8 @@ public static partial class AbilityText
 
         // Nahkampf-Sofortschlag (z. B. Sinister Strike, Raptor Strike)
         if (ability.AddsWeaponDamage)
-            return $"An instant strike that deals weapon damage plus {ability.Damage}{MultiplierText(ability)}.";
+            return (ability.HasCastTime ? "A strike" : "An instant strike")
+                 + $" that deals weapon damage plus {ability.Damage}{MultiplierText(ability)}." + StrikeDebuffText(ability);
 
         // Direct damage – possibly with execute condition and attached DoT (e.g. Moonfire)
         if (ability.IsDamage)
@@ -140,7 +141,10 @@ public static partial class AbilityText
 
         // Stun (e.g. Kidney Shot)
         if (ability.IsDebuff && ability.DebuffIsStun)
-            return $"Stuns the target for {Num(ability.DebuffDuration)} sec.";
+            return $"Stuns the target for {Num(ability.DebuffDuration)} sec."
+                 + (ability.IsDebuffDot
+                     ? $" Deals {ability.DebuffDotDamage} damage every {Num(ability.DebuffDotTickInterval)} sec during that time ({ability.DebuffDotDamage * ability.DebuffDotTickCount} total)."
+                     : "");
 
         // Pure DoT – possibly with lifesteal (e.g. Curse of Agony, Drain Life, Shadow Word: Pain)
         if (ability.IsDebuffDot)
@@ -169,6 +173,18 @@ public static partial class AbilityText
             return $"Converts {ability.LifeTapHpCost} health into {ability.LifeTapManaGain} mana.";
 
         return "";
+    }
+
+    /// <summary>Debuff a weapon strike leaves on the target (Riposte, Hemorrhage, Stormstrike).</summary>
+    private static string StrikeDebuffText(Ability ability)
+    {
+        if (!ability.IsDebuff) return "";
+        string s = "";
+        if (ability.DebuffDamageTakenBonus > 0)
+            s += $" The target takes {Num(ability.DebuffDamageTakenBonus * 100)}% more damage for {Num(ability.DebuffDuration)} sec.";
+        if (ability.DebuffAttackSpeedReduction > 0)
+            s += $" Slows the target's attack speed by {Num(ability.DebuffAttackSpeedReduction * 100)}% for {Num(ability.DebuffDuration)} sec.";
+        return s;
     }
 
     private static string FormDescription(Ability ability)
@@ -201,6 +217,10 @@ public static partial class AbilityText
             ? $" for {Num(ability.BuffDuration)} sec. Recast automatically when it expires."
             : $" for {Num(ability.BuffDuration)} sec.";
 
+        if (ability.BuffPetDamageBonus > 0)
+            return $"Increases your pet's damage by {Num(ability.BuffPetDamageBonus * 100)}%"
+                 + (ability.BuffDamageBonus > 0 ? $" and all damage you deal by {Num(ability.BuffDamageBonus * 100)}%" : "") + suffix;
+
         if (ability.BuffDamageBonus > 0)
             return $"Increases all damage you deal by {Num(ability.BuffDamageBonus * 100)}%{suffix}";
 
@@ -219,7 +239,8 @@ public static partial class AbilityText
         }
 
         if (ability.BuffDamageTakenReduction > 0)
-            return $"Reduces all damage taken by {Num(ability.BuffDamageTakenReduction * 100)}%{suffix}";
+            return $"Reduces all damage taken by {Num(ability.BuffDamageTakenReduction * 100)}%"
+                 + (ability.BuffRetaliationDamage > 0 ? $" and deals {ability.BuffRetaliationDamage} damage to attackers" : "") + suffix;
 
         if (ability.BuffGrantsImmunity)
             return $"Makes you immune to all attacks and spells{suffix}";
@@ -280,6 +301,10 @@ public static partial class AbilityText
             return $"{ability.HotTotalHeal} Healing over {Num(ability.BuffDuration)}s";
         if (ability.IsBuff)
         {
+            if (ability.BuffPetDamageBonus > 0)
+                return $"+{Num(ability.BuffPetDamageBonus * 100)}% Pet DMG"
+                     + (ability.BuffDamageBonus > 0 ? $", +{Num(ability.BuffDamageBonus * 100)}% DMG" : "")
+                     + $" for {Num(ability.BuffDuration)}s";
             if (ability.BuffDamageBonus > 0)
                 return $"+{Num(ability.BuffDamageBonus * 100)}% DMG for {Num(ability.BuffDuration)}s";
             if (ability.BuffAttackSpeedBonus > 0)
@@ -294,7 +319,9 @@ public static partial class AbilityText
                 return t + $" for {Num(ability.BuffDuration)}s";
             }
             if (ability.BuffDamageTakenReduction > 0)
-                return $"-{Num(ability.BuffDamageTakenReduction * 100)}% DMG taken for {Num(ability.BuffDuration)}s";
+                return $"-{Num(ability.BuffDamageTakenReduction * 100)}% DMG taken"
+                     + (ability.BuffRetaliationDamage > 0 ? $" + {ability.BuffRetaliationDamage} retaliation DMG" : "")
+                     + $" for {Num(ability.BuffDuration)}s";
             if (ability.BuffGrantsImmunity)
                 return $"Immune for {Num(ability.BuffDuration)}s";
             if (ability.BuffRetaliationDamage > 0)
@@ -308,6 +335,10 @@ public static partial class AbilityText
         if (ability.AddsWeaponDamage)
         {
             string s = (ability.Damage > 0 ? $"Weapon +{ability.Damage} DMG" : "Weapon DMG") + MultiplierText(ability, compact: true);
+            if (ability.IsDebuff && ability.DebuffDamageTakenBonus > 0)
+                s += $" + {Num(ability.DebuffDamageTakenBonus * 100)}% DMG taken";
+            if (ability.IsDebuff && ability.DebuffAttackSpeedReduction > 0)
+                s += $" + -{Num(ability.DebuffAttackSpeedReduction * 100)}% Atk Speed";
             if (ability.IsDebuffDot)
             {
                 int total = ability.DebuffDotDamage * ability.DebuffDotTickCount;
@@ -337,6 +368,8 @@ public static partial class AbilityText
             string s = $"{ability.DebuffDotDamage} DMG/{Num(ability.DebuffDotTickInterval)}s ({total} total)";
             if (ability.DebuffDotLifesteal > 0)
                 s += " + Lifesteal";
+            if (ability.DebuffIsStun)
+                s = $"Stun {Num(ability.DebuffDuration)}s + {s}";
             return s;
         }
         if (ability.IsDebuff)

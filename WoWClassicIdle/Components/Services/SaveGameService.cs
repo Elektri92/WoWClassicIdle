@@ -141,7 +141,7 @@ public class SaveGameService : ISaveGameService, IDisposable
     {
         var save = new SaveData
         {
-            ActiveSlotId = _engine.ActiveSlotId,
+            ActiveSlotId = _engine.CombatSlotId,
             NextSlotId   = _engine.NextSlotId,
             TotalKills           = _engine.TotalKills,
             TotalDeaths          = _engine.TotalDeaths,
@@ -209,6 +209,19 @@ public class SaveGameService : ISaveGameService, IDisposable
 
         foreach (var (profession, target) in _engine.LastProfessionTargets)
             save.LastProfessionTargets[profession.ToString()] = target;
+
+        save.CraftingQueue = _engine.CraftingQueue
+            .Select(e => new CraftingQueueSaveData
+            {
+                RecipeId = e.Recipe?.Id ?? "",
+                Remaining = e.Remaining,
+                DisenchantItemId = e.IsDisenchant ? e.Item.Id : null,
+                DisenchantRequiredLevel = e.IsDisenchant ? ItemRequirements.LevelOf(e.Item) : 0,
+            })
+            .ToList();
+
+        save.ProfessionBonuses = _engine.BuildOwnedBonusSaveData();
+        save.EquippedProfessionBonuses = _engine.BuildEquippedBonusSaveData();
 
         save.SeenFeatureIntros = _engine.SeenFeatureIntros.ToList();
         save.MerchantStock = _engine.BuildMerchantSaveData();

@@ -34,6 +34,20 @@
                     }
                 </div>
             </WowTooltip>
+            <WowTooltip>
+                <ChildContent>
+                    <div class="czone-bonuses">
+                        @foreach (var bonus in ProfessionBonusRegistry.ForZone(current))
+                        {
+                            <img class="@(Engine.OwnsProfessionBonus(bonus) ? "found" : "")" src="@bonus.IconUrl" alt=""
+                                 style="border-color: @ItemQualityColors.Hex(bonus.Quality)" onerror="this.style.visibility='hidden'" />
+                        }
+                    </div>
+                </ChildContent>
+                <Body>
+                    <ZoneBonusList Zone="current" />
+                </Body>
+            </WowTooltip>
             <div class="czone-banner-mobs">
                 @foreach (var mob in current.Mobs)
                 {
@@ -113,6 +127,11 @@
                                 <span class="czone-badge @(Engine.IsZoneMastered(zone) ? "mastered" : "")">
                                     @(Engine.IsZoneMastered(zone) ? "🏆 Mastered" : $"📜 {Engine.CompletedObjectives(zone)}/{ZoneObjectiveRegistry.For(zone).Count}")
                                 </span>
+                                @{
+                                    var bonuses = ProfessionBonusRegistry.ForZone(zone).ToList();
+                                    int foundBonuses = bonuses.Count(Engine.OwnsProfessionBonus);
+                                }
+                                <span class="czone-badge @(foundBonuses == bonuses.Count ? "mastered" : "")">🎁 @foundBonuses/@bonuses.Count</span>
                             </div>
                         }
                         <div class="czone-tile-mobs">
@@ -224,7 +243,8 @@
     // Only re-render when character, zone, travel or level change (TickUpdated fires 10× per second)
     private string Signature() =>
         $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}"
-        + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}";
+        + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}"
+        + $"|{Engine.OwnedProfessionBonusCount}";
 
     private void OnTick()
     {
@@ -298,6 +318,7 @@
             <span class="zt-section">@ObjectivesTitle(zone)</span>
             @ObjectivesBody(zone)
         }
+        <ZoneBonusList Zone="zone" />
         @if (route is { Legs.Count: > 0 })
         {
             <span class="zt-section">Travel time <b>@ZoneTravel.FormatDuration(route.Seconds)</b></span>

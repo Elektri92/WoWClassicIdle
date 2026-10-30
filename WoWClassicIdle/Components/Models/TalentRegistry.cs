@@ -9,7 +9,7 @@ public static partial class TalentRegistry
     {
         _talents = new Dictionary<CharacterClass, List<TalentDefinition>>();
         foreach (CharacterClass cls in Enum.GetValues<CharacterClass>())
-            _talents[cls] = BuildTalents(cls).Concat(BuildSpecAbilityTalents(cls)).ToList();
+            _talents[cls] = BuildTalents(cls).Concat(BuildSpecAbilityTalents(cls)).Concat(BuildLevelAbilityTalents(cls)).ToList();
     }
 
     public static IReadOnlyList<TalentDefinition> GetTalents(CharacterClass cls) =>
@@ -93,14 +93,14 @@ public static partial class TalentRegistry
         {
             Id            = "mage_arcane_improved_cw",
             Name          = "Arcane Instability",
-            Description   = "Increases the damage of all your abilities by 3% per rank.",
+            Description   = "Increases the damage of all your abilities by 2% per rank.",
             Class         = CharacterClass.Mage,
             TreeIndex     = 0,
             Row           = 0,
             Column        = 1,
             MaxRanks      = 2,
             EffectType    = TalentEffectType.DamageBonus,
-            EffectPerRank = 0.03,
+            EffectPerRank = 0.02,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/inv_drink_10.jpg",
         },
         new TalentDefinition
@@ -211,7 +211,7 @@ public static partial class TalentRegistry
         {
             Id              = "mage_arcane_evocation",
             Name            = "Evocation",
-            Description     = "Teaches you the Evocation ability: restores 80% of your mana over 8 seconds and increases all damage you deal by 20% during that time.",
+            Description     = "Teaches you the Evocation ability: restores 80% of your mana over 8 seconds and increases all damage you deal by 10% during that time.",
             Class           = CharacterClass.Mage,
             TreeIndex       = 0,
             Row             = 1,
@@ -226,14 +226,14 @@ public static partial class TalentRegistry
         {
             Id            = "mage_arcane_improved_am",
             Name          = "Improved Arcane Missiles",
-            Description   = "Increases the damage of Arcane Missiles by 4% per rank.",
+            Description   = "Increases the damage of Arcane Missiles by 2% per rank.",
             Class         = CharacterClass.Mage,
             TreeIndex     = 0,
             Row           = 0,
             Column        = 0,
             MaxRanks      = 3,
             EffectType    = TalentEffectType.ArcaneMissilesDamage,
-            EffectPerRank = 0.04,
+            EffectPerRank = 0.02,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_nature_starfall.jpg",
         },
 

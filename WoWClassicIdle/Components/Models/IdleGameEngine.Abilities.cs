@@ -126,6 +126,7 @@ public partial class IdleGameEngine
                 var (smHealed, _) = RollPlayerCrit(sh);
                 int hpSmBefore = Player.CurrentHp;
                 Player.RegenHp(smHealed);
+                Meter.RecordAbilityHealing(ability, Player.CurrentHp - hpSmBefore);
                 CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, Player.CurrentHp - hpSmBefore, false));
             }
         }

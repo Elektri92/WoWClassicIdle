@@ -1,0 +1,158 @@
+@using Models
+@inject IdleGameEngine Engine
+
+@* 3 bonus slots in the profession header; a slot opens the bag with all bonuses of the profession.
+   Styles: wwwroot/css/profession-bonuses.css *@
+<div class="pbs-wrap">
+    <div class="pbs-slots">
+        @{ var equipped = Engine.EquippedProfessionBonuses(Profession); }
+        @for (int i = 0; i < equipped.Length; i++)
+        {
+            int slot = i;
+            var bonus = equipped[slot];
+            bool canImprove = Engine.CanImproveBonusSlot(Profession, slot);
+            string cssClass = $"pbs-slot {(_openSlot == slot ? "active" : "")} {(canImprove ? "can-improve" : "")}";
+
+            <WowTooltip Title="@(bonus?.Name ?? $"Bonus Slot {slot + 1}")"
+                        TitleColor="@(bonus is null ? null : ItemQualityColors.Hex(bonus.Quality))">
+                <ChildContent>
+                    @if (bonus is not null)
+                    {
+                        <button @key="@bonus.Key" class="@cssClass filled" style="--pbs-color: @ItemQualityColors.Hex(bonus.Quality)"
+                                aria-label="@bonus.Name" @onclick="() => Toggle(slot)"
+                                @oncontextmenu="() => Engine.UnequipProfessionBonus(Profession, slot)" @oncontextmenu:preventDefault>
+                            <img class="@(_justEquippedSlot == slot ? "pbs-equip-icon" : "")" src="@bonus.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                            @if (_justEquippedSlot == slot)
+                            {
+                                <span class="pbs-burst" aria-hidden="true"></span>
+                                <span class="pbs-sparks" aria-hidden="true"></span>
+                            }
+                            @if (canImprove)
+                            {
+                                <span class="pbs-badge" aria-hidden="true">▲</span>
+                            }
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="@cssClass" aria-label="Bonus slot @(slot + 1)" @onclick="() => Toggle(slot)">
+                            @if (canImprove)
+                            {
+                                <span class="pbs-badge" aria-hidden="true">+</span>
+                            }
+                        </button>
+                    }
+                </ChildContent>
+                <Body>
+                    @if (bonus is not null)
+                    {
+                        @BonusLines(bonus)
+                        <span class="zt-sub">Click to change · Right-click to remove</span>
+                    }
+                    else
+                    {
+                        <span class="zt-line">Empty – click to choose a bonus.</span>
+                    }
+                    @if (canImprove)
+                    {
+                        <span class="zt-good">@(bonus is null ? "You have a bonus for this slot!" : "You own a higher rarity!")</span>
+                    }
+                </Body>
+            </WowTooltip>
+        }
+    </div>
+
+    @if (_openSlot is { } openSlot)
+    {
+        <div class="pbs-backdrop" @onclick="Close"></div>
+        <div class="pbs-bag" role="dialog" aria-label="Bonus bag">
+            <div class="pbs-bag-title">
+                <img src="@Inventory.BackpackIconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                <span>Bonus Bag</span>
+                <button class="pbs-bag-close" aria-label="Close" @onclick="Close">×</button>
+            </div>
+            <div class="pbs-bag-grid">
+                @foreach (var bonus in ProfessionBonusRegistry.ForProfession(Profession))
+                {
+                    bool owned = Engine.OwnsProfessionBonus(bonus);
+                    bool isEquipped = equipped.Contains(bonus);
+                    bool upgrade = owned && !isEquipped && IsUpgrade(bonus, equipped);
+
+                    <WowTooltip Title="@bonus.Name" TitleColor="@ItemQualityColors.Hex(bonus.Quality)">
+                        <ChildContent>
+                            <button class="pbs-cell @(owned ? "" : "locked") @(isEquipped ? "equipped" : "") @(upgrade ? "upgrade" : "")"
+                                    style="--pbs-color: @ItemQualityColors.Hex(bonus.Quality)"
+                                    aria-label="@bonus.Name" aria-disabled="@(owned ? "false" : "true")"
+                                    @onclick="() => Pick(openSlot, bonus, isEquipped)">
+                                <img src="@bonus.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                                @if (isEquipped)
+                                {
+                                    <span class="pbs-check" aria-hidden="true">✓</span>
+                                }
+                            </button>
+                        </ChildContent>
+                        <Body>
+                            @BonusLines(bonus)
+                            @if (!owned)
+                            {
+                                <span class="zt-error">Not found yet</span>
+                            }
+                            else if (isEquipped)
+                            {
+                                <span class="zt-good">Equipped – click to remove</span>
+                            }
+                            else
+                            {
+                                <span class="zt-good">Click to equip</span>
+                            }
+                        </Body>
+                    </WowTooltip>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Profession Profession { get; set; }
+
+    private int? _openSlot;
+    // Plays the equip animation; the slot button is keyed by bonus, so it restarts with every new bonus
+    private int? _justEquippedSlot;
+
+    private RenderFragment BonusLines(ProfessionBonus bonus) => __builder =>
+    {
+        <span class="zt-sub">@bonus.Quality Bonus · @Professions.Get(bonus.Profession).Name</span>
+        <span class="zt-good">@bonus.Description</span>
+        <span class="zt-section">Source</span>
+        var zone = ProfessionBonusRegistry.ZoneOf(bonus);
+        <span class="zt-line">Enemies in @zone.Name (Lv @zone.LevelRange)</span>
+        <span class="zt-sub">@Professions.FormatChance(ProfessionBonusRegistry.DropChance)% per kill for a missing bonus of this zone</span>
+    };
+
+    private static bool IsUpgrade(ProfessionBonus bonus, ProfessionBonus?[] equipped) =>
+        equipped.FirstOrDefault(b => b?.Kind == bonus.Kind) is not { } current || bonus.Quality > current.Quality;
+
+    private void Toggle(int slot)
+    {
+        _openSlot = _openSlot == slot ? null : slot;
+        _justEquippedSlot = null;
+    }
+
+    private void Close() => _openSlot = null;
+
+    private void Pick(int slot, ProfessionBonus bonus, bool isEquipped)
+    {
+        if (isEquipped)
+        {
+            int current = Array.IndexOf(Engine.EquippedProfessionBonuses(Profession), bonus);
+            Engine.UnequipProfessionBonus(Profession, current);
+        }
+        else if (Engine.OwnsProfessionBonus(bonus))
+        {
+            Engine.EquipProfessionBonus(slot, bonus);
+            _justEquippedSlot = slot;
+            _openSlot = null;
+        }
+    }
+}

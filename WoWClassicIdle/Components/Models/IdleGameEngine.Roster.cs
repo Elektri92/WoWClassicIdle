@@ -108,8 +108,11 @@ public partial class IdleGameEngine
         ActivateSlot(slot);
     }
 
-    // Character played before a switch in the profession windows – restored when fighting
+    // Character played before a switch in the profession windows – restored when leaving them
     private int? _characterBeforeProfessions;
+
+    // Saved instead of a character only selected temporarily in the profession windows
+    internal int? CombatSlotId => _characterBeforeProfessions ?? _activeSlotId;
 
     /// <summary>
     /// Switch from the profession windows (click in the character list, main profession of another character):
@@ -122,7 +125,7 @@ public partial class IdleGameEngine
         _characterBeforeProfessions = original != id ? original : null;
     }
 
-    /// <summary>Back to fighting: select the originally played character again (if it still exists).</summary>
+    /// <summary>Leaving the profession windows: select the originally played character again (if it still exists).</summary>
     public void RestoreCharacterAfterProfessions()
     {
         if (_characterBeforeProfessions is not { } id) return;

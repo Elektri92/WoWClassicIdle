@@ -103,8 +103,9 @@ public static partial class TalentRegistry
             Description          = "Grants the abilities Bear Form and Maul. While equipped, you are shapeshifted into a Bear: you use Rage instead of Mana and take 6% less damage. Spells that cost Mana or Energy cannot be equipped, except Thorns and Rejuvenation, which cost Rage instead. Only one form can be equipped at a time.",
             Class                = CharacterClass.Druid,
             TreeIndex            = 1,
-            Row                  = 1,
-            Column               = 0,
+            Row                  = 0,
+            LevelRequired        = 12,         // was row 2 (Lv 15) – Feral at -16 % XP/h at Lv 11–14
+            Column               = 3,
             MaxRanks             = 1,
             EffectType           = TalentEffectType.GrantBearForm,
             EffectPerRank        = 1.0,
@@ -134,7 +135,8 @@ public static partial class TalentRegistry
             Description          = "Grants the abilities Cat Form, Claw and Rip. While equipped, you are shapeshifted into a Cat and use Energy instead of Mana. Spells that cost Mana or Rage cannot be equipped, except Rejuvenation, which costs Energy instead. Only one form can be equipped at a time.",
             Class                = CharacterClass.Druid,
             TreeIndex            = 1,
-            Row                  = 1,
+            Row                  = 0,
+            LevelRequired        = 12,         // was row 2 (Lv 15) – Feral at -20 % XP/h at Lv 11–14
             Column               = 2,
             MaxRanks             = 1,
             EffectType           = TalentEffectType.GrantCatForm,

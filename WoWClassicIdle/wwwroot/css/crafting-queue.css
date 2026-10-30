@@ -1,0 +1,77 @@
+/* Crafting queue: right column next to the profession windows (overview and subpages) */
+.craft-queue {
+    position: sticky;
+    top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 10px 8px;
+}
+.prof-detail-layout .craft-queue { margin-top: 1rem; }
+.craft-queue h4 { margin: 0 0 4px; text-align: center; letter-spacing: 1px; }
+.craft-queue .prof-run-bar { margin: 0; }
+.craft-queue-empty { margin: 0; text-align: center; }
+
+.craft-queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+.craft-queue-entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: .8rem;
+}
+.craft-queue-entry.current {
+    border-color: var(--wow-border);
+    background: rgba(255, 209, 0, .08);
+}
+
+.craft-queue-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--quality);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.craft-queue-count { color: var(--wow-gold-soft); white-space: nowrap; }
+.craft-queue-kind { flex: none; width: 16px; height: 16px; border-radius: 3px; }
+
+.craft-queue-remove {
+    flex: none;
+    padding: 0 3px;
+    border: 0;
+    background: none;
+    color: var(--wow-gold-soft);
+    font-size: .75rem;
+    line-height: 1.2;
+    cursor: pointer;
+}
+.craft-queue-remove:hover { color: #ff6b5a; }
+
+/* Amount next to Create / Create All */
+.craft-amount {
+    width: 62px;
+    padding: 2px 4px;
+    border: 1px solid var(--wow-border);
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .35);
+    color: var(--wow-text);
+    font-size: .85rem;
+}
+
+/* Too narrow for three columns: queue moves below the windows */
+@media (max-width: 1100px) {
+    .craft-queue { grid-column: 1 / -1; position: static; }
+    .craft-queue-list { max-height: none; }
+    .prof-detail-layout .craft-queue { margin-top: 0; }
+}

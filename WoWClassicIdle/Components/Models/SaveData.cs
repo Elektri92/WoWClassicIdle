@@ -23,6 +23,11 @@ public class SaveData
     public List<PassiveAssignmentSaveData> PassiveAssignments { get; set; } = new();
     // Profession.ToString() → last chosen zone/recipe
     public Dictionary<string, string> LastProfessionTargets { get; set; } = new();
+    // Open crafting queue in order; null = legacy save without this field
+    public List<CraftingQueueSaveData>? CraftingQueue { get; set; }
+    // Account-wide profession bonuses (ProfessionBonus.Key) and Profession.ToString() → slots; null = legacy save without these fields
+    public List<string>? ProfessionBonuses { get; set; }
+    public Dictionary<string, List<string?>>? EquippedProfessionBonuses { get; set; }
     // Feature intros already shown; null = legacy save without this field
     public List<string>? SeenFeatureIntros { get; set; }
     // Merchant stock with restock time (real time); null = legacy save, stock full
@@ -90,6 +95,15 @@ public class ProfessionSaveData
 }
 
 /// <summary>A passive profession slot filled with a character.</summary>
+public class CraftingQueueSaveData
+{
+    public string RecipeId { get; set; } = "";
+    public int Remaining { get; set; }
+    // Set for disenchant positions (no recipe); the level identifies the exact item like in the bags
+    public int? DisenchantItemId { get; set; }
+    public int DisenchantRequiredLevel { get; set; }
+}
+
 public class PassiveAssignmentSaveData
 {
     public string Profession { get; set; } = "";

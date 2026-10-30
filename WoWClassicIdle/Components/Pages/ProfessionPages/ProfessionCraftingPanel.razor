@@ -1,9 +1,9 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Crafting window like in WoW: recipe list on the left, details + Create on the right. Active slot, 3 s per craft. *@
+@* Crafting window like in WoW: recipe list on the left, details + Create on the right. Create adds to the crafting queue, 3 s per craft. *@
 <div class="al-panel">
-    <h4>Active Slot</h4>
+    <h4>Recipes</h4>
 
     @if (Recipes.Count == 0)
     {
@@ -152,21 +152,13 @@
                         </TradeItemTooltip>
                     }
 
-                    <div class="wow-progress prof-run-bar">
-                        <div class="bar" style="width: @RunPercent%"></div>
-                        <span>@RunLabel</span>
-                    </div>
-
                     <div class="prof-row">
-                        @if (Run is not null)
-                        {
-                            <button class="wow-btn small" @onclick="Engine.StopActiveProfession">Stop</button>
-                        }
-                        else
-                        {
-                            <button class="wow-btn small primary" disabled="@(craftable == 0 || !skillOk)" @onclick="() => Create(1)">Create</button>
-                            <button class="wow-btn small" disabled="@(craftable == 0 || !skillOk)" @onclick="() => Create(craftable)">Create All (@craftable)</button>
-                        }
+                        @{ int amount = Math.Min(_amount ?? 0, craftable); }
+                        <button class="wow-btn small primary" disabled="@(craftable == 0 || !skillOk)" @onclick="() => Create(1)">Create</button>
+                        <input class="craft-amount" type="number" min="1" max="@craftable" aria-label="Amount to create"
+                               @bind="_amount" @bind:event="oninput" />
+                        <button class="wow-btn small" disabled="@(amount <= 0 || !skillOk)" @onclick="() => Create(amount)">Create @Math.Max(amount, 0)</button>
+                        <button class="wow-btn small" disabled="@(craftable == 0 || !skillOk)" @onclick="() => Create(craftable)">Create All (@craftable)</button>
                     </div>
                 </div>
             }
@@ -217,14 +209,8 @@
 
     private Recipe? SelectedRecipe =>Recipes.FirstOrDefault(r => r.Id == _recipeId);
 
-    private ActiveProfessionRun? Run =>
-        Engine.ActiveProfessionRun is { DisenchantQueue: null } run && run.Profession == Progress.Profession ? run : null;
-
-    private string RunPercent => ((Run?.Progress ?? 0) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
-
-    private string RunLabel => Run is { } run && ProfessionRegistry.GetRecipe(run.Target) is { } recipe
-        ? $"Creating {recipe.Result.Name}… ({run.Remaining} left)"
-        : "Idle";
+    // Amount field; null while it is being retyped
+    private int? _amount = 5;
 
     protected override void OnParametersSet()
     {
@@ -239,7 +225,7 @@
         if (SelectedRecipe is null || SelectedRecipe.Profession != Progress.Profession)
         {
             var remembered = ProfessionRegistry.GetRecipe(Engine.GetLastProfessionTarget(Progress.Profession));
-            _recipeId = Run?.Target ?? (remembered?.Profession == Progress.Profession && Progress.KnowsRecipe(remembered.Id) ? remembered.Id : Recipes.FirstOrDefault()?.Id);
+            _recipeId = remembered?.Profession == Progress.Profession && Progress.KnowsRecipe(remembered.Id) ? remembered.Id : Recipes.FirstOrDefault()?.Id;
         }
     }
 
@@ -252,6 +238,6 @@
     private void Create(int count)
     {
         if (_recipeId is not null && count > 0)
-            Engine.StartActiveProfession(Progress.Profession, _recipeId, count);
+            Engine.AddToCraftingQueue(_recipeId, count);
     }
 }

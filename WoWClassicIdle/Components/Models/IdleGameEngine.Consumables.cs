@@ -84,6 +84,7 @@ public partial class IdleGameEngine
         int before = Player.CurrentHp;
         Consume(heal);
         Player.RegenHp(heal.Amount);
+        Meter.RecordItem(heal, CombatActionKind.Heal, Player.CurrentHp - before);
         CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, Player.CurrentHp - before));
         _healthPotionCooldown = PotionCooldownSeconds;
     }

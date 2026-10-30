@@ -15,7 +15,7 @@ namespace Models
 
         /// <summary>Returns a talent- and form-modified copy of the ability (incl. mana cost).</summary>
         public Ability GetEffectiveAbility(Ability ability) =>
-            ApplyFormBonus(ApplyExtendedTalentBonus(GetTalentModifiedAbility(ability)));
+            ApplyFormBonus(ApplyAbilityModifierTalents(ApplyExtendedTalentBonus(GetTalentModifiedAbility(ability))));
 
         private Ability GetTalentModifiedAbility(Ability ability)
         {

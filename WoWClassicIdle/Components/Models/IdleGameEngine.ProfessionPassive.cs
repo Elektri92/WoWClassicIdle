@@ -100,7 +100,7 @@ public partial class IdleGameEngine
             var progress = _sharedProfessions.GetValueOrDefault(assignment.Profession)
                            ?? new ProfessionProgress(assignment.Profession);
 
-            assignment.Elapsed += dt;
+            assignment.Elapsed += dt * ProfessionSpeedFactor(assignment.Profession);
             while (assignment.Elapsed >= Professions.PassiveDurationSeconds)
             {
                 assignment.Elapsed -= Professions.PassiveDurationSeconds;

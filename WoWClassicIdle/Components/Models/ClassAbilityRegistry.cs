@@ -16,15 +16,15 @@ public static partial class ClassAbilityRegistry
     public static IReadOnlyDictionary<CharacterClass, IReadOnlyList<Ability>> Abilities { get; }
         = new Dictionary<CharacterClass, IReadOnlyList<Ability>>
     {
-        [CharacterClass.Warrior] = WarriorAbilities,
-        [CharacterClass.Mage]    = MageAbilities,
-        [CharacterClass.Priest]  = PriestAbilities,
-        [CharacterClass.Rogue]   = RogueAbilities,
-        [CharacterClass.Paladin] = PaladinAbilities,
-        [CharacterClass.Hunter]  = HunterAbilities,
-        [CharacterClass.Warlock] = WarlockAbilities,
-        [CharacterClass.Shaman]  = ShamanAbilities,
-        [CharacterClass.Druid]   = DruidAbilities,
+        [CharacterClass.Warrior] = WarriorAbilities.Concat(LevelSpecAbilities(CharacterClass.Warrior)).ToList(),
+        [CharacterClass.Mage]    = MageAbilities.Concat(LevelSpecAbilities(CharacterClass.Mage)).ToList(),
+        [CharacterClass.Priest]  = PriestAbilities.Concat(LevelSpecAbilities(CharacterClass.Priest)).ToList(),
+        [CharacterClass.Rogue]   = RogueAbilities.Concat(LevelSpecAbilities(CharacterClass.Rogue)).ToList(),
+        [CharacterClass.Paladin] = PaladinAbilities.Concat(LevelSpecAbilities(CharacterClass.Paladin)).ToList(),
+        [CharacterClass.Hunter]  = HunterAbilities.Concat(LevelSpecAbilities(CharacterClass.Hunter)).ToList(),
+        [CharacterClass.Warlock] = WarlockAbilities.Concat(LevelSpecAbilities(CharacterClass.Warlock)).ToList(),
+        [CharacterClass.Shaman]  = ShamanAbilities.Concat(LevelSpecAbilities(CharacterClass.Shaman)).ToList(),
+        [CharacterClass.Druid]   = DruidAbilities.Concat(LevelSpecAbilities(CharacterClass.Druid)).ToList(),
     };
 
     public static IReadOnlyList<Ability> GetAbilitiesFor(CharacterClass cls)
@@ -33,7 +33,7 @@ public static partial class ClassAbilityRegistry
     /// <summary>
     /// Picks the optimal default loadout for a class at a given level:
     /// per ability family (same name) only the highest available rank,
-    /// with more families than slots the most recently unlocked are preferred.
+    /// with more families than slots the filler stays and the most recently unlocked are preferred.
     /// </summary>
     public static List<string> GetDefaultLoadoutIds(CharacterClass cls, int level) =>
         GetAbilitiesFor(cls)
@@ -44,7 +44,8 @@ public static partial class ClassAbilityRegistry
             // Per ExclusiveGroup keep only the most recently unlocked ability
             .GroupBy(a => string.IsNullOrEmpty(a.ExclusiveGroup) ? a.Id : a.ExclusiveGroup)
             .Select(g => g.OrderByDescending(a => a.LevelRequired).First())
-            .OrderByDescending(a => a.LevelRequired)
+            .OrderByDescending(a => a.IsFiller)
+            .ThenByDescending(a => a.LevelRequired)
             .Take(MaxSlotsPerClass)
             .Select(a => a.Id)
             .ToList();
@@ -66,7 +67,8 @@ public static partial class ClassAbilityRegistry
                 var match = g.FirstOrDefault(a => a.SpecHint == specIndex);
                 return match ?? g.OrderByDescending(a => a.LevelRequired).First();
             })
-            .OrderByDescending(a => a.LevelRequired)
+            .OrderByDescending(a => a.IsFiller)
+            .ThenByDescending(a => a.LevelRequired)
             .Take(MaxSlotsPerClass)
             .Select(a => a.Id)
             .ToList();
@@ -119,7 +121,8 @@ public static partial class ClassAbilityRegistry
 
         // Take the "best" regular ones: spec-matching and high level → at the end of the sorted list
         var keptRegular = regularAbilities
-            .OrderByDescending(a => a.SpecHint == specIndex || a.SpecHint < 0 ? 1 : 0)
+            .OrderByDescending(a => a.IsFiller)
+            .ThenByDescending(a => a.SpecHint == specIndex || a.SpecHint < 0 ? 1 : 0)
             .ThenByDescending(a => a.LevelRequired)
             .Take(regularSlots)
             .ToList();

@@ -112,14 +112,14 @@ public static partial class TalentRegistry
         {
             Id            = "warrior_fury_excecuter",
             Name          = "Excecuter",
-            Description   = "Reduces the cooldown of Execute by 2 seconds per rank.",
+            Description   = "Reduces the cooldown of Execute by 20 seconds per rank.",
             Class         = CharacterClass.Warrior,
             TreeIndex     = 1,
             Row           = 0,
             Column        = 2,
             MaxRanks      = 3,
             EffectType    = TalentEffectType.ExecuteCooldown,
-            EffectPerRank = 2.0,
+            EffectPerRank = 20.0,
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/inv_sword_48.jpg",
         },
 

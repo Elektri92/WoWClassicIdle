@@ -62,6 +62,14 @@ public sealed class CombatMeter
     public void RecordItem(Item item, CombatActionKind kind, int amount) =>
         Record(item.Name, item.IconUrl, kind, amount);
 
+    /// <summary>Healing as a side effect of a damage ability (lifesteal, Smite heal) – own row, because rows are keyed by name.</summary>
+    public void RecordAbilityHealing(Ability ability, int amount) =>
+        Record($"{ability.Name} (Heal)", ability.IconUrl, CombatActionKind.Heal, amount);
+
+    /// <summary>Healing from a talent effect without an own ability (e.g. Critical Heal).</summary>
+    public void RecordTalentHeal(string talentName, int amount) =>
+        Record(talentName, SpiritRegenIconUrl, CombatActionKind.Heal, amount);
+
     /// <summary>Passive HP regeneration from Spirit – appears as its own heal row.</summary>
     public void RecordSpiritRegen(int amount) =>
         Record(SpiritRegenName, SpiritRegenIconUrl, CombatActionKind.Heal, amount);

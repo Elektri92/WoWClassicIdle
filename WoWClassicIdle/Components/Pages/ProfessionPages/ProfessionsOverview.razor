@@ -50,6 +50,15 @@
                         <button class="wow-tab" @onclick="() => Engine.DebugSetAllProfessionSkills(skill)">@skill</button>
                     }
                 </div>
+                <span class="prof-debug-label">Bonuses</span>
+                <div class="prof-debug-buttons">
+                    @foreach (var quality in ProfessionBonusRegistry.Qualities)
+                    {
+                        <button class="wow-tab" @onclick="() => Engine.DebugGrantProfessionBonuses(quality)">@quality</button>
+                    }
+                    <button class="wow-tab" @onclick="Engine.DebugDropProfessionBonus">Drop</button>
+                    <button class="wow-tab" @onclick="Engine.DebugClearProfessionBonuses">Clear</button>
+                </div>
             </aside>
         }
 
@@ -91,6 +100,8 @@
             </div>
         </div>
         </div>
+
+        <CraftingQueuePanel />
         </div>
     }
 </div>
@@ -134,6 +145,10 @@
                         <img class="prof-owner-icon prof-worker-icon" src="@IconUrls.ClassIconUrl(worker.Class)" alt=""
                              title="@($"Passive: {IdleGameEngine.CharacterName(worker)} (Lv. {worker.Player.Level})")"
                              onerror="this.remove()" />
+                    }
+                    @if (Engine.CanImproveBonuses(def.Profession))
+                    {
+                        <span class="prof-bonus-dot" title="A bonus slot can be filled or upgraded"></span>
                     }
                 </div>
                 @if (shown is not null)

@@ -45,32 +45,6 @@ namespace Models
         }
 
         /// <summary>
-        /// Equips an armor piece if it is an upgrade (or the slot was empty).
-        /// Only for auto-equip (debug simulator) – in the normal game the player equips manually.
-        /// Items whose level requirement is not met are not equipped.
-        /// Returns true if equipped; the displaced piece goes into <paramref name="displaced"/>.
-        /// </summary>
-        public bool EquipArmorIfUpgrade(ArmorItem item, out ArmorItem? displaced)
-        {
-            if (!MeetsItemRequirements(item))
-            {
-                displaced = null;
-                return false;
-            }
-
-            EquippedArmor.TryGetValue(item.Slot, out var current);
-            if (current is not null && SumPrimary(item.Bonuses) <= SumPrimary(current.Bonuses))
-            {
-                displaced = null;
-                return false;
-            }
-            displaced = current;
-            EquippedArmor[item.Slot] = item;
-            RecalculateStats();
-            return true;
-        }
-
-        /// <summary>
         /// Equips an armor piece from the given bag slot.
         /// The previously worn piece (if any) goes back into the inventory.
         /// Returns false if the required level is not reached – the item stays in the bag.
@@ -122,40 +96,6 @@ namespace Models
             _equippedByClass[ActiveClass] = weapon;
             RecalculateStats();
         }
-
-        /// <summary>
-        /// Equips a weapon if it is an upgrade (higher avg. damage / speed) or no slot is occupied.
-        /// Only for auto-equip (debug simulator). Level/class requirements are checked.
-        /// Returns true if equipped; the displaced weapon goes into <paramref name="displaced"/>.
-        /// </summary>
-        public bool EquipWeaponIfUpgrade(WeaponItem item, out WeaponItem? displaced)
-        {
-            if (!MeetsItemRequirements(item))
-            {
-                displaced = null;
-                return false;
-            }
-
-            double newDps = (item.MinDamage + item.MaxDamage) / 2.0 / item.Speed;
-            if (EquippedWeapon is not null)
-            {
-                double curDps = (EquippedWeapon.MinDamage + EquippedWeapon.MaxDamage) / 2.0 / EquippedWeapon.Speed;
-                if (newDps <= curDps)
-                {
-                    displaced = null;
-                    return false;
-                }
-            }
-
-            displaced = EquippedWeapon;
-            EquippedWeapon = item;
-            _equippedByClass[ActiveClass] = item;
-            RecalculateStats();
-            return true;
-        }
-
-        private static int SumPrimary(PrimaryStats p) =>
-            p.Strength + p.Agility + p.Stamina + p.Intelligence + p.Spirit;
 
         /// <summary>
         /// No-op — starter weapon assignment is now handled inside SetActiveClass.

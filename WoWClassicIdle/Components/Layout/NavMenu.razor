@@ -59,6 +59,10 @@
                     <div class="nav-item">
                         <NavLink class="nav-link" href="professions">
                             <img class="nav-icon" src="https://wow.zamimg.com/images/wow/icons/medium/trade_blacksmithing.jpg" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'" /> Professions
+                            @if (_bonusCanImprove)
+                            {
+                                <span class="prof-bonus-dot" title="A profession bonus slot can be filled or upgraded"></span>
+                            }
                         </NavLink>
                     </div>
                     }
@@ -135,11 +139,14 @@
     private System.Threading.CancellationTokenSource? _deleteConfirmCts;
     private bool _playerLevelAtLeastTen;
     private bool _professionsUnlocked;
+    private bool _bonusCanImprove;
 
     protected override void OnInitialized()
     {
         Engine.RosterChanged += OnRosterChanged;
         Engine.TickUpdated += OnTickUpdated;
+        Engine.ProfessionUpdated += OnProfessionUpdated;
+        _bonusCanImprove = Engine.CanImproveAnyBonuses;
         _playerLevelAtLeastTen = Engine.HasActiveCharacter && Engine.Player.Level >= 10;
         _professionsUnlocked   = Engine.ProfessionsUnlockedOnAccount;
     }
@@ -203,10 +210,20 @@
         }
     }
 
+    // Fires on every profession tick, so only re-render on a change
+    private void OnProfessionUpdated()
+    {
+        bool canImprove = Engine.CanImproveAnyBonuses;
+        if (canImprove == _bonusCanImprove) return;
+        _bonusCanImprove = canImprove;
+        InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         Engine.RosterChanged -= OnRosterChanged;
         Engine.TickUpdated -= OnTickUpdated;
+        Engine.ProfessionUpdated -= OnProfessionUpdated;
         _saveMsgCts?.Cancel();
         _deleteConfirmCts?.Cancel();
     }

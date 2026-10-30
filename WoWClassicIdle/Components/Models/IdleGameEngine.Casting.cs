@@ -88,7 +88,7 @@ public partial class IdleGameEngine
 
         if (!PayCastCost(next)) return dealt;
         dealt += ExecuteAbility(next);
-        Player.Cooldowns.StartCooldown(next.Id, next.Cooldown);
+        Player.Cooldowns.StartCooldown(next.Id, Player.GetEffectiveAbility(next).Cooldown);
         GcdRemaining = GlobalCooldown;
         return dealt;
     }
@@ -102,7 +102,7 @@ public partial class IdleGameEngine
             return 0;
         }
         int dealt = ExecuteAbility(ability);
-        Player.Cooldowns.StartCooldown(ability.Id, ability.Cooldown);
+        Player.Cooldowns.StartCooldown(ability.Id, Player.GetEffectiveAbility(ability).Cooldown);
         return dealt;
     }
 

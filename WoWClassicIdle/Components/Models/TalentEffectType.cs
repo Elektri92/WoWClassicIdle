@@ -148,4 +148,6 @@ public enum TalentEffectType
     SpiritOfRedemption,         // Lethal hit → invulnerable spirit (Priest, Holy)
     Nightfall,                  // x% chance per DoT tick: next Shadow Bolt instant
     Eclipse,                    // Wrath empowers Starfire and vice versa
+    SerpentStingDamage,         // +x% Serpent Sting damage
+    ModifyAbility,              // Changes ModifiedAbilityName via AbilityModifier (Lv 11–15 spec abilities)
 }

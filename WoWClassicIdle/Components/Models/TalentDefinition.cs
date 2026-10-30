@@ -24,6 +24,12 @@ public class TalentDefinition
     /// <summary>Further unlocked abilities (e.g. Bear Form → Maul).</summary>
     public IReadOnlyList<string> AlsoGrantsAbilityIds { get; init; } = [];
 
+    /// <summary>Name of the ability changed by <see cref="AbilityModifier"/> (<see cref="TalentEffectType.ModifyAbility"/>).</summary>
+    public string? ModifiedAbilityName { get; init; }
+
+    /// <summary>Applied to the effective copy of the ability while the talent is skilled.</summary>
+    public Func<Ability, Ability>? AbilityModifier { get; init; }
+
     /// <summary>All abilities unlocked by this talent.</summary>
     public IEnumerable<string> GrantedAbilityIds =>
         string.IsNullOrEmpty(GrantsAbilityId)
@@ -170,7 +176,7 @@ public class TalentDefinition
         TalentEffectType.RegrowthHealing =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Regrowth healing",
         TalentEffectType.GrantEvocation =>
-            "Grants ability: Evocation (restores 80% mana and +20% damage for 8s)",
+            "Grants ability: Evocation (restores 80% mana and +10% damage for 8s)",
         TalentEffectType.ArcaneMissilesDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Arcane Missiles damage",
         TalentEffectType.GrantIgnite =>
@@ -216,7 +222,7 @@ public class TalentDefinition
         TalentEffectType.MultiShotDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Multi-Shot damage",
         TalentEffectType.GrantMongooseBite =>
-            "Grants ability: Mongoose Bite (strike that empowers your next Raptor Strike by 30%)",
+            "Grants ability: Mongoose Bite (strike that empowers your next Raptor Strike by 45%)",
         TalentEffectType.RaptorStrikeBonus =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Raptor Strike damage, -{(EffectPerRank * ranks * 100):0.##}% mana cost",
         TalentEffectType.GrantSiphonLife =>
@@ -260,6 +266,9 @@ public class TalentDefinition
             $"Passive: {(EffectPerRank * ranks * 100):0.##}% chance per damage over time tick to make your next Shadow Bolt instant",
         TalentEffectType.Eclipse =>
             $"Passive: Wrath empowers your next Starfire by {IdleGameEngine.LunarEclipseBonus * 100:0}%, Starfire your next Wrath by {IdleGameEngine.SolarEclipseBonus * 100:0}%",
+        TalentEffectType.SerpentStingDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Serpent Sting damage",
+        TalentEffectType.ModifyAbility => Description,
         _ => ""
     };
 }

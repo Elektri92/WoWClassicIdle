@@ -89,6 +89,11 @@ namespace Models
                         DebuffDotTickInterval = ability.DebuffDotTickInterval * (1.0 - faster),
                     };
                 }
+                case "Serpent Sting":
+                {
+                    double bonus = TalentBonus(TalentEffectType.SerpentStingDamage);
+                    return bonus > 0 ? ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)) } : ability;
+                }
                 case "Fireball":
                     return ability.WithDamageBonus(TalentBonus(TalentEffectType.FireballDamage));
                 case "Wrath":
@@ -117,6 +122,15 @@ namespace Models
                 default:
                     return ability;
             }
+        }
+
+        /// <summary>Row 3 talents that improve a single ability (TalentRegistry.LevelAbilities.cs).</summary>
+        private Ability ApplyAbilityModifierTalents(Ability ability)
+        {
+            foreach (var talent in TalentRegistry.GetTalents(ActiveClass))
+                if (talent.AbilityModifier is not null && talent.ModifiedAbilityName == ability.Name && TalentState.GetRanks(talent.Id) > 0)
+                    ability = talent.AbilityModifier(ability);
+            return ability;
         }
 
         /// <summary>Additional HP from Stamina through talents (Strong Life).</summary>

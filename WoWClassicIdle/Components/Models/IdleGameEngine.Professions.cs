@@ -2,23 +2,6 @@ using System.Diagnostics;
 using Models;
 using Timer = System.Timers.Timer;
 
-/// <summary>Running pass in the active slot (crafting, disenchanting) – only exists while the profession subpage is open.</summary>
-public class ActiveProfessionRun
-{
-    public required Player Player { get; init; }
-    public required Profession Profession { get; init; }
-    /// <summary>Recipe ID or <see cref="IdleGameEngine.DisenchantTarget"/>.</summary>
-    public required string Target { get; init; }
-    /// <summary>Remaining crafts; <c>null</c> = endless.</summary>
-    public int? Remaining { get; set; }
-    /// <summary>Duration of a pass (seconds) – disenchanting is shorter than crafting.</summary>
-    public double Duration { get; init; } = Professions.ActiveDurationSeconds;
-    /// <summary>Queue when disenchanting (<see cref="IdleGameEngine.DisenchantTarget"/>), otherwise <c>null</c>.</summary>
-    public Queue<Item>? DisenchantQueue { get; init; }
-    public double Elapsed { get; set; }
-    public double Progress => Math.Clamp(Elapsed / Duration, 0, 1);
-}
-
 public enum ProfessionLogKind { Loot, SkillUp, Error }
 
 /// <summary>Profession event; <see cref="Id"/> increases continuously (UI detects new entries for the scrolling texts).</summary>
@@ -45,8 +28,6 @@ public partial class IdleGameEngine
 
     // Last chosen zone (gathering) or recipe (crafting) per profession – selected again when the subpage is opened
     private readonly Dictionary<Profession, string> _lastProfessionTargets = new();
-
-    public ActiveProfessionRun? ActiveProfessionRun { get; private set; }
 
     internal IReadOnlyDictionary<Profession, string> LastProfessionTargets => _lastProfessionTargets;
 
@@ -80,7 +61,7 @@ public partial class IdleGameEngine
         lock (_simLock)
         {
             UnlockSharedProfessions();
-            AdvanceActiveRun(dt);
+            AdvanceCraftingQueue(dt);
             AdvancePassiveSlots(dt);
         }
         ProfessionUpdated?.Invoke();
@@ -176,7 +157,6 @@ public partial class IdleGameEngine
         lock (_simLock)
         {
             if (!Player.ProfessionState.Unlearn(profession)) return;
-            if (ActiveProfessionRun?.Profession == profession) ActiveProfessionRun = null;
             // Free passive slots the character may no longer work without the profession
             if (_activeSlotId is { } id && GetCharacter(id) is { } character && !CanWorkPassive(character, profession))
                 _passiveAssignments.RemoveAll(a => a.CharacterId == id && a.Profession == profession);
@@ -184,81 +164,9 @@ public partial class IdleGameEngine
         ProfessionUpdated?.Invoke();
     }
 
-    // ─── Aktiver Slot ───
-
-    /// <summary>Starts the active slot (replaces a running pass). Gathering professions only have passive slots.</summary>
-    public void StartActiveProfession(Profession profession, string target, int? count = null)
-    {
-        lock (_simLock)
-        {
-            if (GetProfessionProgress(profession) is null) return;
-            if (Professions.Get(profession).IsGathering) return;
-            ActiveProfessionRun = new ActiveProfessionRun
-            {
-                Player = Player, Profession = profession, Target = target, Remaining = count,
-            };
-            _lastProfessionTargets[profession] = target;
-        }
-        ProfessionUpdated?.Invoke();
-    }
-
-    public void StopActiveProfession()
-    {
-        lock (_simLock) ActiveProfessionRun = null;
-        ProfessionUpdated?.Invoke();
-    }
-
     /// <summary>How often the recipe can be crafted with the current inventory.</summary>
     public int MaxCraftable(Recipe recipe) =>
         recipe.Reagents.Min(r => _sharedInventory.CountOf(r.Item.Id) / r.Count);
-
-    private void AdvanceActiveRun(double dt)
-    {
-        if (ActiveProfessionRun is not { } run) return;
-
-        // Character switch or unlearned → the pass is discarded
-        var progress = run.Player == Player ? GetProfessionProgress(run.Profession) : null;
-        if (progress is null)
-        {
-            ActiveProfessionRun = null;
-            return;
-        }
-
-        // With accelerated simulation (debug) several passes can fall into one tick
-        run.Elapsed += dt;
-        while (run.Elapsed >= run.Duration)
-        {
-            run.Elapsed -= run.Duration;
-
-            if (run.DisenchantQueue is { } queue)
-            {
-                ExecuteNextDisenchant(progress, queue);
-                run.Remaining = queue.Count;
-                if (queue.Count == 0)
-                {
-                    ActiveProfessionRun = null;
-                    return;
-                }
-                continue;
-            }
-
-            if (!ExecuteProfession(progress, run.Target, Professions.SkillUpChance, source: null))
-            {
-                ActiveProfessionRun = null;
-                return;
-            }
-
-            if (run.Remaining is { } remaining)
-            {
-                run.Remaining = remaining - 1;
-                if (run.Remaining <= 0)
-                {
-                    ActiveProfessionRun = null;
-                    return;
-                }
-            }
-        }
-    }
 
     // ─── Execution ───
 
@@ -283,6 +191,7 @@ public partial class IdleGameEngine
     {
         if (!ProfessionRegistry.GivesSkillUp(progress.Profession, requiredSkill, progress.Skill)) return;
         if (!progress.Definition.IsGathering) chance += ProfessionSkillUpBonus;
+        chance += ProfessionBonusValue(progress.Profession, ProfessionBonusKind.SkillChance);
         if (_professionRng.NextDouble() < chance && progress.TrySkillUp())
             LogProfession(progress.Profession, $"{progress.Definition.Name} {progress.Skill}", ProfessionLogKind.SkillUp);
     }
@@ -293,13 +202,14 @@ public partial class IdleGameEngine
         if (!IsZoneUnlocked(progress.Profession, zoneId)) return false;
 
         var drop = ProfessionRegistry.RollDrop(zone, _professionRng);
-        int leftover = _sharedInventory.TryAdd(drop.Item, drop.Count);
-        if (leftover == drop.Count)
+        int count = RollDoubleYield(progress.Profession) ? drop.Count * 2 : drop.Count;
+        int leftover = _sharedInventory.TryAdd(drop.Item, count);
+        if (leftover == count)
         {
             LogProfession(progress.Profession, "Inventory is full", ProfessionLogKind.Error, source: source);
             return false;
         }
-        LogProfession(progress.Profession, drop.Item.Name, ProfessionLogKind.Loot, drop.Item, drop.Count - leftover, source);
+        LogProfession(progress.Profession, drop.Item.Name, ProfessionLogKind.Loot, drop.Item, count - leftover, source);
         return true;
     }
 
@@ -331,7 +241,12 @@ public partial class IdleGameEngine
             return false;
         }
 
-        LogProfession(progress.Profession, recipe.Result.Name, ProfessionLogKind.Loot, recipe.Result, recipe.ResultCount, source);
+        // The doubled part only takes free space: a full inventory never undoes the finished craft
+        int bonusCount = RollDoubleYield(progress.Profession)
+            ? recipe.ResultCount - _sharedInventory.TryAdd(recipe.Result, recipe.ResultCount)
+            : 0;
+
+        LogProfession(progress.Profession, recipe.Result.Name, ProfessionLogKind.Loot, recipe.Result, recipe.ResultCount + bonusCount, source);
         return true;
     }
 

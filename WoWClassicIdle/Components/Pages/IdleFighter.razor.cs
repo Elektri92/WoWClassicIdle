@@ -40,8 +40,6 @@ public partial class IdleFighter
 
     protected override void OnInitialized()
     {
-        // If the character was switched in the profession windows, play the original one again
-        _engine.RestoreCharacterAfterProfessions();
         _engine.TickUpdated += OnTick;
         _engine.CombatTextRaised += OnCombatText;
         _engine.AbilityUnlocked += OnAbilityUnlocked;

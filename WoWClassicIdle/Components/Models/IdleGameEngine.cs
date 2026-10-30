@@ -31,7 +31,6 @@ public partial class IdleGameEngine
     public IReadOnlyList<CharacterSlot> CharacterRoster => _roster;
     public bool HasActiveCharacter => _activeSlotId.HasValue;
 
-    internal int? ActiveSlotId => _activeSlotId;
     internal int NextSlotId    => _nextSlotId;
 
     // ─── Charakterauswahl ───
@@ -102,10 +101,10 @@ public partial class IdleGameEngine
     public event Action<Item>? ItemDropped;
 
     /// <summary>
-    /// true = dropped armor is equipped automatically if it is an upgrade
-    /// (used by the debug simulator). Normally false: items only go into the inventory.
+    /// true = rare enemies drop no armor or weapons (used by the debug simulator, which equips
+    /// fixed gear per level). Normally false.
     /// </summary>
-    public bool AutoEquipDrops { get; set; }
+    public bool DisableGearDrops { get; set; }
 
     /// <param name="seed">Fixed random seed for reproducible fights (debug simulator); null = random.</param>
     public IdleGameEngine(int intervalMs = 100, int? seed = null)
