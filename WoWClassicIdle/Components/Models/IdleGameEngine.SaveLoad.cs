@@ -60,6 +60,9 @@ public partial class IdleGameEngine
             if (activeSlot is not null)
                 _sharedInventory.UpdateBagsForLevel(activeSlot.Player.Level);
 
+            // Items whose saved slot no longer exists are added last, so they can't take a slot another saved item needs
+            var displacedItems = new List<(Item Item, int Count)>();
+
             foreach (var itemData in save.SharedBagItems ?? [])
             {
                 if (itemData.BagIndex < 0 || itemData.BagIndex >= Inventory.BagSlotCount) continue;
@@ -74,8 +77,11 @@ public partial class IdleGameEngine
                 if (targetBag is not null && itemData.Slot < targetBag.SlotCount)
                     targetBag.Put(itemData.Slot, new ItemStack(item, Math.Max(1, itemData.Count)));
                 else
-                    _sharedInventory.TryAdd(item);  // Fallback: Rucksack
+                    displacedItems.Add((item, Math.Max(1, itemData.Count)));
             }
+
+            foreach (var (item, count) in displacedItems)
+                _sharedInventory.TryAdd(item, count);
 
             if (activeSlot is not null)
             {

@@ -32,22 +32,23 @@ namespace Models
 
         public ItemStack? this[int index] => _slots[index];
 
-        /// <summary>
-        /// Adds items: first onto existing stacks, then into free slots.
-        /// Returns the amount that did NOT fit anymore.
-        /// </summary>
-        public int TryAdd(Item item, int count)
+        /// <summary>Tops up existing stacks of the item. Returns the amount that did NOT fit.</summary>
+        public int FillStacks(Item item, int count)
         {
-            if (item.IsStackable)
-            {
-                foreach (var stack in _slots)
-                {
-                    if (count == 0) return 0;
-                    if (stack is not null && stack.Item.Id == item.Id)
-                        count -= stack.Add(count);
-                }
-            }
+            if (!item.IsStackable) return count;
 
+            foreach (var stack in _slots)
+            {
+                if (count == 0) return 0;
+                if (stack is not null && stack.Item.Id == item.Id)
+                    count -= stack.Add(count);
+            }
+            return count;
+        }
+
+        /// <summary>Puts items into free slots. Returns the amount that did NOT fit.</summary>
+        public int AddToFreeSlots(Item item, int count)
+        {
             for (int i = 0; i < _slots.Length && count > 0; i++)
             {
                 if (_slots[i] is not null) continue;

@@ -17,6 +17,12 @@ namespace Models
         /// <summary>Base size of a newly unlocked bag.</summary>
         public const int BaseBagSlotSize = 12;
 
+        /// <summary>Bag slots new crafting materials go to first: Bag 1 + Bag 3.</summary>
+        private static readonly int[] MaterialBagSlots = { 0, 2 };
+
+        /// <summary>Bag slots new consumables go to first: Bag 2 + Bag 4.</summary>
+        private static readonly int[] ConsumableBagSlots = { 1, 3 };
+
         public const string BackpackIconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_08.jpg";
         private const string VirtualBagIconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_bag_07.jpg";
 
@@ -52,15 +58,31 @@ namespace Models
         public int TotalSlots => AllContainers.Sum(b => b.SlotCount);
         public int FreeSlots  => AllContainers.Sum(b => b.FreeSlots);
 
-        /// <summary>Adds items (backpack first). Returns the amount that didn't fit.</summary>
+        /// <summary>
+        /// Adds items: existing stacks in any container are filled before a new slot is used,
+        /// new slots follow <see cref="PlacementOrder"/>. Returns the amount that didn't fit.
+        /// </summary>
         public int TryAdd(Item item, int count = 1)
         {
-            foreach (var bag in AllContainers)
-            {
-                count = bag.TryAdd(item, count);
-                if (count == 0) break;
-            }
+            var containers = PlacementOrder(item).ToList();
+            foreach (var bag in containers)
+                count = bag.FillStacks(item, count);
+            foreach (var bag in containers)
+                count = bag.AddToFreeSlots(item, count);
             return count;
+        }
+
+        /// <summary>Preferred bags of the item's category first, then the remaining containers in fill order.</summary>
+        private IEnumerable<Bag> PlacementOrder(Item item)
+        {
+            int[] preferredSlots = item switch
+            {
+                ConsumableItem => ConsumableBagSlots,
+                TradeItem      => MaterialBagSlots,
+                _              => [],
+            };
+            var preferred = preferredSlots.Select(i => _bags[i]).OfType<Bag>().ToList();
+            return preferred.Concat(AllContainers.Except(preferred));
         }
 
         public int Remove(int itemId, int count = 1)
