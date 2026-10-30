@@ -129,7 +129,8 @@
             @if (!_def.IsGathering)
             {
                 <p class="wow-hint">
-                    Skill-ups (@((Professions.SkillUpChance * 100).ToString("0"))% chance per run) only happen in the active slot while this page is open.
+                    Skill-ups (@Professions.FormatChance(Professions.SkillUpChance + Engine.ProfessionSkillUpBonus)% chance per run) only happen in the active slot while this page is open.
+                    The chance rises by @Professions.FormatChance(Professions.SkillUpChancePerTenLevels)% per 10 levels across all your characters.
                 </p>
             }
 

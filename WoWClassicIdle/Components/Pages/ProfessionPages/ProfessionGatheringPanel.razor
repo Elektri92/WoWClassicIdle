@@ -8,7 +8,7 @@
 
     <p class="wow-hint">
         Drag characters of any class onto a zone. Up to @Professions.MaxPassiveWorkers characters work passively, spread over any zones,
-        and each run has a @((Professions.PassiveSkillUpChance * 100).ToString("0"))% chance for a skill-up.
+        and each run has a @Professions.FormatChance(Professions.PassiveSkillUpChance)% chance for a skill-up.
         Drag a character back to the bar to remove it. Higher zones unlock with your @Definition.Name skill.
     </p>
 

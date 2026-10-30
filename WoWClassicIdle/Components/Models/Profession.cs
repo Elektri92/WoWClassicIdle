@@ -66,6 +66,15 @@ namespace Models
         /// <summary>Chance for +1 skill per passive pass (gathering – the only source of gathering skill).</summary>
         public const double PassiveSkillUpChance = 0.05;
 
+        /// <summary>Added to the crafting and disenchanting skill-up chance per full 10 levels summed across all characters.</summary>
+        public const double SkillUpChancePerTenLevels = 0.002;
+
+        public static double SkillUpBonus(int totalCharacterLevels) => totalCharacterLevels / 10 * SkillUpChancePerTenLevels;
+
+        /// <summary>Chance as percent text for the UI, e.g. "1.2".</summary>
+        public static string FormatChance(double chance) =>
+            (chance * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
         /// <summary>Apprentice is granted automatically when learning, higher tiers are bought from the trainer.</summary>
         public static readonly IReadOnlyList<ProfessionRank> Ranks =
         [

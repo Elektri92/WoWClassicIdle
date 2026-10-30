@@ -100,6 +100,9 @@ public partial class IdleGameEngine
             ? Player.Level
             : _roster.Max(s => s.Player.Level);
 
+    /// <summary>Bonus on crafting and disenchanting skill-up chances (not gathering) from the levels of all characters combined.</summary>
+    public double ProfessionSkillUpBonus => Professions.SkillUpBonus(_roster.Sum(s => s.Player.Level));
+
     /// <summary>Highest skill of a profession: main profession across all characters, shared professions account-wide (achievements).</summary>
     public int HighestProfessionSkill(Profession profession)
     {
@@ -279,6 +282,7 @@ public partial class IdleGameEngine
     private void RollSkillUp(ProfessionProgress progress, int requiredSkill, double chance = Professions.SkillUpChance)
     {
         if (!ProfessionRegistry.GivesSkillUp(progress.Profession, requiredSkill, progress.Skill)) return;
+        if (!progress.Definition.IsGathering) chance += ProfessionSkillUpBonus;
         if (_professionRng.NextDouble() < chance && progress.TrySkillUp())
             LogProfession(progress.Profession, $"{progress.Definition.Name} {progress.Skill}", ProfessionLogKind.SkillUp);
     }
