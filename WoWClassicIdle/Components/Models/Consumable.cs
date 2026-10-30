@@ -6,9 +6,9 @@ namespace Models
     {
         HealthPotion,   // restores health (at low health, own cooldown)
         ManaPotion,     // restores mana (at low mana, own cooldown)
-        Elixir,         // Stat-Buff (Alchemie), 1 min
+        Elixir,         // stat buff (Alchemy), 3 min
         Flask,          // stat buff (Alchemy), 1 h, persists through death
-        Food,           // Stat-Buff (Kochkunst), 1 min
+        Food,           // stat buff (Cooking), 3 min
         Bandage,        // shortens the spirit healer wait by Amount %
         Explosive,      // Engineering: Amount damage to the enemy, own cooldown
         Costume,        // manual only: transforms the character model (Savory Deviate Delight), renews itself automatically
