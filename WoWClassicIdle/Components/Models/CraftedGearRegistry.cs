@@ -21,7 +21,12 @@ namespace Models
             new(35, 150, 21,  6, [ArmorSlot.Head, ArmorSlot.Chest, ArmorSlot.Legs, ArmorSlot.Hands, ArmorSlot.Feet]),
             new(45, 200, 28,  8, [ArmorSlot.Head, ArmorSlot.Chest, ArmorSlot.Legs, ArmorSlot.Hands, ArmorSlot.Belt, ArmorSlot.Feet]),
             new(55, 250, 35, 10, [ArmorSlot.Head, ArmorSlot.Chest, ArmorSlot.Legs, ArmorSlot.Hands, ArmorSlot.Belt, ArmorSlot.Feet, ArmorSlot.Wrists]),
+            // Added later: generated after all older tiers (IDs 9771–9797), Enchanting starts at 9801
+            new(10,  25,  4,  4, [ArmorSlot.Hands, ArmorSlot.Belt, ArmorSlot.Feet]),
         ];
+
+        /// <summary>Tiers before this index keep their original IDs; later ones are appended after them.</summary>
+        private const int OriginalTierCount = 6;
 
         /// <summary>Material of a tier: item + share of the base amount.</summary>
         private record TierMaterial(string Name, (TradeItem Item, double Share)[] Reagents);
@@ -90,6 +95,7 @@ namespace Models
                 new("Mageweave", [(ProfessionRegistry.MageweaveCloth, 1.0)]),
                 new("Runecloth", [(ProfessionRegistry.Runecloth, 1.0)]),
                 new("Runeweave", [(ProfessionRegistry.Runecloth, 1.5), (ProfessionRegistry.MageweaveCloth, 0.5)]),
+                new("Heavy Linen", [(ProfessionRegistry.LinenCloth, 1.0)]),
             ],
             [
                 new(CharacterClass.Mage,    "Arcanist",   Cloth, Int: 0.50, Sta: 0.30, Spi: 0.20),
@@ -105,6 +111,7 @@ namespace Models
                 new("Thickhide", [(ProfessionRegistry.ThickLeather, 1.0), (ProfessionRegistry.HeavyLeather, 0.5)]),
                 new("Rugged",   [(ProfessionRegistry.RuggedLeather, 1.0), (ProfessionRegistry.ThickLeather, 0.5)]),
                 new("Primal",   [(ProfessionRegistry.RuggedLeather, 1.5), (ProfessionRegistry.ThickLeather, 0.5)]),
+                new("Cured",    [(ProfessionRegistry.LightLeather, 1.0), (ProfessionRegistry.RuinedLeatherScraps, 0.5)]),
             ],
             [
                 new(CharacterClass.Rogue,  "Stalker",     Leather, Agi: 0.50, Sta: 0.30, Str: 0.20),
@@ -121,6 +128,7 @@ namespace Models
                 new("Mithril",    [(ProfessionRegistry.MithrilOre, 1.0), (ProfessionRegistry.SolidStone, 0.5)]),
                 new("Thorium",    [(ProfessionRegistry.ThoriumOre, 1.0), (ProfessionRegistry.DenseStone, 0.5)]),
                 new("Truesilver", [(ProfessionRegistry.ThoriumOre, 1.0), (ProfessionRegistry.TruesilverOre, 0.5), (ProfessionRegistry.DenseStone, 0.5)]),
+                new("Runed Copper", [(ProfessionRegistry.CopperOre, 1.0), (ProfessionRegistry.RoughStone, 0.5)]),
             ],
             [
                 new(CharacterClass.Warrior, "Vanguard",    Plate, Str: 0.45, Sta: 0.40, Agi: 0.15),
@@ -140,34 +148,39 @@ namespace Models
             var recipes = new List<Recipe>();
             int id = 9501;
 
-            // Do not change the order – IDs (save game) and recipe IDs depend on it
-            foreach (var gear in Definitions())
+            void AddTier(ProfessionGear gear, int t)
             {
-                for (int t = 0; t < Tiers.Length; t++)
+                var tier = Tiers[t];
+                var material = gear.Materials[t];
+                foreach (var set in gear.Sets)
                 {
-                    var tier = Tiers[t];
-                    var material = gear.Materials[t];
-                    foreach (var set in gear.Sets)
+                    foreach (var slot in tier.Slots)
                     {
-                        foreach (var slot in tier.Slots)
-                        {
-                            var (piece, icon) = set.Style.Pieces[slot];
-                            double weight = SlotWeight(slot);
-                            var item = new ArmorItem(id++, $"{material.Name} {set.SetName} {piece}", icon, slot,
-                                Stats(tier.Budget * weight, set), tier.Level, ItemQuality.Uncommon,
-                                SellPrice: 12L * tier.Level * tier.Level, RequiredClass: set.Class);
+                        var (piece, icon) = set.Style.Pieces[slot];
+                        double weight = SlotWeight(slot);
+                        var item = new ArmorItem(id++, $"{material.Name} {set.SetName} {piece}", icon, slot,
+                            Stats(tier.Budget * weight, set), tier.Level, ItemQuality.Uncommon,
+                            SellPrice: 12L * tier.Level * tier.Level, RequiredClass: set.Class);
 
-                            var reagents = material.Reagents
-                                .Select(r => new Reagent(r.Item, Math.Max(1, (int)Math.Round(tier.BaseReagents * r.Share * weight))))
-                                .ToList();
+                        var reagents = material.Reagents
+                            .Select(r => new Reagent(r.Item, Math.Max(1, (int)Math.Round(tier.BaseReagents * r.Share * weight))))
+                            .ToList();
 
-                            items.Add(item);
-                            _byId[item.Id] = item;
-                            recipes.Add(new Recipe($"gear_{item.Id}", gear.Profession, item, reagents, tier.Skill));
-                        }
+                        items.Add(item);
+                        _byId[item.Id] = item;
+                        recipes.Add(new Recipe($"gear_{item.Id}", gear.Profession, item, reagents, tier.Skill));
                     }
                 }
             }
+
+            // Do not change the order – IDs (save game) and recipe IDs depend on it
+            var definitions = Definitions();
+            foreach (var gear in definitions)
+                for (int t = 0; t < OriginalTierCount; t++)
+                    AddTier(gear, t);
+            foreach (var gear in definitions)
+                for (int t = OriginalTierCount; t < Tiers.Length; t++)
+                    AddTier(gear, t);
 
             Items = items;
             Recipes = recipes;
