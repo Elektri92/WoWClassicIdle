@@ -1,0 +1,51 @@
+[
+  {
+    "version": "0.0.36",
+    "date": "2026-10-30",
+    "changes": [
+      "From level 10, each death costs 5% of your current XP. You never lose a level.",
+      "Current health and mana, rage or energy are now saved and restored on load."
+    ]
+  },
+  {
+    "version": "0.0.35",
+    "date": "2026-10-30",
+    "changes": [
+      "The new ability popup in Idle Fighter now stays until you dismiss it. The × closes it without equipping the ability.",
+      "Elixirs and buff food now last 3 minutes instead of 1.",
+      "Fixed misplaced and see-through tooltips on upcoming abilities in the Ability Loadout."
+    ]
+  },
+  {
+    "version": "0.0.34",
+    "date": "2026-10-30",
+    "changes": [
+      "Fixed dragging characters into zone slots on Linux."
+    ]
+  },
+  {
+    "version": "0.0.33",
+    "date": "2026-10-30",
+    "changes": [
+      "Consumables can be toggled on the combat bar with a right-click.",
+      "Health and mana potions now have separate cooldowns.",
+      "Gathering professions: passive runs take 90 seconds instead of 120, and skill-ups only come from passive gathering.",
+      "Professions are now unlocked in the menu for the whole account.",
+      "Updates are now checked every minute while playing, and the game saves before restarting."
+    ]
+  },
+  {
+    "version": "0.0.32",
+    "date": "2026-10-30",
+    "changes": [
+      "Items can be moved between inventory slots and bags with drag & drop."
+    ]
+  },
+  {
+    "version": "0.0.31",
+    "date": "2026-10-29",
+    "changes": [
+      "Travel now continues while you are on other pages."
+    ]
+  }
+]

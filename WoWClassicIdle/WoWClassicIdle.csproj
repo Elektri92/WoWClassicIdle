@@ -26,6 +26,12 @@
       <PackageReference Include="Photino.NET" Version="4.0.16" />
     </ItemGroup>
 
+    <!-- Embedded so that the auto-update, which only replaces the binary, brings the matching release notes along -->
+    <ItemGroup>
+      <Content Remove="changelog.json" />
+      <EmbeddedResource Include="changelog.json" LogicalName="changelog.json" />
+    </ItemGroup>
+
     <!-- Otherwise appsettings end up loose next to the binary. But the ContentRoot is the bundle's extraction directory –
          without bundling, appsettings.Production.json (Urls/Logging) is missing there and Kestrel falls back to port 5000. -->
     <ItemGroup>

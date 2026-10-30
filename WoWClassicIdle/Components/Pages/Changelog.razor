@@ -1,0 +1,31 @@
+@page "/changelog"
+@using Models
+@using Services
+
+<PageTitle>Changelog</PageTitle>
+
+@* Styles: wwwroot/css/changelog.css *@
+<div class="wow-page narrow">
+    <h2>Changelog</h2>
+    <p class="wow-hint">What changed in each build, newest first.</p>
+
+    @foreach (var entry in ChangelogRegistry.Entries)
+    {
+        <section class="wow-card changelog-entry">
+            <h4>
+                v@(entry.Version)
+                @if (entry.Version == UpdateService.AppVersion)
+                {
+                    <span class="wow-badge changelog-current">Your build</span>
+                }
+                <span class="changelog-date">@entry.Date</span>
+            </h4>
+            <ul class="changelog-list">
+                @foreach (var change in entry.Changes)
+                {
+                    <li>@change</li>
+                }
+            </ul>
+        </section>
+    }
+</div>

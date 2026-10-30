@@ -11,7 +11,10 @@ jobs:
       contents: write
 
     steps:
+      # Full history and tags: the changelog step reads all commits since the previous release
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -40,6 +43,10 @@ jobs:
           )
           echo "value=$NEW" >> $GITHUB_OUTPUT
 
+      # Must run before publish: the changelog is embedded in the binary
+      - name: Update changelog
+        run: python3 .github/scripts/update_changelog.py ${{ steps.version.outputs.value }} WoWClassicIdle/changelog.json
+
       # Pass the version explicitly to every publish so AssemblyVersion is embedded correctly
       - name: Publish Linux
         run: dotnet publish WoWClassicIdle -p:PublishProfile=Linux-x64 -p:Version=${{ steps.version.outputs.value }}
@@ -62,12 +69,12 @@ jobs:
           cp publish/win/WoWClassicIdle.exe    publish/win/WoWClassicIdle-win-x64.exe
           cp publish/mac/WoWClassicIdle        publish/mac/WoWClassicIdle-osx-x64
 
-      # Commit version.json back to main ([skip ci] prevents an endless loop)
-      - name: Commit version.json
+      # Commit version.json and the changelog back to main ([skip ci] prevents an endless loop)
+      - name: Commit version.json and changelog
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add version.json
+          git add version.json WoWClassicIdle/changelog.json
           git commit -m "chore: bump version to v${{ steps.version.outputs.value }} [skip ci]"
           git push
 

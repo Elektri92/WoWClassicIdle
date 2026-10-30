@@ -1,0 +1,28 @@
+/* ── Changelog (Components/Pages/Changelog.razor) ── */
+.changelog-entry {
+    margin-bottom: .75rem;
+}
+
+.changelog-current {
+    margin-left: .35rem;
+    background: var(--wow-border);
+    color: var(--wow-gold-pale);
+}
+
+.changelog-date {
+    float: right;
+    font-family: var(--wow-font-body);
+    font-size: .8rem;
+    font-weight: 400;
+    color: var(--wow-muted);
+    text-shadow: none;
+}
+
+.changelog-list {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.changelog-list li + li {
+    margin-top: .25rem;
+}

@@ -56,6 +56,16 @@ WoWClassicIdle/Components/
 `Components/Debug/**` und `Components/Pages/Debug/**` werden nur im Debug-Build kompiliert (`.csproj`).
 Nie Debug-Typen aus shared/Release-Code referenzieren. Gate über `BuildInfo.IsDebug`.
 
+## Changelog
+
+Die CI erzeugt bei jedem Push auf `master` den Eintrag in `WoWClassicIdle/changelog.json` aus den Commits seit dem letzten Release-Tag
+(`.github/scripts/update_changelog.py`). Die Datei nie von Hand für neue Builds ergänzen.
+
+**Jeder Commit mit spielerrelevanter Änderung braucht im Body eine Zeile `Changelog: <englischer Text für Spieler>`**
+(mehrfach erlaubt, in eigenem Absatz vor `Co-Authored-By`). Beschreibt, was sich für Spieler ändert, nicht die Technik.
+Rein interne Commits (`chore`, `ci`, `docs`, `refactor`, `style`, `test`, `build`) brauchen keine.
+Fehlt sie bei anderen Typen, zeigt das Spiel nur „Minor fixes and improvements.“, und die CI gibt eine Warnung aus.
+
 ## Konventionen
 
 - **Partial classes**: Neue Systeme als eigene `partial`-Datei anlegen — keine Monolithen.
