@@ -428,6 +428,10 @@ button.bar-slot:hover, .bar-slot.open { border-color: var(--wow-gold); }
 }
 .inv-bags.selling { border-color: var(--wow-gold-soft); }
 
+/* Dragging a stack: its origin fades, all slots show they accept the drop */
+.inv-bags.dragging .bag-slot { border-color: var(--wow-gold-soft); }
+.bag-slot.drag-source img { opacity: .35; }
+
 .stack-count {
     position: absolute;
     right: 2px;

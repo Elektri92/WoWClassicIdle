@@ -149,6 +149,15 @@ public partial class Inventory
     private void ClearDrag() =>
         _dragSource = null;
 
+    /// <summary>Drop on a bag slot: rearranges the dragged stack (see <see cref="Models.Inventory.MoveStack"/>).</summary>
+    private void DropOnBagSlot(int bagIndex, int slotIndex)
+    {
+        if (_dragSource is not { } src) return;
+        _dragSource = null;
+        if (ContainerAt(src.bagIndex) is { } from && ContainerAt(bagIndex) is { } to)
+            _engine.MoveInventoryStack(from, src.slotIndex, to, slotIndex);
+    }
+
     /// <summary>Right-click on a bag slot: sell when the merchant is open, otherwise equip or use.</summary>
     private void OnSlotRightClick(int bagIndex, int slotIndex)
     {

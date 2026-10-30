@@ -62,6 +62,11 @@ public partial class IdleGameEngine
         lock (_simLock) return _sharedInventory.SplitStack(bag, index, amount);
     }
 
+    public bool MoveInventoryStack(Bag from, int fromIndex, Bag to, int toIndex)
+    {
+        lock (_simLock) return _sharedInventory.MoveStack(from, fromIndex, to, toIndex);
+    }
+
     /// <summary>Increments the counter for manually sold items (e.g. via drag and drop onto the merchant).</summary>
     public void TrackItemSold(int count = 1) => TotalItemsSold += count;
 

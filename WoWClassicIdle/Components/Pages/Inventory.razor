@@ -8,7 +8,7 @@
 @* Styles: wwwroot/css/inventory.css – Logik in Inventory.razor.cs *@
 <div class="wow-page inventory-page">
     <h2 class="inv-title">Inventory</h2>
-    <p class="wow-hint inv-hint">Your equipment, bags and character stats. @BagUnlockHint</p>
+    <p class="wow-hint inv-hint">Your equipment, bags and character stats. Drag items between slots to rearrange them. @BagUnlockHint</p>
     @if (_useMessage is not null)
     {
         @* Feedback after right-clicking a usable consumable *@
@@ -135,7 +135,7 @@
 
         @* ── Taschen ── *@
         @* Background: map of the faction capital (Stormwind / Orgrimmar) *@
-        <div class="al-panel inv-bags @(_merchantOpen ? "selling" : "")" style="--i: 1">
+        <div class="al-panel inv-bags @(_merchantOpen ? "selling" : "") @(_dragSource.HasValue ? "dragging" : "")" style="--i: 1">
             <div class="inv-bags-map" aria-hidden="true" style="background-image: url('@IconUrls.CapitalMapUrl(_engine.Faction)')"></div>
             <h4>Bags</h4>
             <!-- Bag bar: Bag 4 … Bag 1, Backpack (right to left, like the original) -->
@@ -335,15 +335,21 @@
         </div>
     };
 
-    // Bag slot: right-click sells when the merchant is open, otherwise equip/use
+    // Looks empty, but may hold an item of another class (shared inventory) – a drop swaps with it
+    private RenderFragment EmptyBagSlot(int containerIndex, int si) =>
+        @<div class="bag-slot empty"
+              @ondragover:preventDefault
+              @ondrop="() => DropOnBagSlot(containerIndex, si)" @ondrop:preventDefault></div>;
+
+    // Bag slot: right-click sells when the merchant is open, otherwise equip/use; dragging onto another slot moves it
     private RenderFragment BagSlot(int containerIndex, int si, ItemStack? stack)
     {
-        if (stack is null) return @<div class="bag-slot empty"></div>;
+        if (stack is null) return EmptyBagSlot(containerIndex, si);
 
         var weaponItem = stack.Item as WeaponItem;
         var armorItem  = stack.Item as ArmorItem;
         bool classLocked = weaponItem?.RequiredClass is { } req && req != _engine.Player.ActiveClass;
-        if (classLocked) return @<div class="bag-slot empty"></div>;
+        if (classLocked) return EmptyBagSlot(containerIndex, si);
 
         bool levelLocked = !_engine.Player.MeetsItemRequirements(stack.Item);
         var slotCss = weaponItem is not null ? "bag-slot weapon-item"
@@ -351,6 +357,7 @@
                     :                         "bag-slot sellable-item";
         if (levelLocked) slotCss += " level-locked";
         if (_merchantOpen) slotCss += " sell-mode";
+        if (_dragSource == (containerIndex, si)) slotCss += " drag-source";
         string? gearHint = _merchantOpen ? SellHint : levelLocked ? null : EquipHint;
 
         RenderFragment content = @<div class="@slotCss"
@@ -359,6 +366,8 @@
                                        draggable="true"
                                        @ondragstart="() => StartDrag(containerIndex, si)"
                                        @ondragend="ClearDrag"
+                                       @ondragover:preventDefault
+                                       @ondrop="() => DropOnBagSlot(containerIndex, si)" @ondrop:preventDefault
                                        @onclick="e => OnSlotClick(e, containerIndex, si)"
                                        @oncontextmenu="() => OnSlotRightClick(containerIndex, si)"
                                        @oncontextmenu:preventDefault="@PreventContextMenu(stack.Item)">
