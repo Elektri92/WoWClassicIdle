@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="8f2a3aa0-bc5c-49d0-8450-990060cab37a" />
+    <option name="activeSessionId" value="f100e36f-f270-40bb-afb8-6da0f694f500" />
     <option name="openSessionIds">
       <list>
         <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
@@ -33,6 +33,7 @@
         <option value="30df9a3e-3aff-4347-bfa0-6de65f823927" />
         <option value="4270da30-e702-462f-b6e7-c67865dc2bd2" />
         <option value="8f2a3aa0-bc5c-49d0-8450-990060cab37a" />
+        <option value="f100e36f-f270-40bb-afb8-6da0f694f500" />
       </list>
     </option>
     <option name="sessionPaths">
@@ -65,6 +66,7 @@
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="/sessions/30341ce3-2e71-4955-b176-e452674ae63f" />
         <entry key="e45e671c-8540-4b3c-a216-5cc613c5d8de" value="/sessions/c022f2f7-63f4-41da-a8c4-48c9dab79284" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="/sessions/b15805d1-dd0f-4966-94e7-a6fcf6249d7d" />
+        <entry key="f100e36f-f270-40bb-afb8-6da0f694f500" value="/sessions/5496d251-cbe0-46f2-af6b-24992fa3c5df" />
         <entry key="f25356c5-3553-4a42-ac3b-f97c0d4e825c" value="/sessions/0a610214-f369-4d1b-b6fe-a83e859a5e5f" />
       </map>
     </option>
@@ -98,6 +100,7 @@
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="Warrior-Stance-Icons und Buff-Anzeige" />
         <entry key="e45e671c-8540-4b3c-a216-5cc613c5d8de" value="Consumable-Toggle und separate Cooldowns" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="Automatisch geöffnete Inventar-Taschen" />
+        <entry key="f100e36f-f270-40bb-afb8-6da0f694f500" value="Zuweisung nur einmal möglich" />
         <entry key="f25356c5-3553-4a42-ac3b-f97c0d4e825c" value="Curse of Agony, Feral Speed" />
       </map>
     </option>
