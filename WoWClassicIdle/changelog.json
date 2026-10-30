@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.0.37",
+    "date": "2026-10-30",
+    "changes": [
+      "The game now reopens the page you were on when you last closed it.",
+      "Added hotkeys: B or C opens the Inventory, F the Idle Fighter, K Professions and N Talents.",
+      "Added a Changelog page to the menu that shows what changed in each build."
+    ]
+  },
+  {
     "version": "0.0.36",
     "date": "2026-10-30",
     "changes": [
