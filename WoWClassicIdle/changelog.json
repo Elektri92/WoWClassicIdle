@@ -1,5 +1,51 @@
 [
   {
+    "version": "0.0.40",
+    "date": "2026-10-31",
+    "sections": [
+      {
+        "category": "Combat",
+        "changes": [
+          "Added a Healing Meter next to the Damage Meter. Log and Reset cover both."
+        ]
+      },
+      {
+        "category": "Items",
+        "changes": [
+          "Mounts must now be learned: a riding trainer of your race appears in your Inventory from level 40 (60% speed, 100 gold) and level 60 (100% speed, 1000 gold), per character. Characters already past these levels need to train too.",
+          "Mounts have their own slot in the character window. Click it to switch mounts. Mounts follow your race, and class mounts were removed.",
+          "Item tooltips and comparisons now show special equip effects."
+        ]
+      },
+      {
+        "category": "Professions",
+        "changes": [
+          "First Aid can now craft stimpaks: used automatically right after resurrecting, they raise your Spirit for a short time.",
+          "Tailoring can now craft cloaks for every class.",
+          "Alchemy can now craft Alchemist's Stones, trinkets that make healing and mana potions of their tier restore 30% more. Enchanting can craft the Charm of Keen Insight (+1% Critical Strike chance).",
+          "Rare and epic profession bonuses now drop less often: 0.5% and 0.25% per kill instead of 1%.",
+          "The crafting queue shows the total time left and can return you to combat when it runs empty (unlocks at level 15).",
+          "Recipe lists show how many of an item are in your bags, the class filter keeps recipes for all classes, and the profession quick bar shows which characters work passively."
+        ]
+      },
+      {
+        "category": "World",
+        "changes": [
+          "Combat zones are now grouped by level range.",
+          "Zones show only what is still open: finished objectives and found drops disappear. A popup appears once you complete a zone."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "Press Space on the Idle Fighter page to jump, with achievements for jumping.",
+          "Added achievements for collecting and equipping profession bonuses.",
+          "The Changelog page now marks builds you haven't seen yet."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.39",
     "date": "2026-10-30",
     "sections": [
