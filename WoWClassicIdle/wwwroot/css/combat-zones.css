@@ -80,7 +80,6 @@
     font-variant-numeric: tabular-nums;
 }
 .czone-objective img { width: 20px; height: 20px; border: 1px solid #000; border-radius: 3px; }
-.czone-objective.done { color: #1eff00; }
 
 /* ----- World map: Kalimdor left, Eastern Kingdoms right ----- */
 .czone-map {
@@ -160,6 +159,29 @@
     text-transform: uppercase;
 }
 .czone-continent-sub { color: #e8e2c8; font-size: .72rem; }
+
+/* Level band within a continent: gold title between two fading lines */
+.czone-band + .czone-band { margin-top: 10px; }
+.czone-band-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    color: var(--wow-gold);
+    font-family: var(--wow-font-title);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    white-space: nowrap;
+}
+.czone-band-title::before,
+.czone-band-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #6a5530);
+}
+.czone-band-title::after { transform: scaleX(-1); }
 
 .czone-grid {
     display: grid;
@@ -731,6 +753,4 @@
 
 .zt-obj { display: flex; align-items: center; gap: 6px; color: #e8e8e8; font-size: .76rem; }
 .zt-obj img { width: 16px; height: 16px; border: 1px solid #000; border-radius: 3px; }
-.zt-obj.done { color: #9d9d9d; }
 .zt-obj-count { margin-left: auto; padding-left: 10px; color: #ffd100; font-variant-numeric: tabular-nums; }
-.zt-obj.done .zt-obj-count { color: #1eff00; }

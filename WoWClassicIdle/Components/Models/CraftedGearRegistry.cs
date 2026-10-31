@@ -28,6 +28,13 @@ namespace Models
         /// <summary>Tiers before this index keep their original IDs; later ones are appended after them.</summary>
         private const int OriginalTierCount = 6;
 
+        /// <summary>Cloaks: IDs 9920–9982 (7 tiers × 9 classes).</summary>
+        private const int FirstCloakId = 9920;
+
+        // Per tier, in the order of Tiers
+        private static readonly string[] CloakIcons =
+            ["inv_misc_cape_01", "inv_misc_cape_02", "inv_misc_cape_06", "inv_misc_cape_10", "inv_misc_cape_11", "inv_misc_cape_16", "inv_misc_cape_20"];
+
         /// <summary>Material of a tier: item + share of the base amount.</summary>
         private record TierMaterial(string Name, (TradeItem Item, double Share)[] Reagents);
 
@@ -183,6 +190,30 @@ namespace Models
             foreach (var gear in definitions)
                 for (int t = OriginalTierCount; t < Tiers.Length; t++)
                     AddTier(gear, t);
+
+            // Tailored cloaks for every class, in their own ID range after Enchanting
+            var tailoring = definitions.Single(g => g.Profession == Profession.Tailoring);
+            id = FirstCloakId;
+            for (int t = 0; t < Tiers.Length; t++)
+            {
+                var tier = Tiers[t];
+                var material = tailoring.Materials[t];
+                foreach (var set in definitions.SelectMany(g => g.Sets))
+                {
+                    double weight = SlotWeight(ArmorSlot.Cape);
+                    var item = new ArmorItem(id++, $"{material.Name} {set.SetName} Cloak", CloakIcons[t], ArmorSlot.Cape,
+                        Stats(tier.Budget * weight, set), tier.Level, ItemQuality.Uncommon,
+                        SellPrice: 12L * tier.Level * tier.Level, RequiredClass: set.Class);
+
+                    var reagents = material.Reagents
+                        .Select(r => new Reagent(r.Item, Math.Max(1, (int)Math.Round(tier.BaseReagents * r.Share * weight))))
+                        .ToList();
+
+                    items.Add(item);
+                    _byId[item.Id] = item;
+                    recipes.Add(new Recipe($"gear_{item.Id}", Profession.Tailoring, item, reagents, tier.Skill));
+                }
+            }
 
             Items = items;
             Recipes = recipes;

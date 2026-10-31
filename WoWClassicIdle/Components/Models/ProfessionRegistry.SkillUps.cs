@@ -14,7 +14,8 @@ namespace Models
         private static IEnumerable<int> SkillRequirements(ProfessionDefinition def)
         {
             if (def.IsGathering) return GetZones(def.Profession).Select(ZoneRequiredSkill);
-            var recipes = GetRecipes(def.Profession).Select(r => r.RequiredSkill);
+            // Expensive one-off recipes (IsSkillStep = false) must not turn the tier below them grey
+            var recipes = GetRecipes(def.Profession).Where(r => r.IsSkillStep).Select(r => r.RequiredSkill);
             // For Enchanting, disenchanting counts as its own recipe line
             return def.Profession == Profession.Enchanting
                 ? recipes.Concat(EnchantingRegistry.Bands.Select(b => b.RequiredSkill))

@@ -335,6 +335,7 @@
         // One-time; also covers characters that were already past the level before the penalty existed
         if (player.Level >= Player.DeathXpPenaltyMinLevel)
             Engine.RequestFeatureIntro(GameFeatureRegistry.DeathXpPenaltyIntroId);
+        Engine.RequestRidingIntro();
 
         if (!ReferenceEquals(player, _trackedPlayer) || player.ActiveClass != _trackedClass)
         {

@@ -18,6 +18,16 @@ public partial class Inventory
     private MerchantFx? _merchantFx;
     private int _fxKey;
 
+    // Riding trainer window (Components/RidingTrainerPanel.razor) replaces the merchant while open
+    private bool _ridingOpen;
+
+    private void SetRidingOpen(bool open)
+    {
+        _ridingOpen = open;
+        // The old merchant line must not replay when the merchant comes back
+        _speech = null;
+    }
+
     private void OpenMerchant()
     {
         _merchantOpen = true;

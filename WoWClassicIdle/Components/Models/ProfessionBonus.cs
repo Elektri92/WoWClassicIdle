@@ -44,8 +44,14 @@ public record ProfessionBonus(
 public static class ProfessionBonusRegistry
 {
     public const int SlotCount = 3;
-    /// <summary>Chance per kill for one missing bonus of the zone.</summary>
-    public const double DropChance = 0.01;
+    /// <summary>Chance per kill for one missing bonus of a zone with this rarity.</summary>
+    public static double DropChance(ItemQuality quality) => quality switch
+    {
+        ItemQuality.Epic => 0.0025,
+        ItemQuality.Rare => 0.005,
+        _                => 0.01,
+    };
+
     public const int RareZoneMinLevel = 20;
     public const int EpicZoneMinLevel = 40;
 

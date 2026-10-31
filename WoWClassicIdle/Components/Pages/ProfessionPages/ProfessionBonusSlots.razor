@@ -127,7 +127,7 @@
         <span class="zt-section">Source</span>
         var zone = ProfessionBonusRegistry.ZoneOf(bonus);
         <span class="zt-line">Enemies in @zone.Name (Lv @zone.LevelRange)</span>
-        <span class="zt-sub">@Professions.FormatChance(ProfessionBonusRegistry.DropChance)% per kill for a missing bonus of this zone</span>
+        <span class="zt-sub">@Professions.FormatChance(ProfessionBonusRegistry.DropChance(bonus.Quality))% per kill for a missing bonus of this zone</span>
     };
 
     private static bool IsUpgrade(ProfessionBonus bonus, ProfessionBonus?[] equipped) =>

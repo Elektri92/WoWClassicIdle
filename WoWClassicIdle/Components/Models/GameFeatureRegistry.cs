@@ -33,6 +33,7 @@ public static class GameFeatureRegistry
 
     public const string IdleFighterIntroId = "idle_fighter";
     public const string DeathXpPenaltyIntroId = "death_xp_penalty";
+    public const string RidingIntroId = "riding";
 
     public static IReadOnlyList<GameFeature> All { get; } = Build();
 
@@ -62,6 +63,19 @@ public static class GameFeatureRegistry
             ],
             Background: Art("warlock-affliction"),
             Header: "Death Penalty Active"),
+
+        // An intro rather than a level unlock: shown once per character, also for those already past the level
+        [RidingIntroId] = new(RidingIntroId, MountRegistry.UnlockLevel, "Mounts",
+            "https://wow.zamimg.com/images/wow/icons/large/ability_mount_ridinghorse.jpg",
+            "A riding trainer of your race now waits for you in your Inventory.",
+            [
+                .. MountRegistry.Skills.Select(s =>
+                    $"{s.Name}: from level {s.RequiredLevel} for {s.Cost / Money.CopperPerGold} gold, per character."),
+                "Each rank teaches the typical mount of your race – change your race and the mount changes with it.",
+                "Your mount gets its own slot in the character window. Click it to switch mounts.",
+                "While mounted, ground travel is faster by the percentage of your mount.",
+            ],
+            "inventory", "Open Inventory", Art("hunter-survival")),
     };
 
     /// <summary>Background in case a feature has none of its own.</summary>
@@ -74,6 +88,19 @@ public static class GameFeatureRegistry
     private static Func<CharacterClass, string> Art(string name) => _ => $"images/talents/{name}.jpg";
 
     public static GameFeature? GetIntro(string id) => _intros.GetValueOrDefault(id);
+
+    public const string ZoneCompletedIntroId = "zone-completed";
+
+    /// <summary>Popup once all objectives of a zone are done and all of its drops are found.</summary>
+    public static GameFeature ZoneCompleted(CombatZone zone) => new(
+        $"{ZoneCompletedIntroId}:{zone.Id}", 0, zone.Name,
+        "https://wow.zamimg.com/images/wow/icons/large/inv_misc_map_01.jpg",
+        "You finished every objective here and found everything this zone can drop.",
+        [
+            .. ZoneObjectiveRegistry.For(zone).Select(o => o.Label),
+            .. ProfessionBonusRegistry.ForZone(zone).Select(b => $"{Professions.Get(b.Profession).Name}: {b.Name}"),
+        ],
+        Header: "Zone Completed!");
 
     /// <summary>Features whose threshold was crossed when going from <paramref name="oldLevel"/> to <paramref name="newLevel"/>.</summary>
     public static IEnumerable<GameFeature> UnlockedBetween(int oldLevel, int newLevel) =>

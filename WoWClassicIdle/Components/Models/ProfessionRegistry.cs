@@ -26,7 +26,8 @@ namespace Models
         Item Result,
         IReadOnlyList<Reagent> Reagents,
         int RequiredSkill = 1,
-        int ResultCount = 1);
+        int ResultCount = 1,
+        bool IsSkillStep = true);
 
     /// <summary>Cloth drop in combat: <see cref="ProfessionRegistry.ClothDropChance"/> per kill of enemies within the level range.</summary>
     public record ClothDrop(TradeItem Item, int MinEnemyLevel, int MaxEnemyLevel);

@@ -73,7 +73,7 @@ namespace Models
 
         /// <summary>Chance as percent text for the UI, e.g. "1.2".</summary>
         public static string FormatChance(double chance) =>
-            (chance * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+            (chance * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
         /// <summary>Apprentice is granted automatically when learning, higher tiers are bought from the trainer.</summary>
         public static readonly IReadOnlyList<ProfessionRank> Ranks =

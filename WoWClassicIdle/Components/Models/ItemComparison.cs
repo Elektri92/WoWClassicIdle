@@ -18,8 +18,14 @@ namespace Models
         public static double Dps(WeaponItem weapon) =>
             (weapon.MinDamage + weapon.MaxDamage) / 2.0 / weapon.Speed;
 
-        public static IReadOnlyList<StatDelta> Compare(ArmorItem candidate, ArmorItem equipped) =>
-            PrimaryDeltas(candidate.Bonuses, equipped.Bonuses).ToList();
+        public static IReadOnlyList<StatDelta> Compare(ArmorItem candidate, ArmorItem equipped)
+        {
+            var deltas = PrimaryDeltas(candidate.Bonuses, equipped.Bonuses).ToList();
+
+            double crit = Math.Round(((candidate.Effect?.CritChance ?? 0) - (equipped.Effect?.CritChance ?? 0)) * 100, 2);
+            if (crit != 0) deltas.Add(new("% Critical Strike", crit, "0.##"));
+            return deltas;
+        }
 
         public static IReadOnlyList<StatDelta> Compare(WeaponItem candidate, WeaponItem equipped)
         {

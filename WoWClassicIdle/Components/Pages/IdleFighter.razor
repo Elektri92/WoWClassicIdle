@@ -454,36 +454,51 @@ else if (!_engine.NeedsCombatZone)
 {
     var meter = _engine.Meter.GetSnapshot();
 <div class="combat-panel">
-    <!-- ═══ DAMAGE METER ═══ -->
+    <!-- ═══ DAMAGE METER (left) / HEALING METER (right) ═══ -->
+    @foreach (var meterKind in new[] { CombatActionKind.Damage, CombatActionKind.Heal })
+    {
+        bool isHealMeter = meterKind == CombatActionKind.Heal;
+        var kindRows = meter.Rows.Where(r => r.Kind == meterKind).ToList();
+        var kindTotal = isHealMeter ? meter.TotalHealing : meter.TotalDamage;
     <div class="meter-box meter-window">
         <div class="meter-header">
-            <span class="meter-title">Damage Meter</span>
-            <div class="meter-actions">
-                <button class="meter-tab @(_showHistory ? "active" : "")" @onclick="ToggleHistory"
-                        title="@(_showHistory ? "Hide action history" : "Show action history")">📜 Log</button>
-                <button class="meter-tab" @onclick="ResetMeter" title="Reset meter">⟲ Reset</button>
-            </div>
+            <span class="meter-title">@(isHealMeter ? "Healing Meter" : "Damage Meter")</span>
+            @* Log and reset cover both meters, so they only appear once *@
+            @if (!isHealMeter)
+            {
+                <div class="meter-actions">
+                    <button class="meter-tab @(_showHistory ? "active" : "")" @onclick="ToggleHistory"
+                            title="@(_showHistory ? "Hide action history" : "Show action history")">📜 Log</button>
+                    <button class="meter-tab" @onclick="ResetMeter" title="Reset damage and healing meters">⟲ Reset</button>
+                </div>
+            }
         </div>
         <div class="meter-summary">
-            <div class="meter-stat"><span>Damage</span><b>@FormatNumber(meter.TotalDamage)</b></div>
-            <div class="meter-stat"><span>DPS</span><b>@meter.Dps.ToString("0.0")</b></div>
-            <div class="meter-stat"><span>Healing</span><b class="heal-text">@FormatNumber(meter.TotalHealing)</b></div>
-            <div class="meter-stat"><span>HPS</span><b class="heal-text">@meter.Hps.ToString("0.0")</b></div>
+            @if (isHealMeter)
+            {
+                <div class="meter-stat"><span>Healing</span><b class="heal-text">@FormatNumber(meter.TotalHealing)</b></div>
+                <div class="meter-stat"><span>HPS</span><b class="heal-text">@meter.Hps.ToString("0.0")</b></div>
+            }
+            else
+            {
+                <div class="meter-stat"><span>Damage</span><b>@FormatNumber(meter.TotalDamage)</b></div>
+                <div class="meter-stat"><span>DPS</span><b>@meter.Dps.ToString("0.0")</b></div>
+            }
             <div class="meter-stat"><span>Combat</span><b>@FormatElapsed(meter.CombatSeconds)</b></div>
         </div>
-        @if (meter.Rows.Count == 0)
+        @if (kindRows.Count == 0)
         {
-            <div class="meter-empty">— no combat data yet —</div>
+            <div class="meter-empty">@(isHealMeter ? "— no healing yet —" : "— no damage yet —")</div>
         }
         else
         {
-            var topTotal = Math.Max(1, meter.Rows.Max(r => r.Total));
+            // Each meter scales its bars to its own top row
+            var topTotal = Math.Max(1, kindRows[0].Total);
             var rank = 0;
             <div class="meter-rows">
-                @foreach (var row in meter.Rows)
+                @foreach (var row in kindRows)
                 {
                     var rowRank = ++rank;
-                    var kindTotal = row.Kind == CombatActionKind.Heal ? meter.TotalHealing : meter.TotalDamage;
                     var share = kindTotal > 0 ? row.Total * 100.0 / kindTotal : 0;
                     var rowPerSec = meter.CombatSeconds > 0 ? row.Total / meter.CombatSeconds : 0;
                     bool isAutoAttack = row.Name == CombatMeter.AutoAttackName;
@@ -491,7 +506,7 @@ else if (!_engine.NeedsCombatZone)
                     var rowAbility = rowRaw is null ? null : _engine.Player.GetEffectiveAbility(rowRaw);
                     var rowContent = new RenderFragment(b => {
                         b.OpenElement(0, "div");
-                        b.AddAttribute(1, "class", $"meter-row {(row.Kind == CombatActionKind.Heal ? "meter-heal" : "meter-dmg")}");
+                        b.AddAttribute(1, "class", $"meter-row {(isHealMeter ? "meter-heal" : "meter-dmg")}");
                         if (!isAutoAttack && rowAbility is null)
                             b.AddAttribute(2, "title", $"{row.Name}: {row.Count} {(row.Name == CombatMeter.SpiritRegenName ? "ticks" : "casts")}, max {row.Max}, avg {(row.Count > 0 ? row.Total / row.Count : 0)}");
                         b.OpenElement(3, "div");
@@ -534,6 +549,7 @@ else if (!_engine.NeedsCombatZone)
             </div>
         }
     </div>
+    }
 
     <!-- ═══ ACTION HISTORY (hidden by default) ═══ -->
     @if (_showHistory)
@@ -1613,7 +1629,7 @@ else if (!_engine.NeedsCombatZone)
 
     .meter-summary {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 1px;
         background: #000;
         border-bottom: 1px solid var(--wow-border);
@@ -2018,6 +2034,10 @@ else if (!_engine.NeedsCombatZone)
         }
         .combat-panel {
             flex-direction: column;
+        }
+        /* Stacked: the 340px flex basis would become a fixed height */
+        .meter-box {
+            flex: 0 0 auto;
         }
     }
 </style>

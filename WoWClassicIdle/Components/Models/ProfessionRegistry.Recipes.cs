@@ -1,7 +1,7 @@
 // Models/ProfessionRegistry.Recipes.cs
 namespace Models
 {
-    // Recipes: consumables from ConsumableRegistry, craftable armor from CraftedGearRegistry.
+    // Recipes: consumables from ConsumableRegistry, craftable armor from CraftedGearRegistry, trinkets from CraftedTrinketRegistry.
     // Lazy so the static constructor doesn't run into an init cycle with these registries
     // (both read the raw materials of this class during construction).
     public static partial class ProfessionRegistry
@@ -15,6 +15,7 @@ namespace Models
             .. ConsumableRegistry.Recipes,
             .. CraftedGearRegistry.Recipes,
             .. EnchantingRegistry.Recipes,
+            .. CraftedTrinketRegistry.Recipes,
         ];
 
         public static IReadOnlyList<Recipe> GetRecipes(Profession profession) =>

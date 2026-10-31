@@ -83,7 +83,7 @@ public partial class IdleGameEngine
 
         int before = Player.CurrentHp;
         Consume(heal);
-        Player.RegenHp(heal.Amount);
+        Player.RegenHp((int)Math.Round(heal.Amount * Player.PotionEffectMultiplier(heal)));
         Meter.RecordItem(heal, CombatActionKind.Heal, Player.CurrentHp - before);
         CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, Player.CurrentHp - before));
         _healthPotionCooldown = PotionCooldownSeconds;
@@ -96,7 +96,7 @@ public partial class IdleGameEngine
         if (BestConsumable(ConsumableKind.ManaPotion) is not { } mana) return;
 
         Consume(mana);
-        Player.RegenMana(mana.Amount);
+        Player.RegenMana((int)Math.Round(mana.Amount * Player.PotionEffectMultiplier(mana)));
         _manaPotionCooldown = PotionCooldownSeconds;
     }
 
@@ -161,5 +161,14 @@ public partial class IdleGameEngine
         RespawnDuration *= 1 - Math.Clamp(bandage.Amount, 0, 90) / 100.0;
         RespawnRemaining = RespawnDuration;
         LastLog = $"Defeated! {bandage.Name} speeds up the Spirit Healer by {bandage.Amount}%…";
+    }
+
+    /// <summary>Right after resurrecting: the strongest stimpak raises Spirit.</summary>
+    private void UseStimpakAfterResurrection()
+    {
+        if (BestConsumable(ConsumableKind.Stimpak) is not { } stimpak) return;
+        Consume(stimpak);
+        Player.ApplyConsumable(stimpak);
+        LastLog = $"{stimpak.Name}: +{stimpak.Amount}% Spirit for {ConsumableItem.FormatDuration(stimpak.DurationSeconds)}.";
     }
 }

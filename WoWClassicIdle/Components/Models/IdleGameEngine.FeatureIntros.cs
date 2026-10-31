@@ -28,6 +28,29 @@ public partial class IdleGameEngine
         FeatureIntroRequested?.Invoke();
     }
 
+    /// <summary>Mount popup: once per character from the unlock level; not for a character only selected temporarily in the profession windows.</summary>
+    public void RequestRidingIntro()
+    {
+        if (ActiveCharacter is not { } slot || slot.Id != CombatSlotId || slot.Player.Level < MountRegistry.UnlockLevel) return;
+        lock (_simLock)
+        {
+            if (!_seenFeatureIntros.Add($"{GameFeatureRegistry.RidingIntroId}:{slot.Id}")) return;
+            _pendingFeatureIntros.Enqueue(GameFeatureRegistry.GetIntro(GameFeatureRegistry.RidingIntroId)!);
+        }
+        FeatureIntroRequested?.Invoke();
+    }
+
+    /// <summary>Zone completed popup: once per character and zone.</summary>
+    private void RequestZoneCompletedPopup(CharacterSlot slot, CombatZone zone)
+    {
+        lock (_simLock)
+        {
+            if (!_seenFeatureIntros.Add($"{GameFeatureRegistry.ZoneCompletedIntroId}:{zone.Id}:{slot.Id}")) return;
+            _pendingFeatureIntros.Enqueue(GameFeatureRegistry.ZoneCompleted(zone));
+        }
+        FeatureIntroRequested?.Invoke();
+    }
+
     /// <summary>
     /// Should the level-up popup be shown? Account-wide features only for the first character:
     /// not if already seen or another character already reached the level (legacy saves).

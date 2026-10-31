@@ -1,17 +1,21 @@
 @using Models
 @inject IdleGameEngine Engine
 
-@* Tooltip section of a combat zone: the profession bonuses dropping there and which ones are found *@
-@{ var bonuses = ProfessionBonusRegistry.ForZone(Zone).ToList(); }
-<span class="zt-section">Profession bonuses (@bonuses.Count(Engine.OwnsProfessionBonus)/@bonuses.Count)</span>
-@foreach (var bonus in bonuses)
+@* Tooltip section of a combat zone: the profession bonuses still missing there; no section once all are found *@
+@{
+    var bonuses = ProfessionBonusRegistry.ForZone(Zone).ToList();
+    var missing = bonuses.Where(b => !Engine.OwnsProfessionBonus(b)).ToList();
+}
+@if (missing.Count > 0)
 {
-    bool found = Engine.OwnsProfessionBonus(bonus);
-    <span class="zt-obj @(found ? "done" : "")">
-        <img src="@bonus.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
-        <span style="color: @ItemQualityColors.Hex(bonus.Quality)">@Professions.Get(bonus.Profession).Name: @bonus.Name</span>
-        <span class="zt-obj-count">@(found ? "✓" : "–")</span>
-    </span>
+    <span class="zt-section">Profession bonuses (@(bonuses.Count - missing.Count)/@bonuses.Count)</span>
+    @foreach (var bonus in missing)
+    {
+        <span class="zt-obj">
+            <img src="@bonus.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+            <span style="color: @ItemQualityColors.Hex(bonus.Quality)">@Professions.Get(bonus.Profession).Name: @bonus.Name</span>
+        </span>
+    }
 }
 
 @code {

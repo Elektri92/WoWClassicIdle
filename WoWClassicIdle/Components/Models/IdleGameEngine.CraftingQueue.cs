@@ -24,6 +24,16 @@ public partial class IdleGameEngine
     // Open queue panels – the queue only runs while the player is in the professions menu
     private int _craftingMenuViewers;
 
+    public const int ReturnToIdleUnlockLevel = 15;
+
+    /// <summary>The queue ran empty by itself while a panel was open and the player wants to go back to combat (not on the sim lock).</summary>
+    public event Action? CraftingQueueFinished;
+
+    /// <summary>Player setting: leave the professions for /idle once the queue has run empty.</summary>
+    public bool ReturnToIdleAfterCrafting { get; set; }
+
+    public bool IsReturnToIdleUnlocked => _roster.Any(s => s.Player.Level >= ReturnToIdleUnlockLevel);
+
     public IReadOnlyList<CraftingQueueEntry> CraftingQueue
     {
         get { lock (_simLock) return _craftingQueue.ToList(); }
@@ -36,6 +46,20 @@ public partial class IdleGameEngine
         {
             lock (_simLock)
                 return _craftingQueue.Count == 0 ? 0 : Math.Clamp(_craftingElapsed / _craftingQueue[0].Duration, 0, 1);
+        }
+    }
+
+    /// <summary>Estimated seconds until the whole queue is done, assuming no position drops out for missing materials.</summary>
+    public double CraftingQueueRemainingSeconds
+    {
+        get
+        {
+            lock (_simLock)
+            {
+                if (_craftingQueue.Count == 0) return 0;
+                double total = _craftingQueue.Sum(e => e.Duration * e.Remaining / ProfessionSpeedFactor(e.Profession));
+                return Math.Max(0, total - _craftingElapsed / ProfessionSpeedFactor(_craftingQueue[0].Profession));
+            }
         }
     }
 
@@ -77,7 +101,16 @@ public partial class IdleGameEngine
         ProfessionUpdated?.Invoke();
     }
 
-    private void AdvanceCraftingQueue(double dt)
+    /// <summary>Returns whether the player should now be sent back to combat.</summary>
+    private bool AdvanceCraftingQueue(double dt)
+    {
+        bool hadEntries = _craftingQueue.Count > 0;
+        RunCraftingQueue(dt);
+        return hadEntries && _craftingQueue.Count == 0 && _craftingMenuViewers > 0
+            && ReturnToIdleAfterCrafting && IsReturnToIdleUnlocked;
+    }
+
+    private void RunCraftingQueue(double dt)
     {
         // Unlearned professions leave the queue even while it is paused
         _craftingQueue.RemoveAll(e => ProfessionOwner(e.Profession) is null);

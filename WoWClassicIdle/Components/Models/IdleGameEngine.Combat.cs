@@ -77,6 +77,7 @@ public partial class IdleGameEngine
         if (RespawnRemaining > 0)
         {
             RespawnRemaining = Math.Max(0, RespawnRemaining - _baseDt);
+            if (RespawnRemaining == 0) UseStimpakAfterResurrection();
             return;
         }
 

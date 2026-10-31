@@ -12,6 +12,7 @@ namespace Models
         Bandage,        // shortens the spirit healer wait by Amount %
         Explosive,      // Engineering: Amount damage to the enemy, own cooldown
         Costume,        // manual only: transforms the character model (Savory Deviate Delight), renews itself automatically
+        Stimpak,        // First Aid: right after resurrecting, raises Spirit by Amount % for a short time
     }
 
     /// <summary>Disguise from Savory Deviate Delight (50/50).</summary>
@@ -69,6 +70,7 @@ namespace Models
             ConsumableKind.Bandage      => $"On death: the Spirit Healer resurrects you {Amount}% faster.",
             ConsumableKind.Explosive    => $"Deals {Amount} damage to your enemy.",
             ConsumableKind.Costume      => $"Turns you into a Pirate or a Ninja for {FormatDuration(DurationSeconds)}.",
+            ConsumableKind.Stimpak      => $"After resurrecting: +{Amount}% Spirit for {FormatDuration(DurationSeconds)}.",
             _ => $"{string.Join(", ", (Bonuses ?? PrimaryStats.Zero).DescribeBonuses())} for {FormatDuration(DurationSeconds)}.",
         };
 

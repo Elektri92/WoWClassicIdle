@@ -1,0 +1,139 @@
+@using Models
+@inject IdleGameEngine Engine
+
+@* Mount slot in the character window; opens a bag with the mounts of the race, like the profession bonus slots.
+   Styles: .pbs-* from wwwroot/css/profession-bonuses.css, adjustments in wwwroot/css/riding.css *@
+<div class="pbs-wrap mount-slot">
+    <div class="pbs-slots">
+        @{
+            bool canImprove = Engine.RidingRank > (Equipped?.Riding.Rank ?? 0);
+            string cssClass = $"pbs-slot {(_open ? "active" : "")} {(canImprove ? "can-improve" : "")}";
+        }
+        <WowTooltip Title="@(Equipped?.Name ?? "Mount")" TitleColor="@(Equipped is null ? null : ItemQualityColors.Hex(Equipped.Riding.Quality))">
+            <ChildContent>
+                @if (Equipped is { } mount)
+                {
+                    <button @key="@mount.Name" class="@cssClass filled" style="--pbs-color: @ItemQualityColors.Hex(mount.Riding.Quality)"
+                            aria-label="@mount.Name" @onclick="Toggle"
+                            @oncontextmenu="() => Engine.EquipMount(0)" @oncontextmenu:preventDefault>
+                        <img class="@(_justEquipped ? "pbs-equip-icon" : "")" src="@mount.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                        @if (_justEquipped)
+                        {
+                            <span class="pbs-burst" aria-hidden="true"></span>
+                            <span class="pbs-sparks" aria-hidden="true"></span>
+                        }
+                        @if (canImprove)
+                        {
+                            <span class="pbs-badge" aria-hidden="true">▲</span>
+                        }
+                    </button>
+                }
+                else
+                {
+                    <button class="@cssClass" aria-label="Mount slot" @onclick="Toggle">
+                        @if (canImprove)
+                        {
+                            <span class="pbs-badge" aria-hidden="true">+</span>
+                        }
+                    </button>
+                }
+            </ChildContent>
+            <Body>
+                @if (Equipped is { } worn)
+                {
+                    @MountLines(worn)
+                    <span class="zt-sub">Click to change · Right-click to remove</span>
+                }
+                else
+                {
+                    <span class="zt-line">Empty – click to choose a mount.</span>
+                }
+                @if (canImprove)
+                {
+                    <span class="zt-good">You know a faster mount!</span>
+                }
+            </Body>
+        </WowTooltip>
+    </div>
+
+    @if (_open)
+    {
+        <div class="pbs-backdrop" @onclick="Close"></div>
+        <div class="pbs-bag" role="dialog" aria-label="Mount bag">
+            <div class="pbs-bag-title">
+                <img src="@MountRegistry.ForRace(Engine.Race)[0].IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                <span>Mounts</span>
+                <button class="pbs-bag-close" aria-label="Close" @onclick="Close">×</button>
+            </div>
+            <div class="pbs-bag-grid">
+                @foreach (var mount in MountRegistry.ForRace(Engine.Race))
+                {
+                    bool owned = Engine.RidingRank >= mount.Riding.Rank;
+                    bool isEquipped = Equipped == mount;
+
+                    <WowTooltip Title="@mount.Name" TitleColor="@ItemQualityColors.Hex(mount.Riding.Quality)">
+                        <ChildContent>
+                            <button class="pbs-cell @(owned ? "" : "locked") @(isEquipped ? "equipped" : "")"
+                                    style="--pbs-color: @ItemQualityColors.Hex(mount.Riding.Quality)"
+                                    aria-label="@mount.Name" aria-disabled="@(owned ? "false" : "true")"
+                                    @onclick="() => Pick(mount, owned, isEquipped)">
+                                <img src="@mount.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                                @if (isEquipped)
+                                {
+                                    <span class="pbs-check" aria-hidden="true">✓</span>
+                                }
+                            </button>
+                        </ChildContent>
+                        <Body>
+                            @MountLines(mount)
+                            @if (!owned)
+                            {
+                                <span class="zt-error">Requires @mount.Riding.Name from @MountRegistry.TrainerFor(Engine.Race).Name</span>
+                            }
+                            else if (isEquipped)
+                            {
+                                <span class="zt-good">Equipped – click to remove</span>
+                            }
+                            else
+                            {
+                                <span class="zt-good">Click to equip</span>
+                            }
+                        </Body>
+                    </WowTooltip>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Mount? Equipped { get; set; }
+    // Passed in so the slot also refreshes when a rank is learned while it stays empty
+    [Parameter] public int RidingRank { get; set; }
+
+    private bool _open;
+    // Plays the equip animation; the slot button is keyed by mount, so it restarts with every new mount
+    private bool _justEquipped;
+
+    private static RenderFragment MountLines(Mount mount) => __builder =>
+    {
+        <span class="zt-sub">@mount.Riding.Quality Mount · @mount.Riding.Name</span>
+        <span class="zt-good">Ground travel @mount.Riding.SpeedPercent% faster</span>
+    };
+
+    private void Toggle()
+    {
+        _open = !_open;
+        _justEquipped = false;
+    }
+
+    private void Close() => _open = false;
+
+    private void Pick(Mount mount, bool owned, bool isEquipped)
+    {
+        if (!owned) return;
+        Engine.EquipMount(isEquipped ? 0 : mount.Riding.Rank);
+        _justEquipped = !isEquipped;
+        _open = false;
+    }
+}

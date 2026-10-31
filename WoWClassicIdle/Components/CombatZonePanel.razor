@@ -22,32 +22,38 @@
                     <span class="czone-xp-hint">@hint</span>
                 }
             </div>
-            <WowTooltip Title="@ObjectivesTitle(current)" TitleColor="#ffd100" Body="ObjectivesBody(current)">
-                <div class="czone-objectives">
-                    @foreach (var objective in ZoneObjectiveRegistry.For(current))
-                    {
-                        bool done = Engine.IsObjectiveDone(objective);
-                        <span class="czone-objective @(done ? "done" : "")">
-                            <img src="@objective.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
-                            @(done ? "✓" : $"{Engine.ObjectiveProgress(objective)}/{objective.Required}")
-                        </span>
-                    }
-                </div>
-            </WowTooltip>
-            <WowTooltip>
-                <ChildContent>
-                    <div class="czone-bonuses">
-                        @foreach (var bonus in ProfessionBonusRegistry.ForZone(current))
+            @* Only what is still open: completed objectives and found drops disappear *@
+            @if (!Engine.IsZoneMastered(current))
+            {
+                <WowTooltip Title="@ObjectivesTitle(current)" TitleColor="#ffd100" Body="ObjectivesBody(current)">
+                    <div class="czone-objectives">
+                        @foreach (var objective in ZoneObjectiveRegistry.For(current).Where(o => !Engine.IsObjectiveDone(o)))
                         {
-                            <img class="@(Engine.OwnsProfessionBonus(bonus) ? "found" : "")" src="@bonus.IconUrl" alt=""
-                                 style="border-color: @ItemQualityColors.Hex(bonus.Quality)" onerror="this.style.visibility='hidden'" />
+                            <span class="czone-objective">
+                                <img src="@objective.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
+                                @Engine.ObjectiveProgress(objective)/@objective.Required
+                            </span>
                         }
                     </div>
-                </ChildContent>
-                <Body>
-                    <ZoneBonusList Zone="current" />
-                </Body>
-            </WowTooltip>
+                </WowTooltip>
+            }
+            @if (ProfessionBonusRegistry.ForZone(current).Where(b => !Engine.OwnsProfessionBonus(b)).ToList() is { Count: > 0 } missingBonuses)
+            {
+                <WowTooltip>
+                    <ChildContent>
+                        <div class="czone-bonuses">
+                            @foreach (var bonus in missingBonuses)
+                            {
+                                <img src="@bonus.IconUrl" alt=""
+                                     style="border-color: @ItemQualityColors.Hex(bonus.Quality)" onerror="this.style.visibility='hidden'" />
+                            }
+                        </div>
+                    </ChildContent>
+                    <Body>
+                        <ZoneBonusList Zone="current" />
+                    </Body>
+                </WowTooltip>
+            }
             <div class="czone-banner-mobs">
                 @foreach (var mob in current.Mobs)
                 {
@@ -95,9 +101,13 @@
                     </div>
                 </div>
             </header>
+            @{ int tileIndex = 0; }
+            @foreach (var band in continent.Bands)
+            {
+            <div class="czone-band">
+            <div class="czone-band-title">@band.Title</div>
             <div class="czone-grid">
-                @{ int tileIndex = 0; }
-                @foreach (var zone in continent.Zones)
+                @foreach (var zone in band.Zones)
                 {
                     int delayIndex = tileIndex++; // staggered fade-in of the tiles
                     bool isHere = zone.Id == current?.Id && !needsZone;
@@ -122,16 +132,24 @@
                                 }
                                 else
                                 {
-                                    <span class="czone-badge flight">🦅 Flight point</span>
+                                    <span class="czone-badge flight" aria-label="Flight point known">🦅</span>
                                 }
-                                <span class="czone-badge @(Engine.IsZoneMastered(zone) ? "mastered" : "")">
-                                    @(Engine.IsZoneMastered(zone) ? "🏆 Mastered" : $"📜 {Engine.CompletedObjectives(zone)}/{ZoneObjectiveRegistry.For(zone).Count}")
-                                </span>
+                                @if (Engine.IsZoneMastered(zone))
+                                {
+                                    <span class="czone-badge mastered" aria-label="Zone mastered">🏆</span>
+                                }
+                                else
+                                {
+                                    <span class="czone-badge">📜 @Engine.CompletedObjectives(zone)/@ZoneObjectiveRegistry.For(zone).Count</span>
+                                }
                                 @{
                                     var bonuses = ProfessionBonusRegistry.ForZone(zone).ToList();
                                     int foundBonuses = bonuses.Count(Engine.OwnsProfessionBonus);
                                 }
-                                <span class="czone-badge @(foundBonuses == bonuses.Count ? "mastered" : "")">🎁 @foundBonuses/@bonuses.Count</span>
+                                @if (foundBonuses < bonuses.Count)
+                                {
+                                    <span class="czone-badge">🎁 @foundBonuses/@bonuses.Count</span>
+                                }
                             </div>
                         }
                         <div class="czone-tile-mobs">
@@ -186,6 +204,8 @@
                     </WowTooltip>
                 }
             </div>
+            </div>
+            }
             </section>
         }
         </div>
@@ -223,7 +243,19 @@
     private string _signature = "";
     private readonly Dictionary<string, TravelRoute> _routes = new();
 
-    private record Continent(string Key, string Title, string IconUrl, IReadOnlyList<CombatZone> Zones);
+    private record LevelBand(string Title, IReadOnlyList<CombatZone> Zones);
+
+    private record Continent(string Key, string Title, string IconUrl, IReadOnlyList<CombatZone> Zones)
+    {
+        public IReadOnlyList<LevelBand> Bands { get; } = BandsOf(Zones);
+    }
+
+    // Tens of the entry level decide the band; the exact range stays on the tile
+    private static IReadOnlyList<LevelBand> BandsOf(IEnumerable<CombatZone> zones) =>
+        zones.GroupBy(z => z.MinLevel / 10)
+            .OrderBy(g => g.Key)
+            .Select(g => new LevelBand($"Level {Math.Max(1, g.Key * 10)}–{g.Key * 10 + 10}", g.ToList()))
+            .ToList();
 
     // Kalimdor left, Eastern Kingdoms right (like on the world map); Teldrassil belongs to Kalimdor
     private static readonly Continent[] Continents =
@@ -306,17 +338,16 @@
         }
         @if (level >= zone.MinLevel)
         {
-            @if (Engine.IsZoneDiscovered(zone))
-            {
-                <span class="zt-sub">🦅 Flight point known</span>
-            }
-            else
+            @if (!Engine.IsZoneDiscovered(zone))
             {
                 <span class="zt-good">✦ Undiscovered – first visit: +@Engine.DiscoveryXpFor(zone) XP</span>
                 <span class="zt-sub">Discover it to unlock its flight point</span>
             }
-            <span class="zt-section">@ObjectivesTitle(zone)</span>
-            @ObjectivesBody(zone)
+            @if (!Engine.IsZoneMastered(zone))
+            {
+                <span class="zt-section">@ObjectivesTitle(zone)</span>
+                @ObjectivesBody(zone)
+            }
         }
         <ZoneBonusList Zone="zone" />
         @if (route is { Legs.Count: > 0 })
@@ -348,26 +379,18 @@
     private string ObjectivesTitle(CombatZone zone) =>
         $"Zone objectives ({Engine.CompletedObjectives(zone)}/{ZoneObjectiveRegistry.For(zone).Count})";
 
-    // Objectives with progress + reward per objective and for the mastery
+    // Open objectives with progress + reward per objective and for the mastery
     private RenderFragment ObjectivesBody(CombatZone zone) => @<text>
-        @foreach (var objective in ZoneObjectiveRegistry.For(zone))
+        @foreach (var objective in ZoneObjectiveRegistry.For(zone).Where(o => !Engine.IsObjectiveDone(o)))
         {
-            bool done = Engine.IsObjectiveDone(objective);
-            <span class="zt-obj @(done ? "done" : "")">
+            <span class="zt-obj">
                 <img src="@objective.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
                 <span>@objective.Label</span>
-                <span class="zt-obj-count">@(done ? "✓" : $"{Engine.ObjectiveProgress(objective)}/{objective.Required}")</span>
+                <span class="zt-obj-count">@Engine.ObjectiveProgress(objective)/@objective.Required</span>
             </span>
         }
-        @if (Engine.IsZoneMastered(zone))
-        {
-            <span class="zt-good">🏆 Zone mastered</span>
-        }
-        else
-        {
-            <span class="zt-sub">Each: +@ZoneObjectiveRegistry.ObjectiveXp(zone, Engine.Player.Level) XP, @Money.Format(ZoneObjectiveRegistry.ObjectiveCopper(zone, Engine.Player.Level))</span>
-            <span class="zt-sub">All done: guaranteed green or blue item</span>
-        }
+        <span class="zt-sub">Each: +@ZoneObjectiveRegistry.ObjectiveXp(zone, Engine.Player.Level) XP, @Money.Format(ZoneObjectiveRegistry.ObjectiveCopper(zone, Engine.Player.Level))</span>
+        <span class="zt-sub">All done: guaranteed green or blue item</span>
     </text>;
 
     private static RenderFragment MobTooltip(ZoneMob mob, CombatZone zone) => @<text>

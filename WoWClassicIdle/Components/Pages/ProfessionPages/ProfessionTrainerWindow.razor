@@ -180,7 +180,7 @@
     private IEnumerable<Recipe> VisibleRecipes => Recipes
         .Where(r => Progress?.KnowsRecipe(r.Id) != true)
         .Where(r => !_availableOnly || Skill >= r.RequiredSkill)
-        .Where(r => _classFilter is null || ItemRequirements.ClassOf(r.Result) == _classFilter)
+        .Where(r => _classFilter is null || ItemRequirements.ClassOf(r.Result) is null || ItemRequirements.ClassOf(r.Result) == _classFilter)
         .Where(r => MatchesSearch(r.Result.Name))
         .OrderBy(r => r.RequiredSkill);
 

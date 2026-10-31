@@ -20,6 +20,8 @@ public class SaveGameService : ISaveGameService, IDisposable
 
     public string? LastRoute { get; set; }
 
+    public string? LastSeenChangelogVersion { get; set; }
+
     private static string DefaultSavePath
     {
         get
@@ -100,6 +102,7 @@ public class SaveGameService : ISaveGameService, IDisposable
                 achievementService.RestoreFromSave(save.Achievements, _engine);
 
             LastRoute = IsLocalRoute(save.LastRoute) ? save.LastRoute : null;
+            LastSeenChangelogVersion = save.LastSeenChangelogVersion;
 
             return true;
         }
@@ -149,7 +152,9 @@ public class SaveGameService : ISaveGameService, IDisposable
             TotalItemsSold       = _engine.TotalItemsSold,
             TotalUncommonLooted  = _engine.TotalUncommonLooted,
             TotalRareItemsLooted = _engine.TotalRareItemsLooted,
+            TotalJumps           = _engine.TotalJumps,
             LastRoute            = LastRoute,
+            LastSeenChangelogVersion = LastSeenChangelogVersion,
         };
 
         foreach (var slot in _engine.CharacterRoster)
@@ -219,6 +224,8 @@ public class SaveGameService : ISaveGameService, IDisposable
                 DisenchantRequiredLevel = e.IsDisenchant ? ItemRequirements.LevelOf(e.Item) : 0,
             })
             .ToList();
+
+        save.ReturnToIdleAfterCrafting = _engine.ReturnToIdleAfterCrafting;
 
         save.ProfessionBonuses = _engine.BuildOwnedBonusSaveData();
         save.EquippedProfessionBonuses = _engine.BuildEquippedBonusSaveData();
@@ -301,6 +308,8 @@ public class SaveGameService : ISaveGameService, IDisposable
         TravelElapsed = slot.Travel?.Elapsed ?? 0,
         DiscoveredZones = slot.DiscoveredZoneIds.Order().ToList(),
         ZoneObjectives  = slot.ZoneObjectiveProgress.ToDictionary(),
+        RidingRank        = slot.RidingRank,
+        EquippedMountRank = slot.EquippedMountRank,
     };
 
     public void Dispose()

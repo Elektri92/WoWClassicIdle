@@ -34,6 +34,7 @@ public partial class AchievementService
         Track(SoldMilestones,         "sold_",          () => _engine.TotalItemsSold);
         Track(UncommonLootMilestones, "loot_uncommon_", () => _engine.TotalUncommonLooted);
         Track(RareLootMilestones,     "loot_rare_",     () => _engine.TotalRareItemsLooted);
+        Track(JumpMilestones,         "jumps_",         () => _engine.TotalJumps);
 
         foreach (var cls in Enum.GetValues<CharacterClass>())
             Track(LevelMilestones, $"class_{cls}_", () => ClassLevel(cls));
@@ -47,6 +48,7 @@ public partial class AchievementService
         map["general_all_classes_10"] = (() => _engine.Player.ClassProgress.Values.Count(p => p.Level >= 10), classCount);
 
         AddExplorationTrackers(map);
+        AddProfessionBonusTrackers(map);
         return map;
     }
 

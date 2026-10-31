@@ -9,6 +9,21 @@
     color: var(--wow-gold-pale);
 }
 
+.changelog-entry.unseen {
+    border-color: var(--wow-gold-soft);
+}
+
+.changelog-new {
+    margin-left: .35rem;
+    background: var(--wow-gold);
+    color: var(--wow-bg-deep);
+    font-weight: 600;
+}
+
+.changelog-unseen-hint {
+    color: var(--wow-gold-pale);
+}
+
 .changelog-date {
     float: right;
     font-family: var(--wow-font-body);

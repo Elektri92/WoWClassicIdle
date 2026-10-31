@@ -53,7 +53,13 @@ public partial class IdleGameEngine
     public int TotalItemsSold { get; private set; }
     public int TotalUncommonLooted { get; private set; }
     public int TotalRareItemsLooted { get; private set; }
+    public int TotalJumps { get; private set; }
     public string? LastLog { get; private set; }
+
+    public void RecordJump()
+    {
+        lock (_simLock) TotalJumps++;
+    }
 
     /// <summary>Splits an inventory stack (shift-click) – locked against concurrent loot/profession ticks.</summary>
     public bool SplitInventoryStack(Bag bag, int index, int amount)

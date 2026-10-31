@@ -18,12 +18,26 @@
             @foreach (var def in group)
             {
                 var owner = def.IsPrimary ? Engine.ProfessionOwner(def.Profession) : null;
+                var workers = Engine.PassiveAssignments
+                    .Where(a => a.Profession == def.Profession)
+                    .Select(a => Engine.GetCharacter(a.CharacterId))
+                    .OfType<CharacterSlot>()
+                    .ToList();
                 <a class="prof-quick-item @(def == _def ? "current" : "")" href="professions/@def.Slug" style="--i: @(quickIndex++)"
-                   title="@(owner is not null ? $"{def.Name} – {IdleGameEngine.CharacterName(owner)}" : def.Name)">
+                   title="@QuickTitle(def, owner, workers)">
                     <img src="@def.IconUrl" alt="@def.Name" onerror="this.style.visibility='hidden'" />
-                    @if (owner is not null)
+                    @if (owner is not null || workers.Count > 0)
                     {
-                        <img class="prof-quick-owner" src="@IconUrls.ClassIconUrl(owner.Class)" alt="" onerror="this.remove()" />
+                        <span class="prof-quick-classes">
+                            @if (owner is not null)
+                            {
+                                <img class="prof-quick-owner" src="@IconUrls.ClassIconUrl(owner.Class)" alt="" onerror="this.remove()" />
+                            }
+                            @foreach (var worker in workers)
+                            {
+                                <img class="prof-quick-owner passive" src="@IconUrls.ClassIconUrl(worker.Class)" alt="" onerror="this.remove()" />
+                            }
+                        </span>
                     }
                     @if (Engine.CanImproveBonuses(def.Profession))
                     {
@@ -188,6 +202,13 @@
         (def.IsGathering ? "Gathering" : "Crafting") + (def.IsPrimary ? " · Primary Profession" : " · Shared by all characters");
 
     private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
+
+    private static string QuickTitle(ProfessionDefinition def, CharacterSlot? owner, List<CharacterSlot> workers)
+    {
+        if (owner is not null) return $"{def.Name} – {IdleGameEngine.CharacterName(owner)}";
+        if (workers.Count == 0) return def.Name;
+        return $"{def.Name} – Passive: {string.Join(", ", workers.Select(IdleGameEngine.CharacterName))}";
+    }
 
     public void Dispose() => Engine.ProfessionUpdated -= OnProfessionUpdated;
 }

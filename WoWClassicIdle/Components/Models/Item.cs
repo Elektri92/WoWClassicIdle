@@ -106,6 +106,12 @@ namespace Models
     }
 
     /// <summary>
+    /// Special effect of a worn armor piece beyond its primary stats.
+    /// <paramref name="PotionLevel"/> = required level of the potions improved by <paramref name="PotionBonus"/>.
+    /// </summary>
+    public record EquipEffect(string Text, double CritChance = 0, int PotionLevel = 0, double PotionBonus = 0);
+
+    /// <summary>
     /// An armor piece that can be equipped into an equipment slot.
     /// <paramref name="RequiredClass"/> = only for this class (crafted class sets), <c>null</c> = all classes.
     /// </summary>
@@ -118,7 +124,8 @@ namespace Models
         int RequiredLevel = 1,
         ItemQuality Quality = ItemQuality.Uncommon,
         long SellPrice = 0,
-        CharacterClass? RequiredClass = null)
+        CharacterClass? RequiredClass = null,
+        EquipEffect? Effect = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
     /// <summary>A weapon item that can be equipped in a weapon slot.</summary>

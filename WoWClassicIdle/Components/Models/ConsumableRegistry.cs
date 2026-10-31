@@ -5,9 +5,9 @@ namespace Models
 {
     /// <summary>
     /// Consumables and their recipes: Alchemy (healing/mana potions, stat elixirs, flasks), Cooking (buff food),
-    /// First Aid (bandages). Tiers match the herbs/fish of the farming zones (skill 1/50/100/150/200/250).
+    /// First Aid (bandages, stimpaks). Tiers match the herbs/fish of the farming zones (skill 1/50/100/150/200/250).
     /// Engineering (dynamite from cloth + stone).
-    /// IDs: 9101–9103 (legacy), Alchemy from 9110, Cooking from 9200, First Aid from 9300, Engineering from 9400.
+    /// IDs: 9101–9103 (legacy), Alchemy from 9110, Cooking from 9200, First Aid from 9300 (stimpaks from 9320), Engineering from 9400.
     /// Not read from the static constructor of ProfessionRegistry (otherwise init cycle).
     /// </summary>
     public static class ConsumableRegistry
@@ -15,10 +15,10 @@ namespace Models
         private const double BuffSeconds  = 180;
         private const double FlaskSeconds = 3600;
 
-        private static readonly int[] TierSkill = [1, 50, 100, 150, 200, 250];
-        private static readonly int[] TierLevel = [1, 10, 20, 30, 40, 50];
+        internal static readonly int[] TierSkill = [1, 50, 100, 150, 200, 250];
+        internal static readonly int[] TierLevel = [1, 10, 20, 30, 40, 50];
 
-        private static readonly string[] PotionNames  = ["Minor", "Lesser", "", "Greater", "Superior", "Major"];
+        internal static readonly string[] PotionNames  = ["Minor", "Lesser", "", "Greater", "Superior", "Major"];
         private static readonly int[]    HealAmounts  = [40, 70, 110, 160, 220, 300];
         private static readonly int[]    ManaAmounts  = [80, 140, 220, 320, 440, 600];
         private static readonly int[]    ElixirStats  = [2, 4, 6, 9, 12, 16];
@@ -48,7 +48,7 @@ namespace Models
         };
 
         // ─── Herbs per Alchemy tier (matching the Herbalism zones) ───
-        private static TradeItem[][] HerbTiers() =>
+        internal static TradeItem[][] HerbTiers() =>
         [
             [Peacebloom, Silverleaf, Earthroot],
             [Mageroyal, Briarthorn],
@@ -127,6 +127,7 @@ namespace Models
             BuildDeviateDelight(Add);
             BuildFirstAid(Add);
             BuildEngineering(Add);
+            BuildStimpaks(Add);
 
             Items = items;
             Recipes = recipes;
@@ -248,6 +249,50 @@ namespace Models
                 var dynamite = new ConsumableItem(id++, name, icon, ConsumableKind.Explosive, Amount: damage,
                     RequiredLevel: level, SellPrice: 5 + skill / 4);
                 add(dynamite, Profession.Engineering, skill, [new Reagent(stone, 2), new Reagent(cloth, 1)]);
+            }
+        }
+
+        private const double StimpakSeconds = 15;
+        private const int FirstStimpakId = 9320;
+        private const string StimpakIcon = "inv_misc_thread_01";
+
+        // Same skill steps as the bandages; Tier = herb and leather tier of that skill range
+        private static readonly (string Name, int Skill, int Tier, int Percent, ItemQuality Quality)[] Stimpaks =
+        [
+            ("Crude Stimpak",       1, 0, 10, ItemQuality.Common),
+            ("Light Stimpak",      40, 0, 12, ItemQuality.Common),
+            ("Field Stimpak",      80, 1, 14, ItemQuality.Common),
+            ("Sturdy Stimpak",    115, 2, 16, ItemQuality.Uncommon),
+            ("Potent Stimpak",    150, 3, 18, ItemQuality.Uncommon),
+            ("Strong Stimpak",    180, 3, 20, ItemQuality.Uncommon),
+            ("Heavy Stimpak",     210, 4, 22, ItemQuality.Uncommon),
+            ("Military Stimpak",  240, 4, 25, ItemQuality.Rare),
+            ("Battle Stimpak",    260, 5, 27, ItemQuality.Rare),
+            ("Champion's Stimpak", 290, 5, 30, ItemQuality.Rare),
+        ];
+
+        private static TradeItem[] LeatherTiers() =>
+            [LightLeather, MediumLeather, HeavyLeather, ThickLeather, RuggedLeather, RuggedLeather];
+
+        private static void BuildStimpaks(AddFn add)
+        {
+            var herbs = HerbTiers();
+            var leather = LeatherTiers();
+            int id = FirstStimpakId;
+            for (int i = 0; i < Stimpaks.Length; i++)
+            {
+                var (name, skill, tier, percent, quality) = Stimpaks[i];
+                // Like normal/heavy bandages: every second step costs double, lasts twice as long and uses the next herbs of the tier
+                int count = i % 2 == 0 ? 1 : 2;
+                int first = i % 2;
+                var stimpak = new ConsumableItem(id++, name, StimpakIcon, ConsumableKind.Stimpak,
+                    Amount: percent, DurationSeconds: StimpakSeconds * count, Quality: quality, SellPrice: 10 + skill);
+                add(stimpak, Profession.FirstAid, skill,
+                [
+                    new Reagent(herbs[tier][first % herbs[tier].Length], count),
+                    new Reagent(leather[tier], count),
+                    new Reagent(herbs[tier][(first + 1) % herbs[tier].Length], count),
+                ]);
             }
         }
 

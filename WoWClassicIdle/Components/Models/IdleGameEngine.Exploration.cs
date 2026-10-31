@@ -24,6 +24,10 @@ public partial class IdleGameEngine
 
     public bool IsZoneMastered(CombatZone zone) => CompletedObjectives(zone) == ZoneObjectiveRegistry.For(zone).Count;
 
+    /// <summary>All objectives done and all drops of the zone found (drops are account-wide).</summary>
+    public bool IsZoneCompleted(CombatZone zone) =>
+        IsZoneMastered(zone) && ProfessionBonusRegistry.ForZone(zone).All(OwnsProfessionBonus);
+
     /// <summary>Mark the zone as discovered; with <paramref name="grantXp"/> there is discovery XP the first time.</summary>
     private void DiscoverZone(CharacterSlot slot, CombatZone zone, bool grantXp)
     {
@@ -66,6 +70,10 @@ public partial class IdleGameEngine
             if (before + 1 >= objective.Required)
                 CompleteObjective(zone, objective);
         }
+
+        // Checked on every kill: drops are account-wide, so another character may have found the last one
+        if (IsZoneCompleted(zone))
+            RequestZoneCompletedPopup(slot, zone);
     }
 
     // Objective completed: XP + copper; last objective of the zone → mastery item

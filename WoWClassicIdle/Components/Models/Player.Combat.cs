@@ -388,6 +388,8 @@ namespace Models
             armorBonus = armorBonus + ConsumableBonus;
 
             var augPrimary = baseStats.Primary + armorBonus;
+            if (ConsumableSpiritMultiplier != 1)
+                augPrimary = augPrimary with { Spirit = (int)Math.Round(augPrimary.Spirit * ConsumableSpiritMultiplier) };
 
             // Melee formulas: Druid forms scale like Rogue (Cat) or Warrior (Bear)
             var meleeClass = MeleeScalingClass;
@@ -396,7 +398,7 @@ namespace Models
             {
                 CopperReward               = old.CopperReward,
                 XpReward                   = old.XpReward,
-                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit,
+                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit + EquippedArmor.Values.Sum(a => a.Effect?.CritChance ?? 0),
                 MeleeDamageMultiplier      = StatScaling.MeleeDamageMultiplier(meleeClass),
                 AutoAttackDamageMultiplier = StatScaling.AutoAttackDamageMultiplier(meleeClass) * (1.0 + autoAtkBonus),
                 AttackSpeedBonus           = StatScaling.AttackSpeedBonus(meleeClass) + autoAtkSpeedBonus,

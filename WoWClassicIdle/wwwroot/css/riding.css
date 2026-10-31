@@ -1,0 +1,30 @@
+/* ============================================
+   Riding: trainer below the merchant and mount slot in the character window
+   NPC, frame and speech bubble come from inventory.css, list/details from professions.css
+   and profession-trainer.css, slot and bag (.pbs-*) from profession-bonuses.css
+   ============================================ */
+
+/* ── Trainer ── */
+.riding-panel { position: relative; }
+.inv-merchant-col > .inv-merchant-npc + .riding-panel { margin-top: 14px; }
+
+/* In the training window the portrait sits on the left → align the bubble left */
+.riding-panel.trading .inv-speech { left: 0; transform: none; transform-origin: 30px 100%; }
+.riding-panel.trading .inv-speech::before,
+.riding-panel.trading .inv-speech::after { left: 38px; }
+
+/* The merchant column is narrow: list above the details, height follows the content */
+.trainer-window.riding-window { height: auto; margin: 22px 0 0; }
+.riding-window .craft-window { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+.riding-window .trainer-list { min-height: 0; }
+.riding-window .trainer-detail { min-height: 190px; }
+.riding-window .craft-result img { flex-shrink: 0; }
+
+.trainer-entry.learned .craft-list-name { color: var(--wow-muted); }
+.riding-learned { color: var(--wow-muted); font-style: italic; }
+
+/* ── Mount slot (same size as the weapon slot next to it) ── */
+.mount-slot .pbs-slot { width: 36px; height: 36px; }
+.mount-slot .pbs-slots { gap: 0; }
+.mount-slot .pbs-bag { left: 0; right: auto; transform-origin: top left; }
+.mount-slot .pbs-bag-grid { grid-template-columns: repeat(2, 42px); }

@@ -13,6 +13,10 @@ public static class ChangelogRegistry
 
     public static IReadOnlyList<ChangelogEntry> Entries => _entries.Value;
 
+    // The seen version comes from the user-editable save file – anything unparsable counts as never seen
+    public static bool IsNewerThan(string version, string? seenVersion) =>
+        !Version.TryParse(seenVersion, out var seen) || !Version.TryParse(version, out var current) || current > seen;
+
     private static IReadOnlyList<ChangelogEntry> Load()
     {
         using var stream = typeof(ChangelogRegistry).Assembly.GetManifestResourceStream("changelog.json")

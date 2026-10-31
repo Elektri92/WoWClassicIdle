@@ -61,6 +61,7 @@ public partial class IdleFighter
         {
             _visibilityHandle = await _js.InvokeAsync<IJSObjectReference>("pageVisibility.register", _selfRef);
             SetEngineRunning(await _js.InvokeAsync<bool>("pageVisibility.isVisible"));
+            _jumpHandle = await _js.InvokeAsync<IJSObjectReference>("playerJump.register", _selfRef);
         }
         catch (JSDisconnectedException)
         {
@@ -342,6 +343,8 @@ public partial class IdleFighter
             {
             }
         }
+
+        await DisposeJumpHandleAsync();
 
         _selfRef?.Dispose();
     }

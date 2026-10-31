@@ -1,0 +1,176 @@
+@using Models
+@inject IdleGameEngine Engine
+
+@* Riding trainer below the merchant on /inventory: NPC of the character's race, click opens the training window.
+   It shares frame and list with the profession trainer (.inv-merchant-window/.mw-*, .trainer-*, .craft-*),
+   adjustments in wwwroot/css/riding.css *@
+<div class="riding-panel @(Open ? "trading" : "")">
+    @if (_speech is not null)
+    {
+        <div @key="_speechKey" class="inv-speech" role="status">
+            <span class="inv-speech-text">@_speech</span>
+        </div>
+    }
+
+    @if (Open)
+    {
+        <div class="inv-merchant-window trainer-window riding-window">
+            <div class="mw-titlebar">
+                <div @key="_speechKey" class="al-portrait mw-portrait @(_speechKey > 0 ? "talking" : "")">
+                    <img class="al-race-portrait" src="@Trainer.PortraitUrl" alt="@Trainer.Name" onerror="this.style.display='none'" />
+                </div>
+                <div class="mw-title">
+                    <span class="mw-name">@Trainer.Name</span>
+                    <span class="mw-subtitle">&lt;@Trainer.Title&gt;</span>
+                </div>
+                <button class="bag-close" title="Close" @onclick="Close">×</button>
+            </div>
+
+            <div class="craft-window">
+                <div class="wow-inset craft-list trainer-list">
+                    <div class="craft-list-group">Riding</div>
+                    @foreach (var mount in Mounts)
+                    {
+                        @Entry(mount)
+                    }
+                </div>
+
+                <div class="craft-detail trainer-detail">
+                    @if (Selected is { } selected)
+                    {
+                        var skill = selected.Riding;
+                        bool learned = Engine.RidingRank >= skill.Rank;
+                        <div class="craft-result">
+                            <img src="@selected.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                            <span style="color: @ItemQualityColors.Hex(skill.Quality)">@skill.Name</span>
+                        </div>
+                        <p class="trainer-desc">
+                            Teaches you to ride your @selected.Name, which makes your ground travel @skill.SpeedPercent% faster.
+                        </p>
+                        @if (learned)
+                        {
+                            <div class="trainer-req">Already learned.</div>
+                        }
+                        else
+                        {
+                            <div class="trainer-req">
+                                Requires:
+                                <span class="@(Engine.Player.Level >= skill.RequiredLevel ? "" : "trainer-missing")">Level @skill.RequiredLevel</span>
+                                @if (skill.Rank > 1)
+                                {
+                                    <text>, </text>
+                                    <span class="@(Engine.RidingRank >= skill.Rank - 1 ? "" : "trainer-missing")">@Mounts[skill.Rank - 2].Riding.Name</span>
+                                }
+                            </div>
+                            <div class="trainer-cost @(Engine.Player.Copper < skill.Cost ? "too-expensive" : "")">
+                                Cost: <MoneyFrame Copper="skill.Cost" />
+                            </div>
+                        }
+                    }
+
+                    @if (_message is not null)
+                    {
+                        <div class="trainer-msg @(_messageFailed ? "failed" : "")">@_message</div>
+                    }
+                </div>
+            </div>
+
+            <div class="mw-footer trainer-footer">
+                <span class="trainer-money"><MoneyFrame Copper="Copper" /></span>
+                <button class="wow-btn small primary" disabled="@(Selected is null || Engine.RidingRank >= Selected.Riding.Rank)" @onclick="Train">Train</button>
+                <button class="wow-btn small" @onclick="Close">Exit</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <button class="inv-merchant-npc riding-npc" title="Talk to @Trainer.Name"
+                @onclick="OpenWindow" @oncontextmenu="OpenWindow" @oncontextmenu:preventDefault>
+            <span @key="_speechKey" class="al-portrait inv-npc-portrait @(_speechKey > 0 ? "talking" : "")">
+                <img class="al-race-portrait" src="@Trainer.PortraitUrl" alt="@Trainer.Name" onerror="this.style.display='none'" />
+                <img class="al-class-badge" src="@Mounts[0].IconUrl" alt="" onerror="this.style.display='none'" />
+            </span>
+            <span class="inv-npc-name">@Trainer.Name</span>
+            <span class="inv-npc-title">&lt;@Trainer.Title&gt;</span>
+            <span class="inv-npc-greeting">@Trainer.Greeting</span>
+            <span class="inv-npc-cta">Click to train</span>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    // Passed in so the window refreshes along with the page on every tick
+    [Parameter] public long Copper { get; set; }
+
+    private int _selectedRank = 1;
+    private string? _message;
+    private bool _messageFailed;
+    private string? _speech;
+    private int _speechKey;
+
+    private RidingTrainer Trainer => MountRegistry.TrainerFor(Engine.Race);
+    private IReadOnlyList<Mount> Mounts => MountRegistry.ForRace(Engine.Race);
+    private Mount? Selected => MountRegistry.Get(Engine.Race, _selectedRank);
+
+    // Entry: green = requirements met, red = not learnable yet, gray = already learned
+    private RenderFragment Entry(Mount mount) => __builder =>
+    {
+        var skill = mount.Riding;
+        bool learned = Engine.RidingRank >= skill.Rank;
+        bool available = learned || (Engine.Player.Level >= skill.RequiredLevel && Engine.RidingRank >= skill.Rank - 1);
+        <div class="craft-list-entry trainer-entry @(learned ? "learned" : available ? "available" : "unavailable") @(skill.Rank == _selectedRank ? "selected" : "")"
+             @onclick="() => Select(skill.Rank)">
+            <img class="craft-list-icon" src="@mount.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+            <span class="craft-list-name">@skill.Name</span>
+            <span class="trainer-entry-cost">
+                @if (learned)
+                {
+                    <span class="riding-learned">Learned</span>
+                }
+                else
+                {
+                    <MoneyFrame Copper="skill.Cost" />
+                }
+            </span>
+        </div>
+    };
+
+    private async Task OpenWindow()
+    {
+        _selectedRank = Math.Min(Engine.RidingRank + 1, MountRegistry.Skills.Count);
+        _message = null;
+        Say(MountRegistry.GreetingLines);
+        await OpenChanged.InvokeAsync(true);
+    }
+
+    private async Task Close()
+    {
+        Say(MountRegistry.FarewellLines);
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private void Select(int rank)
+    {
+        _selectedRank = rank;
+        _message = null;
+    }
+
+    private void Train()
+    {
+        if (Selected is not { } mount) return;
+        var error = Engine.LearnRiding(mount.Riding);
+        (_message, _messageFailed) = error is null
+            ? ($"You have learned {mount.Riding.Name}. Your {mount.Name} is ready!", false)
+            : (error, true);
+        Say(error is null ? MountRegistry.TrainLines : MountRegistry.RefuseLines);
+    }
+
+    private void Say(IReadOnlyList<string> lines)
+    {
+        var options = lines.Where(l => l != _speech).ToList();
+        _speech = options[Random.Shared.Next(options.Count)];
+        _speechKey++;
+    }
+}

@@ -29,6 +29,7 @@ else
                     <span class="tt-note">@(consumable.Kind switch
                     {
                         ConsumableKind.Bandage   => "Used automatically on death while auto-use is on.",
+                        ConsumableKind.Stimpak   => "Used automatically right after resurrecting while auto-use is on.",
                         ConsumableKind.Explosive => "Thrown automatically in combat while auto-use is on (1 min cooldown).",
                         ConsumableKind.Costume   => "Use manually (right-click in bags or click in combat). Renews itself while you have more and auto-use is on.",
                         _                        => "Used automatically when running low while auto-use is on (1 min cooldown).",

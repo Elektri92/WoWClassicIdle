@@ -27,6 +27,7 @@ public partial class IdleGameEngine
             TotalItemsSold       = save.TotalItemsSold;
             TotalUncommonLooted  = save.TotalUncommonLooted;
             TotalRareItemsLooted = save.TotalRareItemsLooted;
+            TotalJumps           = save.TotalJumps;
             SpeedMultiplier = 1.0;
             _nextSlotId     = save.NextSlotId;
 
@@ -133,6 +134,7 @@ public partial class IdleGameEngine
         }
 
         RestoreCraftingQueue(save.CraftingQueue ?? []);
+        ReturnToIdleAfterCrafting = save.ReturnToIdleAfterCrafting;
 
         UnlockSharedProfessions();
     }
@@ -152,6 +154,7 @@ public partial class IdleGameEngine
         ?? (Item?)RareLootRegistry.GetById(itemId)
         ?? (Item?)CraftedGearRegistry.GetById(itemId)
         ?? (Item?)EnchantingRegistry.GetById(itemId)
+        ?? (Item?)CraftedTrinketRegistry.GetById(itemId)
         ?? ProfessionRegistry.GetById(itemId);
 
     private CharacterSlot RestoreSlot(SlotSaveData data)
@@ -190,7 +193,7 @@ public partial class IdleGameEngine
         {
             if (Enum.TryParse<ArmorSlot>(slotName, out var slot)
                 && (RareLootRegistry.GetById(itemId) ?? CraftedGearRegistry.GetById(itemId)
-                    ?? EnchantingRegistry.GetById(itemId)) is { } armor)
+                    ?? EnchantingRegistry.GetById(itemId) ?? CraftedTrinketRegistry.GetById(itemId)) is { } armor)
             {
                 armorBySlot[slot] = armor;
             }
@@ -235,6 +238,7 @@ public partial class IdleGameEngine
             Gender  = data.Gender,
             Player  = player,
         };
+        RestoreRiding(characterSlot, data);      // before the travel: the route depends on the mount
         RestoreExploration(characterSlot, data); // before the travel: the route depends on known flight points
         RestoreCombatZone(characterSlot, data);
         return characterSlot;

@@ -1,22 +1,34 @@
 @page "/changelog"
 @using Models
 @using Services
+@inject ISaveGameService SaveGame
 
 <PageTitle>Changelog</PageTitle>
 
 @* Styles: wwwroot/css/changelog.css *@
 <div class="wow-page narrow">
     <h2>Changelog</h2>
-    <p class="wow-hint">What changed in each build, newest first.</p>
+    <p class="wow-hint">
+        What changed in each build, newest first.
+        @if (_unseenCount > 0)
+        {
+            <span class="changelog-unseen-hint">@_unseenCount @(_unseenCount == 1 ? "build" : "builds") you haven't seen yet.</span>
+        }
+    </p>
 
     @foreach (var entry in ChangelogRegistry.Entries)
     {
-        <section class="wow-card changelog-entry">
+        var unseen = ChangelogRegistry.IsNewerThan(entry.Version, _seenVersion);
+        <section class="wow-card changelog-entry @(unseen ? "unseen" : "")">
             <h4>
                 v@(entry.Version)
                 @if (entry.Version == UpdateService.AppVersion)
                 {
                     <span class="wow-badge changelog-current">Your build</span>
+                }
+                @if (unseen)
+                {
+                    <span class="wow-badge changelog-new">New</span>
                 }
                 <span class="changelog-date">@entry.Date</span>
             </h4>
@@ -33,3 +45,17 @@
         </section>
     }
 </div>
+
+@code {
+    private string? _seenVersion;
+    private int _unseenCount;
+
+    // Highlights stay until the player leaves the page; the next visit only marks what was added since
+    protected override void OnInitialized()
+    {
+        _seenVersion = SaveGame.LastSeenChangelogVersion;
+        _unseenCount = ChangelogRegistry.Entries.Count(e => ChangelogRegistry.IsNewerThan(e.Version, _seenVersion));
+        if (ChangelogRegistry.Entries.Count > 0)
+            SaveGame.LastSeenChangelogVersion = ChangelogRegistry.Entries[0].Version;
+    }
+}

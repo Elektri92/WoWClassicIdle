@@ -1,10 +1,19 @@
 @using Models
 @inject IdleGameEngine Engine
+@inject NavigationManager Nav
 @implements IDisposable
 
 @* Crafting queue next to the profession windows. While this panel is open the queue runs (see IdleGameEngine.CraftingQueue.cs). Styles: wwwroot/css/crafting-queue.css *@
 <aside class="al-panel craft-queue" style="--i: 1">
     <h4>Crafting Queue</h4>
+
+    @{ bool returnUnlocked = Engine.IsReturnToIdleUnlocked; }
+    <label class="craft-queue-option @(returnUnlocked ? "" : "locked")"
+           title="@(returnUnlocked ? "Go back to the Idle Fighter once the queue has run empty." : $"Unlocks when any character reaches level {IdleGameEngine.ReturnToIdleUnlockLevel}.")">
+        <input type="checkbox" checked="@(returnUnlocked && Engine.ReturnToIdleAfterCrafting)" disabled="@(!returnUnlocked)"
+               @onchange="e => Engine.ReturnToIdleAfterCrafting = e.Value is true" />
+        <span>Return to combat when empty@(returnUnlocked ? "" : " 🔒")</span>
+    </label>
 
     @{ var queue = Engine.CraftingQueue; }
     @if (queue.Count == 0)
@@ -16,6 +25,9 @@
         <div class="wow-progress prof-run-bar">
             <div class="bar" style="width: @RunPercent%"></div>
             <span>@(queue[0].IsDisenchant ? "Disenchanting…" : "Crafting…")</span>
+        </div>
+        <div class="craft-queue-total" title="Estimate for the whole queue. Positions without materials drop out when it is their turn.">
+            Total time left: <b>~@FormatRemaining(Engine.CraftingQueueRemainingSeconds)</b>
         </div>
 
         <div class="craft-queue-list">
@@ -47,17 +59,27 @@
 @code {
     private string RunPercent => (Engine.CraftingProgress * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
+    private static string FormatRemaining(double seconds)
+    {
+        int s = (int)Math.Ceiling(seconds);
+        return s >= 3600 ? $"{s / 3600}h {s / 60 % 60:00}m" : s >= 60 ? $"{s / 60}m {s % 60:00}s" : $"{s}s";
+    }
+
     protected override void OnInitialized()
     {
         Engine.EnterCraftingMenu();
         Engine.ProfessionUpdated += OnProfessionUpdated;
+        Engine.CraftingQueueFinished += OnCraftingQueueFinished;
     }
 
     private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
 
+    private void OnCraftingQueueFinished() => _ = InvokeAsync(() => Nav.NavigateTo("/idle"));
+
     public void Dispose()
     {
         Engine.ProfessionUpdated -= OnProfessionUpdated;
+        Engine.CraftingQueueFinished -= OnCraftingQueueFinished;
         Engine.LeaveCraftingMenu();
     }
 }

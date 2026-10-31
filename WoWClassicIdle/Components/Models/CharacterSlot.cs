@@ -16,6 +16,10 @@ namespace Models
         public string? CombatZoneId { get; internal set; }
         /// <summary>Ongoing travel to another combat zone (no fighting during travel).</summary>
         public ZoneTravelState? Travel { get; internal set; }
+        /// <summary>Highest learned riding rank (0 = cannot ride yet).</summary>
+        public int RidingRank     { get; internal set; }
+        /// <summary>Rank of the mount in the mount slot (0 = empty); the mount itself comes from the race.</summary>
+        public int EquippedMountRank { get; internal set; }
         // Immutable collections: the sim thread replaces them completely, the UI reads without a lock
         /// <summary>Zones already visited – the character knows the flight point there.</summary>
         public ImmutableHashSet<string> DiscoveredZoneIds { get; internal set; } = ImmutableHashSet<string>.Empty;

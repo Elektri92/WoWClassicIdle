@@ -12,6 +12,7 @@ public class SaveData
     public int TotalItemsSold { get; set; }
     public int TotalUncommonLooted { get; set; }
     public int TotalRareItemsLooted { get; set; }
+    public int TotalJumps { get; set; }
     public List<SlotSaveData> Roster { get; set; } = new();
     public List<AchievementSaveData> Achievements { get; set; } = new();
     // Shared cross-class inventory – backpack (from version 2)
@@ -25,6 +26,7 @@ public class SaveData
     public Dictionary<string, string> LastProfessionTargets { get; set; } = new();
     // Open crafting queue in order; null = legacy save without this field
     public List<CraftingQueueSaveData>? CraftingQueue { get; set; }
+    public bool ReturnToIdleAfterCrafting { get; set; }
     // Account-wide profession bonuses (ProfessionBonus.Key) and Profession.ToString() → slots; null = legacy save without these fields
     public List<string>? ProfessionBonuses { get; set; }
     public Dictionary<string, List<string?>>? EquippedProfessionBonuses { get; set; }
@@ -34,6 +36,8 @@ public class SaveData
     public List<MerchantStockSaveData>? MerchantStock { get; set; }
     // Page shown when the game was last saved; null = legacy save → start page
     public string? LastRoute { get; set; }
+    // Newest changelog entry the player has opened; null = never opened or legacy save → everything counts as new
+    public string? LastSeenChangelogVersion { get; set; }
 }
 
 public class MerchantStockSaveData
@@ -60,6 +64,9 @@ public class SlotSaveData
     // Discovered zones (null = legacy save → only the current zone) and progress of the zone objectives
     public List<string>? DiscoveredZones { get; set; }
     public Dictionary<string, int>? ZoneObjectives { get; set; }
+    // Learned riding rank and rank of the mount in the slot (missing in legacy saves → 0, on foot)
+    public int RidingRank { get; set; }
+    public int EquippedMountRank { get; set; }
 }
 
 public class PlayerSaveData

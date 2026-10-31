@@ -57,6 +57,13 @@ namespace Models
         /// <summary>Sum of the stat bonuses of all active consumables – flows into RecalculateStats.</summary>
         public PrimaryStats ConsumableBonus { get; private set; } = PrimaryStats.Zero;
 
+        /// <summary>Spirit factor of active stimpaks – flows into RecalculateStats.</summary>
+        public double ConsumableSpiritMultiplier { get; private set; } = 1;
+
+        /// <summary>Factor on the healing or mana of a potion: alchemist stones improve the potions of their tier.</summary>
+        public double PotionEffectMultiplier(ConsumableItem potion) =>
+            1 + EquippedArmor.Values.Sum(a => a.Effect?.PotionLevel == potion.RequiredLevel ? a.Effect.PotionBonus : 0);
+
         /// <summary>Active consumable buffs (copy for the UI).</summary>
         public IReadOnlyList<ActiveConsumable> ActiveConsumables
         {
@@ -112,11 +119,16 @@ namespace Models
         private void RefreshConsumableStats()
         {
             PrimaryStats bonus;
+            double spirit;
             lock (_consumables)
+            {
                 bonus = _consumables.Values.Aggregate(PrimaryStats.Zero, (sum, c) => sum + (c.Item.Bonuses ?? PrimaryStats.Zero));
-            if (bonus == ConsumableBonus) return;
+                spirit = 1 + _consumables.Values.Where(c => c.Item.Kind == ConsumableKind.Stimpak).Sum(c => c.Item.Amount / 100.0);
+            }
+            if (bonus == ConsumableBonus && spirit == ConsumableSpiritMultiplier) return;
 
             ConsumableBonus = bonus;
+            ConsumableSpiritMultiplier = spirit;
             RecalculateStatsKeepResources();
         }
     }

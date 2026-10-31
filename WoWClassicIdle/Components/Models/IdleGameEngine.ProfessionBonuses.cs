@@ -16,6 +16,11 @@ public partial class IdleGameEngine
         get { lock (_simLock) return _ownedProfessionBonuses.Count; }
     }
 
+    public IReadOnlyList<ProfessionBonus> OwnedProfessionBonuses
+    {
+        get { lock (_simLock) return _ownedProfessionBonuses.ToList(); }
+    }
+
     /// <summary>Copy of the slots of a profession (empty slots = <c>null</c>).</summary>
     public ProfessionBonus?[] EquippedProfessionBonuses(Profession profession)
     {
@@ -98,7 +103,7 @@ public partial class IdleGameEngine
     private void RollProfessionBonusDrop()
     {
         if (CombatZoneRegistry.Get(ActiveCharacter?.CombatZoneId) is not { } zone) return;
-        if (_professionRng.NextDouble() >= ProfessionBonusRegistry.DropChance) return;
+        if (_professionRng.NextDouble() >= ProfessionBonusRegistry.DropChance(ProfessionBonusRegistry.QualityFor(zone))) return;
 
         var missing = ProfessionBonusRegistry.ForZone(zone)
             .Where(b => !_ownedProfessionBonuses.Contains(b))

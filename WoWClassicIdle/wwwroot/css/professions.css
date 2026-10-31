@@ -141,15 +141,29 @@
     box-shadow: 0 0 8px rgba(255,209,0,.55);
 }
 
-.prof-quick-owner {
+/* Class icons on the profession icon: gold = learned by, green = passive gatherer (up to 3, overlapping) */
+.prof-quick-classes {
     position: absolute;
     right: -4px;
     bottom: -4px;
-    width: 16px;
-    height: 16px;
-    border-radius: 3px;
-    border: 1px solid #000;
+    display: flex;
+    flex-direction: row-reverse;
+    pointer-events: none;
 }
+
+.prof-quick-owner {
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--wow-gold-soft);
+    background: var(--wow-bg-deep);
+    object-fit: cover;
+    box-shadow: 0 0 0 1px #000, 0 1px 4px rgba(0,0,0,.8);
+}
+
+.prof-quick-owner.passive { border-color: #4fa83a; }
+.prof-quick-owner + .prof-quick-owner { margin-right: -9px; }
 
 .prof-quick-sep { height: 1px; margin: 2px 0; background: var(--wow-border-inner); }
 .prof-quick-sep:last-child { display: none; }
@@ -565,6 +579,17 @@
     font-size: .72rem;
     font-weight: 700;
 }
+
+/* Amount of the result already in the bags */
+.craft-owned {
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--wow-gold-soft);
+    font-size: .72rem;
+    white-space: nowrap;
+}
+.craft-owned + .craft-count { margin-left: 0; }
+.craft-owned-line { color: var(--wow-gold-soft); font-size: .8rem; }
 
 .craft-detail { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .craft-detail .prof-run-bar { align-self: stretch; }

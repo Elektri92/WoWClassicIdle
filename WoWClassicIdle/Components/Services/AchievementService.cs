@@ -18,6 +18,7 @@ public partial class AchievementService : IAchievementService
     private int _lastKnownItemsSold;
     private int _lastKnownUncommonLooted;
     private int _lastKnownRareItemsLooted;
+    private int _lastKnownJumps;
 
     public IReadOnlyList<AchievementDefinition> AllAchievements => _all;
     public IReadOnlyList<EarnedAchievement> EarnedAchievements { get { lock (_lock) return _earned.ToList(); } }
@@ -68,6 +69,7 @@ public partial class AchievementService : IAchievementService
         CheckItemsSold();
         CheckUncommonLooted();
         CheckRareItemsLooted();
+        CheckJumps();
         CheckGeneral();
         CheckInventory();
         CheckExploration();
@@ -86,6 +88,7 @@ public partial class AchievementService : IAchievementService
                     TryAward($"prof_{def.Profession}_{milestone}");
             }
         }
+        CheckProfessionBonuses();
     }
 
     private void CheckClassLevels()
@@ -281,6 +284,7 @@ public partial class AchievementService : IAchievementService
         _lastKnownItemsSold         = engine.TotalItemsSold;
         _lastKnownUncommonLooted    = engine.TotalUncommonLooted;
         _lastKnownRareItemsLooted   = engine.TotalRareItemsLooted;
+        _lastKnownJumps             = engine.TotalJumps;
     }
 
     public bool IsEarned(string id) { lock (_lock) return _earnedIds.Contains(id); }
@@ -378,6 +382,8 @@ public partial class AchievementService : IAchievementService
         list.Add(new() { Id = "sold_500", Category = AchievementCategory.Inventory, Points = 30, Title = "Azeroth Auctioneer", Description = "Sell 500 items.",                             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_coin_01.jpg" });
 
         AddExplorationAchievements(list);
+        AddProfessionBonusAchievements(list);
+        AddJumpAchievements(list);
         return list;
     }
 }

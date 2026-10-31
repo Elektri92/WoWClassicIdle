@@ -20,7 +20,7 @@ public partial class IdleGameEngine
     public ZoneTravelState? CombatCharacterTravel => CombatSlotId is { } id ? GetCharacter(id)?.Travel : null;
 
     /// <summary>Ground travel of the active character (walking, form, mount).</summary>
-    public GroundTravel GroundTravel => ZoneTravel.GroundFor(PlayerClass, Race, Player.Level);
+    public GroundTravel GroundTravel => ZoneTravel.GroundFor(PlayerClass, Player.Level, EquippedMount);
 
     /// <summary>Route from the current zone to <paramref name="target"/>; null without a start zone (the first choice is immediate).</summary>
     public TravelRoute? RouteTo(CombatZone target) =>
@@ -139,7 +139,7 @@ public partial class IdleGameEngine
         slot.CombatZoneId = zone.Id;
 
         if (CombatZoneRegistry.Get(data.TravelTarget) is not { } target || target.Id == zone.Id) return;
-        var ground = ZoneTravel.GroundFor(slot.Class, slot.Race, slot.Player.Level);
+        var ground = ZoneTravel.GroundFor(slot.Class, slot.Player.Level, MountOf(slot));
         slot.Travel = new ZoneTravelState
         {
             FromZoneId   = zone.Id,

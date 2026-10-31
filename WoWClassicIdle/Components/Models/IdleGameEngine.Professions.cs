@@ -58,12 +58,14 @@ public partial class IdleGameEngine
         double dt = (now - _lastProfessionTime) * ProfessionSpeed;
         _lastProfessionTime = now;
 
+        bool queueFinished;
         lock (_simLock)
         {
             UnlockSharedProfessions();
-            AdvanceCraftingQueue(dt);
+            queueFinished = AdvanceCraftingQueue(dt);
             AdvancePassiveSlots(dt);
         }
+        if (queueFinished) CraftingQueueFinished?.Invoke();
         ProfessionUpdated?.Invoke();
     }
 

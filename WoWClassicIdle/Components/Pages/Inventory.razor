@@ -92,6 +92,10 @@
                         @SwapFx(WeaponSlotKey)
                     </div>
                 }
+                @if (_engine.RidingRank > 0)
+                {
+                    <MountSlot Equipped="_engine.EquippedMount" RidingRank="_engine.RidingRank" />
+                }
             </div>
 
             <div class="stats-area">
@@ -197,7 +201,7 @@
 
         @* ── Merchant on the right: click first, then the trade window opens ── *@
         <aside class="inv-merchant-col @(_merchantOpen ? "trading" : "")" style="--i: 2">
-            @if (_speech is not null)
+            @if (_speech is not null && !_ridingOpen)
             {
                 @* Speech bubble: remounted per line (@key) → pop-in, stay briefly, fade out *@
                 <div @key="_speechKey" class="inv-speech" role="status">
@@ -211,7 +215,7 @@
                                 Message="@_merchantMessage" MessageFailed="_merchantMessageFailed"
                                 Fx="_merchantFx" FxKey="_fxKey" SpeechKey="_speechKey" />
             }
-            else
+            else if (!_ridingOpen)
             {
                 <button class="inv-merchant-npc" title="Talk to @MerchantRegistry.Name"
                         @onclick="OpenMerchant" @oncontextmenu="OpenMerchant" @oncontextmenu:preventDefault>
@@ -224,6 +228,12 @@
                     <span class="inv-npc-greeting">@MerchantRegistry.Greeting</span>
                     <span class="inv-npc-cta">Click to trade</span>
                 </button>
+            }
+
+            @* Only one window at a time: the trainer gives way to the open merchant and vice versa *@
+            @if (!_merchantOpen && _engine.Player.Level >= MountRegistry.UnlockLevel)
+            {
+                <RidingTrainerPanel Open="_ridingOpen" OpenChanged="SetRidingOpen" Copper="_engine.Player.Copper" />
             }
         </aside>
     </div>

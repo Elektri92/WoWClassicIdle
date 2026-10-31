@@ -72,6 +72,7 @@
                                 int craftable = Engine.MaxCraftable(recipe);
                                 bool locked = Progress.Skill < recipe.RequiredSkill;
                                 var item = recipe.Result;
+                                int owned = Engine.Player.Inventory.CountOf(item.Id);
                                 RenderFragment entry = @<div class="craft-list-entry @(recipe.Id == _recipeId ? "selected" : "") @(craftable == 0 ? "empty" : "") @(locked ? "locked" : "")"
                                      style="--quality: @ItemQualityColors.Hex(item.Quality)"
                                      @onclick="() => SelectRecipe(recipe)">
@@ -82,6 +83,10 @@
                                     }
                                     <img class="craft-list-icon" src="@item.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
                                     <span class="craft-list-name">@item.Name</span>
+                                    @if (owned > 0)
+                                    {
+                                        <span class="craft-owned" title="In your bags: @owned">🎒 @owned</span>
+                                    }
                                     @if (craftable > 0 && !locked)
                                     {
                                         <span class="craft-count">@craftable</span>
@@ -128,6 +133,7 @@
                             @ResultLabel(selected.Result)
                         </TradeItemTooltip>
                     }
+                    <div class="craft-owned-line">In your bags: @Engine.Player.Inventory.CountOf(selected.Result.Id)</div>
                     @if (!skillOk)
                     {
                         <div class="craft-req">Requires @Progress.Definition.Name (@selected.RequiredSkill)</div>
@@ -192,7 +198,7 @@
         Recipes.Select(r => ItemRequirements.ClassOf(r.Result)).OfType<CharacterClass>().Distinct().ToList();
 
     private IReadOnlyList<Recipe> FilteredRecipes =>
-        Recipes.Where(r => _classFilter is null || ItemRequirements.ClassOf(r.Result) == _classFilter)
+        Recipes.Where(r => _classFilter is null || ItemRequirements.ClassOf(r.Result) is null || ItemRequirements.ClassOf(r.Result) == _classFilter)
                .Where(r => string.IsNullOrWhiteSpace(_search) || r.Result.Name.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase))
                .OrderBy(r => r.RequiredSkill)
                .ToList();

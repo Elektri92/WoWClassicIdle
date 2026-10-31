@@ -92,38 +92,14 @@ public static class ZoneTravel
 
     // ─── Ground travel per character ───
 
-    private static string RaceMountIcon(Race race) => race switch
-    {
-        Race.Dwarf    => Icon("ability_mount_mountainram"),
-        Race.Gnome    => Icon("ability_mount_mechastrider"),
-        Race.NightElf => Icon("ability_mount_whitetiger"),
-        Race.Orc      => Icon("ability_mount_blackdirewolf"),
-        Race.Troll    => Icon("ability_mount_raptor"),
-        Race.Tauren   => Icon("ability_mount_kodo_03"),
-        Race.Undead   => Icon("ability_mount_undeadhorse"),
-        _             => Icon("ability_mount_ridinghorse"),
-    };
-
     /// <summary>
-    /// Fastest ground travel of the character: mount from 40 (60 %, epic from 60 with 100 %), Paladin/Warlock
-    /// with class mount, before that Travel Form (Druid 30), Ghost Wolf (Shaman 20) or Aspect of the Cheetah (Hunter 20).
+    /// Fastest ground travel of the character: the mount in its mount slot, otherwise
+    /// Travel Form (Druid 30), Ghost Wolf (Shaman 20) or Aspect of the Cheetah (Hunter 20).
     /// </summary>
-    public static GroundTravel GroundFor(CharacterClass cls, Race race, int level)
+    public static GroundTravel GroundFor(CharacterClass cls, int level, Mount? mount)
     {
-        if (level >= 60)
-            return cls switch
-            {
-                CharacterClass.Paladin => new(TravelMode.Mount, "Charger", Icon("ability_mount_charger"), 2.0),
-                CharacterClass.Warlock => new(TravelMode.Mount, "Dreadsteed", Icon("ability_mount_dreadsteed"), 2.0),
-                _                      => new(TravelMode.Mount, "Epic mount", RaceMountIcon(race), 2.0),
-            };
-        if (level >= 40)
-            return cls switch
-            {
-                CharacterClass.Paladin => new(TravelMode.Mount, "Warhorse", Icon("spell_nature_swiftness"), 1.6),
-                CharacterClass.Warlock => new(TravelMode.Mount, "Felsteed", Icon("spell_nature_swiftness"), 1.6),
-                _                      => new(TravelMode.Mount, "Riding mount", RaceMountIcon(race), 1.6),
-            };
+        if (mount is not null)
+            return new(TravelMode.Mount, mount.Name, mount.IconUrl, mount.SpeedMultiplier);
         if (cls == CharacterClass.Druid && level >= 30)
             return new(TravelMode.Form, "Travel Form", Icon("ability_druid_travelform"), 1.4);
         if (cls == CharacterClass.Shaman && level >= 20)

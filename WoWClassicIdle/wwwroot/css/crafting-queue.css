@@ -12,6 +12,18 @@
 .craft-queue h4 { margin: 0 0 4px; text-align: center; letter-spacing: 1px; }
 .craft-queue .prof-run-bar { margin: 0; }
 .craft-queue-empty { margin: 0; text-align: center; }
+.craft-queue-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--wow-gold-soft);
+    font-size: .8rem;
+    cursor: pointer;
+}
+.craft-queue-option input { flex: none; margin: 0; }
+.craft-queue-option.locked { opacity: .6; cursor: default; }
+.craft-queue-total { color: var(--wow-gold-soft); font-size: .8rem; text-align: center; }
+.craft-queue-total b { color: #fff; font-weight: 700; }
 
 .craft-queue-list {
     display: flex;

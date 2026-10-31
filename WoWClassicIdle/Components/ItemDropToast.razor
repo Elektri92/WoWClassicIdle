@@ -25,6 +25,10 @@
                             {
                                 <span class="item-toast-stat">@line</span>
                             }
+                            @if (armor.Effect is { } effect)
+                            {
+                                <span class="item-toast-stat">@effect.Text</span>
+                            }
                         }
                         else if (t.Item is WeaponItem weapon)
                         {
