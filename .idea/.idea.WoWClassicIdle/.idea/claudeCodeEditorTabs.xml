@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="519d64fa-8ea8-40b7-9ca2-449dbdbfdee2" />
+    <option name="activeSessionId" value="539c9ffc-0a29-44cf-a0df-9472d9d19c30" />
     <option name="openSessionIds">
       <list>
         <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
@@ -27,16 +27,23 @@
         <option value="20fac374-7a72-4161-9184-9713ae384f34" />
         <option value="a5464d6f-1c3a-4507-bec9-096397f95839" />
         <option value="b82eae48-4582-4da7-bd4e-d6f785ffddb3" />
-        <option value="f9c62676-6f4e-4489-91a3-93c0055c8447" />
-        <option value="4938c2bf-e587-4f3a-9389-38f5ba77111e" />
-        <option value="519d64fa-8ea8-40b7-9ca2-449dbdbfdee2" />
+        <option value="ad5b653a-18e4-46d6-8507-92453bf7372e" />
+        <option value="609c7a39-009e-4150-b079-c4d98c506867" />
+        <option value="e0c780af-e74a-4646-a3e1-c97a93473990" />
+        <option value="033f3390-4fbd-48b5-a939-afa820a574df" />
+        <option value="3d62a512-400e-45ea-bda0-1ffc120f30c1" />
+        <option value="1543b3c3-e052-4f81-9796-f8c6096dba7f" />
+        <option value="c493f731-8895-474f-861e-0fe2a619b20a" />
+        <option value="539c9ffc-0a29-44cf-a0df-9472d9d19c30" />
       </list>
     </option>
     <option name="sessionPaths">
       <map>
         <entry key="02ee4cf7-6c00-4a33-870f-db272a601793" value="/sessions/8a31a0b4-ce50-458d-b94b-fcaebbaa4276" />
+        <entry key="033f3390-4fbd-48b5-a939-afa820a574df" value="/sessions/dd301d20-c841-40ce-afff-41748d4f531b" />
         <entry key="050376ce-e083-4492-a0b8-ec937cfba4b6" value="/sessions/efe50339-6971-4548-9e7f-dbb0aeca647f" />
         <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="/sessions/ca74c7ae-e88f-48ab-9d08-f40289b4c0b5" />
+        <entry key="1543b3c3-e052-4f81-9796-f8c6096dba7f" value="/sessions/d0bf4a2a-522c-4e2c-bda5-1baecdcba596" />
         <entry key="180cfe9e-30c4-4980-b5b4-ffb6754b0bde" value="/sessions/85f5d38e-d4d3-4832-baae-d19c52c9e98b" />
         <entry key="20fac374-7a72-4161-9184-9713ae384f34" value="/sessions/225383d7-8ad4-4920-9af0-e46d651293d4" />
         <entry key="2832bf3c-4337-4c74-bae6-ce91f530cfe3" value="/sessions/2d90cc25-f497-4ccb-b92e-ee522e9d2995" />
@@ -44,29 +51,35 @@
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="/sessions/6b71fc4f-339c-4914-ab12-e2f5e40a451f" />
         <entry key="39c41c07-3cfb-43d9-ad79-e409b225ee45" value="/sessions/97b4bb4c-1eda-446c-a2c3-79171be9ea26" />
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="/sessions/131bc0ad-43a1-4009-9c5b-7eceef8a4cd1" />
+        <entry key="3d62a512-400e-45ea-bda0-1ffc120f30c1" value="/sessions/accf1820-1337-4be8-9f69-0f9719763532" />
         <entry key="3d692cac-c9c0-4714-919c-a2db7467d54d" value="/sessions/8add3aa3-8efd-4e6d-a3e3-9602d398b69b" />
-        <entry key="4938c2bf-e587-4f3a-9389-38f5ba77111e" value="/sessions/26964da0-d316-41e3-9004-eaf628238932" />
         <entry key="4aadcd57-680a-44c6-9378-0dc4872b5397" value="/sessions/0e62f636-d144-4f11-a819-084bd4808dc0" />
         <entry key="4efa8263-9f1f-4a2f-bc18-c16843376c5d" value="/sessions/45b6dbf2-3eec-4a7d-9b52-4e530dc3181e" />
-        <entry key="519d64fa-8ea8-40b7-9ca2-449dbdbfdee2" value="/sessions/8b68ea1f-710e-4e7d-988d-d3a193cdfd67" />
+        <entry key="539c9ffc-0a29-44cf-a0df-9472d9d19c30" value="/sessions/594e4b2a-721d-4103-a87d-47d87561e971" />
+        <entry key="609c7a39-009e-4150-b079-c4d98c506867" value="/sessions/7a7694b3-c8d5-4f79-9030-ed41899c808b" />
         <entry key="62998595-0526-4cd5-9985-83a13e515c24" value="/sessions/dfb207d6-eac8-492b-92fe-4e39ca81e0d5" />
         <entry key="7fbdcff8-ed21-4d8a-b31e-86ba82581aed" value="/sessions/663c2f7b-0f8c-4fa7-8911-3a5625756c8b" />
         <entry key="88f52352-966a-4861-9bfa-78edf3989ba4" value="/sessions/90a94596-a48e-4790-8070-ce8589c258e1" />
         <entry key="9259eca7-c898-4dde-a8e8-f70c55973c28" value="/sessions/d97d7c6e-ad7d-4651-bf2f-6748cbac7616" />
         <entry key="a5464d6f-1c3a-4507-bec9-096397f95839" value="/sessions/b0fc2041-d443-43ed-a2aa-0b6796517bcc" />
+        <entry key="ad5b653a-18e4-46d6-8507-92453bf7372e" value="/sessions/79393c6f-3522-43dc-afce-81a79e175b12" />
         <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="/sessions/new" />
         <entry key="b82eae48-4582-4da7-bd4e-d6f785ffddb3" value="/sessions/d85c4eeb-f643-4720-b47a-a8ffe26574f0" />
+        <entry key="c493f731-8895-474f-861e-0fe2a619b20a" value="/sessions/6a53f5ee-d4a5-4851-9ef8-75400f769e77" />
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="/sessions/30341ce3-2e71-4955-b176-e452674ae63f" />
+        <entry key="e0c780af-e74a-4646-a3e1-c97a93473990" value="/sessions/23f375b3-81c5-436b-b8f6-04ae31289fff" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="/sessions/b15805d1-dd0f-4966-94e7-a6fcf6249d7d" />
         <entry key="f25356c5-3553-4a42-ac3b-f97c0d4e825c" value="/sessions/0a610214-f369-4d1b-b6fe-a83e859a5e5f" />
-        <entry key="f9c62676-6f4e-4489-91a3-93c0055c8447" value="/sessions/cb00ee6f-cc57-4c4f-bba8-4f8b3146808b" />
+        <entry key="f9c62676-6f4e-4489-91a3-93c0055c8447" value="/sessions/79393c6f-3522-43dc-afce-81a79e175b12" />
       </map>
     </option>
     <option name="sessionTitles">
       <map>
         <entry key="02ee4cf7-6c00-4a33-870f-db272a601793" value="Waffentausch und Loottables in Simulationen" />
+        <entry key="033f3390-4fbd-48b5-a939-afa820a574df" value="Ungelesene Changelog-Einträge" />
         <entry key="050376ce-e083-4492-a0b8-ec937cfba4b6" value="Auto-Update unter Linux" />
         <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="Das Default UI sieht irgendwie unsauber aus und sc" />
+        <entry key="1543b3c3-e052-4f81-9796-f8c6096dba7f" value="Zone-Completed Popup und Level-Bereiche" />
         <entry key="180cfe9e-30c4-4980-b5b4-ffb6754b0bde" value="Talentbäume aller Klassen" />
         <entry key="20fac374-7a72-4161-9184-9713ae384f34" value="HP und Mana bei Equipment-Wechsel" />
         <entry key="2832bf3c-4337-4c74-bae6-ce91f530cfe3" value="Loottable zeigt nicht alle Items" />
@@ -74,22 +87,26 @@
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="Kann ich dir auch einfach eine Frage stellen ohne" />
         <entry key="39c41c07-3cfb-43d9-ad79-e409b225ee45" value="didnt start debug as it should" />
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="Warrior-Stances ohne Talentbaum-Skillung" />
+        <entry key="3d62a512-400e-45ea-bda0-1ffc120f30c1" value="Mounts-Feature und Reiten-Skill" />
         <entry key="3d692cac-c9c0-4714-919c-a2db7467d54d" value="Thematische Talentbaum-Hintergründe" />
-        <entry key="4938c2bf-e587-4f3a-9389-38f5ba77111e" value="Berufs-Boni-Slots für WoW Classic" />
         <entry key="4aadcd57-680a-44c6-9378-0dc4872b5397" value="Neue Loottables und Waffen" />
         <entry key="4efa8263-9f1f-4a2f-bc18-c16843376c5d" value="/inventory muss auch noch an den Style der anderen" />
-        <entry key="519d64fa-8ea8-40b7-9ca2-449dbdbfdee2" value="Changelog nach Kategorien" />
+        <entry key="539c9ffc-0a29-44cf-a0df-9472d9d19c30" value="GitHub-Veröffentlichung aller Änderungen" />
+        <entry key="609c7a39-009e-4150-b079-c4d98c506867" value="Runde Klassenicons mit Umrandung" />
         <entry key="62998595-0526-4cd5-9985-83a13e515c24" value="Debugging trotz sauberem Build" />
         <entry key="7fbdcff8-ed21-4d8a-b31e-86ba82581aed" value="Inventar-Taschen und Tooltips überarbeiten" />
         <entry key="88f52352-966a-4861-9bfa-78edf3989ba4" value="Es soll ein Achivement-System eingebaut werden - d" />
         <entry key="9259eca7-c898-4dde-a8e8-f70c55973c28" value="Pergament-Design in /ability-loadout" />
         <entry key="a5464d6f-1c3a-4507-bec9-096397f95839" value="Sichtbarkeit des Berufe-Tabs" />
+        <entry key="ad5b653a-18e4-46d6-8507-92453bf7372e" value="DMG- und Heilungs-Meter auf /idle" />
         <entry key="b2eecd85-176f-4088-a55a-91160926310e" value="Claude Code" />
         <entry key="b82eae48-4582-4da7-bd4e-d6f785ffddb3" value="Automatische Updates alle 1 Minute" />
+        <entry key="c493f731-8895-474f-861e-0fe2a619b20a" value="Crafting-Menü und neue Rezepte" />
         <entry key="c4a5f785-ee2e-4c18-aad2-aff609dda2c6" value="Warrior-Stance-Icons und Buff-Anzeige" />
+        <entry key="e0c780af-e74a-4646-a3e1-c97a93473990" value="Charakter-Icon-Sprung in /idle" />
         <entry key="f0263dbb-1696-49b5-9b70-d22a9f3caff2" value="Automatisch geöffnete Inventar-Taschen" />
         <entry key="f25356c5-3553-4a42-ac3b-f97c0d4e825c" value="Curse of Agony, Feral Speed" />
-        <entry key="f9c62676-6f4e-4489-91a3-93c0055c8447" value="WoW Classic Idle Level Benchmark" />
+        <entry key="f9c62676-6f4e-4489-91a3-93c0055c8447" value="DMG- und Heilungs-Meter auf /idle" />
       </map>
     </option>
   </component>
