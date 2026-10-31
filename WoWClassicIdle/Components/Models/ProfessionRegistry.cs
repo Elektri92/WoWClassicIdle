@@ -141,11 +141,11 @@ namespace Models
         public const double HumanoidClothDropChance = 0.35;
         public const string HumanoidType            = "Humanoid";
 
-        /// <summary>Amount per drop: humanoids 1–2, rare enemies (always drop) 2–3, otherwise 1.</summary>
+        /// <summary>Amount per drop: humanoids 2–4, rare enemies (always drop) 4–6, otherwise 1–3.</summary>
         public static (double Chance, int MinCount, int MaxCount) ClothDropFor(Enemy enemy) =>
-            enemy.IsRare                  ? (1.0, 2, 3)
-            : enemy.Type == HumanoidType  ? (HumanoidClothDropChance, 1, 2)
-            :                               (ClothDropChance, 1, 1);
+            enemy.IsRare                  ? (1.0, 4, 6)
+            : enemy.Type == HumanoidType  ? (HumanoidClothDropChance, 2, 4)
+            :                               (ClothDropChance, 1, 3);
 
         public static readonly IReadOnlyList<ClothDrop> ClothDrops =
         [
