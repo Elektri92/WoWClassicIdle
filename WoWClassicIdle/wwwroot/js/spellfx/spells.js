@@ -5,8 +5,8 @@
 
     function launchSpell(opts) {
         if (!canLaunch()) return;
-        const from = centerOf(PLAYER);
-        const to = centerOf(ENEMY);
+        const from = centerOf(opts.origin || PLAYER);
+        const to = centerOf(opts.target || ENEMY);
         if (!from || !to) return;
 
         const colors = colorsFor(opts.icon);
@@ -46,6 +46,10 @@
                 }
             },
             onArrive: () => {
+                if (opts.onArrive) {
+                    opts.onArrive();
+                    return;
+                }
                 // Pure debuff (Curse of Agony): no damage impact, only the debuff effect
                 if (!opts.debuffOnly) spellImpact(to, dir, colors, !!opts.crit, melee);
                 if (opts.debuff) window.spellFx.fx.debuffFx?.(to, opts);   // auras.js
@@ -65,5 +69,29 @@
         if (crit) frameShake(target);
     }
 
+    // Companion in a dungeon: the card reacts, the spell flies to the enemy or to the player
+    function launchParty(opts) {
+        const origin = `.dp-member[data-npc="${CSS.escape(opts.caster)}"] .dp-portrait`;
+        const card = document.querySelector(origin);
+        if (!card) return;
+        const colors = colorsFor(opts.icon);
+        const lift = opts.kind === 'damage' ? 'translateX(6px)' : 'translateY(-4px)';
+        card.animate([
+            { transform: 'none', filter: 'brightness(1)' },
+            { transform: `${lift} scale(1.18)`, filter: `brightness(1.6) drop-shadow(0 0 8px ${colors[0]})`, offset: 0.35 },
+            { transform: 'none', filter: 'brightness(1)' },
+        ], { duration: 380, easing: 'ease-out' });
+
+        if (opts.kind === 'damage') {
+            launchSpell({ icon: opts.icon, origin, melee: opts.melee, duration: opts.duration });
+            return;
+        }
+        launchSpell({
+            icon: opts.icon, origin, target: PLAYER, duration: opts.duration,
+            onArrive: () => window.spellFx.handlers.buff?.({ kind: opts.kind, icon: opts.icon, name: opts.name }),
+        });
+    }
+
     window.spellFx.handlers.spell = launchSpell;
+    window.spellFx.handlers.party = launchParty;
 })();

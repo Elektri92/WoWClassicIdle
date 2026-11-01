@@ -219,42 +219,9 @@ public static class ClassSimulator
     /// </summary>
     public static SimulationResult Run(CharacterClass cls, int level, double minutes, SimSpec spec, CancellationToken ct = default)
     {
-        int specIndex = spec.TreeIndex;
-
-        var race    = RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key;
-        var faction = RaceClassInfo.RaceToFaction[race];
-
-        var engine = new IdleGameEngine();
-        engine.SetCharacter(faction, race, cls, Gender.Male);
-
+        var (engine, talentPicks) = PrepareBenchmark(cls, level, spec, ct);
         var player   = engine.Player;
         var progress = player.ClassProgress[cls];
-        progress.SetLevel(level);
-        player.SetActiveClass(cls);
-
-        // Gear and starting loadout first – talents are then measured via trial fights
-        SimStarterGear.Equip(player, cls, specIndex, level, spec.Form);
-        var loadout = new ClassLoadout { Class = cls };
-        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, level, specIndex, new HashSet<string>());
-        player.ApplyLoadout(loadout);
-        var talentPicks = AutoInvestTalentsForSpec(player, cls, spec, ct);
-
-        // Optimize loadout (incl. talent abilities) for maximum damage via trial fights
-        loadout = new ClassLoadout
-        {
-            Class              = cls,
-            EquippedAbilityIds = SimLoadoutOptimizer.Optimize(player, player.GetCurrentLoadout().EquippedAbilityIds, ct),
-        };
-        player.ApplyLoadout(loadout);
-
-        engine.Meter.Reset();
-        engine.CurrentEnemy = null;
-
-        // Best green gear of the level for the final loadout; no drops afterwards
-        SimStarterGear.EquipBest(player, cls, level, ct);
-        engine.DisableGearDrops = true;
-        // No rare requeue in headless mode – prevents endless death loops
-        engine.EnableRareRequeue = false;
 
         long damageTaken = 0;
         player.DamageTaken += amount => damageTaken += amount;
@@ -321,6 +288,48 @@ public static class ClassSimulator
             TalentSummary: BuildTalentSummary(player, cls),
             LoadoutIds: player.GetCurrentLoadout().EquippedAbilityIds.ToList(),
             TalentPicks: talentPicks);
+    }
+
+    /// <summary>Engine with a character at the level: gear, talents and loadout measured like in the benchmark, no drops.</summary>
+    internal static (IdleGameEngine Engine, List<TalentPick> TalentPicks) PrepareBenchmark(CharacterClass cls, int level, SimSpec spec, CancellationToken ct)
+    {
+        int specIndex = spec.TreeIndex;
+
+        var race    = RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key;
+        var faction = RaceClassInfo.RaceToFaction[race];
+
+        var engine = new IdleGameEngine();
+        engine.SetCharacter(faction, race, cls, Gender.Male);
+
+        var player   = engine.Player;
+        var progress = player.ClassProgress[cls];
+        progress.SetLevel(level);
+        player.SetActiveClass(cls);
+
+        // Gear and starting loadout first – talents are then measured via trial fights
+        SimStarterGear.Equip(player, cls, specIndex, level, spec.Form);
+        var loadout = new ClassLoadout { Class = cls };
+        loadout.EquippedAbilityIds = ClassAbilityRegistry.GetDefaultLoadoutIds(cls, level, specIndex, new HashSet<string>());
+        player.ApplyLoadout(loadout);
+        var talentPicks = AutoInvestTalentsForSpec(player, cls, spec, ct);
+
+        // Optimize loadout (incl. talent abilities) for maximum damage via trial fights
+        loadout = new ClassLoadout
+        {
+            Class              = cls,
+            EquippedAbilityIds = SimLoadoutOptimizer.Optimize(player, player.GetCurrentLoadout().EquippedAbilityIds, ct),
+        };
+        player.ApplyLoadout(loadout);
+
+        engine.Meter.Reset();
+        engine.CurrentEnemy = null;
+
+        // Best green gear of the level for the final loadout; no drops afterwards
+        SimStarterGear.EquipBest(player, cls, level, ct);
+        engine.DisableGearDrops = true;
+        // No rare requeue in headless mode – prevents endless death loops
+        engine.EnableRareRequeue = false;
+        return (engine, talentPicks);
     }
 
     /// <summary>

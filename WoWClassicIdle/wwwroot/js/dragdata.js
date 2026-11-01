@@ -5,4 +5,8 @@ document.addEventListener('dragstart', function (e) {
     if (e.dataTransfer && e.dataTransfer.types.length === 0) {
         e.dataTransfer.setData('application/x-wow-idle-drag', '1');
     }
+    // mouseleave does not fire during a drag – an open tooltip would stay on screen
+    document.querySelectorAll('.wow-tooltip.visible').forEach(function (tooltip) {
+        tooltip.classList.remove('visible');
+    });
 });

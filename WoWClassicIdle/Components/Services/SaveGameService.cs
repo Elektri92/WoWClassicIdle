@@ -306,10 +306,19 @@ public class SaveGameService : ISaveGameService, IDisposable
         CombatZone    = slot.CombatZoneId,
         TravelTarget  = slot.Travel?.TargetZoneId,
         TravelElapsed = slot.Travel?.Elapsed ?? 0,
+        TravelIsDungeonReturn = slot.Travel?.IsDungeonReturn ?? false,
         DiscoveredZones = slot.DiscoveredZoneIds.Order().ToList(),
         ZoneObjectives  = slot.ZoneObjectiveProgress.ToDictionary(),
         RidingRank        = slot.RidingRank,
         EquippedMountRank = slot.EquippedMountRank,
+        DungeonSelfRole       = slot.DungeonPartySetup?.SelfRole,
+        DungeonCompanions     = slot.DungeonPartySetup?.Companions.ToList(),
+        DungeonReturnZone     = slot.DungeonReturnZoneId,
+        DungeonEncounter      = slot.DungeonRun?.EncounterIndex,
+        DungeonEncounterKills = slot.DungeonRun?.KillsInEncounter ?? 0,
+        DungeonWipes          = slot.DungeonRun?.Wipes ?? 0,
+        DungeonRunStarts      = slot.DungeonRunStartsUtc.ToList(),
+        DungeonClears         = slot.DungeonClears.ToDictionary(),
     };
 
     public void Dispose()

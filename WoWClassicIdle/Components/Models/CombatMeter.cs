@@ -74,8 +74,12 @@ public sealed class CombatMeter
     public void RecordSpiritRegen(int amount) =>
         Record(SpiritRegenName, SpiritRegenIconUrl, CombatActionKind.Heal, amount);
 
+    /// <summary>Factor on recorded healing, so the numbers match the shared health bar in dungeons.</summary>
+    public double HealingScale { get; set; } = 1.0;
+
     private void Record(string name, string iconUrl, CombatActionKind kind, int amount)
     {
+        if (kind == CombatActionKind.Heal) amount = (int)Math.Round(amount * HealingScale);
         lock (_lock)
         {
             Accumulate(name, iconUrl, kind, amount);

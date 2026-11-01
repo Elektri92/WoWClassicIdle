@@ -1,0 +1,61 @@
+@page "/debug/dungeon-sim"
+@using Models
+@using DebugTools
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+<PageTitle>Dungeon Sim (Debug)</PageTitle>
+
+<div class="wow-page wide">
+    <h2>Dungeon Simulation <span class="wow-badge">DEBUG</span></h2>
+    <p class="wow-hint">
+        Targets: at MinLevel + 2 every class clears with at most one death per run, a run takes about 10 minutes,
+        XP/h stays within ±10 % of the open zone.
+    </p>
+    <button class="wow-btn primary" disabled="@_running" @onclick="Run">@(_running ? $"Running {_status}" : "Run simulation")</button>
+    <button class="wow-btn" @onclick="Engine.DebugResetDungeonLockout">Reset lockout of active character</button>
+
+    @if (_results is not null)
+    {
+        <table class="spawn-table">
+            <thead>
+                <tr><th>Dungeon</th><th>Lv</th><th>Class</th><th>Spec</th><th>Role</th><th>Min/run</th><th>Deaths/run</th><th>Failed</th><th>XP/h</th><th>Open XP/h</th><th>Ratio</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _results)
+                {
+                    <tr>
+                        <td>@r.Dungeon</td><td>@r.Level</td><td>@r.Class</td><td>@r.SpecName</td><td>@r.Role</td>
+                        <td>@((r.SecondsPerRun / 60).ToString("0.0"))</td><td>@r.DeathsPerRun.ToString("0.0")</td><td>@r.FailedRuns/@r.Runs</td>
+                        <td>@r.XpPerHour.ToString("0")</td><td>@r.OpenZoneXpPerHour.ToString("0")</td><td>@r.XpRatio.ToString("0.00")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<DungeonSimResult>? _results;
+    private readonly CancellationTokenSource _cts = new();
+    private bool _running;
+    private string _status = "";
+
+    private async Task Run()
+    {
+        _running = true;
+        var progress = new Progress<string>(s => { _status = s; _ = InvokeAsync(StateHasChanged); });
+        try
+        {
+            _results = await Task.Run(() => DungeonSimulator.RunAllAsync(progress, _cts.Token));
+        }
+        catch (OperationCanceledException) { }
+        _running = false;
+    }
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+    }
+}

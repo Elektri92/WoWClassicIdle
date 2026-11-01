@@ -155,6 +155,7 @@ public partial class IdleGameEngine
         ?? (Item?)CraftedGearRegistry.GetById(itemId)
         ?? (Item?)EnchantingRegistry.GetById(itemId)
         ?? (Item?)CraftedTrinketRegistry.GetById(itemId)
+        ?? DungeonLootRegistry.GetById(itemId)
         ?? ProfessionRegistry.GetById(itemId);
 
     private CharacterSlot RestoreSlot(SlotSaveData data)
@@ -183,7 +184,7 @@ public partial class IdleGameEngine
         foreach (var (clsName, weaponId) in p.EquippedWeaponIdByClass)
         {
             if (Enum.TryParse<CharacterClass>(clsName, out var cls))
-                weaponsByClass[cls] = weaponId.HasValue ? WeaponRegistry.GetById(weaponId.Value) : null;
+                weaponsByClass[cls] = weaponId.HasValue ? WeaponRegistry.GetById(weaponId.Value) ?? DungeonLootRegistry.GetById(weaponId.Value) as WeaponItem : null;
         }
         player.RestoreEquippedWeapons(weaponsByClass);
 
@@ -193,7 +194,8 @@ public partial class IdleGameEngine
         {
             if (Enum.TryParse<ArmorSlot>(slotName, out var slot)
                 && (RareLootRegistry.GetById(itemId) ?? CraftedGearRegistry.GetById(itemId)
-                    ?? EnchantingRegistry.GetById(itemId) ?? CraftedTrinketRegistry.GetById(itemId)) is { } armor)
+                    ?? EnchantingRegistry.GetById(itemId) ?? CraftedTrinketRegistry.GetById(itemId)
+                    ?? DungeonLootRegistry.GetById(itemId) as ArmorItem) is { } armor)
             {
                 armorBySlot[slot] = armor;
             }
@@ -240,6 +242,7 @@ public partial class IdleGameEngine
         };
         RestoreRiding(characterSlot, data);      // before the travel: the route depends on the mount
         RestoreExploration(characterSlot, data); // before the travel: the route depends on known flight points
+        RestoreDungeons(characterSlot, data);
         RestoreCombatZone(characterSlot, data);
         return characterSlot;
     }

@@ -125,7 +125,8 @@ namespace Models
         ItemQuality Quality = ItemQuality.Uncommon,
         long SellPrice = 0,
         CharacterClass? RequiredClass = null,
-        EquipEffect? Effect = null)
+        EquipEffect? Effect = null,
+        string? SetId = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
     /// <summary>A weapon item that can be equipped in a weapon slot.</summary>
@@ -141,7 +142,8 @@ namespace Models
         long SellPrice = 0,
         int RequiredLevel = 1,
         CharacterClass? RequiredClass = null,
-        PrimaryStats? Bonuses = null)
+        PrimaryStats? Bonuses = null,
+        IReadOnlyList<CharacterClass>? AllowedClasses = null)
         : Item(Id, Name, Icon, Quality, MaxStack: 1, SellPrice);
 
     /// <summary>Requirements of an item (level/class) that are checked when equipping.</summary>
@@ -166,9 +168,11 @@ namespace Models
             _            => null,
         };
 
-        /// <summary>Class-specific weapons and crafted class armor are bound to their class.</summary>
+        /// <summary>Class-specific weapons and crafted class armor are bound to their class, set pieces to the classes of the set.</summary>
         public static bool MatchesClass(Item item, CharacterClass cls) =>
-            ClassOf(item) is not { } required || required == cls;
+            (ClassOf(item) is not { } required || required == cls)
+            && (item is not WeaponItem { AllowedClasses: { } allowed } || allowed.Contains(cls))
+            && (item is not ArmorItem { SetId: { } setId } || ItemSetRegistry.Get(setId)?.Classes.Contains(cls) != false);
     }
 
     /// <summary>A stack of an item in a bag slot.</summary>

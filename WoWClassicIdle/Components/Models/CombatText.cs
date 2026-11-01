@@ -8,5 +8,6 @@ public enum CombatTextKind { AutoAttack, Ability, Heal }
 /// <summary>
 /// A hit or heal for the floating combat numbers (Floating Combat Text).
 /// <paramref name="IsCrit"/> marks critical hits (<paramref name="Amount"/> already doubled).
+/// <paramref name="FlightMs"/> &gt; 0 delays the number until a projectile with that flight time arrives.
 /// </summary>
-public sealed record CombatText(CombatTextTarget Target, CombatTextKind Kind, int Amount, bool IsCrit = false);
+public sealed record CombatText(CombatTextTarget Target, CombatTextKind Kind, int Amount, bool IsCrit = false, int FlightMs = 0);

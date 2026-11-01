@@ -26,7 +26,10 @@ else
                 <span>@cost</span>
                 <span>@AbilityText.TimingText(Ability)</span>
             </span>
-            <span class="tt-line @(levelTooLow ? "tt-req-missing" : "")">Requires Level @Ability.LevelRequired</span>
+            @if (Ability.LevelRequired > 0)
+            {
+                <span class="tt-line @(levelTooLow ? "tt-req-missing" : "")">Requires Level @Ability.LevelRequired</span>
+            }
             @if (SourceTalent is not null)
             {
                 <span class="tt-line tt-req-missing">Requires Talent: @SourceTalent.Name (@TalentRegistry.GetTreeName(SourceTalent))</span>

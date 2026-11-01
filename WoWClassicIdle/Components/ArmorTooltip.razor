@@ -1,4 +1,5 @@
 @using Models
+@inject IdleGameEngine Engine
 
 @* Wraps the content and shows a WoW tooltip for an armor piece on hover.
    With Compare, the equipped piece and a panel with the stat differences are shown next to it.
@@ -56,7 +57,7 @@ else
     [Parameter] public ArmorItem? Compare { get; set; }
 
     // Tooltip content of an armor piece (for main and comparison panel)
-    private static RenderFragment Body(ArmorItem armor, bool requirementsMet, string? hint) => @<text>
+    private RenderFragment Body(ArmorItem armor, bool requirementsMet, string? hint) => @<text>
         <span class="tt-name" style="color: @ItemQualityColors.Hex(armor.Quality)">@armor.Name</span>
         <span class="tt-subtype">@ArmorSlots.Label(armor.Slot)</span>
         @foreach (var line in armor.Bonuses.DescribeBonuses())
@@ -75,6 +76,19 @@ else
         @if (armor.RequiredClass is { } cls)
         {
             <span class="tt-req-class @(requirementsMet ? "" : "tt-req-blocked")">Classes: @cls</span>
+        }
+        @if (ItemSetRegistry.Get(armor.SetId) is { } set)
+        {
+            int worn = Engine.Player.EquippedArmor.Values.ToArray().Count(a => a.SetId == set.Id);
+            <span class="tt-req-class @(requirementsMet ? "" : "tt-req-blocked")">Classes: @string.Join(", ", set.Classes)</span>
+            <span class="tt-set-name">@set.Name (@worn/@ItemSetRegistry.PiecesPerSet)</span>
+            @foreach (var piece in DungeonLootRegistry.PiecesOf(set.Id))
+            {
+                <span class="tt-set-piece @(Engine.Player.EquippedArmor.GetValueOrDefault(piece.Slot)?.Id == piece.Id ? "active" : "")">@piece.Name</span>
+            }
+            <span class="tt-set-bonus @(worn >= 2 ? "active" : "")">(2) Set: @string.Join(", ", set.TwoPiece.DescribeBonuses())</span>
+            <span class="tt-set-bonus @(worn >= 3 ? "active" : "")">(3) Set: @string.Join(", ", set.ThreePiece.DescribeBonuses())</span>
+            <span class="tt-set-bonus @(worn >= 5 ? "active" : "")">(5) Set: +@((int)Math.Round(set.FivePieceCrit * 100))% Critical Strike chance</span>
         }
         @if (!string.IsNullOrEmpty(hint))
         {

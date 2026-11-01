@@ -1,0 +1,376 @@
+/* Dungeons in /idle: run progress at the right edge, NPC party under the character, golden elite frame */
+
+/* Dungeon colors, also used by the group builder */
+.dp-theme-wailing {
+    --dp-bg-top: #1b2a20;
+    --dp-bg-bottom: #0d1610;
+    --dp-border: #3f6a48;
+    --dp-border-light: #6a9a70;
+    --dp-accent: #7fe07a;
+    --dp-accent-dark: #2f7a3a;
+    --dp-accent-light: #d4ffc8;
+    --dp-node: #16241a;
+    --dp-rail: #08100a;
+    --dp-muted: #a8c0a0;
+    --dp-done: #5c7560;
+    --dp-glow: rgba(127, 224, 122, .6);
+}
+.dp-theme-deadmines {
+    --dp-bg-top: #2c2118;
+    --dp-bg-bottom: #140e09;
+    --dp-border: #6a5238;
+    --dp-border-light: #8a6c48;
+    --dp-accent: #ff9a3c;
+    --dp-accent-dark: #8a4a14;
+    --dp-accent-light: #ffd8a0;
+    --dp-node: #241a10;
+    --dp-rail: #0c0805;
+    --dp-muted: #c0a888;
+    --dp-done: #75624c;
+    --dp-glow: rgba(255, 154, 60, .6);
+}
+
+/* ── Run progress ── */
+.dungeon-progress {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 230px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 10px;
+    overflow-y: auto;
+    background: linear-gradient(180deg, var(--dp-bg-top) 0%, var(--dp-bg-bottom) 100%);
+    border-left: 2px solid var(--dp-border);
+    box-shadow: -4px 0 12px rgba(0, 0, 0, .6);
+    font-family: var(--wow-font-body);
+    color: var(--wow-text);
+}
+
+/* Not enough room next to the centered page: the page moves to the left */
+@media (min-width: 1181px) and (max-width: 1650px) {
+    .idle-page.in-dungeon { margin-right: 236px; }
+}
+
+/* Too narrow for a column: the progress becomes a normal block above the combat */
+@media (max-width: 1180px) {
+    .dungeon-progress {
+        position: static;
+        width: auto;
+        margin-bottom: 10px;
+        border: 2px solid var(--dp-border);
+        border-radius: 8px;
+    }
+}
+
+.dp-header { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--dp-border); }
+.dp-title { font-family: var(--wow-font-title); font-size: 1rem; color: var(--dp-accent); }
+.dp-summary { display: flex; justify-content: space-between; gap: 8px; font-size: .75rem; color: var(--dp-muted); }
+.dp-summary b { color: #fff; font-variant-numeric: tabular-nums; }
+
+.dp-track { position: relative; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+
+/* The rail runs from the center of the first to the center of the last step */
+.dp-rail {
+    position: absolute;
+    left: 17px;
+    top: calc(100% / var(--steps) / 2);
+    bottom: calc(100% / var(--steps) / 2);
+    width: 6px;
+    border-radius: 3px;
+    background: var(--dp-rail);
+    box-shadow: inset 0 0 0 1px var(--dp-border);
+}
+.dp-rail-fill {
+    width: 100%;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--dp-accent-dark) 0%, var(--dp-accent) 100%);
+    box-shadow: 0 0 6px var(--dp-glow);
+    transition: height .3s ease;
+}
+
+.dp-step-host { flex: 1 1 0; min-height: 44px; display: flex; align-items: center; position: relative; }
+.dp-step { display: flex; align-items: center; gap: 10px; width: 100%; }
+
+.dp-node {
+    flex: 0 0 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.dp-step.trash .dp-node::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--dp-node);
+    border: 2px solid var(--dp-border);
+}
+.dp-step.trash.done .dp-node::before { background: var(--dp-accent); border-color: var(--dp-accent-dark); }
+.dp-step.trash.current .dp-node::before { background: var(--dp-accent-light); border-color: var(--dp-accent); box-shadow: 0 0 8px var(--dp-glow); }
+
+.dp-step.boss .dp-node img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid var(--dp-border-light);
+    background: #000;
+}
+.dp-step.boss.done .dp-node img { filter: grayscale(1) brightness(.5); border-color: var(--dp-border); }
+.dp-step.boss.current .dp-node img { border-color: var(--dp-accent); box-shadow: 0 0 10px var(--dp-glow); }
+
+.dp-step-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dp-step-name { font-family: var(--wow-font-title); font-size: .8rem; line-height: 1.15; color: #f0e4c4; }
+.dp-step-sub { font-size: .7rem; color: var(--dp-muted); }
+.dp-step.done .dp-step-name, .dp-step.done .dp-step-sub { color: var(--dp-done); }
+.dp-step.current .dp-step-name { color: var(--dp-accent); }
+.dp-step.current .dp-step-sub { color: var(--dp-accent-light); }
+
+.dp-pips { display: flex; gap: 4px; }
+.dp-pip { width: 10px; height: 10px; border-radius: 2px; background: var(--dp-node); border: 1px solid var(--dp-border); }
+.dp-pip.killed { background: var(--dp-accent); border-color: var(--dp-accent-dark); }
+
+.dp-footer { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid var(--dp-border); }
+.dp-chip { font-size: .75rem; color: #e8dcc0; font-variant-numeric: tabular-nums; }
+
+/* Loot table in the boss tooltip */
+.zt-loot { display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; }
+.zt-loot img { width: 24px; height: 24px; flex: 0 0 24px; border: 1px solid #000; border-radius: 3px; }
+.zt-loot-text { display: flex; flex-direction: column; min-width: 0; }
+.zt-loot-set { color: #ffd100; font-size: .7rem; }
+
+/* ── NPC party under the own character ── */
+.player-column {
+    flex: 1;
+    min-width: 260px;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.player-column > .player-frame { flex: none; min-width: 0; max-width: none; width: 100%; box-sizing: border-box; }
+.player-column .zt-host { display: block; min-width: 0; }
+
+@media (max-width: 640.98px) {
+    .player-column { max-width: 100%; width: 100%; }
+}
+
+.dungeon-party { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.dp-you-host { grid-column: 1 / -1; }
+.dp-you { font-size: .75rem; color: #c8b890; }
+.dp-member {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 5px;
+    background: rgba(20, 16, 10, .85);
+    border: 1px solid #5a4a28;
+    border-radius: 6px;
+}
+.dp-portrait { position: relative; flex: 0 0 30px; width: 30px; height: 30px; }
+.dp-portrait > img:first-child { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #8a7444; }
+.dp-class {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid #000;
+}
+.dp-member-text { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.dp-member-name { font-size: .72rem; color: #f0e4c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dp-role { display: inline-flex; align-items: center; gap: 3px; font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
+.role-icon { width: 18px; height: 18px; flex: 0 0 18px; vertical-align: middle; }
+.dp-role.role-tank   { color: #8fb8e8; }
+.dp-role.role-healer { color: #6fe08a; }
+.dp-role.role-damage { color: #e88f7a; }
+
+.dp-member.shielding { border-color: #8fb8e8; box-shadow: 0 0 8px rgba(143, 184, 232, .6); }
+.dp-spell { position: relative; flex: 0 0 22px; width: 22px; height: 22px; }
+.dp-spell img { width: 22px; height: 22px; border: 1px solid #000; border-radius: 3px; display: block; }
+.dp-spell-cd { position: absolute; inset: 0; border-radius: 3px; pointer-events: none; }
+.dp-spell.casting img { box-shadow: 0 0 8px 2px rgba(255, 220, 110, .9); }
+
+/* ── Group builder on entering a dungeon ── */
+.dpd-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .7);
+}
+.dpd-window {
+    width: min(760px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(180deg, var(--dp-bg-top) 0%, var(--dp-bg-bottom) 100%);
+    border: 2px solid var(--dp-border);
+    border-radius: 8px;
+    box-shadow: 0 0 30px var(--dp-glow);
+    color: var(--wow-text);
+    font-family: var(--wow-font-body);
+}
+.dpd-header { display: flex; flex-direction: column; gap: 2px; }
+.dpd-title { font-family: var(--wow-font-title); font-size: 1.35rem; color: var(--dp-accent); }
+.dpd-sub { font-size: .8rem; color: var(--dp-muted); }
+.dpd-status { margin-right: auto; font-size: .8rem; color: var(--dp-muted); }
+.dpd-status.ready { color: var(--dp-accent); }
+.dpd-window .dpd-heading { display: flex; align-items: center; gap: 5px; margin: 0; font-size: .95rem; color: var(--dp-accent-light); }
+
+/* Five round slots */
+.dpd-slots { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 6px 0 12px; border-bottom: 1px solid var(--dp-border); }
+.dpd-slot { width: 96px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.dpd-slot .zt-host { display: block; }
+.dpd-circle {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 3px solid var(--dp-border-light);
+    background: var(--dp-rail);
+    box-shadow: inset 0 0 12px #000;
+    transition: box-shadow .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.dpd-slot.empty .dpd-circle { border-style: dashed; border-color: var(--dp-border); }
+.dpd-slot.filled .dpd-circle { cursor: grab; border-color: var(--dp-accent); }
+.dpd-slot.can-drop .dpd-circle { border-color: var(--dp-accent-light); box-shadow: 0 0 14px var(--dp-glow); }
+.dpd-slot.no-drop .dpd-circle { opacity: .35; }
+.dpd-slot-role-icon { width: 44px; height: 44px; opacity: .35; }
+.dpd-portrait { width: 100%; height: 100%; border-radius: 50%; display: block; }
+.dpd-circle .dp-class { width: 24px; height: 24px; right: -2px; bottom: -2px; }
+.dpd-slot-name { font-size: .8rem; color: #f0e4c4; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dpd-slot.empty .dpd-slot-name { display: none; }
+.dpd-slot-name.self { color: var(--dp-accent-light); font-weight: 700; }
+
+/* Selection */
+.dpd-pool {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px;
+    border: 1px dashed transparent;
+    border-radius: 6px;
+}
+.dpd-pool.can-drop { border-color: var(--dp-accent); background: rgba(0, 0, 0, .25); }
+.dpd-group { display: flex; flex-direction: column; gap: 6px; }
+.dpd-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; min-height: 42px; }
+.dpd-cards .zt-host { display: block; min-width: 0; }
+.dpd-card {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: var(--dp-node);
+    border: 1px solid var(--dp-border);
+    border-radius: 6px;
+    cursor: grab;
+}
+.dpd-card:hover { border-color: var(--dp-accent); }
+.dpd-card.self { border-color: var(--dp-accent); box-shadow: 0 0 8px var(--dp-glow); }
+.dpd-card.dragging { opacity: .4; }
+.dpd-card-class { font-size: .68rem; color: var(--dp-muted); }
+.dpd-card-spell { width: 22px; height: 22px; flex: 0 0 22px; border: 1px solid #000; border-radius: 3px; }
+
+.dpd-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 10px; border-top: 1px solid var(--dp-border); }
+
+/* ── Elite enemies: golden frame ── */
+.elite-frame {
+    border-color: #c8a030 !important;
+    box-shadow: 0 0 22px rgba(255, 200, 60, .5), inset 0 0 0 1px #e8c860 !important;
+}
+.elite-name {
+    color: #ffd100 !important;
+    text-shadow: 0 0 8px rgba(255, 200, 60, .6) !important;
+}
+.elite-badge {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #ffd100;
+    background: rgba(255, 200, 60, .15);
+    border: 1px solid #c8a030;
+    border-radius: 3px;
+    padding: 1px 4px;
+    white-space: nowrap;
+}
+.elite-portrait-area .enemy-portrait {
+    border-color: #c8a030;
+    box-shadow: 0 0 12px rgba(255, 200, 60, .7);
+}
+
+/* Dragon frame (465 × 376 px graphic, portrait hole at 181/163 of 465 with r = 99): scaled to 155 px
+   (hole r ≈ 33 = portrait + border) and mirrored, so head and wings stick out of the frame on the left. */
+.elite-dragon-frame {
+    position: absolute;
+    left: -63px;
+    top: -22px;
+    width: 155px;
+    height: 125px;
+    max-width: none;
+    transform: scaleX(-1);
+    pointer-events: none;
+    z-index: 3;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .8)) drop-shadow(0 0 6px rgba(255, 200, 60, .35));
+}
+.elite-level-badge {
+    position: absolute;
+    left: 6px;
+    top: 56px;
+    width: 22px;
+    height: 22px;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid #c8a030;
+    background: radial-gradient(circle, #2a1f10 0%, #0e0b07 100%);
+    color: #ffd100;
+    font-family: var(--wow-font-title);
+    font-size: .7rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+}
+
+/* Bosses have no readable level: the skull replaces it in the portrait and next to the name */
+.boss-skull-badge {
+    position: absolute;
+    left: 6px;
+    top: 56px;
+    width: 26px;
+    height: 26px;
+    max-width: none;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px #000);
+}
+.boss-skull-level {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    vertical-align: middle;
+}
+
+/* Shared health bar of the group in the player frame */
+.hp-bar.group-hp { box-shadow: 0 0 0 1px #c8a030, 0 0 8px rgba(255, 200, 60, .35); }
+.group-hp-label { font-weight: 700; color: #ffd100; }

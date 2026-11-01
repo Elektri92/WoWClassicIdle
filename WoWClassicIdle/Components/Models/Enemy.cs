@@ -10,6 +10,11 @@ public class Enemy
     public string Type { get; set; } = "";
     public string? ImageUrl { get; set; }
     public bool IsRare { get; init; }
+    public bool IsBoss { get; init; }
+    /// <summary>Dungeon enemy: the party healer works and the kill counts for the run.</summary>
+    public bool FromDungeon { get; init; }
+    /// <summary>Factor on the kill XP (dungeon enemies are tougher than their level).</summary>
+    public double XpMultiplier { get; init; } = 1.0;
 
     public int CurrentHp { get; private set; }
     public bool IsAlive => CurrentHp > 0;

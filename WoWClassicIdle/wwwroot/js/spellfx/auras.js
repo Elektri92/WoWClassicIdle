@@ -1,7 +1,7 @@
 // Combat effects – buffs on the player (rune, light pillar, particles) and debuffs on the enemy
 // (circling motes, drops, stun stars); the icon then flies into the buff/debuff bar.
 (() => {
-    const { PLAYER, colorsFor, centerOf, spawn, animateAndRemove, flash, ring, sparks } = window.spellFx.fx;
+    const { PLAYER, EASE, colorsFor, centerOf, spawn, playFx, animateAndRemove, flash, ring, sparks } = window.spellFx.fx;
     const HEAL = ['#9dff8a', '#24b02a', '#f0fff0'];
     const SHIELD = ['#a8dcff', '#2f7fe0', '#ffffff'];
     const DEBUFF_DEFAULT = ['#ff6a5a', '#8a1010', '#ffd0c8'];  // physical debuffs (Rend, Sunder Armor)
@@ -25,20 +25,16 @@
         img.alt = '';
         img.onerror = () => { img.style.visibility = 'hidden'; };
         badge.appendChild(img);
-        badge.animate([
-            { transform: `translate(-50%, -50%) scale(${startScale})`, opacity: 0 },
-            { transform: 'translate(-50%, -50%) scale(1.25)', opacity: 1, offset: 0.3 },
-            { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-        ], { duration: 380, fill: 'forwards', easing: 'ease-out' });
+        playFx(badge, 'badgeIn', { duration: 380, vars: { s0: startScale } });
 
         setTimeout(() => {
             // The bar is only updated with the next UI render → only look for the target now
             const dest = findBarIcon(barSelector, opts.name);
             const tx = dest ? dest.x - x : 0, ty = dest ? dest.y - y : -40;
-            animateAndRemove(badge, [
-                { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${dest ? 0.6 : 0.8})`, opacity: dest ? 0.9 : 0 },
-            ], { duration: 420, easing: 'cubic-bezier(.5,0,.75,.6)' });
+            animateAndRemove(badge, 'badgeOut', {
+                duration: 420, easing: EASE.in,
+                vars: { dx: tx, dy: ty, s1: dest ? 0.6 : 0.8, o1: dest ? 0.9 : 0 },
+            });
             if (dest) setTimeout(() => {
                 ring(dest.x, dest.y, colors, 0.55, 320);
                 dest.el.animate([
@@ -59,11 +55,10 @@
             el.style.opacity = '0';
             const dist = rise * (0.7 + Math.random() * 0.5);
             const wobble = (Math.random() - 0.5) * 16;
-            animateAndRemove(el, [
-                { transform: 'translate(-50%, -50%) scale(.4)', opacity: 0 },
-                { transform: `translate(calc(-50% + ${wobble / 2}px), calc(-50% + ${-dist * 0.2}px)) scale(1)`, opacity: 1, offset: 0.2 },
-                { transform: `translate(calc(-50% + ${wobble}px), calc(-50% + ${-dist}px)) scale(.5)`, opacity: 0 },
-            ], { duration: life + Math.random() * 200, delay: i * delayStep, easing: 'ease-out' });
+            animateAndRemove(el, 'drift', {
+                duration: life + Math.random() * 200, delay: i * delayStep,
+                vars: { dx: wobble, dy: -dist },
+            });
         }
     }
 
@@ -87,30 +82,17 @@
         ], { duration: 700, easing: 'ease-out' });
 
         // Rotierender Runenkreis
-        animateAndRemove(spawn('spellfx-rune', x, y, colors), [
-            { transform: 'translate(-50%, -50%) scale(.4) rotate(0deg)', opacity: 0 },
-            { transform: 'translate(-50%, -50%) scale(1.15) rotate(70deg)', opacity: 1, offset: 0.35 },
-            { transform: 'translate(-50%, -50%) scale(1.3) rotate(160deg)', opacity: 0 },
-        ], { duration: 950, easing: 'ease-out' });
+        animateAndRemove(spawn('spellfx-rune', x, y, colors), 'rune', { duration: 950 });
 
         // Light pillar from the bottom of the portrait
-        animateAndRemove(spawn('spellfx-pillar', x, y + 34, colors), [
-            { transform: 'translate(-50%, -100%) scaleY(0)', opacity: 0.2 },
-            { transform: 'translate(-50%, -100%) scaleY(1)', opacity: 0.9, offset: 0.3 },
-            { transform: 'translate(-50%, -100%) scaleY(1.1) scaleX(.4)', opacity: 0 },
-        ], { duration: 750, easing: 'ease-out' });
+        animateAndRemove(spawn('spellfx-pillar', x, y + 34, colors), 'pillar', { duration: 750 });
 
         switch (opts.kind) {
             case 'heal':
                 drift(x, y + 20, colors, 'spellfx-plus', 9, { rise: 80, delayStep: 55 });
                 break;
             case 'shield':
-                animateAndRemove(spawn('spellfx-bubble', x, y, colors), [
-                    { transform: 'translate(-50%, -50%) scale(.5)', opacity: 0 },
-                    { transform: 'translate(-50%, -50%) scale(1.08)', opacity: 1, offset: 0.25 },
-                    { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.85, offset: 0.7 },
-                    { transform: 'translate(-50%, -50%) scale(1.15)', opacity: 0 },
-                ], { duration: 1200, easing: 'ease-out' });
+                animateAndRemove(spawn('spellfx-bubble', x, y, colors), 'bubble', { duration: 1200 });
                 drift(x, y + 10, colors, 'spellfx-mote', 6, { rise: 40 });
                 break;
             case 'form':   // Gestaltwandel: Rauchwolke + Blitz
@@ -139,11 +121,7 @@
             m.style.transform = `rotate(${i * 120}deg) translateX(40px)`;
             orbit.appendChild(m);
         }
-        animateAndRemove(orbit, [
-            { transform: 'translate(-50%, -50%) rotate(0deg) scale(1.2)', opacity: 0 },
-            { transform: 'translate(-50%, -50%) rotate(140deg) scale(1)', opacity: 1, offset: 0.3 },
-            { transform: 'translate(-50%, -50%) rotate(420deg) scale(.25)', opacity: 0 },
-        ], { duration: 950, easing: 'ease-in-out' });
+        animateAndRemove(orbit, 'orbit', { duration: 950, easing: EASE.inOut });
 
         // Weakening: drops sink downwards
         drift(x, y - 20, colors, 'spellfx-drip', 8, { spreadX: 28, rise: -45, delayStep: 50, life: 700 });
@@ -164,12 +142,7 @@
                 s.style.transform = `rotate(${i * 120}deg) translateX(22px)`;
                 stars.appendChild(s);
             }
-            animateAndRemove(stars, [
-                { transform: 'translate(-50%, -50%) scaleY(.4) rotate(0deg)', opacity: 0 },
-                { transform: 'translate(-50%, -50%) scaleY(.4) rotate(120deg)', opacity: 1, offset: 0.15 },
-                { transform: 'translate(-50%, -50%) scaleY(.4) rotate(600deg)', opacity: 1, offset: 0.85 },
-                { transform: 'translate(-50%, -50%) scaleY(.4) rotate(720deg)', opacity: 0 },
-            ], { duration: 1500, easing: 'linear' });
+            animateAndRemove(stars, 'stars', { duration: 1500, easing: EASE.linear });
         }
 
         badgeToBar(x, y, colors, opts, '.enemy-frame .debuff-bar', { startScale: 1.9, holdMs: 380 });

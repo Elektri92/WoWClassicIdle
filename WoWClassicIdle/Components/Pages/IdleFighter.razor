@@ -8,7 +8,7 @@
 
 <PageTitle>Idle Fighter</PageTitle>
 
-<div class="wow-page narrow idle-page @(BuildInfo.IsDebug ? "with-debug" : "")">
+<div class="wow-page narrow idle-page @(BuildInfo.IsDebug ? "with-debug" : "") @(ShowDungeonProgress ? "in-dungeon" : "")">
 @if (_engine.IsAtSpiritHealer)
 {
     <!-- Ghost world: screen desaturated, only the Spirit Healer stays in color (css/spirit-healer.css) -->
@@ -22,6 +22,11 @@
 <p class="wow-hint">Your character fights on its own in the zone you choose.</p>
 
 <CombatZonePanel @bind-Open="_zoneMenuOpen" />
+
+@if (ShowDungeonProgress)
+{
+    <DungeonProgressPanel />
+}
 
 @if (ZoneMenuVisible)
 {
@@ -44,6 +49,7 @@ else if (!_engine.NeedsCombatZone)
     <!-- ═══════════════════════════════════════════ -->
     <!--  PLAYER FRAME  (left)                      -->
     <!-- ═══════════════════════════════════════════ -->
+    <div class="player-column">
     <div class="unit-frame player-frame @(ShowLevelUp ? "leveling-up" : "")">
         @if (ShowLevelUp)
         {
@@ -129,17 +135,21 @@ else if (!_engine.NeedsCombatZone)
                         // The shield sits behind the HP; if it no longer fits, it is laid right-aligned over the HP
                         int shieldLeft  = Math.Min(playerHpPct, 100 - shieldPct);
                     }
-                    <div class="hp-bar">
+                    <div class="hp-bar @(_engine.CurrentDungeonParty.Count > 0 ? "group-hp" : "")">
                         <div class="hp-fill" style="transform: scaleX(@Scale(playerHpPct / 100.0))"></div>
                         @if (shieldPct > 0)
                         {
                             <div class="shield-fill" style="left: @(shieldLeft)%; width: @(shieldPct)%"></div>
                         }
                         <span class="bar-text">
-                            @_engine.Player.CurrentHp / @_engine.Player.Stats.MaxHp
+                            @if (_engine.CurrentDungeonParty.Count > 0)
+                            {
+                                <span class="group-hp-label">Group&nbsp;</span>
+                            }
+                            @_engine.ToGroupHealth(_engine.Player.CurrentHp) / @_engine.ToGroupHealth(_engine.Player.Stats.MaxHp)
                             @if (shield > 0)
                             {
-                                <span class="shield-text">&nbsp;(+@shield)</span>
+                                <span class="shield-text">&nbsp;(+@_engine.ToGroupHealth(shield))</span>
                             }
                         </span>
                     </div>
@@ -265,6 +275,11 @@ else if (!_engine.NeedsCombatZone)
                 }
             </div>
     </div>
+    @if (_engine.CurrentDungeonParty is { Count: > 0 } party)
+    {
+        <DungeonPartyFrames Party="party" SelfRole="_engine.CurrentDungeonSelfRole" Level="_engine.Player.Level" />
+    }
+    </div>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  VS INDICATOR                               -->
@@ -276,7 +291,7 @@ else if (!_engine.NeedsCombatZone)
     <!-- ═══════════════════════════════════════════ -->
     <!--  ENEMY FRAME  (right)                       -->
     <!-- ═══════════════════════════════════════════ -->
-        <div class="unit-frame enemy-frame @(_engine.IsAtSpiritHealer ? "spirit-frame" : _engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
+        <div class="unit-frame enemy-frame @(_engine.IsAtSpiritHealer ? "spirit-frame" : _engine.CurrentEnemy is { FromDungeon: true } ? "elite-frame" : _engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
             <div class="combat-text-overlay">
                 @foreach (var f in SnapshotFloats(_enemyFloats))
                 {
@@ -286,7 +301,7 @@ else if (!_engine.NeedsCombatZone)
                 }
             </div>
             <div class="frame-header">
-                <div class="portrait-area @(_engine.IsAtSpiritHealer ? "spirit-portrait-area" : _engine.CurrentEnemy?.IsRare == true ? "rare-portrait-area" : "")">
+                <div class="portrait-area @(_engine.IsAtSpiritHealer ? "spirit-portrait-area" : _engine.CurrentEnemy is { FromDungeon: true } ? "elite-portrait-area" : _engine.CurrentEnemy?.IsRare == true ? "rare-portrait-area" : "")">
                     @if (_engine.IsAtSpiritHealer)
                     {
                         <img class="race-portrait enemy-portrait spirit-healer-portrait"
@@ -315,7 +330,20 @@ else if (!_engine.NeedsCombatZone)
                              alt=""
                              onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23333%22 width=%2264%22 height=%2264%22 rx=%228%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22>👹</text></svg>'" />
                     }
-                    @if (!_engine.IsAtSpiritHealer && _engine.CurrentEnemy?.IsRare == true)
+                    @if (!_engine.IsAtSpiritHealer && _engine.CurrentEnemy is { FromDungeon: true })
+                    {
+                        <!-- Golden dragon frame: every dungeon enemy is elite (css/dungeons.css) -->
+                        <img class="elite-dragon-frame" src="images/elite-dragon-frame.png" alt="" aria-hidden="true" />
+                        @if (_engine.CurrentEnemy is { IsBoss: true })
+                        {
+                            <img class="boss-skull-badge" src="images/boss-skull.png" alt="Boss" />
+                        }
+                        else
+                        {
+                            <span class="elite-level-badge">@_engine.CurrentEnemy?.Stats.Level</span>
+                        }
+                    }
+                    else if (!_engine.IsAtSpiritHealer && _engine.CurrentEnemy?.IsRare == true)
                     {
                         <!-- Silver dragon frame (WoW Classic rare elite), mirrored: wings point outwards instead of over the bars -->
                         <img class="rare-dragon-frame" src="images/rare-dragon-frame.png" alt="" aria-hidden="true" />
@@ -340,11 +368,26 @@ else if (!_engine.NeedsCombatZone)
                 else if (_engine.CurrentEnemy is { IsAlive: true } enemy)
                 {
                     <div class="name-line">
-                        <span class="char-name enemy-name @(enemy.IsRare ? "rare-name" : "")">@enemy.Name</span>
-                        <span class="level">Lv. @enemy.Stats.Level</span>
+                        <span class="char-name enemy-name @(enemy.FromDungeon ? "elite-name" : enemy.IsRare ? "rare-name" : "")">@enemy.Name</span>
+                        @if (enemy.IsBoss)
+                        {
+                            <img class="boss-skull-level" src="images/boss-skull.png" alt="Boss level" />
+                        }
+                        else
+                        {
+                            <span class="level">Lv. @enemy.Stats.Level</span>
+                        }
                         @if (enemy.IsRare)
                         {
                             <span class="rare-badge">RARE</span>
+                        }
+                        @if (enemy.FromDungeon)
+                        {
+                            <span class="elite-badge">ELITE</span>
+                        }
+                        @if (enemy.IsBoss)
+                        {
+                            <span class="elite-badge">BOSS</span>
                         }
                     </div>
                     <div class="bar-row">
@@ -361,7 +404,7 @@ else if (!_engine.NeedsCombatZone)
                     <WowTooltip Contents="true" Title="Enemy Attack">
                         <Body>
                             <span class="zt-line">Attacks every @_engine.EnemySwingInterval.ToString("0.0#")s</span>
-                            <span class="zt-sub">Base speed @enemy.Stats.Speed.ToString("0.0#")s · Attack @enemy.Stats.Attack</span>
+                            <span class="zt-sub">Base speed @enemy.Stats.Speed.ToString("0.0#")s · Attack @_engine.ToGroupHealth(enemy.Stats.Attack)</span>
                             @if (enemyStunned)
                             {
                                 <span class="zt-good">Stunned – can't attack</span>

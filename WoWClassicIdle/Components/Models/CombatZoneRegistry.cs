@@ -17,7 +17,10 @@ public static partial class CombatZoneRegistry
             .OrderBy(z => z.MinLevel).ThenBy(z => z.MaxLevel).ThenBy(z => z.Name)
             .ToList();
 
-    private static readonly Dictionary<string, CombatZone> ById = All.ToDictionary(z => z.Id);
+    /// <summary>All dungeons – reachable through <see cref="Get"/>, but deliberately not part of <see cref="All"/>.</summary>
+    public static IReadOnlyList<CombatZone> Dungeons => DungeonRegistry.All;
+
+    private static readonly Dictionary<string, CombatZone> ById = All.Concat(Dungeons).ToDictionary(z => z.Id);
 
     private static readonly Dictionary<string, IReadOnlyList<EnemyTemplate>> TemplatesByZone =
         All.ToDictionary(z => z.Id, z => (IReadOnlyList<EnemyTemplate>)z.Mobs.Select(m => EnemyScaling.BuildTemplate(m, z)).ToList());
@@ -30,7 +33,7 @@ public static partial class CombatZoneRegistry
 
     // Dark zone themes: combat and travel backgrounds show a night sky
     private static readonly HashSet<string> NightThemes =
-        ["duskwood", "tirisfal", "teldrassil", "darkshore", "sorrows", "plague", "deadwind", "felwood", "blasted", "moonglade", "ashenvale", "silverpine"];
+        ["duskwood", "tirisfal", "teldrassil", "darkshore", "sorrows", "plague", "deadwind", "felwood", "blasted", "moonglade", "ashenvale", "silverpine", "wailing", "deadmines"];
 
     public static bool IsNightTheme(string theme) => NightThemes.Contains(theme);
 

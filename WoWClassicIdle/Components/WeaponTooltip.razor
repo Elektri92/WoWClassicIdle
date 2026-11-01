@@ -80,6 +80,10 @@ else
         {
             <span class="tt-req-class">Classes: @cls</span>
         }
+        else if (weapon.AllowedClasses is { } classes)
+        {
+            <span class="tt-req-class">Classes: @string.Join(", ", classes)</span>
+        }
         @if (!string.IsNullOrEmpty(hint))
         {
             <span class="tt-hint">@hint</span>

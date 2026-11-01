@@ -34,6 +34,8 @@ public partial class IdleGameEngine
         if (!CombatZoneRegistry.CanEnter(zone, Player.Level)) return $"Requires level {zone.MinLevel}";
         if (IsTraveling) return "You are already traveling";
         if (zone.Id == ActiveCharacter?.CombatZoneId) return "You are already here";
+        if (zone.IsDungeon && NeedsCombatZone) return "Choose a hunting ground first";
+        if (DungeonLockoutBlocker(zone) is { } lockout) return lockout;
         return null;
     }
 
@@ -83,8 +85,11 @@ public partial class IdleGameEngine
     }
 
     /// <summary>Enemy from the current zone – null without a zone or during travel.</summary>
-    private Enemy? SpawnEnemy() =>
-        !IsTraveling && CurrentCombatZone is { } zone ? _spawner.Spawn(Player.Stats.Level, zone) : null;
+    private Enemy? SpawnEnemy()
+    {
+        if (IsTraveling || CurrentCombatZone is not { } zone) return null;
+        return zone.IsDungeon ? SpawnDungeonEnemy(zone) : _spawner.Spawn(Player.Stats.Level, zone);
+    }
 
     // Leave combat: the enemy disappears, the running cast and swing timer are discarded
     private void LeaveCombat()
@@ -110,11 +115,15 @@ public partial class IdleGameEngine
 
         slot.CombatZoneId = travel.TargetZoneId;
         slot.Travel = null;
+        ClearPartyBuffs(slot);
+        slot.DungeonRun = null; // only the arrival ends a run: "Turn back" keeps it
         var arrived = CombatZoneRegistry.Get(travel.TargetZoneId);
         LastLog = slot.Player == Player
             ? $"🗺 Arrived in {arrived?.Name}"
             : $"🗺 {slot.Name} arrived in {arrived?.Name}";
-        if (arrived is not null)
+        if (arrived is { IsDungeon: true })
+            EnterDungeon(slot, arrived, travel.FromZoneId); // no flight point in dungeons
+        else if (arrived is not null)
             DiscoverZone(slot, arrived, grantXp: true);
         return true;
     }
@@ -137,14 +146,18 @@ public partial class IdleGameEngine
     {
         if (CombatZoneRegistry.Get(data.CombatZone) is not { } zone) return;
         slot.CombatZoneId = zone.Id;
+        if (zone.Dungeon is { } dungeon)
+            RestoreDungeonRun(slot, dungeon, data);
 
         if (CombatZoneRegistry.Get(data.TravelTarget) is not { } target || target.Id == zone.Id) return;
         var ground = ZoneTravel.GroundFor(slot.Class, slot.Player.Level, MountOf(slot));
+        var route = ZoneTravel.Route(zone, target, slot.Faction, ground, slot.DiscoveredZoneIds);
         slot.Travel = new ZoneTravelState
         {
             FromZoneId   = zone.Id,
             TargetZoneId = target.Id,
-            Route        = ZoneTravel.Route(zone, target, slot.Faction, ground, slot.DiscoveredZoneIds),
+            Route        = data.TravelIsDungeonReturn ? route.Faster(DungeonRules.ReturnTravelSpeed) : route,
+            IsDungeonReturn = data.TravelIsDungeonReturn,
             Elapsed      = Math.Max(0, data.TravelElapsed),
         };
     }

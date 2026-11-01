@@ -358,7 +358,7 @@
 
         var weaponItem = stack.Item as WeaponItem;
         var armorItem  = stack.Item as ArmorItem;
-        bool classLocked = weaponItem?.RequiredClass is { } req && req != _engine.Player.ActiveClass;
+        bool classLocked = weaponItem is not null && !ItemRequirements.MatchesClass(weaponItem, _engine.Player.ActiveClass);
         if (classLocked) return EmptyBagSlot(containerIndex, si);
 
         bool levelLocked = !_engine.Player.MeetsItemRequirements(stack.Item);

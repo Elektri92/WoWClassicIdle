@@ -1,0 +1,118 @@
+@using Models
+@inject IdleGameEngine Engine
+@implements IDisposable
+
+@* Run progress at the right edge of /idle: remaining trash and bosses, loot table per boss in the tooltip (css/dungeons.css).
+   Has its own signature-based refresh, because TickUpdated fires 10× per second. *@
+@if (Engine.CurrentCombatZone is { Dungeon: { } dungeon } zone && Engine.CurrentDungeonRun is { } run && run.EncounterIndex < dungeon.Encounters.Count)
+{
+    var steps = dungeon.Encounters;
+    int killsLeft = steps.Skip(run.EncounterIndex).Where(e => !e.IsBoss).Sum(e => e.Kills)
+                    - (steps[run.EncounterIndex].IsBoss ? 0 : run.KillsInEncounter);
+    int bossesLeft = steps.Skip(run.EncounterIndex).Count(e => e.IsBoss);
+    double fill = Math.Min(1, (run.EncounterIndex + (double)run.KillsInEncounter / steps[run.EncounterIndex].Kills) / Math.Max(1, steps.Count - 1));
+
+    <aside class="dungeon-progress dp-theme-@zone.Theme">
+        <header class="dp-header">
+            <span class="dp-title">@zone.Name</span>
+            <span class="dp-summary">
+                <span><b>@killsLeft</b> trash left</span>
+                <span><b>@bossesLeft</b> @(bossesLeft == 1 ? "boss" : "bosses") left</span>
+            </span>
+        </header>
+
+        <div class="dp-track" style="--steps: @steps.Count">
+            <div class="dp-rail"><div class="dp-rail-fill" style="height: @((fill * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></div></div>
+            @for (int i = 0; i < steps.Count; i++)
+            {
+                var step = steps[i];
+                string state = i < run.EncounterIndex ? "done" : i == run.EncounterIndex ? "current" : "upcoming";
+                int kills = i < run.EncounterIndex ? step.Kills : i == run.EncounterIndex ? run.KillsInEncounter : 0;
+                @if (step.Boss is { } boss)
+                {
+                    <WowTooltip Class="dp-step-host" Title="@boss.Name" TitleColor="#ffd100" Body="LootTooltip(zone, step)">
+                        <div class="dp-step boss @state">
+                            <span class="dp-node"><img src="@boss.ImageUrl" alt="" onerror="this.style.visibility='hidden'" /></span>
+                            <span class="dp-step-text">
+                                <span class="dp-step-name">@boss.Name</span>
+                                <span class="dp-step-sub">@(state switch { "done" => "✓ Defeated", "current" => "⚔ Fighting", _ => "Boss" })</span>
+                            </span>
+                        </div>
+                    </WowTooltip>
+                }
+                else
+                {
+                    <div class="dp-step-host">
+                        <div class="dp-step trash @state">
+                            <span class="dp-node"></span>
+                            <span class="dp-step-text">
+                                <span class="dp-pips">
+                                    @for (int k = 0; k < step.Kills; k++)
+                                    {
+                                        <span class="dp-pip @(k < kills ? "killed" : "")"></span>
+                                    }
+                                </span>
+                                <span class="dp-step-sub">@(state == "done" ? "✓ Trash cleared" : $"Trash {kills}/{step.Kills}")</span>
+                            </span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <footer class="dp-footer">
+            <span class="dp-chip">☠ Wipes @run.Wipes/@DungeonRules.MaxWipes</span>
+            <span class="dp-chip">🗝 Runs left @Engine.DungeonRunsLeft/@DungeonRules.RunsPerWindow</span>
+        </footer>
+    </aside>
+}
+
+@code {
+    private string _signature = "";
+
+    protected override void OnInitialized()
+    {
+        _signature = Signature();
+        Engine.TickUpdated += OnTick;
+    }
+
+    private string Signature() =>
+        $"{Engine.ActiveCharacter?.Id}|{Engine.CurrentCombatZone?.Id}|{Engine.CurrentDungeonRun?.EncounterIndex}"
+        + $"|{Engine.CurrentDungeonRun?.KillsInEncounter}|{Engine.CurrentDungeonRun?.Wipes}|{Engine.DungeonRunsLeft}";
+
+    private void OnTick()
+    {
+        var signature = Signature();
+        if (signature == _signature) return;
+        _signature = signature;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    // Only what can actually drop for this character: items of other classes never drop
+    private RenderFragment LootTooltip(CombatZone zone, DungeonEncounter step) => @<text>
+        <span class="zt-section">Drops one of these</span>
+        @foreach (var item in DungeonLootRegistry.TableFor(zone.Id, step.BossIndex).Where(i => ItemRequirements.MatchesClass(i, Engine.Player.ActiveClass)))
+        {
+            <span class="zt-loot">
+                <img src="@item.IconUrl" alt="" style="border-color: @ItemQualityColors.Hex(item.Quality)" onerror="this.style.visibility='hidden'" />
+                <span class="zt-loot-text">
+                    <span style="color: @ItemQualityColors.Hex(item.Quality)">@item.Name</span>
+                    <span class="zt-sub">@ItemLine(item)</span>
+                    @if (item is ArmorItem { SetId: { } setId })
+                    {
+                        <span class="zt-loot-set">@ItemSetRegistry.Get(setId)?.Name</span>
+                    }
+                </span>
+            </span>
+        }
+    </text>;
+
+    private static string ItemLine(Item item) => item switch
+    {
+        ArmorItem a  => $"{ArmorSlots.Label(a.Slot)} · {string.Join(", ", a.Bonuses.DescribeBonuses())}",
+        WeaponItem w => $"{w.Type} · {string.Join(", ", (w.Bonuses ?? PrimaryStats.Zero).DescribeBonuses())}",
+        _            => "",
+    };
+
+    public void Dispose() => Engine.TickUpdated -= OnTick;
+}

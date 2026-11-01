@@ -84,14 +84,58 @@
 /* ----- World map: Kalimdor left, Eastern Kingdoms right ----- */
 .czone-map {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr) 170px;
+    grid-template-areas: "dungeons-left kalimdor eastern dungeons-right";
     align-items: start;
     gap: 14px;
     margin-top: 12px;
 }
+.continent-dungeons-kalimdor        { grid-area: dungeons-left; }
+.continent-kalimdor                 { grid-area: kalimdor; }
+.continent-eastern-kingdoms         { grid-area: eastern; }
+.continent-dungeons-eastern-kingdoms { grid-area: dungeons-right; }
+
+/* The map with its dungeon columns needs more room than the combat view */
+.wow-page.idle-page:has(.czone-map) { max-width: 1240px; }
+.czone-map .czone-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
+.continent-dungeons-kalimdor .czone-grid,
+.continent-dungeons-eastern-kingdoms .czone-grid { grid-template-columns: minmax(0, 1fr); }
+
+/* Narrow tiles next to the dungeon columns: level and icons wrap instead of being cut off */
+.czone-map .czone-tile-head { flex-wrap: wrap; }
+.czone-map .czone-tile-mobs { flex-wrap: wrap; }
+.continent-dungeons-kalimdor .czone-continent-title,
+.continent-dungeons-eastern-kingdoms .czone-continent-title { font-size: .85rem; letter-spacing: .02em; }
+.continent-dungeons-kalimdor .czone-continent-header,
+.continent-dungeons-eastern-kingdoms .czone-continent-header { gap: 6px; padding: 8px; }
+.continent-dungeons-kalimdor .czone-continent-header img,
+.continent-dungeons-eastern-kingdoms .czone-continent-header img { width: 28px; height: 28px; }
+
+/* Too narrow for four columns: the dungeons stay in reach above their continent */
+@media (max-width: 1280px) {
+    .czone-map {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "dungeons-left dungeons-right"
+            "kalimdor eastern";
+    }
+}
+/* The debug panel takes room from the page */
+@media (max-width: 1450px) {
+    .with-debug .czone-map {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "dungeons-left dungeons-right"
+            "kalimdor eastern";
+    }
+}
 
 @media (max-width: 900px) {
-    .czone-map { grid-template-columns: 1fr; }
+    .czone-map,
+    .with-debug .czone-map {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "dungeons-left" "kalimdor" "dungeons-right" "eastern";
+    }
 }
 
 /* Continent frame in the style of the WoW world map: dark parchment, double gold border, corner fittings */
@@ -337,6 +381,7 @@
 .czone-badge.new      { color: #1eff00; }
 .czone-badge.flight   { color: #8fd0ff; }
 .czone-badge.mastered { color: var(--wow-gold); }
+.czone-badge.dungeon  { color: #6fb6ff; }
 
 /* Travel time – slides in from below on hover */
 .czone-travel {
@@ -501,6 +546,23 @@
         radial-gradient(ellipse at 80% 0%, rgba(255, 230, 150, .35), transparent 55%),
         linear-gradient(180deg, #c09a3e 0%, #9a7428 50%, #64481a 100%);
     border-color: #a8843a;
+}
+
+/* Wailing Caverns: poison-green caves */
+.zone-theme-wailing {
+    background:
+        radial-gradient(ellipse at 30% 100%, rgba(120, 220, 110, .3), transparent 55%),
+        radial-gradient(ellipse at 80% 0%, rgba(60, 120, 90, .3), transparent 55%),
+        linear-gradient(180deg, #24382c 0%, #1b2c22 50%, #101a14 100%);
+    border-color: #4f7a55;
+}
+
+/* Deadmines: dark tunnels with lantern light */
+.zone-theme-deadmines {
+    background:
+        radial-gradient(ellipse at 75% 20%, rgba(255, 170, 80, .28), transparent 50%),
+        linear-gradient(180deg, #3a2e24 0%, #2a2119 50%, #17120d 100%);
+    border-color: #7a6242;
 }
 
 /* Redridge: red cliffs */

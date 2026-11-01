@@ -61,12 +61,22 @@ public class SlotSaveData
     public string? CombatZone { get; set; }
     public string? TravelTarget { get; set; }
     public double TravelElapsed { get; set; }
+    public bool TravelIsDungeonReturn { get; set; }
     // Discovered zones (null = legacy save → only the current zone) and progress of the zone objectives
     public List<string>? DiscoveredZones { get; set; }
     public Dictionary<string, int>? ZoneObjectives { get; set; }
     // Learned riding rank and rank of the mount in the slot (missing in legacy saves → 0, on foot)
     public int RidingRank { get; set; }
     public int EquippedMountRank { get; set; }
+    // Running dungeon run (null = none), lockout start times and completed runs per dungeon
+    public DungeonRole? DungeonSelfRole { get; set; }
+    public List<CharacterClass>? DungeonCompanions { get; set; }
+    public string? DungeonReturnZone { get; set; }
+    public int? DungeonEncounter { get; set; }
+    public int DungeonEncounterKills { get; set; }
+    public int DungeonWipes { get; set; }
+    public List<DateTime>? DungeonRunStarts { get; set; }
+    public Dictionary<string, int>? DungeonClears { get; set; }
 }
 
 public class PlayerSaveData

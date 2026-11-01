@@ -121,3 +121,22 @@
     font-size: .72rem;
     font-style: italic;
 }
+
+.tt-set-name {
+    display: block;
+    margin-top: 6px;
+    color: #ffd100;
+    font-size: 0.8rem;
+}
+
+.tt-set-piece,
+.tt-set-bonus {
+    display: block;
+    color: #808080;
+    font-size: 0.75rem;
+}
+
+.tt-set-piece { padding-left: 8px; }
+.tt-set-piece.active { color: #ffffa0; }
+.tt-set-piece + .tt-set-bonus { margin-top: 4px; }
+.tt-set-bonus.active { color: #1eff00; }

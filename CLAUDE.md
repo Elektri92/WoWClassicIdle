@@ -39,6 +39,10 @@ WoWClassicIdle/Components/
 | `Models/ZoneTravel.cs` | Reisezeiten (Laufen/Reittier/Flug/Schiff/Zeppelin) |
 | `Models/IdleGameEngine.Zones.cs` | Zonenwahl je Charakter, Reisen, SpawnEnemy |
 | `Models/RareLootRegistry.cs` | Rare-Loottabellen |
+| `Models/DungeonRegistry.cs` / `DungeonDefinition.cs` | Dungeons als Daten, Regeln und Balancewerte (`DungeonRules`), Gegner-Builder |
+| `Models/IdleGameEngine.Dungeons.cs` | Run-Ablauf, Boss-Loot, Wipes, Lockout |
+| `Models/DungeonLootRegistry.cs` / `ItemSetRegistry.cs` | Boss-Loottabellen, Set-Teile und Set-Boni |
+| `Models/DungeonPartyRegistry.cs` | Gruppenaufbau: Rollen, Klassen-/Rollenkombis, NPC-Zauber |
 | `Models/Player.cs` | Spieler-Zustand, Equip, XP |
 | `Models/CombatEngine.cs` | Reine Kampfmathematik (keine Zustand) |
 

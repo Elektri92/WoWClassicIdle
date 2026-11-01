@@ -21,8 +21,11 @@ public record CombatZone(
     double Y,
     string Theme,
     string Description,
-    IReadOnlyList<ZoneMob> Mobs)
+    IReadOnlyList<ZoneMob> Mobs,
+    DungeonDefinition? Dungeon = null)
 {
+    public bool IsDungeon => Dungeon is not null;
+
     /// <summary>Player level from which kills no longer grant XP (enemies are then 6+ levels below).</summary>
     public int NoXpLevel => MaxLevel + StaticHelpers.NoXpLevelDifference;
 

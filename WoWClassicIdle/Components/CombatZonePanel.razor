@@ -23,7 +23,7 @@
                 }
             </div>
             @* Only what is still open: completed objectives and found drops disappear *@
-            @if (!Engine.IsZoneMastered(current))
+            @if (!current.IsDungeon && !Engine.IsZoneMastered(current))
             {
                 <WowTooltip Title="@ObjectivesTitle(current)" TitleColor="#ffd100" Body="ObjectivesBody(current)">
                     <div class="czone-objectives">
@@ -97,7 +97,7 @@
                 <div>
                     <div class="czone-continent-title">@continent.Title</div>
                     <div class="czone-continent-sub">
-                        @continent.Zones.Count(z => CombatZoneRegistry.CanEnter(z, level)) / @continent.Zones.Count zones open
+                        @(continent.Subtitle ?? $"{continent.Zones.Count(z => CombatZoneRegistry.CanEnter(z, level))} / {continent.Zones.Count} zones open")
                     </div>
                 </div>
             </header>
@@ -105,7 +105,10 @@
             @foreach (var band in continent.Bands)
             {
             <div class="czone-band">
-            <div class="czone-band-title">@band.Title</div>
+            @if (band.Title.Length > 0)
+            {
+                <div class="czone-band-title">@band.Title</div>
+            }
             <div class="czone-grid">
                 @foreach (var zone in band.Zones)
                 {
@@ -126,6 +129,13 @@
                         @if (!locked)
                         {
                             <div class="czone-tile-badges">
+                                @if (zone.IsDungeon)
+                                {
+                                    <span class="czone-badge dungeon">🗝 Runs @Engine.DungeonRunsLeft/@DungeonRules.RunsPerWindow</span>
+                                    <span class="czone-badge">🏆 @Engine.DungeonClears(zone)</span>
+                                }
+                                else
+                                {
                                 @if (!Engine.IsZoneDiscovered(zone))
                                 {
                                     <span class="czone-badge new">✦ Undiscovered</span>
@@ -142,18 +152,17 @@
                                 {
                                     <span class="czone-badge">📜 @Engine.CompletedObjectives(zone)/@ZoneObjectiveRegistry.For(zone).Count</span>
                                 }
-                                @{
-                                    var bonuses = ProfessionBonusRegistry.ForZone(zone).ToList();
-                                    int foundBonuses = bonuses.Count(Engine.OwnsProfessionBonus);
-                                }
+                                var bonuses = ProfessionBonusRegistry.ForZone(zone).ToList();
+                                int foundBonuses = bonuses.Count(Engine.OwnsProfessionBonus);
                                 @if (foundBonuses < bonuses.Count)
                                 {
                                     <span class="czone-badge">🎁 @foundBonuses/@bonuses.Count</span>
                                 }
+                                }
                             </div>
                         }
                         <div class="czone-tile-mobs">
-                            @foreach (var mob in zone.Mobs)
+                            @foreach (var mob in zone.Dungeon?.Bosses ?? zone.Mobs)
                             {
                                 <img src="@mob.ImageUrl" alt="@mob.Name" title="@mob.Name" onerror="this.style.visibility='hidden'" />
                             }
@@ -170,6 +179,10 @@
                         else if (locked)
                         {
                             <div class="czone-status locked">🔒 Requires level @zone.MinLevel</div>
+                        }
+                        else if (Engine.DungeonLockoutBlocker(zone) is { } lockout)
+                        {
+                            <div class="czone-status locked">🔒 @lockout</div>
                         }
                         else if (XpHint(zone, level) is { } hint)
                         {
@@ -211,6 +224,13 @@
         </div>
         </div>
     }
+
+    @if (_partyDialogZone is { } dialogZone && Engine.ActiveCharacter is { } dialogSlot)
+    {
+        <DungeonPartyDialog Zone="dialogZone" Slot="dialogSlot"
+                            OnConfirm="setup => EnterDungeon(dialogZone, setup)"
+                            OnCancel="() => _partyDialogZone = null" />
+    }
 </div>
 
 @code {
@@ -245,9 +265,10 @@
 
     private record LevelBand(string Title, IReadOnlyList<CombatZone> Zones);
 
-    private record Continent(string Key, string Title, string IconUrl, IReadOnlyList<CombatZone> Zones)
+    private record Continent(string Key, string Title, string IconUrl, IReadOnlyList<CombatZone> Zones, string? Subtitle = null)
     {
-        public IReadOnlyList<LevelBand> Bands { get; } = BandsOf(Zones);
+        // Dungeon columns are a single list without level bands
+        public IReadOnlyList<LevelBand> Bands { get; } = Subtitle is null ? BandsOf(Zones) : [new LevelBand("", Zones)];
     }
 
     // Tens of the entry level decide the band; the exact range stays on the tile
@@ -257,13 +278,20 @@
             .Select(g => new LevelBand($"Level {Math.Max(1, g.Key * 10)}–{g.Key * 10 + 10}", g.ToList()))
             .ToList();
 
-    // Kalimdor left, Eastern Kingdoms right (like on the world map); Teldrassil belongs to Kalimdor
+    private const string DungeonIconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_key_03.jpg";
+
+    // Kalimdor left, Eastern Kingdoms right (like on the world map); Teldrassil belongs to Kalimdor.
+    // The dungeons of each continent stand on its outer side.
     private static readonly Continent[] Continents =
     [
+        new("dungeons-kalimdor", "Dungeons", DungeonIconUrl,
+            CombatZoneRegistry.Dungeons.Where(z => z.Landmass != Landmass.EasternKingdoms).ToList(), "Kalimdor"),
         new("kalimdor", "Kalimdor", "https://wow.zamimg.com/images/wow/icons/large/inv_misc_map_01.jpg",
             CombatZoneRegistry.All.Where(z => z.Landmass != Landmass.EasternKingdoms).ToList()),
         new("eastern-kingdoms", "Eastern Kingdoms", "https://wow.zamimg.com/images/wow/icons/large/inv_misc_map02.jpg",
             CombatZoneRegistry.All.Where(z => z.Landmass == Landmass.EasternKingdoms).ToList()),
+        new("dungeons-eastern-kingdoms", "Dungeons", DungeonIconUrl,
+            CombatZoneRegistry.Dungeons.Where(z => z.Landmass == Landmass.EasternKingdoms).ToList(), "Eastern Kingdoms"),
     ];
 
     protected override void OnInitialized()
@@ -276,7 +304,8 @@
     private string Signature() =>
         $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}"
         + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}"
-        + $"|{Engine.OwnedProfessionBonusCount}";
+        + $"|{Engine.OwnedProfessionBonusCount}"
+        + $"|{Engine.DungeonRunsLeft}|{(int?)Engine.DungeonLockoutRemaining?.TotalMinutes}";
 
     private void OnTick()
     {
@@ -298,9 +327,25 @@
         return route;
     }
 
+    private CombatZone? _partyDialogZone;
+
+    private async Task EnterDungeon(CombatZone zone, DungeonPartySetup setup)
+    {
+        _partyDialogZone = null;
+        Engine.SetDungeonParty(setup);
+        if (Engine.SelectCombatZone(zone.Id))
+            await (Open ? CloseAnimated() : SetOpen(false));
+    }
+
     private async Task Select(CombatZone zone)
     {
         if (_closing) return;
+        // Dungeons ask for the group first; the journey starts after the confirmation
+        if (zone.IsDungeon && Engine.CombatZoneBlocker(zone) is null)
+        {
+            _partyDialogZone = zone;
+            return;
+        }
         // First pick (needsZone): map disappears immediately, combat fades in on its own
         if (Engine.SelectCombatZone(zone.Id))
             await (Open ? CloseAnimated() : SetOpen(false));
@@ -336,7 +381,21 @@
         {
             <span class="zt-warn">@hint</span>
         }
-        @if (level >= zone.MinLevel)
+        @if (zone.Dungeon is { } dungeon)
+        {
+            <span class="zt-section">Bosses</span>
+            @foreach (var boss in dungeon.Bosses)
+            {
+                <span class="zt-mob">
+                    <img src="@boss.ImageUrl" alt="" onerror="this.style.visibility='hidden'" />
+                    <span>@boss.Name</span>
+                </span>
+            }
+            <span class="zt-good">Every boss drops one green or blue item</span>
+            <span class="zt-sub">Build a group of 1 tank, 1 healer and 3 DPS – your companions cast their spells on their own and you share one health bar</span>
+            <span class="zt-sub">@DungeonRules.RunsPerWindow runs per @((int)DungeonRules.LockoutWindow.TotalHours) hours per character (@Engine.DungeonRunsLeft left) · @DungeonRules.MaxWipes wipes end a run</span>
+        }
+        else if (level >= zone.MinLevel)
         {
             @if (!Engine.IsZoneDiscovered(zone))
             {
@@ -372,7 +431,7 @@
         }
         else
         {
-            <span class="zt-hint">Click to travel here – no fighting on the road</span>
+            <span class="zt-hint">@(zone.IsDungeon ? "Click to build your group" : "Click to travel here – no fighting on the road")</span>
         }
     </text>;
 

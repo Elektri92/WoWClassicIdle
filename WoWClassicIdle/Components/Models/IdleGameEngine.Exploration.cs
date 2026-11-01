@@ -22,7 +22,7 @@ public partial class IdleGameEngine
     /// <summary>Number of completed objectives of the zone.</summary>
     public int CompletedObjectives(CombatZone zone) => ZoneObjectiveRegistry.For(zone).Count(IsObjectiveDone);
 
-    public bool IsZoneMastered(CombatZone zone) => CompletedObjectives(zone) == ZoneObjectiveRegistry.For(zone).Count;
+    public bool IsZoneMastered(CombatZone zone) => !zone.IsDungeon && CompletedObjectives(zone) == ZoneObjectiveRegistry.For(zone).Count;
 
     /// <summary>All objectives done and all drops of the zone found (drops are account-wide).</summary>
     public bool IsZoneCompleted(CombatZone zone) =>

@@ -1,0 +1,219 @@
+@using Models
+
+@* Group builder on entering a dungeon: five round slots (1 tank, 1 healer, 3 DPS) filled by drag and drop –
+   the own character has to be placed as well. A click places or removes too. Styles: css/dungeons.css
+   WebKit only accepts a drop if dragenter is cancelled as well, Chromium does not need that. *@
+<div class="dpd-overlay dp-theme-@Zone.Theme" role="dialog" aria-modal="true" aria-label="Build your group">
+    <div class="dpd-window">
+        <header class="dpd-header">
+            <span class="dpd-title">@Zone.Name</span>
+            <span class="dpd-sub">Drag yourself and four companions into the group</span>
+        </header>
+
+        <div class="dpd-slots">
+            @for (int i = 0; i < _slots.Length; i++)
+            {
+                int index = i;
+                var role = DungeonPartyRegistry.GroupSlots[i];
+                var pick = _slots[i];
+                string dropState = _drag is null ? "" : Fits(_drag, index) ? "can-drop" : "no-drop";
+                <div class="dpd-slot @dropState @(pick is null ? "empty" : "filled")"
+                     @ondragenter:preventDefault @ondragover:preventDefault
+                     @ondrop="() => DropOnSlot(index)" @ondrop:preventDefault>
+                    @if (pick is null)
+                    {
+                        <span class="dpd-circle">
+                            <img class="dpd-slot-role-icon" src="@DungeonPartyRegistry.RoleIconUrl(role)" alt="" draggable="false" />
+                        </span>
+                        <span class="dpd-slot-name">@DungeonPartyRegistry.RoleLabel(role)</span>
+                    }
+                    else
+                    {
+                        <WowTooltip Title="@NameOf(pick)" Body="PickTooltip(pick)">
+                            <span class="dpd-circle" role="button" aria-label="Remove @NameOf(pick)" draggable="true"
+                                  @ondragstart="() => StartDrag(pick, index)" @ondragend="EndDrag"
+                                  @onclick="() => _slots[index] = null">
+                                <img class="dpd-portrait" src="@PortraitOf(pick)" alt="" draggable="false" onerror="this.style.visibility='hidden'" />
+                                <img class="dp-class" src="@IconUrls.ClassIconUrl(ClassOf(pick))" alt="" draggable="false" onerror="this.style.visibility='hidden'" />
+                            </span>
+                        </WowTooltip>
+                        <span class="dpd-slot-name @(pick.IsSelf ? "self" : "")">@(pick.IsSelf ? "You" : NameOf(pick))</span>
+                    }
+                    <span class="dp-role dpd-slot-role role-@role.ToString().ToLowerInvariant()">
+                        <img class="role-icon" src="@DungeonPartyRegistry.RoleIconUrl(role)" alt="" draggable="false" /> @DungeonPartyRegistry.RoleLabel(role)
+                    </span>
+                </div>
+            }
+        </div>
+
+        <div class="dpd-pool @(_dragFromSlot is not null ? "can-drop" : "")"
+             @ondragenter:preventDefault @ondragover:preventDefault
+             @ondrop="DropOnPool" @ondrop:preventDefault>
+            @if (!SelfPlaced)
+            {
+                <section class="dpd-group">
+                    <h4 class="dpd-heading">You</h4>
+                    <div class="dpd-cards">@Card(_self)</div>
+                </section>
+            }
+            @foreach (var role in new[] { DungeonRole.Tank, DungeonRole.Healer, DungeonRole.Damage })
+            {
+                <section class="dpd-group">
+                    <h4 class="dpd-heading">
+                        <img class="role-icon" src="@DungeonPartyRegistry.RoleIconUrl(role)" alt="" draggable="false" /> @DungeonPartyRegistry.RoleLabel(role)
+                    </h4>
+                    <div class="dpd-cards">
+                        @foreach (var member in _pool.Where(m => m.Role == role && !IsPlaced(m)))
+                        {
+                            @Card(new PartyPick(member))
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+
+        <footer class="dpd-footer">
+            <span class="dpd-status @(CanEnter ? "ready" : "")">@StatusText</span>
+            <button type="button" class="wow-btn" @onclick="OnCancel">Cancel</button>
+            <button type="button" class="wow-btn primary" disabled="@(!CanEnter)" @onclick="Confirm">Enter dungeon</button>
+        </footer>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CombatZone Zone { get; set; } = null!;
+    [Parameter, EditorRequired] public CharacterSlot Slot { get; set; } = null!;
+    [Parameter] public EventCallback<DungeonPartySetup> OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    /// <summary>Something that can sit in a slot: an NPC, or the own character without one.</summary>
+    private sealed record PartyPick(DungeonPartyMember? Npc)
+    {
+        public bool IsSelf => Npc is null;
+    }
+
+    private readonly PartyPick _self = new((DungeonPartyMember?)null);
+    private readonly PartyPick?[] _slots = new PartyPick?[DungeonPartyRegistry.GroupSlots.Count];
+    private IReadOnlyList<DungeonPartyMember> _pool = [];
+    private PartyPick? _drag;
+    private int? _dragFromSlot;
+
+    protected override void OnInitialized()
+    {
+        _pool = DungeonPartyRegistry.Pool(Slot.Id, Slot.Faction);
+
+        // The last group is filled in again; without one every slot starts empty
+        if (Slot.DungeonPartySetup is not { } setup) return;
+        _slots[Array.IndexOf(DungeonPartyRegistry.GroupSlots.ToArray(), setup.SelfRole)] = _self;
+        var npcRoles = DungeonPartyRegistry.NpcSlots(setup.SelfRole);
+        for (int i = 0; i < npcRoles.Count; i++)
+        {
+            int free = Enumerable.Range(0, _slots.Length).First(s => _slots[s] is null && DungeonPartyRegistry.GroupSlots[s] == npcRoles[i]);
+            _slots[free] = new PartyPick(_pool.First(m => m.Role == npcRoles[i] && m.Class == setup.Companions[i]));
+        }
+    }
+
+    private bool SelfPlaced => _slots.Any(p => p is { IsSelf: true });
+    private bool IsPlaced(DungeonPartyMember member) => _slots.Any(p => p?.Npc == member);
+    private bool CanEnter => SelfPlaced && _slots.All(p => p is not null);
+
+    private string StatusText =>
+        !SelfPlaced ? "Place your own character in the group"
+        : _slots.Any(p => p is null) ? $"{_slots.Count(p => p is null)} slots still empty"
+        : "Your group is ready";
+
+    private bool Fits(PartyPick pick, int slot)
+    {
+        var role = DungeonPartyRegistry.GroupSlots[slot];
+        return pick.IsSelf ? DungeonPartyRegistry.RolesFor(Slot.Class).Contains(role) : pick.Npc!.Role == role;
+    }
+
+    private void StartDrag(PartyPick pick, int? fromSlot)
+    {
+        _drag = pick;
+        _dragFromSlot = fromSlot;
+    }
+
+    private void EndDrag()
+    {
+        _drag = null;
+        _dragFromSlot = null;
+    }
+
+    // A fitting occupant swaps places with a slot it came from, otherwise it goes back to the selection
+    private void DropOnSlot(int target)
+    {
+        if (_drag is { } pick && Fits(pick, target))
+        {
+            var occupant = _slots[target];
+            if (_dragFromSlot is { } from)
+                _slots[from] = occupant is not null && Fits(occupant, from) ? occupant : null;
+            _slots[target] = pick;
+        }
+        EndDrag();
+    }
+
+    private void DropOnPool()
+    {
+        if (_dragFromSlot is { } from)
+            _slots[from] = null;
+        EndDrag();
+    }
+
+    // Same as dragging: into the first free slot that fits
+    private void PlaceByClick(PartyPick pick)
+    {
+        int free = Enumerable.Range(0, _slots.Length).FirstOrDefault(s => _slots[s] is null && Fits(pick, s), -1);
+        if (free >= 0) _slots[free] = pick;
+    }
+
+    private Task Confirm()
+    {
+        if (!CanEnter) return Task.CompletedTask;
+        var selfRole = DungeonPartyRegistry.GroupSlots[Array.IndexOf(_slots, _self)];
+        var companions = _slots.Where(p => p is { IsSelf: false }).Select(p => p!.Npc!.Class).ToList();
+        return OnConfirm.InvokeAsync(new DungeonPartySetup(selfRole, companions));
+    }
+
+    private string NameOf(PartyPick pick) => pick.Npc?.Name ?? Slot.Name;
+    private CharacterClass ClassOf(PartyPick pick) => pick.Npc?.Class ?? Slot.Class;
+    private string PortraitOf(PartyPick pick) =>
+        pick.Npc is { } npc ? IconUrls.RaceIconUrl(npc.Race, npc.Gender) : IconUrls.RaceIconUrl(Slot.Race, Slot.Gender);
+
+    private RenderFragment Card(PartyPick pick) =>
+        @<WowTooltip Title="@NameOf(pick)" Body="PickTooltip(pick)">
+            <div class="dpd-card @(pick.IsSelf ? "self" : "") @(_drag == pick ? "dragging" : "")" role="button" draggable="true"
+                 @ondragstart="() => StartDrag(pick, null)" @ondragend="EndDrag"
+                 @onclick="() => PlaceByClick(pick)">
+                <span class="dp-portrait">
+                    <img src="@PortraitOf(pick)" alt="" draggable="false" onerror="this.style.visibility='hidden'" />
+                    <img class="dp-class" src="@IconUrls.ClassIconUrl(ClassOf(pick))" alt="" draggable="false" onerror="this.style.visibility='hidden'" />
+                </span>
+                <span class="dp-member-text">
+                    <span class="dp-member-name">@NameOf(pick)</span>
+                    <span class="dpd-card-class">@ClassOf(pick)</span>
+                </span>
+                @if (pick.Npc is { } npc)
+                {
+                    <img class="dpd-card-spell" src="@npc.Spell.IconUrl" alt="" draggable="false" onerror="this.style.visibility='hidden'" />
+                }
+            </div>
+        </WowTooltip>;
+
+    private RenderFragment PickTooltip(PartyPick pick) => @<text>
+        @if (pick.Npc is { } npc)
+        {
+            <span class="zt-sub">@npc.Race @npc.Class · @DungeonPartyRegistry.RoleLabel(npc.Role)</span>
+            <span class="zt-section">@npc.Spell.Name</span>
+            <span class="zt-good">@npc.Spell.Description</span>
+        }
+        else
+        {
+            <span class="zt-sub">@Slot.Race @Slot.Class · Can fill: @string.Join(", ", DungeonPartyRegistry.RolesFor(Slot.Class).Select(DungeonPartyRegistry.RoleLabel))</span>
+            @foreach (var role in DungeonPartyRegistry.RolesFor(Slot.Class))
+            {
+                <span class="zt-good">@DungeonPartyRegistry.RoleLabel(role): @DungeonPartyRegistry.SelfRoleEffect(role)</span>
+            }
+        }
+    </text>;
+}

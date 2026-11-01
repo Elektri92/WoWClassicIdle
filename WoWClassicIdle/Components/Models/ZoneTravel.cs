@@ -10,6 +10,10 @@ public record TravelLeg(TravelMode Mode, string From, string To, double Seconds,
 public record TravelRoute(IReadOnlyList<TravelLeg> Legs)
 {
     public double Seconds => Legs.Sum(l => l.Seconds);
+
+    /// <summary>The same route, <paramref name="factor"/> times as fast.</summary>
+    public TravelRoute Faster(double factor) =>
+        new(Legs.Select(l => l with { Seconds = l.Seconds / factor }).ToList());
 }
 
 /// <summary>Ongoing travel of a character (progress in game seconds).</summary>
@@ -18,6 +22,8 @@ public class ZoneTravelState
     public required string FromZoneId { get; init; }
     public required string TargetZoneId { get; init; }
     public required TravelRoute Route { get; init; }
+    /// <summary>Journey home after a dungeon run: <see cref="Route"/> is already sped up.</summary>
+    public bool IsDungeonReturn { get; init; }
     public double Elapsed { get; internal set; }
     /// <summary>Time since the last out-of-combat regen tick (every 5 s while traveling).</summary>
     internal double RegenAcc { get; set; }

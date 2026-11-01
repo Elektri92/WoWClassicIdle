@@ -38,6 +38,16 @@ public partial class AchievementService
             .ToHashSet();
     }
 
+    /// <summary>Clears of a dungeon, summed across all characters.</summary>
+    private long DungeonClears(CombatZone dungeon) =>
+        RosterSnapshot().Sum(s => (long)s.DungeonClears.GetValueOrDefault(dungeon.Id));
+
+    /// <summary>Most worn pieces of one set on any character.</summary>
+    private int MostSetPiecesWorn() =>
+        RosterSnapshot()
+            .Select(s => s.Player.EquippedArmor.Values.ToArray().Where(a => a.SetId is not null).GroupBy(a => a.SetId).Select(g => g.Count()).DefaultIfEmpty(0).Max())
+            .DefaultIfEmpty(0).Max();
+
     private void CheckExploration()
     {
         var discovered = DiscoveredZones();
@@ -55,6 +65,10 @@ public partial class AchievementService
         foreach (int m in MasteredZoneMilestones)
             if (mastered >= m) TryAward($"zone_mastery_{m}");
         if (mastered >= ZoneCount) TryAward("zone_mastery_all");
+
+        foreach (var dungeon in CombatZoneRegistry.Dungeons)
+            if (DungeonClears(dungeon) >= 1) TryAward($"dungeon_clear_{dungeon.Id}");
+        if (MostSetPiecesWorn() >= ItemSetRegistry.PiecesPerSet) TryAward("dungeon_full_set");
     }
 
     private void AddExplorationTrackers(Dictionary<string, (Func<long>, long)> map)
@@ -71,6 +85,10 @@ public partial class AchievementService
         foreach (int m in MasteredZoneMilestones)
             map[$"zone_mastery_{m}"] = (() => MasteredZones().Count, m);
         map["zone_mastery_all"] = (() => MasteredZones().Count, ZoneCount);
+
+        foreach (var dungeon in CombatZoneRegistry.Dungeons)
+            map[$"dungeon_clear_{dungeon.Id}"] = (() => DungeonClears(dungeon), 1);
+        map["dungeon_full_set"] = (() => MostSetPiecesWorn(), ItemSetRegistry.PiecesPerSet);
     }
 
     private static void AddExplorationAchievements(List<AchievementDefinition> list)
@@ -104,5 +122,11 @@ public partial class AchievementService
         list.Add(new() { Id = "zone_mastery_10",  Category = cat, Points = 20, Title = "Defender of Azeroth", Description = "Master 10 different zones.",     IconUrl = trophy });
         list.Add(new() { Id = "zone_mastery_20",  Category = cat, Points = 25, Title = "Legend of the Realm", Description = "Master 20 different zones.",     IconUrl = trophy });
         list.Add(new() { Id = "zone_mastery_all", Category = cat, Points = 50, Title = "Loremaster",         Description = $"Master all {ZoneCount} zones.", IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_book_09.jpg" });
+
+        // ── Dungeons ──
+        const string key = "https://wow.zamimg.com/images/wow/icons/large/inv_misc_key_03.jpg";
+        foreach (var dungeon in CombatZoneRegistry.Dungeons)
+            list.Add(new() { Id = $"dungeon_clear_{dungeon.Id}", Category = cat, Points = 15, Title = $"Conqueror of {dungeon.Name}", Description = $"Complete a run of {dungeon.Name}.", IconUrl = key });
+        list.Add(new() { Id = "dungeon_full_set", Category = AchievementCategory.Loot, Points = 25, Title = "Fully Outfitted", Description = "Wear all five pieces of a dungeon set.", IconUrl = "https://wow.zamimg.com/images/wow/icons/large/inv_chest_cloth_05.jpg" });
     }
 }

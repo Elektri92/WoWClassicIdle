@@ -63,11 +63,13 @@ public partial class IdleGameEngine
 
         var ground = ZoneTravel.GroundFor(slot.Class, slot.Player.Level, MountOf(slot));
         var route = ZoneTravel.Route(from, target, slot.Faction, ground, slot.DiscoveredZoneIds);
+        if (travel.IsDungeonReturn) route = route.Faster(DungeonRules.ReturnTravelSpeed);
         slot.Travel = new ZoneTravelState
         {
             FromZoneId   = travel.FromZoneId,
             TargetZoneId = travel.TargetZoneId,
             Route        = route,
+            IsDungeonReturn = travel.IsDungeonReturn,
             Elapsed      = travel.Progress * route.Seconds,
             RegenAcc     = travel.RegenAcc,
         };

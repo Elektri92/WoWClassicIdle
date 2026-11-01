@@ -77,7 +77,11 @@ public partial class IdleGameEngine
         if (RespawnRemaining > 0)
         {
             RespawnRemaining = Math.Max(0, RespawnRemaining - _baseDt);
-            if (RespawnRemaining == 0) UseStimpakAfterResurrection();
+            if (RespawnRemaining == 0)
+            {
+                UseStimpakAfterResurrection();
+                FinishFailedDungeonRun();
+            }
             return;
         }
 
@@ -109,6 +113,7 @@ public partial class IdleGameEngine
 
         double dt = _baseDt;
         Meter.AddCombatTime(dt);
+        Meter.HealingScale = GroupHealthScale;
         MaintainPassiveAuras();
         UpdateConsumables(dt);
 
@@ -217,7 +222,7 @@ public partial class IdleGameEngine
 
         // ── Abilities (cooldown-based, with cast time and global cooldown) + pet attacks ──
         Player.Cooldowns.Tick(dt * attackSpeed);
-        int abilityDmg = UpdateAbilities(dt, attackSpeed) + UpdatePet(dt, enemyDmgTakenMult);
+        int abilityDmg = UpdateAbilities(dt, attackSpeed) + UpdatePet(dt, enemyDmgTakenMult) + UpdateDungeonParty(dt, enemyDmgTakenMult);
         if (abilityDmg > 0)
         {
             totalPlayerDmg += abilityDmg;
@@ -321,8 +326,9 @@ public partial class IdleGameEngine
 
             int enemyDmg = CombatEngine.CalculateDamage(
                 CurrentEnemy.Stats.Attack, Player.Stats.Defense, _rng);
-            double dmgReduction = Math.Min(0.99, Player.Stats.DamageTakenReduction + Player.Buffs.DamageTakenReduction);
+            double dmgReduction = Math.Min(0.99, Player.Stats.DamageTakenReduction + Player.Buffs.DamageTakenReduction + PartyDamageReduction);
             int reducedDmg = Math.Max(1, (int)Math.Round(enemyDmg * (1.0 - dmgReduction)));
+            RecordPartyMitigation(enemyDmg);
             reducedDmg = SplitDamageWithPet(reducedDmg);   // Pet absorbs part of the hit
             var (taken, absorbs) = Player.TakeDamage(reducedDmg);
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.AutoAttack, taken));
@@ -382,6 +388,7 @@ public partial class IdleGameEngine
             int xpLost = Player.ApplyDeathXpPenalty();
             if (xpLost > 0)
                 LastLog += $" Lost {xpLost} XP.";
+            HandleDungeonDeath();
             ResetCastState();
             _playerAttackAcc = 0;
             _enemyAttackAcc  = 0;
@@ -499,7 +506,7 @@ public partial class IdleGameEngine
         }
 
         // Enemies that are too low (3+ levels below the player) give heavily reduced or no XP
-        int xpReward = StaticHelpers.GetKillXp(Player.Level, deadEnemy.Stats.Level);
+        int xpReward = (int)Math.Round(StaticHelpers.GetKillXp(Player.Level, deadEnemy.Stats.Level) * deadEnemy.XpMultiplier);
 
         if (GrantXp(xpReward) > 0)
             LastLog = $"⬆ {Player.ActiveClass} → Lv. {Player.Level}";
@@ -510,6 +517,7 @@ public partial class IdleGameEngine
 
         // Count zone objectives (overwrites LastLog when an objective was completed)
         TrackZoneObjectives(deadEnemy);
+        AdvanceDungeonRun(deadEnemy);
 
         TotalKills++;
         if (deadEnemy.IsRare) TotalRareKills++;

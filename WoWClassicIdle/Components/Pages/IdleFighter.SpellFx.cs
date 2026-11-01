@@ -12,12 +12,13 @@ public partial class IdleFighter
     /// <summary>An effect for spellFx.play – field names are serialized to JS as camelCase.</summary>
     private sealed class PendingFx
     {
-        public string Type { get; init; } = "spell";       // spell | swing | buff
+        public string Type { get; init; } = "spell";       // spell | swing | buff | party
         public string? Attacker { get; init; }              // swing: player | enemy
         public string? Style { get; init; }                 // swing: slash | chop | stab | blunt | claw | splash | arrow | wand
         public string? Icon { get; init; }
         public string? Name { get; init; }                  // spell/buff: matched against the icon in the buff/debuff bar
-        public string? Kind { get; init; }                  // buff: buff | heal | shield | form
+        public string? Kind { get; init; }                  // buff: buff | heal | shield | form; party: damage | heal | shield
+        public string? Caster { get; init; }                // party: name of the casting companion
         public bool Debuff { get; init; }                   // spell: applies a debuff to the enemy
         public bool DebuffOnly { get; init; }               // spell: pure debuff without damage
         public bool Stun { get; init; }
@@ -91,12 +92,26 @@ public partial class IdleFighter
         AddFx(new PendingFx { Type = "buff", Kind = kind, Icon = ability.IconUrl, Name = ability.Name });
     }
 
+    // Timer thread! A companion casts: animation from its card to the enemy or to the player.
+    private void OnPartySpellCast(DungeonPartyMemberState state)
+    {
+        if (_selfRef is null) return;
+        var spell = state.Member.Spell;
+        AddFx(new PendingFx
+        {
+            Type = "party", Caster = state.Member.Name, Icon = spell.IconUrl, Name = state.SpellAbility.Name, Melee = spell.Melee,
+            Duration = spell.FlightMs,
+            Kind = spell.Kind switch { NpcSpellKind.Damage => "damage", NpcSpellKind.Heal => "heal", _ => "shield" },
+        });
+    }
+
     /// <summary>
     /// Derives the matching effect from a combat number and returns the delay (ms)
     /// with which the number should appear so it coincides with the impact.
     /// </summary>
     private int TakeHitDelay(CombatText ct)
     {
+        if (ct.FlightMs > 0) return ct.FlightMs;   // companions: their animation is already on its way
         if (ct.Kind == CombatTextKind.Heal) return 0;
 
         if (ct.Target == CombatTextTarget.Enemy && ct.Kind == CombatTextKind.Ability)

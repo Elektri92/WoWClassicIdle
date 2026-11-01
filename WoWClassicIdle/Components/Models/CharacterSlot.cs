@@ -25,5 +25,15 @@ namespace Models
         public ImmutableHashSet<string> DiscoveredZoneIds { get; internal set; } = ImmutableHashSet<string>.Empty;
         /// <summary>Progress of the zone objectives (<see cref="ZoneObjective.Id"/> → counter).</summary>
         public ImmutableDictionary<string, int> ZoneObjectiveProgress { get; internal set; } = ImmutableDictionary<string, int>.Empty;
+        /// <summary>Last chosen dungeon group (null = default group).</summary>
+        public DungeonPartySetup? DungeonPartySetup { get; internal set; }
+        /// <summary>Zone the character returns to after the running dungeon run.</summary>
+        public string? DungeonReturnZoneId { get; internal set; }
+        /// <summary>Running dungeon run (null outside of dungeons).</summary>
+        public DungeonRunState? DungeonRun { get; internal set; }
+        /// <summary>Start times of recent dungeon runs (UTC) – basis of the lockout.</summary>
+        public ImmutableList<DateTime> DungeonRunStartsUtc { get; internal set; } = ImmutableList<DateTime>.Empty;
+        /// <summary>Completed runs per dungeon.</summary>
+        public ImmutableDictionary<string, int> DungeonClears { get; internal set; } = ImmutableDictionary<string, int>.Empty;
     }
 }

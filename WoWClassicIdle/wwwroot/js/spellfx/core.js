@@ -60,35 +60,100 @@ window.spellFx = (() => {
         return el;
     }
 
-    function animateAndRemove(el, keyframes, options) {
-        el.animate(keyframes, { fill: 'forwards', ...options }).onfinish = () => el.remove();
+    // Particles run on one shared frame loop instead of WebKit animations: every Web Animations or CSS animation on a
+    // short-lived element makes the WebKitGTK process grow steadily, and combat slows down the longer the game runs.
+    const CENTER = 'translate(-50%, -50%)';
+    const offset = (dx, dy) => `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    /** Value at progress t along [[position, value], …]. */
+    function track(t, stops) {
+        let i = 1;
+        while (i < stops.length - 1 && t > stops[i][0]) i++;
+        const [p0, v0] = stops[i - 1], [p1, v1] = stops[i];
+        return lerp(v0, v1, Math.min(1, Math.max(0, (t - p0) / (p1 - p0))));
     }
 
-    const at = (rot, sx = 1, extra = '') => `translate(-50%, -50%) ${extra} rotate(${rot}deg) scaleX(${sx})`;
+    // Effect name → frame at progress t; v holds the random parts of the particle
+    const FX = {
+        scatter: (t, v) => [`${offset(v.dx * t, v.dy * t)} scale(${lerp(1, v.s1, t)})`, lerp(v.o0 ?? 1, 0, t)],
+        grow: (t, v) => [`${CENTER} scale(${lerp(v.s0, v.s1, t)})`, 1 - t],
+        slash: (t, v) => [`${CENTER} rotate(${v.rot}deg) scaleX(${track(t, [[0, 0], [.35, 1], [1, 1.1]])})`, track(t, [[0, 1], [.35, 1], [1, 0]])],
+        drift: (t, v) => {
+            const dx = track(t, [[0, 0], [.2, v.dx / 2], [1, v.dx]]), dy = track(t, [[0, 0], [.2, v.dy * .2], [1, v.dy]]);
+            return [`${offset(dx, dy)} scale(${track(t, [[0, .4], [.2, 1], [1, .5]])})`, track(t, [[0, 0], [.2, 1], [1, 0]])];
+        },
+        badgeIn: (t, v) => [`${CENTER} scale(${track(t, [[0, v.s0], [.3, 1.25], [1, 1]])})`, track(t, [[0, 0], [.3, 1], [1, 1]])],
+        badgeOut: (t, v) => [`${offset(v.dx * t, v.dy * t)} scale(${lerp(1, v.s1, t)})`, lerp(1, v.o1, t)],
+        rune: t => [`${CENTER} scale(${track(t, [[0, .4], [.35, 1.15], [1, 1.3]])}) rotate(${track(t, [[0, 0], [.35, 70], [1, 160]])}deg)`, track(t, [[0, 0], [.35, 1], [1, 0]])],
+        pillar: t => [`translate(-50%, -100%) scaleY(${track(t, [[0, 0], [.3, 1], [1, 1.1]])}) scaleX(${track(t, [[0, 1], [.3, 1], [1, .4]])})`, track(t, [[0, .2], [.3, .9], [1, 0]])],
+        bubble: t => [`${CENTER} scale(${track(t, [[0, .5], [.25, 1.08], [.7, 1], [1, 1.15]])})`, track(t, [[0, 0], [.25, 1], [.7, .85], [1, 0]])],
+        orbit: t => [`${CENTER} rotate(${track(t, [[0, 0], [.3, 140], [1, 420]])}deg) scale(${track(t, [[0, 1.2], [.3, 1], [1, .25]])})`, track(t, [[0, 0], [.3, 1], [1, 0]])],
+        stars: t => [`${CENTER} scaleY(.4) rotate(${track(t, [[0, 0], [.15, 120], [.85, 600], [1, 720]])}deg)`, track(t, [[0, 0], [.15, 1], [.85, 1], [1, 0]])],
+    };
+
+    // Easings of the effects: t → eased progress
+    const EASE = {
+        out: t => 1 - (1 - t) ** 2.2,
+        inOut: t => t < .5 ? 2 * t * t : 1 - (2 - 2 * t) ** 2 / 2,
+        in: t => t ** 2.4,
+        burst: t => 1 - (1 - t) ** 3.2,
+        linear: t => t,
+    };
+
+    const running = new Map();   // Element → running effect
+    let loopActive = false;
+
+    function renderFx(el, fx, t) {
+        const [transform, opacity] = FX[fx.name](fx.ease(t), fx.vars);
+        el.style.transform = transform;
+        el.style.opacity = opacity;
+    }
+
+    function fxLoop(now) {
+        for (const [el, fx] of running) {
+            const t = (now - fx.start) / fx.duration;
+            if (t < 0) continue;
+            renderFx(el, fx, Math.min(1, t));
+            if (t >= 1) {
+                running.delete(el);
+                if (fx.remove) el.remove();
+            }
+        }
+        if (running.size > 0) requestAnimationFrame(fxLoop);
+        else loopActive = false;
+    }
+
+    function playFx(el, name, { duration, delay = 0, easing = EASE.out, vars = {}, remove = false }) {
+        const fx = { name, duration, ease: easing, vars, remove, start: performance.now() + delay };
+        renderFx(el, fx, 0);
+        running.set(el, fx);
+        if (!loopActive) {
+            loopActive = true;
+            requestAnimationFrame(fxLoop);
+        }
+    }
+
+    function animateAndRemove(el, name, options) {
+        playFx(el, name, { ...options, remove: true });
+    }
 
     // ── Bausteine ─────────────────────────────────────────────
 
     function trailParticle(x, y, colors, cls, life) {
         const p = spawn(cls, x, y, colors);
         const dx = (Math.random() - 0.5) * 14, dy = (Math.random() - 0.5) * 14;
-        animateAndRemove(p, [
-            { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.9 },
-            { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)`, opacity: 0 },
-        ], { duration: life, easing: 'ease-out' });
+        animateAndRemove(p, 'scatter', { duration: life, vars: { dx, dy, s1: .2, o0: .9 } });
     }
 
     function flash(x, y, colors, scale, duration) {
-        animateAndRemove(spawn('spellfx-flash', x, y, colors), [
-            { transform: 'translate(-50%, -50%) scale(.3)', opacity: 1 },
-            { transform: `translate(-50%, -50%) scale(${scale})`, opacity: 0 },
-        ], { duration, easing: 'ease-out' });
+        animateAndRemove(spawn('spellfx-flash', x, y, colors), 'grow', { duration, vars: { s0: .3, s1: scale } });
     }
 
     function ring(x, y, colors, scale, duration) {
-        animateAndRemove(spawn('spellfx-ring', x, y, colors), [
-            { transform: 'translate(-50%, -50%) scale(.2)', opacity: 1 },
-            { transform: `translate(-50%, -50%) scale(${scale})`, opacity: 0 },
-        ], { duration, easing: 'cubic-bezier(.2,.7,.3,1)' });
+        animateAndRemove(spawn('spellfx-ring', x, y, colors), 'grow', {
+            duration, easing: EASE.burst, vars: { s0: .2, s1: scale },
+        });
     }
 
     /** Sparks; with dirAngle (radians) as a cone in the strike direction, otherwise all around. */
@@ -98,10 +163,10 @@ window.spellFx = (() => {
                 ? (Math.PI * 2 * i) / count + Math.random() * 0.5
                 : dirAngle + (Math.random() - 0.5) * 1.6;
             const dist = minDist + Math.random() * spread;
-            animateAndRemove(spawn(cls, x, y, colors), [
-                { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-                { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px)) scale(.3)`, opacity: 0 },
-            ], { duration: 380 + Math.random() * 200, easing: 'cubic-bezier(.1,.8,.3,1)' });
+            animateAndRemove(spawn(cls, x, y, colors), 'scatter', {
+                duration: 380 + Math.random() * 200, easing: EASE.burst,
+                vars: { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, s1: .3 },
+            });
         }
     }
 
@@ -111,11 +176,7 @@ window.spellFx = (() => {
         const ox = -Math.sin(rad) * offset, oy = Math.cos(rad) * offset;
         const el = spawn(cls, x + ox, y + oy, colors);
         el.style.opacity = '0';
-        animateAndRemove(el, [
-            { transform: at(angleDeg, 0), opacity: 1 },
-            { transform: at(angleDeg, 1), opacity: 1, offset: 0.35 },
-            { transform: at(angleDeg, 1.1), opacity: 0 },
-        ], { duration, delay, easing: 'ease-out' });
+        animateAndRemove(el, 'slash', { duration, delay, vars: { rot: angleDeg } });
     }
 
     /** The hit portrait recoils in the strike direction and flashes. */
@@ -197,7 +258,7 @@ window.spellFx = (() => {
 
     const fx = {
         PLAYER, ENEMY, TRAIL_INTERVAL, PHYSICAL,
-        canLaunch, colorsFor, centerOf, spawn, animateAndRemove,
+        EASE, canLaunch, colorsFor, centerOf, spawn, playFx, animateAndRemove,
         trailParticle, flash, ring, sparks, slash, hitReact, frameShake, fly, direction,
     };
 

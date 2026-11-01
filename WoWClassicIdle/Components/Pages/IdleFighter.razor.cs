@@ -13,6 +13,7 @@ public partial class IdleFighter
     private bool _zoneMenuOpen;
     /// <summary>Zone map visible – also on the first visit without a chosen zone.</summary>
     private bool ZoneMenuVisible => _zoneMenuOpen || _engine.NeedsCombatZone;
+    private bool ShowDungeonProgress => _engine.CurrentDungeonRun is not null && !_engine.IsTraveling && !ZoneMenuVisible;
     private double _speedMultiplier = 1.0;
     private HashSet<string> _multiRankNames = new();
     private double _gameElapsedSeconds = 0.0;
@@ -44,6 +45,7 @@ public partial class IdleFighter
         _engine.CombatTextRaised += OnCombatText;
         _engine.AbilityUnlocked += OnAbilityUnlocked;
         _engine.AbilityTriggered += OnAbilityTriggered;
+        _engine.PartySpellCast += OnPartySpellCast;
         ApplySavedLoadout();
         _running = _engine.IsGameRunning;
         StartUiTimer();
@@ -226,7 +228,7 @@ public partial class IdleFighter
         lock (list)
         {
             list.Add(new CombatFloat(
-                Interlocked.Increment(ref _nextFloatId), ct.Kind, onPlayer, ct.Amount,
+                Interlocked.Increment(ref _nextFloatId), ct.Kind, onPlayer, onPlayer ? _engine.ToGroupHealth(ct.Amount) : ct.Amount,
                 _rng.Next(-45, 46), _rng.Next(0, 22), DateTime.UtcNow, ct.IsCrit, delayMs));
             if (list.Count > MaxFloatsPerFrame)
                 list.RemoveRange(0, list.Count - MaxFloatsPerFrame);
@@ -327,6 +329,7 @@ public partial class IdleFighter
         _engine.CombatTextRaised -= OnCombatText;
         _engine.AbilityUnlocked -= OnAbilityUnlocked;
         _engine.AbilityTriggered -= OnAbilityTriggered;
+        _engine.PartySpellCast -= OnPartySpellCast;
 
         // Leaving the page stops the fight. Prerendered instances never started it.
         if (_selfRef != null)

@@ -382,6 +382,8 @@ namespace Models
             var armorBonus = PrimaryStats.Zero;
             foreach (var armor in EquippedArmor.Values)
                 armorBonus = armorBonus + armor.Bonuses;
+            var setBonus = ItemSetRegistry.ActiveBonus(EquippedArmor.Values);
+            armorBonus = armorBonus + setBonus.Stats;
             if (EquippedWeapon?.Bonuses is { } weaponBonus)
                 armorBonus = armorBonus + weaponBonus;
             // Consumables (elixirs, flasks, food) work like gear bonuses
@@ -398,7 +400,7 @@ namespace Models
             {
                 CopperReward               = old.CopperReward,
                 XpReward                   = old.XpReward,
-                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit + EquippedArmor.Values.Sum(a => a.Effect?.CritChance ?? 0),
+                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit + EquippedArmor.Values.Sum(a => a.Effect?.CritChance ?? 0) + setBonus.Crit,
                 MeleeDamageMultiplier      = StatScaling.MeleeDamageMultiplier(meleeClass),
                 AutoAttackDamageMultiplier = StatScaling.AutoAttackDamageMultiplier(meleeClass) * (1.0 + autoAtkBonus),
                 AttackSpeedBonus           = StatScaling.AttackSpeedBonus(meleeClass) + autoAtkSpeedBonus,

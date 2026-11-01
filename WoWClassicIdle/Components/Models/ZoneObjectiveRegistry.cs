@@ -33,7 +33,7 @@ public static class ZoneObjectiveRegistry
         new ZoneObjective($"{zone.Id}:rare", zone.Id, ZoneObjectiveKind.SlayRare, null, RareIcon, 1),
     ];
 
-    public static IReadOnlyList<ZoneObjective> For(CombatZone zone) => ByZone[zone.Id];
+    public static IReadOnlyList<ZoneObjective> For(CombatZone zone) => ByZone.GetValueOrDefault(zone.Id) ?? [];
 
     /// <summary>Reward tier: player level, clamped to the level range of the zone (old zones give little).</summary>
     public static int RewardLevel(CombatZone zone, int playerLevel) => Math.Clamp(playerLevel, zone.MinLevel, zone.MaxLevel);
