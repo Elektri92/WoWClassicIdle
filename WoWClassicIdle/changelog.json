@@ -1,5 +1,39 @@
 [
   {
+    "version": "0.0.42",
+    "date": "2026-11-01",
+    "sections": [
+      {
+        "category": "Combat",
+        "changes": [
+          "Added two dungeons for both factions: Wailing Caverns (level 17-24) and The Deadmines (level 18-23). Each has five bosses with trash groups in front of them. They appear on the zone map but stay locked until the level cap rises above the current limit.",
+          "Build your dungeon group by dragging your character and NPCs into one tank, one healer and three damage slots. Companions cast real spells, share one health bar with you and appear in the damage and healing meters.",
+          "Each character can start 3 dungeon runs per 12 hours. The third death ends a run, and after every run your character travels back to the previous zone at double speed."
+        ]
+      },
+      {
+        "category": "Items",
+        "changes": [
+          "Every dungeon boss drops one item usable by your class. Each dungeon has 3 class sets of 5 pieces with 2, 3 and 5 piece bonuses, shown in the item tooltip.",
+          "Dungeon weapons can be limited to several classes, and tooltips list them."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "Added achievements for completing each dungeon and for wearing a full dungeon set.",
+          "Tooltips no longer stay on screen while dragging an item or character."
+        ]
+      },
+      {
+        "category": "System",
+        "changes": [
+          "Fixed combat slowing down the longer the game runs on Linux."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.41",
     "date": "2026-10-31",
     "sections": [
