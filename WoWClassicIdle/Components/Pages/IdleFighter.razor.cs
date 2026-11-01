@@ -315,7 +315,7 @@ public partial class IdleFighter
         (Math.Clamp(fraction, 0, 1) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Share (0..1) as a culture-invariant factor for <c>transform: scaleX()</c>. Animate fill bars via transform instead of
+    /// Share (0..1) as a culture-invariant factor for <c>scaleX()</c> or <c>--bar-frac</c>. Animate fill bars via transform instead of
     /// width: width forces layout + repaint on every tick, which makes WebKitGTK (Linux) stutter.
     /// </summary>
     private static string Scale(double fraction) =>

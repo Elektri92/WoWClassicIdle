@@ -1,3 +1,10 @@
+/* Fill fraction of value bars (HP, mana, XP, meters). Registered so that it can be transitioned. */
+@property --bar-frac {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 1;
+}
+
 html, body {
     font-family: 'Cinzel', 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
     background-color: #0e0b08;

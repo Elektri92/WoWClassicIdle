@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="2855001f-ca19-4cf6-8110-867c424f0635" />
+    <option name="activeSessionId" value="3405a82c-ab75-41fd-a8db-c4600b1a0b79" />
     <option name="openSessionIds">
       <list>
         <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
@@ -32,6 +32,7 @@
         <option value="f8f184cc-2f92-4571-91dd-1f62f97e8afd" />
         <option value="cc4bf5f9-fede-44e3-b675-a7c96dddc428" />
         <option value="2855001f-ca19-4cf6-8110-867c424f0635" />
+        <option value="3405a82c-ab75-41fd-a8db-c4600b1a0b79" />
       </list>
     </option>
     <option name="sessionPaths">
@@ -45,6 +46,7 @@
         <entry key="2855001f-ca19-4cf6-8110-867c424f0635" value="/sessions/aab71687-b98f-43d3-bdb3-827e391838e1" />
         <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="/switch-account" />
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="/sessions/6b71fc4f-339c-4914-ab12-e2f5e40a451f" />
+        <entry key="3405a82c-ab75-41fd-a8db-c4600b1a0b79" value="/sessions/7f77436a-4fda-4dee-8591-ac274f44c8ff" />
         <entry key="39c41c07-3cfb-43d9-ad79-e409b225ee45" value="/sessions/97b4bb4c-1eda-446c-a2c3-79171be9ea26" />
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="/sessions/131bc0ad-43a1-4009-9c5b-7eceef8a4cd1" />
         <entry key="3d692cac-c9c0-4714-919c-a2db7467d54d" value="/sessions/8add3aa3-8efd-4e6d-a3e3-9602d398b69b" />
@@ -77,6 +79,7 @@
         <entry key="2855001f-ca19-4cf6-8110-867c424f0635" value="WoWClassicIdle Release auf GitHub" />
         <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="Claude Code" />
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="Kann ich dir auch einfach eine Frage stellen ohne" />
+        <entry key="3405a82c-ab75-41fd-a8db-c4600b1a0b79" value="HP-Balken springen unter Linux" />
         <entry key="39c41c07-3cfb-43d9-ad79-e409b225ee45" value="didnt start debug as it should" />
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="Warrior-Stances ohne Talentbaum-Skillung" />
         <entry key="3d692cac-c9c0-4714-919c-a2db7467d54d" value="Thematische Talentbaum-Hintergründe" />

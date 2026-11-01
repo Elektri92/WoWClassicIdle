@@ -136,7 +136,7 @@ else if (!_engine.NeedsCombatZone)
                         int shieldLeft  = Math.Min(playerHpPct, 100 - shieldPct);
                     }
                     <div class="hp-bar @(_engine.CurrentDungeonParty.Count > 0 ? "group-hp" : "")">
-                        <div class="hp-fill" style="transform: scaleX(@Scale(playerHpPct / 100.0))"></div>
+                        <div class="hp-fill" style="--bar-frac: @Scale(playerHpPct / 100.0)"></div>
                         @if (shieldPct > 0)
                         {
                             <div class="shield-fill" style="left: @(shieldLeft)%; width: @(shieldPct)%"></div>
@@ -158,7 +158,7 @@ else if (!_engine.NeedsCombatZone)
                     @{ int effectiveMaxMana = _engine.Player.Stats.MaxMana + _engine.Player.Buffs.BonusMaxMana; }
                     <div class="mana-bar mana-bar-@(_engine.Player.Resource.ToString().ToLowerInvariant())">
                         <div class="mana-fill"
-                             style="transform: scaleX(@Scale(CalcPct(_engine.Player.CurrentMana, effectiveMaxMana) / 100.0))"></div>
+                             style="--bar-frac: @Scale(CalcPct(_engine.Player.CurrentMana, effectiveMaxMana) / 100.0)"></div>
                         <span class="bar-text">@_engine.Player.CurrentMana / @effectiveMaxMana</span>
                     </div>
                 </div>
@@ -172,7 +172,7 @@ else if (!_engine.NeedsCombatZone)
                         else
                         {
                             <div class="xp-fill"
-                                 style="transform: scaleX(@Scale(CalcPct(_engine.Player.Xp, _engine.Player.XpToNextLevel) / 100.0))"></div>
+                                 style="--bar-frac: @Scale(CalcPct(_engine.Player.Xp, _engine.Player.XpToNextLevel) / 100.0)"></div>
                             <span class="bar-text">@_engine.Player.Xp / @_engine.Player.XpToNextLevel</span>
                         }
                     </div>
@@ -186,7 +186,7 @@ else if (!_engine.NeedsCombatZone)
                 <div class="pet-row">
                     <img class="pet-icon" src="@pet.Definition.IconUrl" alt="@pet.Definition.Name" onerror="this.style.visibility='hidden'" />
                     <div class="hp-bar pet-hp">
-                        <div class="hp-fill" style="transform: scaleX(@Scale(CalcPct(pet.CurrentHp, pet.MaxHp) / 100.0))"></div>
+                        <div class="hp-fill" style="--bar-frac: @Scale(CalcPct(pet.CurrentHp, pet.MaxHp) / 100.0)"></div>
                         <span class="bar-text">@pet.Definition.Name · @pet.CurrentHp / @pet.MaxHp</span>
                     </div>
                 </div>
@@ -393,7 +393,7 @@ else if (!_engine.NeedsCombatZone)
                     <div class="bar-row">
                         <div class="hp-bar enemy-hp">
                             <div class="hp-fill"
-                                 style="transform: scaleX(@Scale(CalcPct(enemy.CurrentHp, enemy.Stats.MaxHp) / 100.0))"></div>
+                                 style="--bar-frac: @Scale(CalcPct(enemy.CurrentHp, enemy.Stats.MaxHp) / 100.0)"></div>
                             <span class="bar-text">@enemy.CurrentHp / @enemy.Stats.MaxHp</span>
                         </div>
                     </div>
@@ -446,7 +446,7 @@ else if (!_engine.NeedsCombatZone)
                     </div>
                     <div class="bar-row">
                         <div class="hp-bar enemy-hp">
-                            <div class="hp-fill" style="transform: scaleX(0)"></div>
+                            <div class="hp-fill" style="--bar-frac: 0"></div>
                         </div>
                     </div>
                 }
@@ -554,7 +554,7 @@ else if (!_engine.NeedsCombatZone)
                             b.AddAttribute(2, "title", $"{row.Name}: {row.Count} {(row.Name == CombatMeter.SpiritRegenName ? "ticks" : "casts")}, max {row.Max}, avg {(row.Count > 0 ? row.Total / row.Count : 0)}");
                         b.OpenElement(3, "div");
                         b.AddAttribute(4, "class", "meter-fill");
-                        b.AddAttribute(5, "style", $"transform: scaleX({Scale((double)row.Total / topTotal)})");
+                        b.AddAttribute(5, "style", $"--bar-frac: {Scale((double)row.Total / topTotal)}");
                         b.CloseElement();
                         b.OpenElement(6, "span");
                         b.AddAttribute(7, "class", "meter-rank");
@@ -1039,11 +1039,13 @@ else if (!_engine.NeedsCombatZone)
         box-shadow: inset 0 0 4px #000;
     }
 
-    /* Fill via scaleX instead of width – compositing only, no layout per tick */
+    /* Value bars transition a registered property instead of transform: WebKitGTK (Linux) runs transform
+       transitions in the compositor, and retargeting one mid-flight makes the bar jump back. No layout per tick. --bar-frac is registered in app.css. */
     .hp-fill, .mana-fill, .xp-fill {
         height: 100%;
         transform-origin: left;
-        transition: transform .4s ease;
+        transform: scaleX(var(--bar-frac));
+        transition: --bar-frac .4s ease;
     }
 
     .hp-fill {
@@ -1743,7 +1745,8 @@ else if (!_engine.NeedsCombatZone)
         position: absolute;
         inset: 0;
         transform-origin: left;
-        transition: transform .4s ease;
+        transform: scaleX(var(--bar-frac));
+        transition: --bar-frac .4s ease;
     }
 
     .meter-fill::after {
