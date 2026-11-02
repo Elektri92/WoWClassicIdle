@@ -112,7 +112,7 @@ public partial class IdleGameEngine
         foreach (var profData in save.SecondaryProfessions ?? [])
         {
             if (Enum.TryParse<Profession>(profData.Profession, out var profession) && !Professions.Get(profession).IsPrimary)
-                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex);
+                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex, profData.TrainerSeenSkill);
         }
 
         foreach (var data in save.PassiveAssignments ?? [])
@@ -139,16 +139,17 @@ public partial class IdleGameEngine
 
         RestoreCraftingQueue(save.CraftingQueue ?? []);
         ReturnToIdleAfterCrafting = save.ReturnToIdleAfterCrafting;
+        DisenchantCraftedItems = save.DisenchantCraftedItems;
 
         UnlockSharedProfessions();
     }
 
     /// <summary>Takes over an account-wide profession – with multiple legacy entries the highest skill wins.</summary>
-    private void RestoreSharedProfession(Profession profession, int skill, int rankIndex)
+    private void RestoreSharedProfession(Profession profession, int skill, int rankIndex, int trainerSeenSkill)
     {
         var current = _sharedProfessions.GetValueOrDefault(profession);
         if (current is not null && current.Skill >= skill && current.RankIndex >= rankIndex) return;
-        var progress = new ProfessionProgress(profession);
+        var progress = new ProfessionProgress(profession) { TrainerSeenSkill = trainerSeenSkill };
         progress.Restore(Math.Max(skill, current?.Skill ?? 1), Math.Max(rankIndex, current?.RankIndex ?? 0));
         _sharedProfessions[profession] = progress;
     }
@@ -215,9 +216,9 @@ public partial class IdleGameEngine
         {
             if (!Enum.TryParse<Profession>(profData.Profession, out var profession)) continue;
             if (Professions.Get(profession).IsPrimary)
-                player.ProfessionState.Restore(profession, profData.Skill, profData.RankIndex, profData.KnownRecipes, player.ActiveClass);
+                player.ProfessionState.Restore(profession, profData.Skill, profData.RankIndex, profData.KnownRecipes, player.ActiveClass, profData.TrainerSeenSkill);
             else
-                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex); // migrate legacy save
+                RestoreSharedProfession(profession, profData.Skill, profData.RankIndex, profData.TrainerSeenSkill); // migrate legacy save
         }
 
         // Set the active class (recalculates stats, restores the weapon)
@@ -226,7 +227,7 @@ public partial class IdleGameEngine
 
         // Load the loadout of the active class into the character
         if (p.LoadoutAbilityIdsByClass.TryGetValue(p.ActiveClass.ToString(), out var activeIds))
-            player.ApplyLoadout(new ClassLoadout { Class = p.ActiveClass, EquippedAbilityIds = activeIds.ToList() });
+            player.ApplyLoadout(p.BuildLoadout(p.ActiveClass, activeIds));
 
         // Last: every stat recalculation above refills health and resource
         player.RestoreResources(p.CurrentHp, p.CurrentMana);

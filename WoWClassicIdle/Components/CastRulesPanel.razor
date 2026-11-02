@@ -1,0 +1,145 @@
+@using Models
+
+@* Auto-cast conditions of the equipped spells on /ability-loadout. Styles: wwwroot/css/cast-rules.css *@
+<div class="al-panel cast-rules" style="--i: 1">
+    <button class="cast-rules-head @(_expanded ? "open" : "")" aria-expanded="@(_expanded ? "true" : "false")"
+            @onclick="() => _expanded = !_expanded">
+        <span class="cast-rules-title">Auto-Cast Conditions</span>
+        <span class="toggle-arrow" aria-hidden="true">▼</span>
+    </button>
+
+    @if (_expanded)
+    {
+        <p class="cast-rules-hint">Choose when each equipped spell is cast automatically. Limits are a percentage of your maximum @ResourceName and health.</p>
+
+        @if (Abilities.Count == 0)
+        {
+            <div class="pool-empty">None of your equipped spells can be limited.</div>
+        }
+
+        <div class="cast-rule-list">
+            @foreach (var ability in Abilities)
+            {
+                var spell = ability;
+                var rule = Loadout.RuleFor(spell.Name);
+                <div class="cast-rule" @key="spell.Name">
+                    <AbilityTooltip Ability="Player.GetEffectiveAbility(spell)" PlayerLevel="Player.Level" CastRule="rule" Class="cast-rule-spell">
+                        <img src="@spell.IconUrl" alt="" />
+                        <span class="cast-rule-name">@spell.Name</span>
+                    </AbilityTooltip>
+
+                    <div class="cast-conditions">
+                        @if (AbilityCastRule.SupportsResource(spell))
+                        {
+                            var defaultCondition = AbilityText.DefaultResourceCondition(spell);
+                            int? pct = rule?.ResourcePct;
+                            var comparison = rule?.ResourceComparison ?? ResourceComparison.Below;
+                            <div class="cast-condition">
+                                <span class="cast-condition-label">@ResourceName</span>
+                                <div class="cast-segments" role="group" aria-label="@($"{ResourceName} condition of {spell.Name}")">
+                                    <button class="@(pct is null ? "active" : "")" aria-pressed="@(pct is null ? "true" : "false")"
+                                            @onclick="() => SetResource(spell, null, comparison)">
+                                        @(defaultCondition is null ? "Always" : "Default")
+                                    </button>
+                                    <button class="@(pct is not null && comparison == ResourceComparison.Below ? "active" : "")"
+                                            title="@($"Only while {ResourceName} is below the limit")"
+                                            aria-label="@($"Only while {ResourceName} is below the limit")"
+                                            aria-pressed="@(pct is not null && comparison == ResourceComparison.Below ? "true" : "false")"
+                                            @onclick="() => SetResource(spell, pct ?? AbilityCastRule.DefaultPercent, ResourceComparison.Below)">&lt;</button>
+                                    <button class="@(pct is not null && comparison == ResourceComparison.Above ? "active" : "")"
+                                            title="@($"Only while {ResourceName} is above the limit")"
+                                            aria-label="@($"Only while {ResourceName} is above the limit")"
+                                            aria-pressed="@(pct is not null && comparison == ResourceComparison.Above ? "true" : "false")"
+                                            @onclick="() => SetResource(spell, pct ?? AbilityCastRule.DefaultPercent, ResourceComparison.Above)">&gt;</button>
+                                </div>
+                                @if (pct is { } limit)
+                                {
+                                    // "Below 0 %" and "above 100 %" could never be cast
+                                    int min = comparison == ResourceComparison.Below ? 1 : 0;
+                                    int max = comparison == ResourceComparison.Below ? 100 : 99;
+                                    <input class="cast-slider" type="range" min="@min" max="@max" step="1" value="@limit"
+                                           style="--pct: @(limit)%" aria-label="@($"{ResourceName} limit of {spell.Name} in percent")"
+                                           @oninput="e => OnResourceSlider(spell, comparison, e)" />
+                                    <output class="cast-value">@limit%</output>
+                                }
+                                else
+                                {
+                                    <span class="cast-condition-hint">
+                                        @(defaultCondition is null ? "Whenever it is affordable" : $"Casts {defaultCondition}")
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        @if (AbilityCastRule.SupportsHp(spell))
+                        {
+                            int? hpPct = rule?.HpPct;
+                            <div class="cast-condition">
+                                <span class="cast-condition-label">Health</span>
+                                <div class="cast-segments" role="group" aria-label="@($"Health condition of {spell.Name}")">
+                                    <button class="@(hpPct is null ? "active" : "")" aria-pressed="@(hpPct is null ? "true" : "false")"
+                                            @onclick="() => SetHp(spell, null)">
+                                        @(spell.IsHealing ? "Default" : "Always")
+                                    </button>
+                                    <button class="@(hpPct is not null ? "active" : "")"
+                                            title="Only at or below the health limit"
+                                            aria-label="Only at or below the health limit"
+                                            aria-pressed="@(hpPct is not null ? "true" : "false")"
+                                            @onclick="() => SetHp(spell, hpPct ?? AbilityCastRule.DefaultPercent)">≤</button>
+                                </div>
+                                @if (hpPct is { } hpLimit)
+                                {
+                                    <input class="cast-slider hp" type="range" min="1" max="100" step="1" value="@hpLimit"
+                                           style="--pct: @(hpLimit)%" aria-label="@($"Health limit of {spell.Name} in percent")"
+                                           @oninput="e => OnHpSlider(spell, e)" />
+                                    <output class="cast-value">@hpLimit%</output>
+                                }
+                                else
+                                {
+                                    <span class="cast-condition-hint">
+                                        @(spell.IsHealing ? $"Casts at or below {Ability.HealThreshold * 100:0}% health" : "Regardless of health")
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Equipped spells that can be limited, in slot order.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<Ability> Abilities { get; set; } = Array.Empty<Ability>();
+    [Parameter, EditorRequired] public ClassLoadout Loadout { get; set; } = null!;
+    [Parameter, EditorRequired] public Player Player { get; set; } = null!;
+    /// <summary>Resource of the current class or form.</summary>
+    [Parameter, EditorRequired] public string ResourceName { get; set; } = "";
+    /// <summary>A rule of the loadout was changed.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool _expanded = true;
+
+    private Task Update(Ability spell, Func<AbilityCastRule, AbilityCastRule> change)
+    {
+        Loadout.SetCastRule(spell.Name, change(Loadout.RuleFor(spell.Name) ?? new AbilityCastRule()));
+        return OnChanged.InvokeAsync();
+    }
+
+    private Task SetResource(Ability spell, int? pct, ResourceComparison comparison) => Update(spell, rule => rule with
+    {
+        ResourcePct = pct is { } p
+            ? Math.Clamp(p, comparison == ResourceComparison.Below ? 1 : 0, comparison == ResourceComparison.Below ? 100 : 99)
+            : null,
+        ResourceComparison = comparison,
+    });
+
+    private Task SetHp(Ability spell, int? pct) => Update(spell, rule => rule with { HpPct = pct });
+
+    private Task OnResourceSlider(Ability spell, ResourceComparison comparison, ChangeEventArgs e) =>
+        int.TryParse(e.Value?.ToString(), out var pct) ? SetResource(spell, pct, comparison) : Task.CompletedTask;
+
+    private Task OnHpSlider(Ability spell, ChangeEventArgs e) =>
+        int.TryParse(e.Value?.ToString(), out var pct) ? SetHp(spell, Math.Clamp(pct, 1, 100)) : Task.CompletedTask;
+}

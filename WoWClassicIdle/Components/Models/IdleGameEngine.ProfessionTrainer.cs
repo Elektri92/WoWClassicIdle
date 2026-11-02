@@ -25,6 +25,49 @@ public partial class IdleGameEngine
         return null;
     }
 
+    /// <summary>
+    /// Is there something new at the trainer, whoever is being played? A reachable rank stays new until it is trained,
+    /// recipes only until the trainer was visited at their skill (otherwise recipes for other classes would glow forever).
+    /// </summary>
+    public bool HasTrainerNews(Profession profession)
+    {
+        lock (_simLock)
+        {
+            if (TrainerProgress(profession) is not { } progress) return false;
+            if (progress.NextRank is { } next && progress.Skill >= next.RequiredSkill && TrainerLevel(profession) >= next.RequiredLevel)
+                return true;
+            return ProfessionRegistry.GetRecipes(profession).Any(r =>
+                r.RequiredSkill > progress.TrainerSeenSkill && r.RequiredSkill <= progress.Skill && !progress.KnowsRecipe(r.Id));
+        }
+    }
+
+    /// <summary>The player is looking at the trainer's offers: recipes up to the current skill are no longer new.</summary>
+    public void MarkTrainerSeen(Profession profession)
+    {
+        lock (_simLock)
+            if (TrainerProgress(profession) is { } progress)
+                progress.TrainerSeenSkill = progress.Skill;
+    }
+
+    /// <summary>Why the profession glows in the menus (UI text) – <c>null</c> if there is nothing new.</summary>
+    public string? ProfessionNews(Profession profession) => (HasTrainerNews(profession), CanImproveBonuses(profession)) switch
+    {
+        (true, true)  => "New training and a better bonus are available",
+        (true, false) => "New training available",
+        (false, true) => "A better bonus is available",
+        _             => null,
+    };
+
+    private ProfessionProgress? TrainerProgress(Profession profession) =>
+        Professions.Get(profession).IsPrimary
+            ? ProfessionOwner(profession)?.Player.ProfessionState.Get(profession)
+            : _sharedProfessions.GetValueOrDefault(profession);
+
+    private int TrainerLevel(Profession profession) =>
+        Professions.Get(profession).IsPrimary
+            ? ProfessionOwner(profession)?.Player.Level ?? 0
+            : _roster.Select(s => s.Player.Level).DefaultIfEmpty().Max();
+
     /// <summary>Buys the next training tier. Returns an English error message on failure, otherwise <c>null</c>.</summary>
     public string? TrainProfessionRank(Profession profession)
     {

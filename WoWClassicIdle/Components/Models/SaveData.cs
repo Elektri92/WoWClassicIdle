@@ -29,6 +29,7 @@ public class SaveData
     // Open crafting queue in order; null = legacy save without this field
     public List<CraftingQueueSaveData>? CraftingQueue { get; set; }
     public bool ReturnToIdleAfterCrafting { get; set; }
+    public bool DisenchantCraftedItems { get; set; }
     // Account-wide profession bonuses (ProfessionBonus.Key) and Profession.ToString() → slots; null = legacy save without these fields
     public List<string>? ProfessionBonuses { get; set; }
     public Dictionary<string, List<string?>>? EquippedProfessionBonuses { get; set; }
@@ -100,12 +101,22 @@ public class PlayerSaveData
     public Dictionary<string, int> EquippedArmorIdBySlot { get; set; } = new();
     public List<ItemStackSaveData> BackpackItems { get; set; } = new();
     public Dictionary<string, List<string>> LoadoutAbilityIdsByClass { get; set; } = new();
+    // CharacterClass.ToString() → spell name → auto-cast conditions (missing in legacy saves → none)
+    public Dictionary<string, Dictionary<string, AbilityCastRule>> CastRulesByClass { get; set; } = new();
     // TalentId → invested ranks
     public Dictionary<string, int> TalentInvestedPoints { get; set; } = new();
     // BuffKeys of consumable kinds with auto-use off (missing in legacy saves → all on)
     public List<string> DisabledAutoUseConsumables { get; set; } = new();
     // Main profession (from version 4; older saves also contain gathering/secondary professions here → taken over account-wide)
     public List<ProfessionSaveData> Professions { get; set; } = new();
+
+    public ClassLoadout BuildLoadout(CharacterClass cls, IEnumerable<string> abilityIds)
+    {
+        var loadout = new ClassLoadout { Class = cls, EquippedAbilityIds = abilityIds.ToList() };
+        if (CastRulesByClass.TryGetValue(cls.ToString(), out var rules))
+            loadout.SetCastRules(rules);
+        return loadout;
+    }
 }
 
 public class ProfessionSaveData
@@ -116,6 +127,7 @@ public class ProfessionSaveData
     public int RankIndex { get; set; }
     // Recipe IDs learned from the trainer; null = legacy save (all recipes up to the skill count as learned)
     public List<string>? KnownRecipes { get; set; }
+    public int TrainerSeenSkill { get; set; }
 }
 
 /// <summary>A passive profession slot filled with a character.</summary>

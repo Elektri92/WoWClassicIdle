@@ -83,11 +83,27 @@ namespace Models
         Head,
         Neck,
         Trinket,
+
+        // Second worn position of the paired slots; items themselves only use Ring/Trinket
+        Ring2,
+        Trinket2,
     }
 
     /// <summary>Display name of an armor slot (WoW Classic slot names for the UI).</summary>
     public static class ArmorSlots
     {
+        private static readonly ArmorSlot[] RingPositions = [ArmorSlot.Ring, ArmorSlot.Ring2];
+        private static readonly ArmorSlot[] TrinketPositions = [ArmorSlot.Trinket, ArmorSlot.Trinket2];
+
+        /// <summary>Worn positions that accept an item of the given slot.</summary>
+        public static IReadOnlyList<ArmorSlot> PositionsFor(ArmorSlot slot) => slot switch
+        {
+            ArmorSlot.Ring or ArmorSlot.Ring2       => RingPositions,
+            ArmorSlot.Trinket or ArmorSlot.Trinket2 => TrinketPositions,
+            _                                       => [slot],
+        };
+
+
         public static string Label(ArmorSlot slot) => slot switch
         {
             ArmorSlot.Hands   => "Hands",
@@ -97,10 +113,10 @@ namespace Models
             ArmorSlot.Feet    => "Feet",
             ArmorSlot.Wrists  => "Wrist",
             ArmorSlot.Cape    => "Back",
-            ArmorSlot.Ring    => "Finger",
+            ArmorSlot.Ring or ArmorSlot.Ring2       => "Finger",
             ArmorSlot.Head    => "Head",
             ArmorSlot.Neck    => "Neck",
-            ArmorSlot.Trinket => "Trinket",
+            ArmorSlot.Trinket or ArmorSlot.Trinket2 => "Trinket",
             _                 => slot.ToString(),
         };
     }

@@ -127,7 +127,9 @@
             .OfType<CharacterSlot>()
             .ToList();
         bool hasAction = def.IsPrimary && (progress is not null || owner is null);
-        <div class="prof-card prof-bg-@def.Slug @(shown is not null ? "learned" : "") @(hasAction ? "has-action" : "")" style="--i: @index" @onclick="() => Open(def)">
+        var news     = Engine.ProfessionNews(def.Profession);
+        <div class="prof-card prof-bg-@def.Slug @(shown is not null ? "learned" : "") @(hasAction ? "has-action" : "") @(news is not null ? "has-news" : "")"
+             style="--i: @index" title="@news" @onclick="() => Open(def)">
             <img class="prof-icon" src="@def.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
             <div class="prof-card-body">
                 <div class="prof-card-name">

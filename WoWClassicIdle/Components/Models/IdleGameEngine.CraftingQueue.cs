@@ -23,6 +23,7 @@ public partial class IdleGameEngine
     private double _craftingElapsed;
     // Open queue panels – the queue only runs while the player is in the professions menu
     private int _craftingMenuViewers;
+    private bool _craftingQueuePaused;
 
     public const int ReturnToIdleUnlockLevel = 15;
 
@@ -33,6 +34,30 @@ public partial class IdleGameEngine
     public bool ReturnToIdleAfterCrafting { get; set; }
 
     public bool IsReturnToIdleUnlocked => _roster.Any(s => s.Player.Level >= ReturnToIdleUnlockLevel);
+
+    /// <summary>Player setting: crafted items that can be disenchanted become the next position of the queue.</summary>
+    public bool DisenchantCraftedItems { get; set; }
+
+    public bool IsDisenchantCraftedUnlocked
+    {
+        get { lock (_simLock) return ProfessionOwner(Profession.Enchanting) is not null; }
+    }
+
+    /// <summary>The current position waits until the inventory has room for its result.</summary>
+    public bool IsCraftingQueuePaused
+    {
+        get { lock (_simLock) return _craftingQueuePaused; }
+    }
+
+    public int FreeInventorySlots
+    {
+        get { lock (_simLock) return _sharedInventory.FreeSlots; }
+    }
+
+    public int TotalInventorySlots
+    {
+        get { lock (_simLock) return _sharedInventory.TotalSlots; }
+    }
 
     public IReadOnlyList<CraftingQueueEntry> CraftingQueue
     {
@@ -57,11 +82,17 @@ public partial class IdleGameEngine
             lock (_simLock)
             {
                 if (_craftingQueue.Count == 0) return 0;
-                double total = _craftingQueue.Sum(e => e.Duration * e.Remaining / ProfessionSpeedFactor(e.Profession));
+                double total = _craftingQueue.Sum(e => e.Remaining * (e.Duration / ProfessionSpeedFactor(e.Profession) + FollowUpDisenchantSeconds(e)));
                 return Math.Max(0, total - _craftingElapsed / ProfessionSpeedFactor(_craftingQueue[0].Profession));
             }
         }
     }
+
+    private double FollowUpDisenchantSeconds(CraftingQueueEntry entry) =>
+        WillDisenchantResult(entry) ? DisenchantCastSeconds / ProfessionSpeedFactor(Profession.Enchanting) : 0;
+
+    private bool WillDisenchantResult(CraftingQueueEntry entry) =>
+        DisenchantCraftedItems && !entry.IsDisenchant && DisenchantBlocker(entry.Item) is null;
 
     public void EnterCraftingMenu()
     {
@@ -116,11 +147,7 @@ public partial class IdleGameEngine
         _craftingQueue.RemoveAll(e => ProfessionOwner(e.Profession) is null);
 
         if (_craftingMenuViewers == 0) return;
-        if (!DropUnworkableEntries())
-        {
-            _craftingElapsed = 0;
-            return;
-        }
+        if (!CanWorkOnQueue()) return;
 
         // With accelerated simulation (debug) several passes can fall into one tick
         _craftingElapsed += dt * ProfessionSpeedFactor(_craftingQueue[0].Profession);
@@ -130,10 +157,11 @@ public partial class IdleGameEngine
             _craftingElapsed -= entry.Duration;
 
             var progress = ProfessionOwner(entry.Profession)!.Player.ProfessionState.Get(entry.Profession)!;
+            int resultsBefore = _sharedInventory.CountOf(entry.Item.Id);
             bool success = entry.Recipe is { } recipe
                 ? ExecuteProfession(progress, recipe.Id, Professions.SkillUpChance, source: null)
                 : ExecuteDisenchant(progress, entry.Item);
-            // Only a full inventory fails here: the position stays and is retried on the next pass
+            // Full inventories are caught by CanWorkOnQueue: the position stays and is retried on the next pass
             if (!success)
             {
                 _craftingElapsed = 0;
@@ -141,13 +169,28 @@ public partial class IdleGameEngine
             }
 
             if (--entry.Remaining <= 0) _craftingQueue.RemoveAt(0);
-            if (!DropUnworkableEntries())
-            {
-                _craftingElapsed = 0;
-                return;
-            }
+            // Counted from the bags because a double yield can add a second item
+            if (WillDisenchantResult(entry))
+                for (int i = _sharedInventory.CountOf(entry.Item.Id) - resultsBefore; i > 0; i--)
+                    _craftingQueue.Insert(0, NewDisenchantEntry(entry.Item));
+
+            if (!CanWorkOnQueue()) return;
         }
     }
+
+    /// <summary>Prepares the first position; without one or without room for its result the progress restarts.</summary>
+    private bool CanWorkOnQueue()
+    {
+        bool hasEntry = DropUnworkableEntries();
+        _craftingQueuePaused = hasEntry && !HasRoomForResult(_craftingQueue[0]);
+        if (hasEntry && !_craftingQueuePaused) return true;
+        _craftingElapsed = 0;
+        return false;
+    }
+
+    // Disenchanting needs no check: the destroyed item always leaves a slot for the material
+    private bool HasRoomForResult(CraftingQueueEntry entry) =>
+        entry.Recipe is not { } recipe || _sharedInventory.HasRoomAfterUsing(recipe.Reagents, recipe.Result, recipe.ResultCount);
 
     /// <summary>Removes positions that cannot be worked on when it is their turn. Returns whether one is left.</summary>
     private bool DropUnworkableEntries()

@@ -102,6 +102,31 @@ namespace Models
         public int CountOf(int itemId) => AllContainers.Sum(b => b.CountOf(itemId));
 
         /// <summary>
+        /// Would the items fit once the reagents are used up? Walks the slots in the order of <see cref="Remove"/>,
+        /// because a used-up reagent stack frees its slot. Doesn't touch the bags.
+        /// </summary>
+        public bool HasRoomAfterUsing(IEnumerable<Reagent> reagents, Item item, int count)
+        {
+            var toRemove = reagents.GroupBy(r => r.Item.Id).ToDictionary(g => g.Key, g => g.Sum(r => r.Count));
+            int freeSlots = 0;
+            int stackSpace = 0;
+            foreach (var stack in AllContainers.SelectMany(b => b.Slots))
+            {
+                if (stack is null)
+                {
+                    freeSlots++;
+                    continue;
+                }
+
+                int removed = Math.Min(toRemove.GetValueOrDefault(stack.Item.Id), stack.Count);
+                if (removed > 0) toRemove[stack.Item.Id] -= removed;
+                if (stack.Count == removed) freeSlots++;
+                else if (item.IsStackable && stack.Item.Id == item.Id) stackSpace += item.MaxStack - (stack.Count - removed);
+            }
+            return count <= stackSpace + freeSlots * item.MaxStack;
+        }
+
+        /// <summary>
         /// Splits <paramref name="amount"/> items off a stack and puts them into the next free slot
         /// (same bag first, then the other containers). <c>false</c> if there is no space or the amount is invalid.
         /// </summary>

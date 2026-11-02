@@ -9,7 +9,7 @@
 else
 {
     var cost = AbilityText.CostText(Ability);
-    var note = AbilityText.AutoCastNote(Ability);
+    var note = AbilityText.AutoCastNote(Ability, CastRule);
     bool levelTooLow = PlayerLevel is { } lvl && lvl < Ability.LevelRequired;
 
     <span class="tt-host @Class" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
@@ -63,6 +63,9 @@ else
 
     /// <summary>Remaining duration, if the tooltip belongs to an active buff.</summary>
     [Parameter] public double? BuffRemaining { get; set; }
+
+    /// <summary>Auto-cast conditions from the loadout – replace the default auto-cast note.</summary>
+    [Parameter] public AbilityCastRule? CastRule { get; set; }
 
     /// <summary>Extra CSS class for the wrapper (e.g. "tt-block" for rows).</summary>
     [Parameter] public string? Class { get; set; }

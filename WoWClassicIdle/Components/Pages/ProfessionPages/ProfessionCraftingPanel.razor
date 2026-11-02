@@ -99,7 +99,7 @@
                                 {
                                     <ArmorTooltip Armor="armor" Class="tt-contents" Hint="@hint"
                                                   RequirementsMet="@Engine.Player.MeetsItemRequirements(armor)"
-                                                  Compare="@Engine.Player.EquippedArmor.GetValueOrDefault(armor.Slot)">
+                                                  Compare="@Engine.Player.EquippedArmor.GetValueOrDefault(Engine.Player.EquipTargetFor(armor))">
                                         @entry
                                     </ArmorTooltip>
                                 }

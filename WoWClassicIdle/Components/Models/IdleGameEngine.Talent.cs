@@ -52,7 +52,7 @@ public partial class IdleGameEngine
             {
                 var granted = ClassAbilityRegistry.FindById(abilityId);
                 if (granted is not null)
-                    AbilityUnlocked?.Invoke(granted);
+                    AbilityUnlocked?.Invoke(ClassAbilityRegistry.HighestRank(granted, Player.Level));
             }
         }
         return ok;

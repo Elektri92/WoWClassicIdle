@@ -36,6 +36,11 @@ public class TalentDefinition
             ? AlsoGrantsAbilityIds
             : AlsoGrantsAbilityIds.Prepend(GrantsAbilityId);
 
+    /// <summary>The granted abilities including their higher ranks (those still need the level).</summary>
+    public IReadOnlyList<string> GrantedRankIds =>
+        _grantedRankIds ??= GrantedAbilityIds.SelectMany(ClassAbilityRegistry.AllRankIds).ToList();
+    private IReadOnlyList<string>? _grantedRankIds;
+
     /// <summary>Description of the effect for a specific rank.</summary>
     public string EffectDescription(int ranks) => EffectType switch
     {

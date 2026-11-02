@@ -23,8 +23,9 @@
                     .Select(a => Engine.GetCharacter(a.CharacterId))
                     .OfType<CharacterSlot>()
                     .ToList();
-                <a class="prof-quick-item @(def == _def ? "current" : "")" href="professions/@def.Slug" style="--i: @(quickIndex++)"
-                   title="@QuickTitle(def, owner, workers)">
+                var news = Engine.ProfessionNews(def.Profession);
+                <a class="prof-quick-item @(def == _def ? "current" : "") @(news is not null ? "has-news" : "")" href="professions/@def.Slug" style="--i: @(quickIndex++)"
+                   title="@(news is null ? QuickTitle(def, owner, workers) : $"{QuickTitle(def, owner, workers)} – {news}")">
                     <img src="@def.IconUrl" alt="@def.Name" onerror="this.style.visibility='hidden'" />
                     @if (owner is not null || workers.Count > 0)
                     {
@@ -97,7 +98,8 @@
                         <span class="inv-speech-text">@_speech</span>
                     </div>
                 }
-                <button class="trainer-npc @(_trainerOpen ? "open" : "")" title="Talk to @trainer.Name"
+                @{ bool trainerNews = !_trainerOpen && Engine.HasTrainerNews(_def.Profession); }
+                <button class="trainer-npc @(_trainerOpen ? "open" : "") @(trainerNews ? "has-news" : "")" title="Talk to @trainer.Name"
                         @onclick="ToggleTrainer" @oncontextmenu="ToggleTrainer" @oncontextmenu:preventDefault>
                     <span @key="_speechKey" class="al-portrait trainer-npc-portrait @(_speechKey > 0 ? "talking" : "")">
                         <img class="al-race-portrait" src="@trainer.PortraitUrl" alt="@trainer.Name" onerror="this.style.display='none'" />
@@ -107,7 +109,7 @@
                         <span class="inv-npc-name">@trainer.Name</span>
                         <span class="inv-npc-title">&lt;@trainer.Title&gt;</span>
                         <span class="inv-npc-greeting">@trainer.Greeting</span>
-                        <span class="inv-npc-cta">@(_trainerOpen ? "Click to close" : "Click to train")</span>
+                        <span class="inv-npc-cta">@(_trainerOpen ? "Click to close" : trainerNews ? "New training available!" : "Click to train")</span>
                     </span>
                 </button>
             </div>
@@ -201,7 +203,12 @@
     private static string CategoryLabel(ProfessionDefinition def) =>
         (def.IsGathering ? "Gathering" : "Crafting") + (def.IsPrimary ? " · Primary Profession" : " · Shared by all characters");
 
-    private void OnProfessionUpdated() => _ = InvokeAsync(StateHasChanged);
+    private void OnProfessionUpdated() => _ = InvokeAsync(() =>
+    {
+        // Skill-ups while the trainer window is open are seen right away
+        if (_trainerOpen && _def is not null) Engine.MarkTrainerSeen(_def.Profession);
+        StateHasChanged();
+    });
 
     private static string QuickTitle(ProfessionDefinition def, CharacterSlot? owner, List<CharacterSlot> workers)
     {

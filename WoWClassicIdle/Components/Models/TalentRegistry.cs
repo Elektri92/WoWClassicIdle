@@ -17,7 +17,7 @@ public static partial class TalentRegistry
 
     /// <summary>Talents that unlock the ability <paramref name="abilityId"/> (empty = not a talent ability).</summary>
     public static IEnumerable<TalentDefinition> GetGrantingTalents(CharacterClass cls, string abilityId) =>
-        GetTalents(cls).Where(t => t.GrantedAbilityIds.Contains(abilityId));
+        GetTalents(cls).Where(t => t.GrantedRankIds.Contains(abilityId));
 
     public static TalentDefinition? GetById(CharacterClass cls, string id) =>
         GetTalents(cls).FirstOrDefault(t => t.Id == id);

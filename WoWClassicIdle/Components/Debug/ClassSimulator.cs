@@ -495,7 +495,7 @@ public static class ClassSimulator
         foreach (var talent in TalentRegistry.GetTalents(cls))
         {
             if (player.TalentState.GetRanks(talent.Id) > 0)
-                result.UnionWith(talent.GrantedAbilityIds);
+                result.UnionWith(talent.GrantedRankIds);
         }
         return result;
     }

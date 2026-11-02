@@ -259,7 +259,7 @@ public static partial class AbilityText
     }
 
     /// <summary>Additional hint on the auto-cast logic (e.g. rage threshold, heal gate).</summary>
-    public static string AutoCastNote(Ability ability)
+    public static string AutoCastNote(Ability ability, AbilityCastRule? rule = null)
     {
         if (ability.IsForm || ability.IsAura)
             return "Active as long as it is equipped — no cast required.";
@@ -268,13 +268,39 @@ public static partial class AbilityText
         if (ability.IsPassive)
             return "Equipped passively. Triggers automatically on each attack — no cast required.";
 
-        if (ability.IsHealing)
-            return $"Auto-cast at or below {Num(Ability.HealThreshold * 100)}% health."
-                 + " Damage spells wait until there is enough mana.";
+        var parts = new List<string>();
 
+        if (rule?.HpPct is { } hpPct)
+            parts.Add($"Auto-cast at or below {hpPct}% health.");
+        else if (ability.IsHealing)
+            parts.Add($"Auto-cast at or below {Num(Ability.HealThreshold * 100)}% health.");
+
+        if (rule?.ResourcePct is { } resourcePct)
+        {
+            // Spells with form costs are paid with whatever resource the current form uses
+            var resource = ability.FormCosts.Count > 0 ? "your resource" : ResourceName(ability);
+            var comparison = rule.ResourceComparison == ResourceComparison.Below ? "below" : "above";
+            parts.Add($"Auto-cast only while {resource} is {comparison} {resourcePct}%.");
+        }
+        else if (DefaultResourceCondition(ability) is { } condition)
+            parts.Add($"Auto-cast only {condition}.");
+
+        if (ability.IsHealing)
+            parts.Add("Damage spells wait until there is enough mana.");
+
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>Built-in resource limit of an ability ("at 60+ Rage"), null = only the cost counts.</summary>
+    public static string? DefaultResourceCondition(Ability ability)
+    {
+        if (ability.IsLifeTap)
+            return $"below 50% {ResourceName(ability)}";
+        if (ability.CastWhenManaBelowPct > 0)
+            return $"below {Num(ability.CastWhenManaBelowPct * 100)}% {ResourceName(ability)}";
         return ability.MinResourceToCast > 0
-            ? $"Auto-cast only at {ability.MinResourceToCast}+ {ResourceName(ability)}."
-            : "";
+            ? $"at {ability.MinResourceToCast}+ {ResourceName(ability)}"
+            : null;
     }
 
     /// <summary>Single-line effect text for the pool view (without cooldown and resources).</summary>

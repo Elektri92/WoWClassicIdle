@@ -26,9 +26,9 @@ public partial class Inventory
         new(ArmorSlots.Label(ArmorSlot.Legs), "legs", ArmorSlot.Legs),
         new(ArmorSlots.Label(ArmorSlot.Feet), "feet", ArmorSlot.Feet),
         new(ArmorSlots.Label(ArmorSlot.Ring), "finger", ArmorSlot.Ring),
-        new("Finger", "finger"),
+        new(ArmorSlots.Label(ArmorSlot.Ring2), "finger", ArmorSlot.Ring2),
         new(ArmorSlots.Label(ArmorSlot.Trinket), "trinket", ArmorSlot.Trinket),
-        new("Trinket", "trinket"),
+        new(ArmorSlots.Label(ArmorSlot.Trinket2), "trinket", ArmorSlot.Trinket2),
     };
 
     private static readonly EquipSlot WeaponSlot = new("Weapon", "mainhand");
@@ -114,9 +114,9 @@ public partial class Inventory
             ? item
             : null;
 
-    /// <summary>Piece worn in the bag item's slot – comparison target for the tooltip.</summary>
+    /// <summary>Piece the bag item would replace – comparison target for the tooltip.</summary>
     private ArmorItem? EquippedArmorFor(ArmorItem item) =>
-        _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var equipped) ? equipped : null;
+        _engine.Player.EquippedArmor.TryGetValue(_engine.Player.EquipTargetFor(item), out var equipped) ? equipped : null;
 
     private static string SlotImage(EquipSlot slot, ArmorItem? gear) =>
         gear?.IconUrl ?? SlotIconUrl(slot.Icon);

@@ -42,6 +42,9 @@ namespace Models
         /// <summary>Known recipe IDs (crafting professions only).</summary>
         public IReadOnlyCollection<string> KnownRecipes => _knownRecipes;
 
+        /// <summary>Skill at the last visit to the trainer; only recipes above it count as new.</summary>
+        public int TrainerSeenSkill { get; internal set; }
+
         /// <summary>Crafting professions start with a basic recipe (<see cref="ProfessionTrainerRegistry.StarterRecipe"/>).</summary>
         public ProfessionProgress(Profession profession, CharacterClass? learnerClass = null)
         {
@@ -133,10 +136,10 @@ namespace Models
             return true;
         }
 
-        internal void Restore(Profession profession, int skill, int rankIndex, IEnumerable<string>? knownRecipes, CharacterClass? learnerClass)
+        internal void Restore(Profession profession, int skill, int rankIndex, IEnumerable<string>? knownRecipes, CharacterClass? learnerClass, int trainerSeenSkill)
         {
             if (!Professions.Get(profession).IsPrimary) return;
-            Primary = new ProfessionProgress(profession, learnerClass);
+            Primary = new ProfessionProgress(profession, learnerClass) { TrainerSeenSkill = trainerSeenSkill };
             Primary.Restore(skill, rankIndex, knownRecipes);
         }
     }

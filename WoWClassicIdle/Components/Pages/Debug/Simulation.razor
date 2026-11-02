@@ -339,7 +339,7 @@
                                                         double share = kindTotal > 0 ? (double)b.Total / kindTotal : 0;
                                                         <tr>
                                                             <td class="src">
-                                                                <AbilityTooltip Ability="ClassAbilityRegistry.FindByName(row.Class, b.Name)" PlayerLevel="row.Level">
+                                                                <AbilityTooltip Ability="ClassAbilityRegistry.FindByName(row.Class, b.Name, row.Level)" PlayerLevel="row.Level">
                                                                     <span class="src-inner">
                                                                         @if (!string.IsNullOrEmpty(b.IconUrl))
                                                                         {
@@ -631,7 +631,7 @@
                                                         double share = kindTotal > 0 ? (double)b.Total / kindTotal : 0;
                                                         <tr>
                                                             <td class="src">
-                                                                <AbilityTooltip Ability="ClassAbilityRegistry.FindByName(r.Class, b.Name)" PlayerLevel="r.FinalLevel">
+                                                                <AbilityTooltip Ability="ClassAbilityRegistry.FindByName(r.Class, b.Name, r.FinalLevel)" PlayerLevel="r.FinalLevel">
                                                                     <span class="src-inner">
                                                                         @if (!string.IsNullOrEmpty(b.IconUrl))
                                                                         {

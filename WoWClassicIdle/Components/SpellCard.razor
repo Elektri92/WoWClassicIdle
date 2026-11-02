@@ -10,7 +10,7 @@
 }
 <div class="spell-card @(Group.IsLocked ? "locked" : "") @(Group.SourceTalent is not null ? "talent-locked" : "") @(equipped ? "equipped" : "") @(Group.CanUpgrade ? "upgradable" : "") @(blocked ? "excluded" : "")"
      style="--i: @Math.Min(Index, 12)">
-    <AbilityTooltip Ability="eff" PlayerLevel="Player.Level" SourceTalent="Group.SourceTalent" Class="tt-block">
+    <AbilityTooltip Ability="eff" PlayerLevel="Player.Level" SourceTalent="Group.SourceTalent" CastRule="CastRule" Class="tt-block">
         <div class="spell-main" @onclick="Toggle">
             <span class="spell-icon">
                 <img src="@Group.Display.IconUrl" alt="@Group.Name" />
@@ -87,7 +87,7 @@
                 bool isUnlocked = Group.Unlocked.Contains(r);
                 string state = isEquipped ? "equipped" : isUnlocked ? "unlocked" : "locked";
 
-                <AbilityTooltip Ability="Player.GetEffectiveAbility(r)" PlayerLevel="Player.Level" Class="rank-tt">
+                <AbilityTooltip Ability="Player.GetEffectiveAbility(r)" PlayerLevel="Player.Level" CastRule="CastRule" Class="rank-tt">
                     <button class="rank-node @state @(r == Group.Best ? "best" : "")"
                             aria-disabled="@(!isUnlocked)"
                             aria-label="@($"Rank {r.Rank}")"
@@ -118,6 +118,8 @@
     /// <summary>Equipped spell of the same exclusive group that equipping would replace.</summary>
     [Parameter] public Ability? Conflict { get; set; }
     [Parameter] public int ConflictSlot { get; set; }
+    /// <summary>Auto-cast conditions of this spell from the loadout.</summary>
+    [Parameter] public AbilityCastRule? CastRule { get; set; }
     [Parameter] public EventCallback OnToggle { get; set; }
     [Parameter] public EventCallback<Ability> OnRank { get; set; }
 

@@ -79,6 +79,7 @@ public static class SimTalentOptimizer
             .Select(ClassAbilityRegistry.FindById)
             .OfType<Ability>()
             .Where(a => a.LevelRequired <= player.Level)
+            .Select(a => ClassAbilityRegistry.HighestRank(a, player.Level))
             .ToList();
         if (granted.Count > 0)
         {
@@ -94,7 +95,7 @@ public static class SimTalentOptimizer
 
             // Heuristic loadout with the new talent – covers forms (Bear Form + Maul)
             var unlocked = new HashSet<string>(ClassSimulator.GetUnlockedTalentAbilityIds(player, player.ActiveClass));
-            unlocked.UnionWith(talent.GrantedAbilityIds);
+            unlocked.UnionWith(talent.GrantedRankIds);
             trials.Add(ClassAbilityRegistry.GetDefaultLoadoutIds(player.ActiveClass, player.Level, specIndex, unlocked));
         }
 

@@ -207,8 +207,7 @@
 
     private void OnItemDropped(Item item)
     {
-        bool equipped = item is ArmorItem a
-            && _engine.Player.EquippedArmor.TryGetValue(a.Slot, out var cur) && cur == a;
+        bool equipped = item is ArmorItem a && _engine.Player.WornCount(a) > 0;
 
         lock (_toasts)
             _toasts.Add(new ToastEntry(Interlocked.Increment(ref _nextId), item, equipped, DateTime.UtcNow));

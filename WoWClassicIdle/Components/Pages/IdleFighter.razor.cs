@@ -165,6 +165,11 @@ public partial class IdleFighter
         });
     }
 
+    // Equipped rank of a meter/history row, otherwise the highest learned one (e.g. after swapping the loadout)
+    private Ability? RankInUse(string name) =>
+        _engine.Player.EquippedAbilities.FirstOrDefault(a => a.Name == name)
+        ?? ClassAbilityRegistry.FindByName(_engine.Player.ActiveClass, name, _engine.Player.Level);
+
     private void EquipAndDismiss(AbilityNotification n)
     {
         var cls = _engine.Player.ActiveClass;

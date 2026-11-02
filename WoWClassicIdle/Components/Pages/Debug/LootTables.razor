@@ -51,7 +51,7 @@
                 <div class="item-grid">
                     @foreach (var item in slotGroup)
                     {
-                        bool equipped = _engine.Player.EquippedArmor.TryGetValue(item.Slot, out var cur) && cur == item;
+                        bool equipped = _engine.Player.WornCount(item) > 0;
                         bool justGiven = _justGiven == item.Id;
                         <div class="item-row @(equipped ? "item-equipped" : "") @(justGiven ? "item-just-given" : "")">
                             <img class="item-icon"

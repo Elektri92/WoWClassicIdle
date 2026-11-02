@@ -18,7 +18,9 @@ public static class EnemyScaling
     ];
 
     public static int Hp(int level, EnemyArchetype archetype) =>
-        (int)Math.Round(BaseHp[Math.Clamp(level, 1, BaseHp.Length) - 1] * archetype.HpMultiplier);
+        (int)Math.Round(BaseHpAt(level) * archetype.HpMultiplier);
+
+    public static int BaseHpAt(int level) => BaseHp[Math.Clamp(level, 1, BaseHp.Length) - 1];
 
     // BaseAttack ≈ 5 + level × 0.38 (rounded down so Lv 1–2 stays at 5 like after balancing)
     public static int Attack(int level, EnemyArchetype archetype) =>

@@ -44,19 +44,34 @@ namespace Models
             return true;
         }
 
+        /// <summary>Position an item goes to without an explicit choice: the first free one, otherwise the first one.</summary>
+        public ArmorSlot EquipTargetFor(ArmorItem item)
+        {
+            var positions = ArmorSlots.PositionsFor(item.Slot);
+            foreach (var position in positions)
+                if (!EquippedArmor.ContainsKey(position))
+                    return position;
+            return positions[0];
+        }
+
+        /// <summary>How many copies of the item are currently worn.</summary>
+        public int WornCount(ArmorItem item) =>
+            ArmorSlots.PositionsFor(item.Slot).Count(p => EquippedArmor.TryGetValue(p, out var worn) && worn.Id == item.Id);
+
         /// <summary>
-        /// Equips an armor piece from the given bag slot.
+        /// Equips an armor piece from the given bag slot, at <paramref name="target"/> or else at <see cref="EquipTargetFor"/>.
         /// The previously worn piece (if any) goes back into the inventory.
         /// Returns false if the required level is not reached – the item stays in the bag.
         /// </summary>
-        public bool EquipArmor(ArmorItem item, Bag sourceBag, int sourceSlot)
+        public bool EquipArmor(ArmorItem item, Bag sourceBag, int sourceSlot, ArmorSlot? target = null)
         {
             if (!MeetsItemRequirements(item)) return false;
 
+            var position = target ?? EquipTargetFor(item);
             sourceBag.Take(sourceSlot);
-            if (EquippedArmor.TryGetValue(item.Slot, out var current))
+            if (EquippedArmor.TryGetValue(position, out var current))
                 Inventory.TryAdd(current);
-            EquippedArmor[item.Slot] = item;
+            EquippedArmor[position] = item;
             RecalculateStatsKeepResources();
             return true;
         }
@@ -85,7 +100,7 @@ namespace Models
         /// <summary>Equips an armor piece without upgrade check (e.g. for debug purposes).</summary>
         public void ForceEquipArmor(ArmorItem item)
         {
-            EquippedArmor[item.Slot] = item;
+            EquippedArmor[EquipTargetFor(item)] = item;
             RecalculateStats();
         }
 

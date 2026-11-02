@@ -35,5 +35,31 @@ public class ClassLoadout
             EquippedAbilityIds.RemoveAt(slotIndex);
     }
 
-    public void Clear() => EquippedAbilityIds.Clear();
+    /// <summary>
+    /// Auto-cast conditions per spell name. Replaced as a whole on every change,
+    /// so the engine tick can read it without a lock while the UI edits a rule.
+    /// </summary>
+    public IReadOnlyDictionary<string, AbilityCastRule> CastRules { get; private set; } = NoCastRules;
+    private static readonly IReadOnlyDictionary<string, AbilityCastRule> NoCastRules = new Dictionary<string, AbilityCastRule>();
+
+    public AbilityCastRule? RuleFor(string spellName) => CastRules.GetValueOrDefault(spellName);
+
+    public void SetCastRule(string spellName, AbilityCastRule? rule)
+    {
+        var rules = new Dictionary<string, AbilityCastRule>(CastRules);
+        if (rule is null || rule.IsEmpty)
+            rules.Remove(spellName);
+        else
+            rules[spellName] = rule;
+        CastRules = rules;
+    }
+
+    public void SetCastRules(IReadOnlyDictionary<string, AbilityCastRule> rules) =>
+        CastRules = new Dictionary<string, AbilityCastRule>(rules);
+
+    public void Clear()
+    {
+        EquippedAbilityIds.Clear();
+        CastRules = NoCastRules;
+    }
 }

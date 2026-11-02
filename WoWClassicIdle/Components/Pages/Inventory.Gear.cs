@@ -91,11 +91,11 @@ public partial class Inventory
     /// <summary>Equips an armor piece dragged onto a paperdoll slot.</summary>
     private void DropOnArmorSlot(ArmorSlot? armorSlot)
     {
-        if (armorSlot is null || _dragSource is not { } src) return;
+        if (armorSlot is not { } target || _dragSource is not { } src) return;
         _dragSource = null;
         var bag = ContainerAt(src.bagIndex);
-        if (bag?.Slots[src.slotIndex]?.Item is ArmorItem armor && armor.Slot == armorSlot)
-            Swap(SlotKey(armor.Slot), () => _engine.Player.EquipArmor(armor, bag, src.slotIndex));
+        if (bag?.Slots[src.slotIndex]?.Item is ArmorItem armor && ArmorSlots.PositionsFor(armor.Slot).Contains(target))
+            Swap(SlotKey(target), () => _engine.Player.EquipArmor(armor, bag, src.slotIndex, target));
     }
 
     private void TryEquipItem(int bagIndex, int slotIndex)
@@ -108,7 +108,8 @@ public partial class Inventory
                 Swap(WeaponSlotKey, () => _engine.Player.EquipWeapon(weapon, bag, slotIndex));
                 break;
             case ArmorItem armor:
-                Swap(SlotKey(armor.Slot), () => _engine.Player.EquipArmor(armor, bag, slotIndex));
+                var target = _engine.Player.EquipTargetFor(armor);
+                Swap(SlotKey(target), () => _engine.Player.EquipArmor(armor, bag, slotIndex, target));
                 break;
         }
     }

@@ -205,3 +205,34 @@
     .prof-search-source,
     .prof-search-prof { display: none; }
 }
+
+/* Something new at the trainer or a better bonus: the trainer, the profession card and the quick select pulse in gold */
+.trainer-npc.has-news {
+    border-color: var(--wow-gold);
+    animation: prof-news-glow 1.8s ease-in-out infinite;
+}
+.trainer-npc.has-news .inv-npc-cta { color: var(--wow-gold); }
+.prof-layout .prof-map-bg .prof-card.has-news { border-color: var(--wow-gold); }
+/* Next to the entrance animation of the card (professions.css); on the card itself because it clips its children */
+.prof-layout .prof-card.has-news {
+    animation: al-card-in .45s cubic-bezier(.2, .8, .2, 1) calc(.3s + var(--i, 0) * .04s) backwards,
+               prof-news-glow 1.8s ease-in-out infinite;
+}
+.prof-quick-item.has-news > img:first-child,
+.prof-detail-page .prof-quick-item.current.has-news > img:first-child {
+    filter: none;
+    border-color: var(--wow-gold);
+    animation: prof-news-glow 1.8s ease-in-out infinite;
+}
+@keyframes prof-news-glow {
+    0%, 100% { box-shadow: 0 0 3px rgba(255, 209, 0, .35); }
+    50%      { box-shadow: 0 0 14px 3px rgba(255, 209, 0, .85); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .trainer-npc.has-news,
+    .prof-layout .prof-card.has-news,
+    .prof-quick-item.has-news > img:first-child {
+        animation: none;
+        box-shadow: 0 0 10px 2px rgba(255, 209, 0, .7);
+    }
+}

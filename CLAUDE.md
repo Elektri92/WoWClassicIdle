@@ -33,6 +33,7 @@ WoWClassicIdle/Components/
 | `Models/IdleGameEngine.SaveLoad.cs` | RestoreFromSave, RestoreSlot |
 | `Models/ClassAbilityRegistry.cs` | Abilities-Dict + statische Methoden |
 | `Models/ClassAbilityRegistry.Warrior.cs` … `.Druid.cs` | Ability-Daten je Klasse |
+| `Models/ClassAbilityRegistry.Ranks.cs` | Generiert höhere Ränge (alle 10 Level + Lv 60) aus dem höchsten handgeschriebenen Rang; Kurven für Schaden/Heilung/Mana |
 | `Models/EnemySpawner.cs` | Gegner-Spawn-Logik (Level = Spieler ± 2, auf Zonenbereich begrenzt) |
 | `Models/CombatZoneRegistry*.cs` | Kampfzonen (40) mit je 3 Gegnern, Koordinaten, Theme |
 | `Models/EnemyArchetype.cs` / `EnemyScaling.cs` | Stat-Profile je Gegnerart + HP/Attack/Kupfer-Formeln |
@@ -44,6 +45,7 @@ WoWClassicIdle/Components/
 | `Models/DungeonLootRegistry.cs` / `ItemSetRegistry.cs` | Boss-Loottabellen, Set-Teile und Set-Boni |
 | `Models/DungeonPartyRegistry.cs` | Gruppenaufbau: Rollen, Klassen-/Rollenkombis, NPC-Zauber |
 | `Models/RacialRegistry.cs` | Racial-Passive je Rasse (Werte, Texte, Icons); Wirkung in `Player.Racials.cs` / `IdleGameEngine.Racials.cs` |
+| `Models/AbilityCastRule.cs` / `IdleGameEngine.CastRules.cs` | Auto-Cast-Bedingungen je Zauber (Ressource/HP in %); UI in `CastRulesPanel.razor` |
 | `Models/Player.cs` | Spieler-Zustand, Equip, XP |
 | `Models/CombatEngine.cs` | Reine Kampfmathematik (keine Zustand) |
 

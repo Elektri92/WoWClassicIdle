@@ -137,13 +137,10 @@ public partial class IdleGameEngine
         if (!IsReadyToCast(ability)) return false;
         if (!Player.CanUseInCurrentForm(ability)) return false;
         if (ability.IsPetSummon && Pet is not null) return false;   // Pet is already alive
-        if (ability.CastWhenManaBelowPct > 0
-            && Player.CurrentMana >= Player.Stats.MaxMana * ability.CastWhenManaBelowPct) return false;
-        if (ability.IsHealing && !PlayerNeedsHeal) return false;
+        if (!MeetsResourceCondition(ability) || !MeetsHpCondition(ability)) return false;
         if (!ability.IsHealing && ability.ManaCost > 0 && IsSavingManaForHeal()) return false;
-        // Life Tap: only at low mana and with sufficient HP
-        if (ability.IsLifeTap
-            && (Player.CurrentMana >= Player.Stats.MaxMana / 2 || PlayerNeedsHeal || Player.CurrentHp <= ability.LifeTapHpCost))
+        // Life Tap: only with sufficient HP
+        if (ability.IsLifeTap && (PlayerNeedsHeal || Player.CurrentHp <= ability.LifeTapHpCost))
             return false;
         return Player.CurrentMana >= CastCost(ability);
     }

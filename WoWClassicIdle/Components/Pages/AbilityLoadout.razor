@@ -63,7 +63,8 @@
 
                     <AbilityTooltip @key="@($"{slotIndex}:{equippedAbility?.Id ?? "empty"}")"
                                     Ability="equippedAbility is null ? null : Engine.Player.GetEffectiveAbility(equippedAbility)"
-                                    PlayerLevel="Engine.Player.Level" Class="tt-block">
+                                    PlayerLevel="Engine.Player.Level" Class="tt-block"
+                                    CastRule="equippedAbility is null ? null : CurrentLoadout.RuleFor(equippedAbility.Name)">
                         <div class="slot @(equippedAbility != null ? "filled" : "empty")" style="--i: @slotIndex"
                              @onclick="() => OnSlotClicked(slotIndex)">
                             <span class="slot-number">@(slotIndex + 1)</span>
@@ -80,6 +81,19 @@
                                         <span class="rank-badge">Rank @equippedAbility.Rank</span>
                                     }
                                 </span>
+                                @if (CurrentLoadout.RuleFor(equippedAbility.Name) is { } castRule)
+                                {
+                                    <span class="slot-rules">
+                                        @if (castRule.ResourcePct is { } resourcePct)
+                                        {
+                                            <span>@ResourceName @(castRule.ResourceComparison == ResourceComparison.Below ? "<" : ">") @resourcePct%</span>
+                                        }
+                                        @if (castRule.HpPct is { } hpPct)
+                                        {
+                                            <span>Health ≤ @hpPct%</span>
+                                        }
+                                    </span>
+                                }
                                 @if (upgrade is not null)
                                 {
                                     <button class="slot-upgrade" title="@($"Upgrade to Rank {upgrade.Rank}")"
@@ -99,9 +113,12 @@
                 </div>
             </div>
 
+            <CastRulesPanel Abilities="RuleAbilities" Loadout="CurrentLoadout" Player="Engine.Player"
+                            ResourceName="@ResourceName" OnChanged="CommitLoadout" />
+
             @* ── Spellbook: one entry per spell, ranks on a bar ── *@
             @* Pergament-Look: wwwroot/css/spellbook.css *@
-            <div class="al-panel pool-column spellbook" style="--i: 1">
+            <div class="al-panel pool-column spellbook" style="--i: 2">
                 <h4 class="spellbook-title">Spellbook</h4>
 
                 <div class="pool-filters">
@@ -132,6 +149,7 @@
                     <SpellCard @key="group.Name" Group="group" Index="poolIndex++" Player="Engine.Player"
                                SlotNumber="SlotNumberOf(group.Equipped)"
                                Conflict="conflict" ConflictSlot="SlotNumberOf(conflict)"
+                               CastRule="CurrentLoadout.RuleFor(group.Name)"
                                OnToggle="() => OnSpellClicked(group)" OnRank="OnRankClicked" />
                 }
                 </div>

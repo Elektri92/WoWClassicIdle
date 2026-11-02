@@ -7,12 +7,25 @@
 <aside class="al-panel craft-queue" style="--i: 1">
     <h4>Crafting Queue</h4>
 
+    @{ int freeSlots = Engine.FreeInventorySlots; }
+    <div class="craft-queue-slots @(freeSlots == 0 ? "full" : "")" title="Free slots across your backpack and bags.">
+        Free inventory slots: <b>@freeSlots / @Engine.TotalInventorySlots</b>
+    </div>
+
     @{ bool returnUnlocked = Engine.IsReturnToIdleUnlocked; }
     <label class="craft-queue-option @(returnUnlocked ? "" : "locked")"
            title="@(returnUnlocked ? "Go back to the Idle Fighter once the queue has run empty." : $"Unlocks when any character reaches level {IdleGameEngine.ReturnToIdleUnlockLevel}.")">
         <input type="checkbox" checked="@(returnUnlocked && Engine.ReturnToIdleAfterCrafting)" disabled="@(!returnUnlocked)"
                @onchange="e => Engine.ReturnToIdleAfterCrafting = e.Value is true" />
         <span>Return to combat when empty@(returnUnlocked ? "" : " 🔒")</span>
+    </label>
+
+    @{ bool disenchantUnlocked = Engine.IsDisenchantCraftedUnlocked; }
+    <label class="craft-queue-option @(disenchantUnlocked ? "" : "locked")"
+           title="@(disenchantUnlocked ? "Crafted uncommon gear is disenchanted right after crafting. Items above the enchanter's skill are kept." : "Unlocks when any character has learned Enchanting.")">
+        <input type="checkbox" checked="@(disenchantUnlocked && Engine.DisenchantCraftedItems)" disabled="@(!disenchantUnlocked)"
+               @onchange="e => Engine.DisenchantCraftedItems = e.Value is true" />
+        <span>Disenchant crafted items@(disenchantUnlocked ? "" : " 🔒")</span>
     </label>
 
     @{ var queue = Engine.CraftingQueue; }
@@ -24,8 +37,12 @@
     {
         <div class="wow-progress prof-run-bar">
             <div class="bar" style="width: @RunPercent%"></div>
-            <span>@(queue[0].IsDisenchant ? "Disenchanting…" : "Crafting…")</span>
+            <span>@(Engine.IsCraftingQueuePaused ? "Paused" : queue[0].IsDisenchant ? "Disenchanting…" : "Crafting…")</span>
         </div>
+        @if (Engine.IsCraftingQueuePaused)
+        {
+            <div class="wow-alert warning craft-queue-paused">Inventory full – paused until a slot is free.</div>
+        }
         <div class="craft-queue-total" title="Estimate for the whole queue. Positions without materials drop out when it is their turn.">
             Total time left: <b>~@FormatRemaining(Engine.CraftingQueueRemainingSeconds)</b>
         </div>

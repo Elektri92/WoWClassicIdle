@@ -21,6 +21,7 @@ public partial class ProfessionDetail
             return;
         }
         _trainerOpen = true;
+        if (_def is not null) Engine.MarkTrainerSeen(_def.Profession);
         if (Trainer is { } trainer) Say(trainer.GreetingLines);
     }
 

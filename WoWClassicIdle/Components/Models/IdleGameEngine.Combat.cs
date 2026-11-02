@@ -39,12 +39,19 @@ public partial class IdleGameEngine
              && (CurrentEnemy is null || CurrentEnemy.CurrentHp > CurrentEnemy.Stats.MaxHp * ability.RequiresEnemyBelowHpPct));
 
     /// <summary>
-    /// HP below the threshold and an equipped, ready heal only fails because of mana:
+    /// An equipped, ready heal whose conditions are met only fails because of mana:
     /// then no other abilities are cast until there is enough mana.
     /// </summary>
-    private bool IsSavingManaForHeal() =>
-        PlayerNeedsHeal
-        && Player.EquippedAbilities.Any(a => a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < CastCost(a));
+    private bool IsSavingManaForHeal()
+    {
+        foreach (var a in Player.SortedEquippedAbilities)
+        {
+            if (a.IsHealing && IsReadyToCast(a) && Player.CurrentMana < CastCost(a)
+                && MeetsHpCondition(a) && MeetsResourceCondition(a))
+                return true;
+        }
+        return false;
+    }
 
     /// <summary>Simulated play time per step in seconds.</summary>
     public double StepSeconds => _baseDt;
@@ -262,7 +269,7 @@ public partial class IdleGameEngine
             if (nextSwingAbility is not null
                 && Player.Cooldowns.IsReady(nextSwingAbility.Id)   // Holy Strike: 10 s CD; Heroic Strike/Maul have none
                 && !IsSavingManaForHeal()
-                && Player.CurrentMana >= nextSwingAbility.MinResourceToCast
+                && MeetsResourceCondition(nextSwingAbility)
                 && Player.ConsumeMana(nextSwingAbility.ManaCost))
             {
                 double swingMult = Player.Buffs.DamageMultiplier * Player.Buffs.WeaponDamageMultiplier * enemyDmgTakenMult * RacialDamageFactor(CurrentEnemy);
@@ -418,16 +425,16 @@ public partial class IdleGameEngine
 
     /// <summary>
     /// Automatically sells an armor or weapon item if an exact duplicate
-    /// (same ID) is already in the inventory or equipped.
+    /// (same ID) is already in the inventory or equipped. Rings and trinkets
+    /// are kept until there is a copy for each of their two positions.
     /// </summary>
     private bool TryAutoSellIfDuplicate(Item item)
     {
         if (item is not ArmorItem and not WeaponItem) return false;
 
-        bool hasDuplicate =
-            Player.Inventory.CountOf(item.Id) > 0
-            || (item is ArmorItem ai && Player.EquippedArmor.Values.Any(e => e.Id == ai.Id))
-            || (item is WeaponItem w  && Player.EquippedWeapon?.Id == w.Id);
+        bool hasDuplicate = item is ArmorItem ai
+            ? Player.Inventory.CountOf(item.Id) + Player.WornCount(ai) >= ArmorSlots.PositionsFor(ai.Slot).Count
+            : Player.Inventory.CountOf(item.Id) > 0 || Player.EquippedWeapon?.Id == item.Id;
 
         if (!hasDuplicate) return false;
 
@@ -455,13 +462,18 @@ public partial class IdleGameEngine
         int levelsGained = Player.GainXp(amount);
         for (int l = oldLevel + 1; l <= Player.Level; l++)
         {
-            // Talent abilities are reported when skilling (InvestTalentPoint), not on level-up
             foreach (var ability in ClassAbilityRegistry.GetAbilitiesFor(Player.ActiveClass)
-                         .Where(a => a.LevelRequired == l && !a.TalentUnlockOnly))
+                         .Where(a => a.LevelRequired == l && IsWorthUnlockNotice(a)))
                 AbilityUnlocked?.Invoke(ability);
         }
         return levelsGained;
     }
+
+    // New abilities and new ranks of equipped ones; the first rank of a talent ability is reported when skilling
+    private bool IsWorthUnlockNotice(Ability ability) =>
+        ability.Rank > 1
+            ? (!ability.TalentUnlockOnly || Player.HasTalentAbility(ability.Id)) && Player.EquippedAbilities.Any(a => a.Name == ability.Name)
+            : !ability.TalentUnlockOnly;
 
     private void HandleEnemyDeath()
     {

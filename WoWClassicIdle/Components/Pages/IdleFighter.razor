@@ -264,7 +264,8 @@ else if (!_engine.NeedsCombatZone)
                         bool isCasting  = casting?.Id == equipped.Id;
                         // The GCD only affects actively cast abilities (no passives / on-next-swing)
                         bool onGcd = !onCooldown && gcdRemaining > 0 && !equipped.IsPassive && !equipped.ReplacesAutoAttack;
-                        <AbilityTooltip Ability="_engine.Player.GetEffectiveAbility(equipped)" PlayerLevel="_engine.Player.Level">
+                        <AbilityTooltip Ability="_engine.Player.GetEffectiveAbility(equipped)" PlayerLevel="_engine.Player.Level"
+                                        CastRule="_engine.Player.GetCurrentLoadout().RuleFor(equipped.Name)">
                             <span class="ability-slot filled @(onCooldown ? "on-cooldown" : "ready") @(isCasting ? "casting" : "")">
                                 <img src="@equipped.IconUrl" alt="@equipped.Name"
                                      onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23333%22 width=%2232%22 height=%2232%22 rx=%224%22/></svg>'" />
@@ -570,7 +571,7 @@ else if (!_engine.NeedsCombatZone)
                     var share = kindTotal > 0 ? row.Total * 100.0 / kindTotal : 0;
                     var rowPerSec = meter.CombatSeconds > 0 ? row.Total / meter.CombatSeconds : 0;
                     bool isAutoAttack = row.Name == CombatMeter.AutoAttackName;
-                    var rowRaw     = isAutoAttack ? null : ClassAbilityRegistry.FindByName(_engine.Player.ActiveClass, row.Name);
+                    var rowRaw     = isAutoAttack ? null : RankInUse(row.Name);
                     var rowAbility = rowRaw is null ? null : _engine.Player.GetEffectiveAbility(rowRaw);
                     var rowContent = new RenderFragment(b => {
                         b.OpenElement(0, "div");
@@ -639,7 +640,7 @@ else if (!_engine.NeedsCombatZone)
                 @foreach (var action in meter.History)
                 {
                     bool isHeal = action.Kind == CombatActionKind.Heal;
-                    <AbilityTooltip @key="action.Id" Ability="ClassAbilityRegistry.FindByName(_engine.Player.ActiveClass, action.Name) is {} histAbility ? _engine.Player.GetEffectiveAbility(histAbility) : null" Class="tt-block">
+                    <AbilityTooltip @key="action.Id" Ability="RankInUse(action.Name) is {} histAbility ? _engine.Player.GetEffectiveAbility(histAbility) : null" Class="tt-block">
                         <div class="history-row">
                             <span class="history-time">@FormatElapsed(action.GameTime)</span>
                             <img class="meter-icon" src="@action.IconUrl" alt="" onerror="this.style.visibility='hidden'" />

@@ -28,7 +28,7 @@ public partial class AbilityLoadout
     private HashSet<string> TalentGrantedAbilityIds =>
         TalentRegistry.GetTalents(Engine.PlayerClass)
             .Where(t => Engine.Player.TalentState.GetRanks(t.Id) > 0)
-            .SelectMany(t => t.GrantedAbilityIds)
+            .SelectMany(t => t.GrantedRankIds)
             .ToHashSet();
 
     // Form according to the loadout (not the engine) so the pool is correct right after switching
@@ -55,6 +55,16 @@ public partial class AbilityLoadout
         .Select(a => a.Name)
         .Distinct()
         .Count();
+
+    // Resource of the current class or form, as labeled in the auto-cast conditions
+    private string ResourceName => ShapeshiftForms.ResourceName(Engine.Player.Resource);
+
+    // Equipped spells with at least one configurable auto-cast condition, in slot order
+    private IReadOnlyList<Ability> RuleAbilities => CurrentLoadout.EquippedAbilityIds
+        .Select(id => CurrentPool.FirstOrDefault(a => a.Id == id))
+        .OfType<Ability>()
+        .Where(a => AbilityCastRule.SupportsResource(a) || AbilityCastRule.SupportsHp(a))
+        .ToList();
 
     /// <summary>
     /// Group ranks per spell. Visible are usable ranks, level-locked ranks and talent abilities

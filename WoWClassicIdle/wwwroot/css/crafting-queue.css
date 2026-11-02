@@ -24,6 +24,10 @@
 .craft-queue-option.locked { opacity: .6; cursor: default; }
 .craft-queue-total { color: var(--wow-gold-soft); font-size: .8rem; text-align: center; }
 .craft-queue-total b { color: #fff; font-weight: 700; }
+.craft-queue-slots { color: var(--wow-gold-soft); font-size: .8rem; text-align: center; }
+.craft-queue-slots b { color: #fff; font-weight: 700; }
+.craft-queue-slots.full b { color: #ff6b5a; }
+.craft-queue-paused { margin: 0; padding: 4px 6px; font-size: .78rem; text-align: center; }
 
 .craft-queue-list {
     display: flex;

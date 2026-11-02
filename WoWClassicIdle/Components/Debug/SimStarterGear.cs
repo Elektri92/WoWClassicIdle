@@ -69,16 +69,16 @@ internal static class SimStarterGear
             player.ForceEquipArmor(item);
     }
 
-    /// <summary>Best item per slot for the priority: most prioritized stats, then most stats in total, then the widest spread.</summary>
+    /// <summary>Best items per slot (two for rings and trinkets) for the priority: most prioritized stats, then most stats in total, then the widest spread.</summary>
     private static IReadOnlyList<ArmorItem> BuildSet(CharacterClass cls, int level, PrimaryStats priority) =>
         AvailableItems(cls, level)
             .GroupBy(i => i.Slot)
-            .Select(slot => slot
+            .SelectMany(slot => slot
                 .OrderByDescending(i => Score(i.Bonuses, priority))
                 .ThenByDescending(i => Sum(i.Bonuses))
                 .ThenByDescending(i => Covered(i.Bonuses, priority))
                 .ThenBy(i => i.Id)
-                .First())
+                .Take(ArmorSlots.PositionsFor(slot.Key).Count))
             .ToList();
 
     private static List<ArmorItem> AvailableItems(CharacterClass cls, int level)

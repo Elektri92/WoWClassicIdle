@@ -5,7 +5,7 @@ namespace Models;
 // One file per class: ClassAbilityRegistry.Warrior.cs, .Mage.cs etc.
 
 /// <summary>
-/// Rank 1 values from WoW Classic (1.12).
+/// Hand-written ranks: rank 1 values from WoW Classic (1.12), higher ranks see ClassAbilityRegistry.Ranks.cs.
 /// Damage/healing = average of the tooltip range, cost = Mana/Rage/Energy.
 /// Cooldown: real CD if present, otherwise cast time or GCD (idle pacing).
 /// </summary>
@@ -16,15 +16,15 @@ public static partial class ClassAbilityRegistry
     public static IReadOnlyDictionary<CharacterClass, IReadOnlyList<Ability>> Abilities { get; }
         = new Dictionary<CharacterClass, IReadOnlyList<Ability>>
     {
-        [CharacterClass.Warrior] = WarriorAbilities.Concat(LevelSpecAbilities(CharacterClass.Warrior)).ToList(),
-        [CharacterClass.Mage]    = MageAbilities.Concat(LevelSpecAbilities(CharacterClass.Mage)).ToList(),
-        [CharacterClass.Priest]  = PriestAbilities.Concat(LevelSpecAbilities(CharacterClass.Priest)).ToList(),
-        [CharacterClass.Rogue]   = RogueAbilities.Concat(LevelSpecAbilities(CharacterClass.Rogue)).ToList(),
-        [CharacterClass.Paladin] = PaladinAbilities.Concat(LevelSpecAbilities(CharacterClass.Paladin)).ToList(),
-        [CharacterClass.Hunter]  = HunterAbilities.Concat(LevelSpecAbilities(CharacterClass.Hunter)).ToList(),
-        [CharacterClass.Warlock] = WarlockAbilities.Concat(LevelSpecAbilities(CharacterClass.Warlock)).ToList(),
-        [CharacterClass.Shaman]  = ShamanAbilities.Concat(LevelSpecAbilities(CharacterClass.Shaman)).ToList(),
-        [CharacterClass.Druid]   = DruidAbilities.Concat(LevelSpecAbilities(CharacterClass.Druid)).ToList(),
+        [CharacterClass.Warrior] = WithGeneratedRanks(CharacterClass.Warrior, WarriorAbilities.Concat(LevelSpecAbilities(CharacterClass.Warrior))),
+        [CharacterClass.Mage]    = WithGeneratedRanks(CharacterClass.Mage, MageAbilities.Concat(LevelSpecAbilities(CharacterClass.Mage))),
+        [CharacterClass.Priest]  = WithGeneratedRanks(CharacterClass.Priest, PriestAbilities.Concat(LevelSpecAbilities(CharacterClass.Priest))),
+        [CharacterClass.Rogue]   = WithGeneratedRanks(CharacterClass.Rogue, RogueAbilities.Concat(LevelSpecAbilities(CharacterClass.Rogue))),
+        [CharacterClass.Paladin] = WithGeneratedRanks(CharacterClass.Paladin, PaladinAbilities.Concat(LevelSpecAbilities(CharacterClass.Paladin))),
+        [CharacterClass.Hunter]  = WithGeneratedRanks(CharacterClass.Hunter, HunterAbilities.Concat(LevelSpecAbilities(CharacterClass.Hunter))),
+        [CharacterClass.Warlock] = WithGeneratedRanks(CharacterClass.Warlock, WarlockAbilities.Concat(LevelSpecAbilities(CharacterClass.Warlock))),
+        [CharacterClass.Shaman]  = WithGeneratedRanks(CharacterClass.Shaman, ShamanAbilities.Concat(LevelSpecAbilities(CharacterClass.Shaman))),
+        [CharacterClass.Druid]   = WithGeneratedRanks(CharacterClass.Druid, DruidAbilities.Concat(LevelSpecAbilities(CharacterClass.Druid))),
     };
 
     public static IReadOnlyList<Ability> GetAbilitiesFor(CharacterClass cls)
@@ -86,7 +86,9 @@ public static partial class ClassAbilityRegistry
         // Talent-unlocked abilities the player already owns
         // (only one per ExclusiveGroup, e.g. one Druid form – spec-matching preferred)
         var talentAbilities = GetAbilitiesFor(cls)
-            .Where(a => a.TalentUnlockOnly && unlockedTalentAbilityIds.Contains(a.Id))
+            .Where(a => a.TalentUnlockOnly && unlockedTalentAbilityIds.Contains(a.Id) && a.LevelRequired <= level)
+            .GroupBy(a => a.Name)
+            .Select(g => g.OrderByDescending(a => a.Rank).First())
             .GroupBy(a => string.IsNullOrEmpty(a.ExclusiveGroup) ? a.Id : a.ExclusiveGroup)
             .Select(g => g.FirstOrDefault(a => a.SpecHint == specIndex) ?? g.First())
             .ToList();
@@ -144,6 +146,11 @@ public static partial class ClassAbilityRegistry
     /// <summary>Finds an ability of the class by display name (e.g. for damage meter rows).</summary>
     public static Ability? FindByName(CharacterClass cls, string name)
         => GetAbilitiesFor(cls).FirstOrDefault(a => a.Name == name);
+
+    /// <summary>Highest rank learned at <paramref name="level"/> of an ability of the class by display name.</summary>
+    public static Ability? FindByName(CharacterClass cls, string name, int level)
+        => GetAbilitiesFor(cls).Where(a => a.Name == name && a.LevelRequired <= level).MaxBy(a => a.Rank)
+           ?? FindByName(cls, name);
 
     /// <summary>Class the ability belongs to.</summary>
     public static CharacterClass? ClassOf(Ability ability)

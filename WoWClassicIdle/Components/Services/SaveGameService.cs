@@ -94,7 +94,7 @@ public class SaveGameService : ISaveGameService, IDisposable
                 foreach (var (clsName, abilityIds) in slotData.Player.LoadoutAbilityIdsByClass)
                 {
                     if (Enum.TryParse<CharacterClass>(clsName, out var cls))
-                        _loadout.SaveLoadout(new ClassLoadout { Class = cls, EquippedAbilityIds = abilityIds.ToList() });
+                        _loadout.SaveLoadout(slotData.Player.BuildLoadout(cls, abilityIds));
                 }
             }
 
@@ -227,6 +227,7 @@ public class SaveGameService : ISaveGameService, IDisposable
             .ToList();
 
         save.ReturnToIdleAfterCrafting = _engine.ReturnToIdleAfterCrafting;
+        save.DisenchantCraftedItems = _engine.DisenchantCraftedItems;
 
         save.ProfessionBonuses = _engine.BuildOwnedBonusSaveData();
         save.EquippedProfessionBonuses = _engine.BuildEquippedBonusSaveData();
@@ -274,6 +275,8 @@ public class SaveGameService : ISaveGameService, IDisposable
                 ? p.GetCurrentLoadout()
                 : _loadout.GetLoadout(cls, p.ClassProgress[cls].Level);
             data.LoadoutAbilityIdsByClass[cls.ToString()] = loadout.EquippedAbilityIds.ToList();
+            if (loadout.CastRules.Count > 0)
+                data.CastRulesByClass[cls.ToString()] = new Dictionary<string, AbilityCastRule>(loadout.CastRules);
         }
 
         // Talente
@@ -293,6 +296,7 @@ public class SaveGameService : ISaveGameService, IDisposable
         Skill      = progress.Skill,
         RankIndex  = progress.RankIndex,
         KnownRecipes = progress.Definition.IsGathering ? null : progress.KnownRecipes.ToList(),
+        TrainerSeenSkill = progress.TrainerSeenSkill,
     };
 
     private SlotSaveData BuildSlotSaveData(CharacterSlot slot) => new()
