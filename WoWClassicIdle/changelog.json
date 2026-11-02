@@ -1,5 +1,54 @@
 [
   {
+    "version": "0.0.44",
+    "date": "2026-11-02",
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "Every race now has two passive racial traits, such as more damage, attack speed or a cheaper merchant. They are shown during character creation and in the Inventory."
+        ]
+      },
+      {
+        "category": "Combat",
+        "changes": [
+          "Raised the level cap from 10 to 15.",
+          "Dungeon bosses now make an entrance: the screen darkens, the boss speaks a line, and the fight starts after a few seconds.",
+          "Attacks from dungeon enemies and especially bosses now look much heavier.",
+          "The XP lost on death drops by 1 percentage point for each character of yours at the next ten-level mark (for example level 20+ for levels 10–19). A tooltip below the XP bar shows your current loss."
+        ]
+      },
+      {
+        "category": "Items",
+        "changes": [
+          "Money is now shared by all your characters. The money your characters already have is added together."
+        ]
+      },
+      {
+        "category": "Professions",
+        "changes": [
+          "Tailoring, Leatherworking and Blacksmithing can now craft expensive blue hands and wrists for every class (level 10, skill 25).",
+          "The crafting window now has one Create button that uses the amount field, which starts at 1 and resets when you pick another recipe."
+        ]
+      },
+      {
+        "category": "World",
+        "changes": [
+          "Flight points now unlock for your whole account, and reaching a dungeon unlocks its flight point too. Everything your characters have already visited stays unlocked.",
+          "Wailing Caverns and The Deadmines now have their own animated scenery."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "Changing the race of an existing character now starts a 24-hour cooldown for that character.",
+          "You can jump again as soon as the previous jump has finished.",
+          "Enemy names no longer repeat the level, and rare and dungeon enemies show it only on their portrait."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.43",
     "date": "2026-11-01",
     "sections": [
