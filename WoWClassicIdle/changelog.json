@@ -1,5 +1,32 @@
 [
   {
+    "version": "0.0.45",
+    "date": "2026-11-02",
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "Spells with fixed values now gain a new rank every 10 levels and at level 60. You are notified about new ranks of equipped spells.",
+          "The Ability Loadout now lets you set auto-cast conditions for each spell, based on your resource or health in percent. Tooltips and slots show the active conditions."
+        ]
+      },
+      {
+        "category": "Items",
+        "changes": [
+          "You can now wear two rings and two trinkets at the same time. A second copy of a ring or trinket is no longer sold automatically."
+        ]
+      },
+      {
+        "category": "Professions",
+        "changes": [
+          "The crafting queue now shows your free inventory slots and pauses while the inventory has no room for the next result.",
+          "New crafting queue option for enchanters: crafted uncommon gear is disenchanted right after crafting.",
+          "Professions and their trainers now glow when new training or a better bonus is available."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.44",
     "date": "2026-11-02",
     "sections": [
