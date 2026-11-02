@@ -153,6 +153,7 @@ public class SaveGameService : ISaveGameService, IDisposable
             TotalUncommonLooted  = _engine.TotalUncommonLooted,
             TotalRareItemsLooted = _engine.TotalRareItemsLooted,
             TotalJumps           = _engine.TotalJumps,
+            SharedCopper         = _engine.SharedInventory.Copper,
             LastRoute            = LastRoute,
             LastSeenChangelogVersion = LastSeenChangelogVersion,
         };
@@ -229,6 +230,7 @@ public class SaveGameService : ISaveGameService, IDisposable
 
         save.ProfessionBonuses = _engine.BuildOwnedBonusSaveData();
         save.EquippedProfessionBonuses = _engine.BuildEquippedBonusSaveData();
+        save.FlightPoints = _engine.BuildFlightPointSaveData();
 
         save.SeenFeatureIntros = _engine.SeenFeatureIntros.ToList();
         save.MerchantStock = _engine.BuildMerchantSaveData();
@@ -244,7 +246,6 @@ public class SaveGameService : ISaveGameService, IDisposable
         var data = new PlayerSaveData
         {
             ActiveClass = p.ActiveClass,
-            Copper      = p.Copper,
             CurrentHp   = p.CurrentHp,
             CurrentMana = p.CurrentMana,
             DisabledAutoUseConsumables = p.DisabledAutoUse.ToList(),
@@ -301,6 +302,7 @@ public class SaveGameService : ISaveGameService, IDisposable
         Name    = slot.Name,
         Faction = slot.Faction,
         Race    = slot.Race,
+        RaceChangedAt = slot.RaceChangedAtUtc,
         Gender  = slot.Gender,
         Player  = BuildPlayerSaveData(slot.Player),
         CombatZone    = slot.CombatZoneId,

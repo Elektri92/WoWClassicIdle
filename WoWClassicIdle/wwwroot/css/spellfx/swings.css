@@ -18,6 +18,20 @@
     border-radius: 4px;
 }
 
+/* Boss: huge blow across the whole portrait */
+.spellfx-slash.colossal {
+    width: 190px;
+    height: 12px;
+    border-radius: 6px;
+}
+
+/* Boss hit: the edges of the screen flare up red */
+.spellfx-layer > .spellfx-boss-hit {
+    inset: 0;
+    transform: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(170, 10, 0, .4) 80%, rgba(110, 0, 0, .7) 100%);
+}
+
 /* Dagger / arrow / stinger: short, pointed thrust */
 .spellfx-thrust {
     width: 54px;

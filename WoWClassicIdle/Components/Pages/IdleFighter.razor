@@ -18,6 +18,11 @@
 {
     <div @key="_resurrectedAt.Ticks" class="resurrect-flash" aria-hidden="true"></div>
 }
+@if (IntroEnemy is { } veilBoss)
+{
+    <!-- Boss entrance: darkness over the screen, only the boss frame stays above it (css/boss-intro.css) -->
+    <div class="boss-intro-veil" style="@BossIntroStyle(veilBoss)" aria-hidden="true"></div>
+}
 <h2>Idle Fighter</h2>
 <p class="wow-hint">Your character fights on its own in the zone you choose.</p>
 
@@ -39,11 +44,19 @@ else if (_engine.IsTraveling)
 else if (!_engine.NeedsCombatZone)
 {
     var battleTheme = _engine.CurrentCombatZone?.Theme ?? "grassland";
+    var inInstance = _engine.CurrentCombatZone?.IsDungeon == true;
 <!-- Combat background in the colors of the current zone (css/combat-zones.css) -->
-<div class="battle-backdrop zone-theme-@battleTheme @(CombatZoneRegistry.IsNightTheme(battleTheme) ? "night" : "day")">
+<div class="battle-backdrop zone-theme-@battleTheme @(inInstance ? "instance" : CombatZoneRegistry.IsNightTheme(battleTheme) ? "night" : "day")">
 <div class="battle-scenery" aria-hidden="true">
-    <div class="battle-mountains zone-theme-@battleTheme"></div>
-    <div class="battle-hills zone-theme-@battleTheme"></div>
+    @if (inInstance)
+    {
+        <DungeonScenery Theme="@battleTheme" />
+    }
+    else
+    {
+        <div class="battle-mountains zone-theme-@battleTheme"></div>
+        <div class="battle-hills zone-theme-@battleTheme"></div>
+    }
 </div>
 <div class="battlefield">
     <!-- ═══════════════════════════════════════════ -->
@@ -176,6 +189,7 @@ else if (!_engine.NeedsCombatZone)
                             <span class="bar-text">@_engine.Player.Xp / @_engine.Player.XpToNextLevel</span>
                         }
                     </div>
+                    <DeathPenaltyInfo Penalty="_engine.CurrentDeathXpPenalty" Level="_engine.Player.Level" />
                 </div>
             </div>
         </div>
@@ -291,7 +305,18 @@ else if (!_engine.NeedsCombatZone)
     <!-- ═══════════════════════════════════════════ -->
     <!--  ENEMY FRAME  (right)                       -->
     <!-- ═══════════════════════════════════════════ -->
-        <div class="unit-frame enemy-frame @(_engine.IsAtSpiritHealer ? "spirit-frame" : _engine.CurrentEnemy is { FromDungeon: true } ? "elite-frame" : _engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "")">
+        @{ var introBoss = IntroEnemy; }
+        <div class="unit-frame enemy-frame @(_engine.IsAtSpiritHealer ? "spirit-frame" : _engine.CurrentEnemy is { FromDungeon: true } ? "elite-frame" : _engine.CurrentEnemy?.IsRare == true ? "rare-frame" : "") @(introBoss is not null ? "boss-intro" : "")"
+             style="@(introBoss is not null ? BossIntroStyle(introBoss) : null)">
+            @if (introBoss is not null)
+            {
+                <span class="boss-intro-aura" aria-hidden="true"></span>
+                <span class="boss-intro-ring" aria-hidden="true"></span>
+                <span class="boss-intro-ring late" aria-hidden="true"></span>
+                <div class="inv-speech boss-speech" role="status">
+                    <span class="inv-speech-text">@introBoss.SpawnQuote</span>
+                </div>
+            }
             <div class="combat-text-overlay">
                 @foreach (var f in SnapshotFloats(_enemyFloats))
                 {
@@ -369,11 +394,8 @@ else if (!_engine.NeedsCombatZone)
                 {
                     <div class="name-line">
                         <span class="char-name enemy-name @(enemy.FromDungeon ? "elite-name" : enemy.IsRare ? "rare-name" : "")">@enemy.Name</span>
-                        @if (enemy.IsBoss)
-                        {
-                            <img class="boss-skull-level" src="images/boss-skull.png" alt="Boss level" />
-                        }
-                        else
+                        @* Rare and dungeon enemies already show their level (or the boss skull) on the portrait *@
+                        @if (!enemy.FromDungeon && !enemy.IsRare)
                         {
                             <span class="level">Lv. @enemy.Stats.Level</span>
                         }
@@ -394,7 +416,10 @@ else if (!_engine.NeedsCombatZone)
                         <div class="hp-bar enemy-hp">
                             <div class="hp-fill"
                                  style="--bar-frac: @Scale(CalcPct(enemy.CurrentHp, enemy.Stats.MaxHp) / 100.0)"></div>
-                            <span class="bar-text">@enemy.CurrentHp / @enemy.Stats.MaxHp</span>
+                            @if (!enemy.IsInIntro)
+                            {
+                                <span class="bar-text">@enemy.CurrentHp / @enemy.Stats.MaxHp</span>
+                            }
                         </div>
                     </div>
                     <!-- Enemy swing timer: fills up until the next attack, glows shortly before; a stun visually freezes it -->

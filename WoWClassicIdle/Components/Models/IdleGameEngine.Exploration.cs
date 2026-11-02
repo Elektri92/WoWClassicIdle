@@ -4,7 +4,16 @@ using Models;
 // Exploration: discovery XP when entering a zone for the first time, known flight points and zone objectives ("Zone Mastery").
 public partial class IdleGameEngine
 {
-    /// <summary>Zone already visited (= flight point known). Without a roster character everything counts as discovered.</summary>
+    // Account-wide; immutable: the sim thread replaces the set completely, the UI reads without a lock
+    private ImmutableHashSet<string> _flightPoints = ImmutableHashSet<string>.Empty;
+
+    /// <summary>Number of flight points the account has learned (zones and dungeons).</summary>
+    public int FlightPointCount => _flightPoints.Count;
+
+    /// <summary>Any character of the account has already been here.</summary>
+    public bool IsFlightPointKnown(CombatZone zone) => _flightPoints.Contains(zone.Id);
+
+    /// <summary>Zone already visited by the active character. Without a roster character everything counts as discovered.</summary>
     public bool IsZoneDiscovered(CombatZone zone) =>
         ActiveCharacter is not { } slot || slot.DiscoveredZoneIds.Contains(zone.Id);
 
@@ -28,9 +37,18 @@ public partial class IdleGameEngine
     public bool IsZoneCompleted(CombatZone zone) =>
         IsZoneMastered(zone) && ProfessionBonusRegistry.ForZone(zone).All(OwnsProfessionBonus);
 
+    /// <summary>Unlocks the flight point for the whole account; true = it was not known yet.</summary>
+    private bool LearnFlightPoint(CombatZone zone)
+    {
+        if (_flightPoints.Contains(zone.Id)) return false;
+        _flightPoints = _flightPoints.Add(zone.Id);
+        return true;
+    }
+
     /// <summary>Mark the zone as discovered; with <paramref name="grantXp"/> there is discovery XP the first time.</summary>
     private void DiscoverZone(CharacterSlot slot, CombatZone zone, bool grantXp)
     {
+        string flightNote = LearnFlightPoint(zone) ? ", flight point learned" : "";
         if (slot.DiscoveredZoneIds.Contains(zone.Id)) return;
         slot.DiscoveredZoneIds = slot.DiscoveredZoneIds.Add(zone.Id);
         if (!grantXp) return;
@@ -40,13 +58,13 @@ public partial class IdleGameEngine
             // Arrived in the background as an inactive character: XP without unlock notifications
             int slotXp = ZoneObjectiveRegistry.DiscoveryXp(zone, slot.Player.Level);
             slot.Player.GainXp(slotXp);
-            LastLog = $"🗺 {slot.Name} discovered {zone.Name}: +{slotXp} XP, flight point learned";
+            LastLog = $"🗺 {slot.Name} discovered {zone.Name}: +{slotXp} XP{flightNote}";
             return;
         }
 
         int xp = ZoneObjectiveRegistry.DiscoveryXp(zone, Player.Level);
         bool levelUp = GrantXp(xp) > 0;
-        LastLog = $"🗺 Discovered {zone.Name}: +{xp} XP, flight point learned"
+        LastLog = $"🗺 Discovered {zone.Name}: +{xp} XP{flightNote}"
                   + (levelUp ? $" – ⬆ Lv. {Player.Level}" : "");
     }
 
@@ -117,5 +135,18 @@ public partial class IdleGameEngine
 
         if (data.ZoneObjectives is { } progress)
             slot.ZoneObjectiveProgress = progress.Where(p => p.Value > 0).ToImmutableDictionary();
+    }
+
+    internal List<string> BuildFlightPointSaveData() => _flightPoints.Order().ToList();
+
+    /// <summary>Account-wide flight points from the save game (legacy: everything the characters have visited, cleared dungeons included).</summary>
+    private void RestoreFlightPoints(SaveData save)
+    {
+        var known = save.FlightPoints ?? save.Roster
+            .SelectMany(s => (s.DiscoveredZones ?? [])
+                .Concat(s.DungeonClears?.Keys.AsEnumerable() ?? [])
+                .Append(s.CombatZone ?? ""))
+            .ToList();
+        _flightPoints = known.Where(id => CombatZoneRegistry.Get(id) is not null).ToImmutableHashSet();
     }
 }

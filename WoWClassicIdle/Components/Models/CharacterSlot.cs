@@ -10,6 +10,8 @@ namespace Models
         public string Name        { get; internal set; } = "";
         public Faction Faction    { get; internal set; }
         public Race Race          { get; internal set; }
+        /// <summary>Time of the last race change (UTC, null = never changed) – basis of the cooldown.</summary>
+        public DateTime? RaceChangedAtUtc { get; internal set; }
         public Gender Gender      { get; internal set; }
         public Player Player      { get; init; } = null!;
         /// <summary>Selected combat zone (null = never chosen → combat paused until a choice is made).</summary>
@@ -21,7 +23,7 @@ namespace Models
         /// <summary>Rank of the mount in the mount slot (0 = empty); the mount itself comes from the race.</summary>
         public int EquippedMountRank { get; internal set; }
         // Immutable collections: the sim thread replaces them completely, the UI reads without a lock
-        /// <summary>Zones already visited – the character knows the flight point there.</summary>
+        /// <summary>Zones already visited by this character (discovery XP, achievements); flight points are account-wide.</summary>
         public ImmutableHashSet<string> DiscoveredZoneIds { get; internal set; } = ImmutableHashSet<string>.Empty;
         /// <summary>Progress of the zone objectives (<see cref="ZoneObjective.Id"/> → counter).</summary>
         public ImmutableDictionary<string, int> ZoneObjectiveProgress { get; internal set; } = ImmutableDictionary<string, int>.Empty;

@@ -1,0 +1,53 @@
+@using System.Globalization
+@using Models
+
+@* XP loss per death below the XP bar; the tooltip explains what changes it. *@
+<WowTooltip Class="death-penalty" Title="Death Penalty">
+    <Body>
+        @if (Penalty.Active)
+        {
+            <span class="zt-line">
+                @(Penalty.Share > 0
+                    ? $"Each death costs {Percent(Penalty.Share * 100)} of your current XP. You can't lose a level."
+                    : "Dying costs you no XP.")
+            </span>
+            @if (Penalty.ReductionPercent > 0)
+            {
+                <span class="zt-good">−@Penalty.ReductionPercent % from @Penalty.HigherCharacters @(Penalty.HigherCharacters == 1 ? "character" : "characters") at level @Penalty.Milestone+</span>
+            }
+            @if (Penalty.RacialMultiplier < 1 && Penalty.Share > 0)
+            {
+                <span class="zt-good">A quarter less from Will of the Forsaken</span>
+            }
+        }
+        else if (Level < Player.DeathXpPenaltyMinLevel)
+        {
+            <span class="zt-line">Dying costs no XP until level @Player.DeathXpPenaltyMinLevel, then @Player.DeathXpPenaltyBasePercent % of your current XP.</span>
+        }
+        else
+        {
+            <span class="zt-line">At max level there is no XP to lose.</span>
+        }
+        @if (Penalty.Active || Level < Player.DeathXpPenaltyMinLevel)
+        {
+            <span class="zt-section">
+                Each of your characters at level <b>@Penalty.Milestone+</b> lowers the loss for levels <b>@Penalty.BracketStart–@(Penalty.Milestone - 1)</b> by <b>1 percentage point</b>. @Player.DeathXpPenaltyBasePercent characters remove it completely.
+            </span>
+        }
+        <span class="zt-sub">Same rule for every range: 20+ helps 10–19, 30+ helps 20–29, and so on up to 60 for 50–59.</span>
+        @if (Penalty.RacialMultiplier >= 1)
+        {
+            <span class="zt-sub">Undead lose a quarter less.</span>
+        }
+    </Body>
+    <ChildContent>
+        <span class="death-penalty-label">XP lost on death: <b class="@(Penalty.Share < Player.DeathXpPenaltyShare ? "reduced" : "")">@Percent(Penalty.Share * 100)</b></span>
+    </ChildContent>
+</WowTooltip>
+
+@code {
+    [Parameter, EditorRequired] public DeathXpPenalty Penalty { get; set; } = null!;
+    [Parameter] public int Level { get; set; }
+
+    private static string Percent(double value) => $"{value.ToString("0.##", CultureInfo.InvariantCulture)} %";
+}

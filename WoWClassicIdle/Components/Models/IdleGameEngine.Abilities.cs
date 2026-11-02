@@ -45,6 +45,7 @@ public partial class IdleGameEngine
             double abilityMult = Player.Buffs.DamageMultiplier
                 * (ability.AddsWeaponDamage ? Player.Buffs.WeaponDamageMultiplier : 1.0)
                 * enemy.Debuffs.DamageTakenMultiplier
+                * RacialDamageFactor(enemy)
                 * Player.Buffs.ConsumeEmpower(ability.Name);   // z. B. Mongoose Bite → Raptor Strike
             // Cold Blood: guaranteed crit for all hits of this ability
             double extraCrit = Player.GetAbilityCritBonus(ability) + (Player.Buffs.ConsumeGuaranteedCrit() ? 1.0 : 0.0);

@@ -77,7 +77,7 @@
             <span class="czone-legend-title">@(needsZone ? "Choose your hunting grounds" : "Choose a new zone")</span>
             <span class="czone-chip">⚔ Enemies near your level</span>
             <span class="czone-chip">@(needsZone ? "⚡ First pick is instant" : "🧭 Travel takes time – no fighting")</span>
-            <span class="czone-chip">🦅 Fly only to discovered zones</span>
+            <span class="czone-chip">🦅 Flight points unlock account-wide</span>
             <span class="czone-legend-levels">
                 <span class="czone-level lvl-yellow">Full XP</span>
                 <span class="czone-level lvl-green">Reduced</span>
@@ -129,6 +129,10 @@
                         @if (!locked)
                         {
                             <div class="czone-tile-badges">
+                                @if (Engine.IsFlightPointKnown(zone))
+                                {
+                                    <span class="czone-badge flight" aria-label="Flight point known">🦅</span>
+                                }
                                 @if (zone.IsDungeon)
                                 {
                                     <span class="czone-badge dungeon">🗝 Runs @Engine.DungeonRunsLeft/@DungeonRules.RunsPerWindow</span>
@@ -139,10 +143,6 @@
                                 @if (!Engine.IsZoneDiscovered(zone))
                                 {
                                     <span class="czone-badge new">✦ Undiscovered</span>
-                                }
-                                else
-                                {
-                                    <span class="czone-badge flight" aria-label="Flight point known">🦅</span>
                                 }
                                 @if (Engine.IsZoneMastered(zone))
                                 {
@@ -303,7 +303,7 @@
     // Only re-render when character, zone, travel or level change (TickUpdated fires 10× per second)
     private string Signature() =>
         $"{Engine.ActiveCharacter?.Id}|{Engine.ActiveCharacter?.CombatZoneId}|{Engine.Travel?.TargetZoneId}|{Engine.Player.Level}"
-        + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}"
+        + $"|{Engine.ActiveCharacter?.DiscoveredZoneIds.Count}|{Engine.FlightPointCount}|{Engine.ActiveCharacter?.ZoneObjectiveProgress.Values.Sum()}"
         + $"|{Engine.OwnedProfessionBonusCount}"
         + $"|{Engine.DungeonRunsLeft}|{(int?)Engine.DungeonLockoutRemaining?.TotalMinutes}";
 
@@ -394,13 +394,20 @@
             <span class="zt-good">Every boss drops one green or blue item</span>
             <span class="zt-sub">Build a group of 1 tank, 1 healer and 3 DPS – your companions cast their spells on their own and you share one health bar</span>
             <span class="zt-sub">@DungeonRules.RunsPerWindow runs per @((int)DungeonRules.LockoutWindow.TotalHours) hours per character (@Engine.DungeonRunsLeft left) · @DungeonRules.MaxWipes wipes end a run</span>
+            @if (!Engine.IsFlightPointKnown(zone))
+            {
+                <span class="zt-sub">Reach it once to unlock its flight point for your account</span>
+            }
         }
         else if (level >= zone.MinLevel)
         {
             @if (!Engine.IsZoneDiscovered(zone))
             {
                 <span class="zt-good">✦ Undiscovered – first visit: +@Engine.DiscoveryXpFor(zone) XP</span>
-                <span class="zt-sub">Discover it to unlock its flight point</span>
+                @if (!Engine.IsFlightPointKnown(zone))
+                {
+                    <span class="zt-sub">Discover it to unlock its flight point for your account</span>
+                }
             }
             @if (!Engine.IsZoneMastered(zone))
             {

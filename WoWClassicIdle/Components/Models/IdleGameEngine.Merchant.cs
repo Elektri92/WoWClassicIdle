@@ -48,10 +48,10 @@ public partial class IdleGameEngine
         {
             var state = StockState(offer);
             if (state.Count <= 0) return "Sold out.";
-            if (Player.Copper < offer.Price) return "You don't have enough money.";
+            if (Player.Copper < MerchantPrice(offer)) return "You don't have enough money.";
             if (_sharedInventory.TryAdd(offer.Item) > 0) return "Your bags are full.";
 
-            Player.Copper -= offer.Price;
+            Player.Copper -= MerchantPrice(offer);
             state.Count--;
             state.RestockAtUtc ??= DateTime.UtcNow + offer.RestockInterval;
             return null;

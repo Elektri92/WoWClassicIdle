@@ -388,6 +388,7 @@ namespace Models
                 armorBonus = armorBonus + weaponBonus;
             // Consumables (elixirs, flasks, food) work like gear bonuses
             armorBonus = armorBonus + ConsumableBonus;
+            armorBonus = armorBonus + RacialPrimaryBonus(baseStats.Primary + armorBonus);
 
             var augPrimary = baseStats.Primary + armorBonus;
             if (ConsumableSpiritMultiplier != 1)
@@ -396,15 +397,15 @@ namespace Models
             // Melee formulas: Druid forms scale like Rogue (Cat) or Warrior (Bear)
             var meleeClass = MeleeScalingClass;
 
-            Stats = ApplyFormStats(baseStats with
+            Stats = ApplyRacialStats(ApplyFormStats(baseStats with
             {
                 CopperReward               = old.CopperReward,
                 XpReward                   = old.XpReward,
-                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit + EquippedArmor.Values.Sum(a => a.Effect?.CritChance ?? 0) + setBonus.Crit,
+                CritChance                 = StatScaling.CritChance(meleeClass) + talentCrit + EquippedArmor.Values.Sum(a => a.Effect?.CritChance ?? 0) + setBonus.Crit + Racial.CritChance,
                 MeleeDamageMultiplier      = StatScaling.MeleeDamageMultiplier(meleeClass),
                 AutoAttackDamageMultiplier = StatScaling.AutoAttackDamageMultiplier(meleeClass) * (1.0 + autoAtkBonus),
-                AttackSpeedBonus           = StatScaling.AttackSpeedBonus(meleeClass) + autoAtkSpeedBonus,
-                DamageTakenReduction       = Math.Clamp(damageTakenRed, 0, 0.99),
+                AttackSpeedBonus           = StatScaling.AttackSpeedBonus(meleeClass) + autoAtkSpeedBonus + Racial.AttackSpeedBonus,
+                DamageTakenReduction       = Math.Clamp(damageTakenRed + Racial.DamageTakenReduction, 0, 0.99),
                 HealingMultiplier          = 1.0 + healingBonus,
                 Primary                    = augPrimary,
                 MaxHp                      = baseStats.MaxHp   + StatScaling.BonusHp(armorBonus) + StaminaTalentHp(augPrimary),
@@ -412,7 +413,7 @@ namespace Models
                 ManaRegenPer5              = ManaRegenWithSpiritBonus(StatScaling.ManaRegenPer5(ActiveClass, augPrimary), spiritRegenBonus),
                 HpRegenPer5                = StatScaling.HpRegenPer5(meleeClass, augPrimary),
                 AttackPower                = StatScaling.AttackPower(meleeClass, level, augPrimary),
-            });
+            }));
 
             CurrentHp = Stats.MaxHp;
             CurrentMana = StartingResource;

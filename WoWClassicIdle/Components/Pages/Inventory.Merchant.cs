@@ -61,15 +61,16 @@ public partial class Inventory
 
     private void BuyFromMerchant(MerchantOffer offer)
     {
+        long price = _engine.MerchantPrice(offer);
         var error = _engine.BuyFromMerchant(offer);
         if (error is not null)
         {
             ShowMerchantMessage(error, true);
-            if (_engine.Player.Copper < offer.Price) Say(MerchantRegistry.RefuseLines);
+            if (_engine.Player.Copper < price) Say(MerchantRegistry.RefuseLines);
             return;
         }
-        ShowMerchantMessage($"Bought: {offer.Item.Name} for {Money.Format(offer.Price)}", false);
-        ShowFx(MerchantFxKind.Buy, offer.Item, offer.Price);
+        ShowMerchantMessage($"Bought: {offer.Item.Name} for {Money.Format(price)}", false);
+        ShowFx(MerchantFxKind.Buy, offer.Item, price);
         Say(MerchantRegistry.BuyLines);
     }
 

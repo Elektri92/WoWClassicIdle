@@ -127,8 +127,8 @@ public static class ZoneTravel
 
     /// <summary>
     /// Fastest route from <paramref name="from"/> to <paramref name="to"/> (Dijkstra over zones + harbors).
-    /// Flying is only possible between known flight points (<paramref name="flightPoints"/> = discovered zones);
-    /// discovered zones serve as stopovers, e.g. fly to the next known point and ride from there.
+    /// Flying is only possible between known flight points (<paramref name="flightPoints"/> = account-wide zones and dungeons);
+    /// they serve as stopovers, e.g. fly to the next known point and ride from there.
     /// </summary>
     public static TravelRoute Route(CombatZone from, CombatZone to, Faction faction, GroundTravel ground, IReadOnlySet<string> flightPoints)
     {

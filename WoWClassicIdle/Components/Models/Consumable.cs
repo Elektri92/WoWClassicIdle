@@ -89,5 +89,5 @@ namespace Models
     }
 
     /// <summary>Active consumable buff with remaining duration (combat seconds).</summary>
-    public record ActiveConsumable(ConsumableItem Item, double Remaining);
+    public record ActiveConsumable(ConsumableItem Item, double Remaining, double Duration);
 }

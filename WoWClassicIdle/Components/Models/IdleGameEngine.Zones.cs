@@ -25,7 +25,7 @@ public partial class IdleGameEngine
     /// <summary>Route from the current zone to <paramref name="target"/>; null without a start zone (the first choice is immediate).</summary>
     public TravelRoute? RouteTo(CombatZone target) =>
         CurrentCombatZone is { } from && ActiveCharacter is { } slot
-            ? ZoneTravel.Route(from, target, Faction, GroundTravel, slot.DiscoveredZoneIds)
+            ? ZoneTravel.Route(from, target, Faction, GroundTravel, _flightPoints)
             : null;
 
     /// <summary>Reason why the zone cannot be chosen (null = selectable).</summary>
@@ -62,7 +62,7 @@ public partial class IdleGameEngine
                 {
                     FromZoneId   = from.Id,
                     TargetZoneId = zone.Id,
-                    Route        = ZoneTravel.Route(from, zone, slot.Faction, GroundTravel, slot.DiscoveredZoneIds),
+                    Route        = ZoneTravel.Route(from, zone, slot.Faction, GroundTravel, _flightPoints),
                 };
                 LeaveCombat();
                 LastLog = $"🧭 Traveling to {zone.Name} ({ZoneTravel.FormatDuration(slot.Travel.Duration)})";
@@ -122,7 +122,11 @@ public partial class IdleGameEngine
             ? $"🗺 Arrived in {arrived?.Name}"
             : $"🗺 {slot.Name} arrived in {arrived?.Name}";
         if (arrived is { IsDungeon: true })
-            EnterDungeon(slot, arrived, travel.FromZoneId); // no flight point in dungeons
+        {
+            bool learned = LearnFlightPoint(arrived); // dungeons have no discovery XP, only the flight point
+            EnterDungeon(slot, arrived, travel.FromZoneId);
+            if (learned) LastLog += ", flight point learned";
+        }
         else if (arrived is not null)
             DiscoverZone(slot, arrived, grantXp: true);
         return true;
@@ -142,7 +146,7 @@ public partial class IdleGameEngine
     }
 
     /// <summary>Take over zone and travel of a character from the save game (invalid values are discarded).</summary>
-    private static void RestoreCombatZone(CharacterSlot slot, SlotSaveData data)
+    private void RestoreCombatZone(CharacterSlot slot, SlotSaveData data)
     {
         if (CombatZoneRegistry.Get(data.CombatZone) is not { } zone) return;
         slot.CombatZoneId = zone.Id;
@@ -151,7 +155,7 @@ public partial class IdleGameEngine
 
         if (CombatZoneRegistry.Get(data.TravelTarget) is not { } target || target.Id == zone.Id) return;
         var ground = ZoneTravel.GroundFor(slot.Class, slot.Player.Level, MountOf(slot));
-        var route = ZoneTravel.Route(zone, target, slot.Faction, ground, slot.DiscoveredZoneIds);
+        var route = ZoneTravel.Route(zone, target, slot.Faction, ground, _flightPoints);
         slot.Travel = new ZoneTravelState
         {
             FromZoneId   = zone.Id,

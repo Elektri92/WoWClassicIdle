@@ -59,7 +59,7 @@ public class EnemySpawner
             XpReward     = (int)(StaticHelpers.GetXpForLevel(enemyLevel))
         };
 
-        string name = isRare ? $"★ {template.Name} (Lv.{enemyLevel})" : $"{template.Name} (Lv.{enemyLevel})";
+        string name = isRare ? $"★ {template.Name}" : template.Name;
 
         return new Enemy(stats)
         {

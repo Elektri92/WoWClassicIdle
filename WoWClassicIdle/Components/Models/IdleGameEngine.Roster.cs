@@ -41,6 +41,23 @@ public partial class IdleGameEngine
     }
 
     // ─── Roster-Verwaltung ───
+    public static readonly TimeSpan RaceChangeCooldown = TimeSpan.FromHours(24);
+
+    /// <summary>Reason why the character of this class cannot switch to the race right now (null = allowed).</summary>
+    public string? RaceChangeBlocker(CharacterClass characterClass, Race race)
+    {
+        var slot = _roster.FirstOrDefault(s => s.Class == characterClass);
+        if (slot is not { RaceChangedAtUtc: { } changedAt } || slot.Race == race) return null;
+        var remaining = changedAt + RaceChangeCooldown - DateTime.UtcNow;
+        return remaining > TimeSpan.Zero
+            ? $"{IdleGameEngine.CharacterName(slot)} can change race again in {FormatLockout(remaining)}."
+            : null;
+    }
+
+    /// <summary>True if saving this race would change the race of the existing character of this class.</summary>
+    public bool WouldChangeRace(CharacterClass characterClass, Race race) =>
+        _roster.FirstOrDefault(s => s.Class == characterClass) is { } slot && slot.Race != race;
+
     public CharacterSlot CreateCharacter(string name, Faction faction, Race race, CharacterClass characterClass, Gender gender)
     {
         if (CharacterNames.Validate(name) is { } nameError)
@@ -58,10 +75,15 @@ public partial class IdleGameEngine
         if (_roster.Any(s => s != existing && string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException($"The name '{name}' is already taken by another character.");
 
+        if (RaceChangeBlocker(characterClass, race) is { } raceBlocker)
+            throw new ArgumentException(raceBlocker);
+
         if (existing is not null)
         {
             lock (_simLock)
             {
+                if (existing.Race != race)
+                    existing.RaceChangedAtUtc = DateTime.UtcNow;
                 existing.Name    = name;
                 existing.Player.Name = name;
                 existing.Faction = faction;

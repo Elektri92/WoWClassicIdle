@@ -111,6 +111,14 @@ public partial class IdleGameEngine
             return;
         }
 
+        // ── Entrance of a boss: the fight only starts afterwards ──
+        if (CurrentEnemy.IsInIntro)
+        {
+            CurrentEnemy.IntroRemaining = Math.Max(0, CurrentEnemy.IntroRemaining - _baseDt);
+            EnemySwingInterval = CurrentEnemy.Stats.Speed;
+            return;
+        }
+
         double dt = _baseDt;
         Meter.AddCombatTime(dt);
         Meter.HealingScale = GroupHealthScale;
@@ -151,7 +159,7 @@ public partial class IdleGameEngine
         // ── Enemy DoT ticks (debuffs) ──
         foreach (var dot in CurrentEnemy.Debuffs.Tick(dt))
         {
-            var (dotDmg, dotCrit) = RollPlayerCrit(dot.Amount);
+            var (dotDmg, dotCrit) = RollPlayerCrit(RacialDotTick(dot.Amount, CurrentEnemy));
             Meter.RecordAbility(dot.Source, CombatActionKind.Damage, CurrentEnemy.TakeDamage(dotDmg));
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, dotDmg, dotCrit));
             totalPlayerDmg += dotDmg;
@@ -257,7 +265,7 @@ public partial class IdleGameEngine
                 && Player.CurrentMana >= nextSwingAbility.MinResourceToCast
                 && Player.ConsumeMana(nextSwingAbility.ManaCost))
             {
-                double swingMult = Player.Buffs.DamageMultiplier * Player.Buffs.WeaponDamageMultiplier * enemyDmgTakenMult;
+                double swingMult = Player.Buffs.DamageMultiplier * Player.Buffs.WeaponDamageMultiplier * enemyDmgTakenMult * RacialDamageFactor(CurrentEnemy);
                 var (swingDmg, swingCrit) = RollPlayerCrit(
                     CombatEngine.CalculateAbilityDamage(nextSwingAbility, Player.Stats, _rng, swingMult));
                 Meter.RecordAbility(nextSwingAbility, CombatActionKind.Damage, CurrentEnemy.TakeDamage(swingDmg));
@@ -277,7 +285,7 @@ public partial class IdleGameEngine
                 continue;
             }
 
-            double autoMult = Player.Buffs.DamageMultiplier * Player.Buffs.WeaponDamageMultiplier * enemyDmgTakenMult;
+            double autoMult = Player.Buffs.DamageMultiplier * Player.Buffs.WeaponDamageMultiplier * enemyDmgTakenMult * RacialDamageFactor(CurrentEnemy);
             double autoAttackCritBonus = Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.AutoAttackCrit);
             var (playerDmg, autoCrit) = RollPlayerCrit(
                 CombatEngine.CalculateAutoAttack(Player.Stats, _rng, autoMult), autoAttackCritBonus);
@@ -381,11 +389,11 @@ public partial class IdleGameEngine
             if (EnableRareRequeue && CurrentEnemy is { IsRare: true })
                 _pendingRareEnemy = CurrentEnemy;
             CurrentEnemy = null;
-            RespawnDuration  = 10 + Player.Level;
+            RespawnDuration  = (10 + Player.Level) * (1 - Player.Racial.RespawnReduction);
             RespawnRemaining = RespawnDuration;
             LastLog = "Defeated! Resurrecting at the Spirit Healer…";
             HandleConsumablesOnDeath();
-            int xpLost = Player.ApplyDeathXpPenalty();
+            int xpLost = Player.ApplyDeathXpPenalty(CurrentDeathXpPenalty);
             if (xpLost > 0)
                 LastLog += $" Lost {xpLost} XP.";
             HandleDungeonDeath();
@@ -458,7 +466,8 @@ public partial class IdleGameEngine
     private void HandleEnemyDeath()
     {
         var deadEnemy = CurrentEnemy!;
-        Player.Copper += deadEnemy.Stats.CopperReward;
+        Player.Copper += RacialKillCopper(deadEnemy);
+        ApplyRacialKillHeal();
         RollCombatTradeDrops(deadEnemy);
         RollProfessionBonusDrop();
 
@@ -474,7 +483,7 @@ public partial class IdleGameEngine
             else
             {
                 // No loot table → double gold instead of an item
-                Player.Copper += deadEnemy.Stats.CopperReward;
+                Player.Copper += RacialKillCopper(deadEnemy);
             }
 
             // 25 % chance for a green class weapon

@@ -58,6 +58,8 @@ public static class GameFeatureRegistry
             "From now on, dying costs you experience.",
             [
                 $"Each death removes {Player.DeathXpPenaltyShare * 100:0} % of your current XP towards the next level.",
+                $"Each character {DeathXpPenalty.BracketSize} levels ahead (e.g. level 20+ for levels 10–19) lowers the loss by 1 percentage point.",
+                "Undead lose a quarter less thanks to Will of the Forsaken.",
                 "You can never lose a level – your XP drops to 0 at most.",
                 $"Characters below level {Player.DeathXpPenaltyMinLevel} are not affected.",
             ],

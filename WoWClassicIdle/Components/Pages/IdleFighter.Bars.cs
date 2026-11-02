@@ -14,9 +14,9 @@ public partial class IdleFighter
     /// <summary>Game seconds per real-time second – the engine computes whole sub-steps per tick.</summary>
     private double SimRate => Math.Max(1, Math.Round(_engine.SpeedMultiplier));
 
-    /// <summary>Combat is at a standstill (pause, spirit healer, travel, no enemy) – swing timers don't advance then.</summary>
+    /// <summary>Combat is at a standstill (pause, spirit healer, travel, no enemy, boss entrance) – swing timers don't advance then.</summary>
     private bool CombatFrozen =>
-        !_running || _engine.IsAtSpiritHealer || _engine.IsTraveling || _engine.CurrentEnemy is not { IsAlive: true };
+        !_running || _engine.IsAtSpiritHealer || _engine.IsTraveling || _engine.CurrentEnemy is not { IsAlive: true, IsInIntro: false };
 
     /// <summary>Inline style of a bar: animation timing, or a static transform when paused.</summary>
     private static string BarStyle(BarClock clock, string staticTransform) =>

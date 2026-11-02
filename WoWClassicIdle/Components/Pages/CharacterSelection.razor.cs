@@ -73,6 +73,10 @@ public partial class CharacterSelection
     private string PreviewName =>
         string.IsNullOrWhiteSpace(characterName) ? "Unnamed" : CharacterNames.Normalize(characterName);
 
+    private string? RaceBlocker => Engine.RaceChangeBlocker(selectedClass, selectedRace);
+
+    private string? ConfirmBlocker => CharacterNames.Validate(characterName) ?? RaceBlocker;
+
     private void OnNameChanged()
     {
         // Only show errors after input – an empty field at form start is not an error

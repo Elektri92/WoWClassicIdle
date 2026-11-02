@@ -34,6 +34,9 @@ namespace Models
         public static int BagSlotSize(int level) =>
             BaseBagSlotSize + level / 5;
 
+        /// <summary>Money in copper; lives here so that all characters sharing this inventory also share the money.</summary>
+        public long Copper { get; set; }
+
         /// <summary>Level at which all bags grow next.</summary>
         public static int NextBagGrowthLevel(int level) => (level / 5 + 1) * 5;
 

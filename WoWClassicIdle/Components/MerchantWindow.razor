@@ -25,7 +25,8 @@
             {
                 var o = offer;
                 int stock = Engine.MerchantStockOf(o);
-                bool affordable = Engine.Player.Copper >= o.Price;
+                long price = Engine.MerchantPrice(o);
+                bool affordable = Engine.Player.Copper >= price;
                 <div class="mw-cell @(stock == 0 ? "sold-out" : "") @(affordable ? "" : "too-expensive")"
                      @onclick="() => OnBuy.InvokeAsync(o)"
                      @oncontextmenu="() => OnBuy.InvokeAsync(o)" @oncontextmenu:preventDefault>
@@ -37,7 +38,7 @@
                     </TradeItemTooltip>
                     <div class="mw-cell-info">
                         <span class="mw-cell-name" style="color: @ItemQualityColors.Hex(o.Item.Quality)">@o.Item.Name</span>
-                        <span class="mw-cell-price"><MoneyFrame Copper="o.Price" /></span>
+                        <span class="mw-cell-price"><MoneyFrame Copper="price" /></span>
                         @if (Engine.MerchantRestockRemaining(o) is { } left)
                         {
                             <span class="mw-cell-note" title="Stock refills completely">Restock @FormatCountdown(left)</span>

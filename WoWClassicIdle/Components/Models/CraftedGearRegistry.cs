@@ -7,6 +7,7 @@ namespace Models
     /// Schmiedekunst → Platte (Krieger, Paladin).
     /// stat budget is slightly above the usable stats of green drops of the same tier (class stats only),
     /// blue drops stay better. IDs from 9501.
+    /// Additionally one expensive blue tier (<see cref="BlueTier"/>), above green crafted gear and below blue drops of the next level.
     /// </summary>
     public static class CraftedGearRegistry
     {
@@ -35,6 +36,11 @@ namespace Models
         private static readonly string[] CloakIcons =
             ["inv_misc_cape_01", "inv_misc_cape_02", "inv_misc_cape_06", "inv_misc_cape_10", "inv_misc_cape_11", "inv_misc_cape_16", "inv_misc_cape_20"];
 
+        /// <summary>Blue hands and wrists per class: IDs 9983–10000 (2 slots × 9 classes).</summary>
+        private const int FirstBlueId = 9983;
+
+        private static readonly GearTier BlueTier = new(10, 25, 11, 40, [ArmorSlot.Hands, ArmorSlot.Wrists]);
+
         /// <summary>Material of a tier: item + share of the base amount.</summary>
         private record TierMaterial(string Name, (TradeItem Item, double Share)[] Reagents);
 
@@ -47,7 +53,8 @@ namespace Models
             double Str = 0, double Agi = 0, double Sta = 0, double Int = 0, double Spi = 0);
 
         /// <param name="ExtraReagents">Added to the amount of every reagent of the profession.</param>
-        private record ProfessionGear(Profession Profession, TierMaterial[] Materials, ClassSet[] Sets, int ExtraReagents = 0);
+        /// <param name="BlueMaterial">Material of <see cref="BlueTier"/>; must not be used by a higher skill tier first, otherwise it lowers zone locks.</param>
+        private record ProfessionGear(Profession Profession, TierMaterial[] Materials, ClassSet[] Sets, TierMaterial BlueMaterial, int ExtraReagents = 0);
 
         private static readonly ArmorStyle Cloth = new(new()
         {
@@ -109,7 +116,8 @@ namespace Models
                 new(CharacterClass.Mage,    "Arcanist",   Cloth, Int: 0.50, Sta: 0.30, Spi: 0.20),
                 new(CharacterClass.Priest,  "Devout",     Cloth, Int: 0.40, Spi: 0.35, Sta: 0.25),
                 new(CharacterClass.Warlock, "Shadoweave", Cloth, Int: 0.40, Sta: 0.45, Spi: 0.15),
-            ]),
+            ],
+            new("Spellwoven", [(ProfessionRegistry.LinenCloth, 1.0)])),
 
             new(Profession.Leatherworking,
             [
@@ -126,7 +134,8 @@ namespace Models
                 new(CharacterClass.Druid,  "Wildheart",   Leather, Int: 0.35, Agi: 0.30, Sta: 0.20, Spi: 0.15),
                 new(CharacterClass.Hunter, "Beastmaster", Mail,    Agi: 0.50, Sta: 0.30, Int: 0.20),
                 new(CharacterClass.Shaman, "Earthcaller", Mail,    Int: 0.35, Agi: 0.25, Sta: 0.25, Spi: 0.15),
-            ]),
+            ],
+            new("Reinforced", [(ProfessionRegistry.LightLeather, 1.0), (ProfessionRegistry.RuinedLeatherScraps, 0.5)])),
 
             new(Profession.Blacksmithing,
             [
@@ -142,6 +151,7 @@ namespace Models
                 new(CharacterClass.Warrior, "Vanguard",    Plate, Str: 0.45, Sta: 0.40, Agi: 0.15),
                 new(CharacterClass.Paladin, "Lightforged", Plate, Str: 0.40, Sta: 0.30, Int: 0.30),
             ],
+            new("Tempered Copper", [(ProfessionRegistry.CopperOre, 1.0)]),
             ExtraReagents: 1),
         ];
 
@@ -157,10 +167,8 @@ namespace Models
             var recipes = new List<Recipe>();
             int id = 9501;
 
-            void AddTier(ProfessionGear gear, int t)
+            void AddTier(ProfessionGear gear, GearTier tier, TierMaterial material, ItemQuality quality = ItemQuality.Uncommon, long sellFactor = 12L, bool isSkillStep = true)
             {
-                var tier = Tiers[t];
-                var material = gear.Materials[t];
                 foreach (var set in gear.Sets)
                 {
                     foreach (var slot in tier.Slots)
@@ -168,8 +176,8 @@ namespace Models
                         var (piece, icon) = set.Style.Pieces[slot];
                         double weight = SlotWeight(slot);
                         var item = new ArmorItem(id++, $"{material.Name} {set.SetName} {piece}", icon, slot,
-                            Stats(tier.Budget * weight, set), tier.Level, ItemQuality.Uncommon,
-                            SellPrice: 12L * tier.Level * tier.Level, RequiredClass: set.Class);
+                            Stats(tier.Budget * weight, set), tier.Level, quality,
+                            SellPrice: sellFactor * tier.Level * tier.Level, RequiredClass: set.Class);
 
                         var reagents = material.Reagents
                             .Select(r => new Reagent(r.Item, Math.Max(1, (int)Math.Round(tier.BaseReagents * r.Share * weight)) + gear.ExtraReagents))
@@ -177,7 +185,7 @@ namespace Models
 
                         items.Add(item);
                         _byId[item.Id] = item;
-                        recipes.Add(new Recipe($"gear_{item.Id}", gear.Profession, item, reagents, tier.Skill));
+                        recipes.Add(new Recipe($"gear_{item.Id}", gear.Profession, item, reagents, tier.Skill, IsSkillStep: isSkillStep));
                     }
                 }
             }
@@ -186,10 +194,10 @@ namespace Models
             var definitions = Definitions();
             foreach (var gear in definitions)
                 for (int t = 0; t < OriginalTierCount; t++)
-                    AddTier(gear, t);
+                    AddTier(gear, Tiers[t], gear.Materials[t]);
             foreach (var gear in definitions)
                 for (int t = OriginalTierCount; t < Tiers.Length; t++)
-                    AddTier(gear, t);
+                    AddTier(gear, Tiers[t], gear.Materials[t]);
 
             // Tailored cloaks for every class, in their own ID range after Enchanting
             var tailoring = definitions.Single(g => g.Profession == Profession.Tailoring);
@@ -214,6 +222,11 @@ namespace Models
                     recipes.Add(new Recipe($"gear_{item.Id}", Profession.Tailoring, item, reagents, tier.Skill));
                 }
             }
+
+            // Blue tier in its own ID range after the cloaks
+            id = FirstBlueId;
+            foreach (var gear in definitions)
+                AddTier(gear, BlueTier, gear.BlueMaterial, ItemQuality.Rare, sellFactor: 48L, isSkillStep: false);
 
             Items = items;
             Recipes = recipes;

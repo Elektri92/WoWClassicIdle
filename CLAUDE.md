@@ -43,6 +43,7 @@ WoWClassicIdle/Components/
 | `Models/IdleGameEngine.Dungeons.cs` | Run-Ablauf, Boss-Loot, Wipes, Lockout |
 | `Models/DungeonLootRegistry.cs` / `ItemSetRegistry.cs` | Boss-Loottabellen, Set-Teile und Set-Boni |
 | `Models/DungeonPartyRegistry.cs` | Gruppenaufbau: Rollen, Klassen-/Rollenkombis, NPC-Zauber |
+| `Models/RacialRegistry.cs` | Racial-Passive je Rasse (Werte, Texte, Icons); Wirkung in `Player.Racials.cs` / `IdleGameEngine.Racials.cs` |
 | `Models/Player.cs` | Spieler-Zustand, Equip, XP |
 | `Models/CombatEngine.cs` | Reine Kampfmathematik (keine Zustand) |
 

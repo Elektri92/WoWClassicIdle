@@ -1,0 +1,166 @@
+/* Instance decoration in the /idle combat background (Components/DungeonScenery.razor).
+   Sits inside .battle-scenery, so it stays behind the frames and under the edge vignette.
+   Animations only use transform/opacity so they stay cheap in WebKitGTK. */
+
+.ds-layer {
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+.ds-cave  { top: 0; height: 100%; }
+.ds-floor { bottom: 0; }
+
+/* ── Wailing Caverns: overgrown cave ── */
+.wc-floor   { height: 22%; }
+.wc-ceiling { top: 0; height: 13%; }
+
+.wc-mushrooms {
+    position: absolute;
+    bottom: 4%;
+    height: 24%;
+    filter: brightness(.8);
+}
+.wc-mushrooms.left  { left: 1%; }
+.wc-mushrooms.right { right: 1%; }
+
+.wc-vine {
+    position: absolute;
+    top: 4%;
+    left: var(--x);
+    height: var(--h);
+    transform-origin: 50% 0;
+    animation: wc-sway var(--t) ease-in-out var(--d) infinite alternate;
+}
+@keyframes wc-sway {
+    from { transform: rotate(-1.4deg); }
+    to   { transform: rotate(1.4deg); }
+}
+
+.wc-spore {
+    position: absolute;
+    bottom: 8%;
+    left: var(--x);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #b8ffb0;
+    box-shadow: 0 0 6px 2px rgba(127, 224, 122, .7);
+    opacity: 0;
+    animation: wc-spore var(--t) linear var(--d) infinite;
+}
+@keyframes wc-spore {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    15%  { opacity: .85; }
+    50%  { transform: translate(14px, -130px); }
+    85%  { opacity: .6; }
+    100% { transform: translate(-6px, -260px); opacity: 0; }
+}
+
+/* ── Deadmines: pirate hideout with the ship in a cave harbor ── */
+.dm-water {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 26%;
+    background:
+        repeating-linear-gradient(180deg, rgba(255, 170, 80, .1) 0 2px, transparent 2px 11px),
+        linear-gradient(180deg, #16262b 0%, #0a1316 100%);
+}
+
+.dm-ship {
+    position: absolute;
+    /* Behind the enemy frame: masts show above it, the hull below it */
+    left: 66%;
+    bottom: 9%;
+    height: 86%;
+    max-width: none;
+    transform-origin: 50% 90%;
+    animation: dm-bob 7s ease-in-out infinite alternate;
+    filter: brightness(.95);
+}
+@keyframes dm-bob {
+    from { transform: translateX(-50%) rotate(-.5deg); }
+    to   { transform: translateX(-50%) translateY(3px) rotate(.5deg); }
+}
+
+.dm-dock { height: 11%; }
+
+.dm-prop {
+    position: absolute;
+    bottom: 7%;
+    filter: brightness(.82);
+}
+.dm-cargo  { left: 1.5%; height: 30%; }
+.dm-chest  { right: 33%; height: 20%; }
+.dm-cannon { right: 7%; height: 20%; }
+
+.dm-post {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+.dm-post.left  { left: 0; }
+.dm-post.right { right: 0; transform: scaleX(-1); }
+
+.dm-beam { top: 0; height: 8%; }
+
+.dm-banner {
+    position: absolute;
+    top: 7%;
+    left: 1.5%;
+    height: 24%;
+    transform-origin: 50% 0;
+    filter: brightness(.8);
+    animation: dm-banner 6s ease-in-out infinite alternate;
+}
+@keyframes dm-banner {
+    from { transform: skewX(-1.5deg); }
+    to   { transform: skewX(1.5deg); }
+}
+
+.dm-lantern {
+    position: absolute;
+    top: 7%;
+    left: var(--x);
+    height: 20%;
+    aspect-ratio: 60 / 126;
+    transform-origin: 50% 0;
+    animation: dm-swing 5s ease-in-out var(--d) infinite alternate;
+}
+.dm-lantern img {
+    position: relative;
+    display: block;
+    height: 100%;
+}
+.dm-lantern-glow {
+    position: absolute;
+    left: 50%;
+    top: 78%;
+    width: 240px;
+    height: 240px;
+    margin: -120px 0 0 -120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 180, 90, .42) 0%, rgba(255, 160, 70, .14) 42%, transparent 70%);
+    animation: dm-flicker 3.1s steps(9) var(--d) infinite;
+}
+@keyframes dm-swing {
+    from { transform: rotate(-2.2deg); }
+    to   { transform: rotate(2.2deg); }
+}
+@keyframes dm-flicker {
+    0%, 100% { opacity: 1; }
+    20%      { opacity: .82; }
+    35%      { opacity: .95; }
+    55%      { opacity: .74; }
+    75%      { opacity: .92; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wc-vine,
+    .dm-banner,
+    .dm-lantern,
+    .dm-lantern-glow { animation: none; }
+    .dm-ship { animation: none; transform: translateX(-50%); }
+    .wc-spore { display: none; }
+}

@@ -78,6 +78,7 @@ window.spellFx = (() => {
     const FX = {
         scatter: (t, v) => [`${offset(v.dx * t, v.dy * t)} scale(${lerp(1, v.s1, t)})`, lerp(v.o0 ?? 1, 0, t)],
         grow: (t, v) => [`${CENTER} scale(${lerp(v.s0, v.s1, t)})`, 1 - t],
+        fade: t => ['none', track(t, [[0, 0], [.2, 1], [1, 0]])],
         slash: (t, v) => [`${CENTER} rotate(${v.rot}deg) scaleX(${track(t, [[0, 0], [.35, 1], [1, 1.1]])})`, track(t, [[0, 1], [.35, 1], [1, 0]])],
         drift: (t, v) => {
             const dx = track(t, [[0, 0], [.2, v.dx / 2], [1, v.dx]]), dy = track(t, [[0, 0], [.2, v.dy * .2], [1, v.dy]]);

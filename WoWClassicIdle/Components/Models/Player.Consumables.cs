@@ -78,7 +78,8 @@ namespace Models
         /// <summary>Activates a buff (replaces the slot of the same kind) and recalculates the stats.</summary>
         public void ApplyConsumable(ConsumableItem item)
         {
-            lock (_consumables) _consumables[item.BuffKey] = new ActiveConsumable(item, item.DurationSeconds);
+            double duration = item.DurationSeconds * (item.Kind == ConsumableKind.Food ? 1 + Racial.FoodDurationBonus : 1);
+            lock (_consumables) _consumables[item.BuffKey] = new ActiveConsumable(item, duration, duration);
             RefreshConsumableStats();
         }
 

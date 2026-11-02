@@ -15,7 +15,7 @@ public partial class IdleGameEngine
         if (slot.RidingRank < skill.Rank - 1)
             return $"Requires {MountRegistry.Skills.First(s => s.Rank == skill.Rank - 1).Name}";
         if (Player.Level < skill.RequiredLevel) return $"Requires level {skill.RequiredLevel}";
-        if (Player.Copper < skill.Cost) return "You don't have enough money.";
+        if (Player.Copper < RidingCost(skill)) return "You don't have enough money.";
         return null;
     }
 
@@ -26,7 +26,7 @@ public partial class IdleGameEngine
         {
             if (RidingBlocker(skill) is { } blocker) return blocker;
             var slot = ActiveCharacter!;
-            Player.Copper -= skill.Cost;
+            Player.Copper -= RidingCost(skill);
             slot.RidingRank = skill.Rank;
             SetEquippedMount(slot, skill.Rank);
             LastLog = $"🐎 Learned {skill.Name}";
@@ -55,14 +55,14 @@ public partial class IdleGameEngine
     private static Mount? MountOf(CharacterSlot slot) => MountRegistry.Get(slot.Race, slot.EquippedMountRank);
 
     // Speed change during a journey: the share already covered stays the same, the remaining time adapts
-    private static void RerouteTravel(CharacterSlot slot)
+    private void RerouteTravel(CharacterSlot slot)
     {
         if (slot.Travel is not { } travel
             || CombatZoneRegistry.Get(travel.FromZoneId) is not { } from
             || CombatZoneRegistry.Get(travel.TargetZoneId) is not { } target) return;
 
         var ground = ZoneTravel.GroundFor(slot.Class, slot.Player.Level, MountOf(slot));
-        var route = ZoneTravel.Route(from, target, slot.Faction, ground, slot.DiscoveredZoneIds);
+        var route = ZoneTravel.Route(from, target, slot.Faction, ground, _flightPoints);
         if (travel.IsDungeonReturn) route = route.Faster(DungeonRules.ReturnTravelSpeed);
         slot.Travel = new ZoneTravelState
         {

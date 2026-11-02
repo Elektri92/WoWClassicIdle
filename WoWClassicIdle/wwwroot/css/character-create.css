@@ -23,6 +23,26 @@
     padding: 13px 38px;
 }
 
+/* ── Racial traits of the chosen race ── */
+.cs-racials {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+}
+.cs-racial {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+}
+.cs-racial-name {
+    color: var(--crest-text, #ffd100);
+    font-weight: 600;
+}
+.cs-racial-desc {
+    font-size: .9rem;
+}
+
 /* ── Stage: cross-fade the race color change (registered properties are animatable) ── */
 .cs-stage {
     position: relative;

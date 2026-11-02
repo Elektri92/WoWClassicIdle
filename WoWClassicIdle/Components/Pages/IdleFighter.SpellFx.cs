@@ -15,6 +15,7 @@ public partial class IdleFighter
         public string Type { get; init; } = "spell";       // spell | swing | buff | party
         public string? Attacker { get; init; }              // swing: player | enemy
         public string? Style { get; init; }                 // swing: slash | chop | stab | blunt | claw | splash | arrow | wand
+        public string? Rank { get; init; }                  // swing by the enemy: elite | boss = stronger animation
         public string? Icon { get; init; }
         public string? Name { get; init; }                  // spell/buff: matched against the icon in the buff/debuff bar
         public string? Kind { get; init; }                  // buff: buff | heal | shield | form; party: damage | heal | shield
@@ -30,6 +31,8 @@ public partial class IdleFighter
     private const int SpellFlightMs = 450;
     private const int MeleeFlightMs = 240;
     private const int SwingImpactMs = 110;      // lunge until the hit
+    private const int EliteImpactMs = 150;      // the stronger the enemy, the longer it winds up
+    private const int BossImpactMs = 200;
     private const int ArrowFlightMs = 260;
     private const int WandFlightMs = 320;
     private const int MaxFxPerTick = 3;         // at high game speed only show the latest effects
@@ -140,9 +143,18 @@ public partial class IdleFighter
         }
 
         // Hit of the enemy on the player
-        AddFx(new PendingFx { Type = "swing", Attacker = "enemy", Style = EnemySwingStyle(), Crit = ct.IsCrit, Duration = SwingImpactMs });
-        return SwingImpactMs;
+        var (rank, impactMs) = EnemySwingRank();
+        AddFx(new PendingFx { Type = "swing", Attacker = "enemy", Style = EnemySwingStyle(), Rank = rank, Crit = ct.IsCrit, Duration = impactMs });
+        return impactMs;
     }
+
+    /// <summary>Strength of the enemy attack animation: dungeon enemies are elites, on top of them stand the bosses.</summary>
+    private (string? Rank, int ImpactMs) EnemySwingRank() => _engine.CurrentEnemy switch
+    {
+        { IsBoss: true }      => ("boss", BossImpactMs),
+        { FromDungeon: true } => ("elite", EliteImpactMs),
+        _                     => (null, SwingImpactMs),
+    };
 
     /// <summary>Presentation of the player auto-attack depending on the weapon or Druid form.</summary>
     private (string Style, int DurationMs) PlayerSwingStyle()

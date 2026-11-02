@@ -118,6 +118,12 @@
     font-size: .8rem;
     color: #ff6b5a;
 }
+.cs-race-note {
+    margin-top: 6px;
+    text-align: center;
+    font-size: .8rem;
+    color: #ffd100;
+}
 
 /* Keep class colors readable on colorful zone backgrounds */
 .cs-name-line .char-class {

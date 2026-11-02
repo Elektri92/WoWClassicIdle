@@ -14,8 +14,12 @@ namespace Models
         /// <summary>Progression of all allowed classes of this race.</summary>
         public Dictionary<CharacterClass, ClassProgress> ClassProgress { get; }
 
-        /// <summary>Total money in copper (displayed as gold/silver/copper via <see cref="Money"/>).</summary>
-        public long Copper { get; set; }
+        /// <summary>Total money in copper, shared by all characters (displayed as gold/silver/copper via <see cref="Money"/>).</summary>
+        public long Copper
+        {
+            get => Inventory.Copper;
+            set => Inventory.Copper = value;
+        }
 
         /// <summary>Backpack + 4 bag slots (set to the shared inventory by the engine).</summary>
         public Inventory Inventory { get; internal set; } = new();
@@ -68,6 +72,8 @@ namespace Models
 
             EquippedWeapon = WeaponRegistry.GetStarter(characterClass);
             _equippedByClass[characterClass] = EquippedWeapon;
+
+            RecalculateStats();   // the passed base stats don't know racials
         }
 
         /// <summary>
@@ -88,15 +94,17 @@ namespace Models
         /// <summary>From this level on dying costs XP.</summary>
         public const int DeathXpPenaltyMinLevel = 10;
 
-        /// <summary>Share of the current XP lost per death.</summary>
-        public const double DeathXpPenaltyShare = 0.05;
+        /// <summary>Percent of the current XP lost per death before any reduction.</summary>
+        public const int DeathXpPenaltyBasePercent = 5;
+
+        /// <summary>Share of the current XP lost per death before any reduction.</summary>
+        public const double DeathXpPenaltyShare = DeathXpPenaltyBasePercent / 100.0;
 
         /// <summary>
-        /// Death penalty: from <see cref="DeathXpPenaltyMinLevel"/> on the active class loses
-        /// a share of its current XP (no level loss). Returns the XP actually lost.
+        /// Death penalty: the active class loses a share of its current XP (no level loss).
+        /// Returns the XP actually lost.
         /// </summary>
-        public int ApplyDeathXpPenalty() =>
-            Level >= DeathXpPenaltyMinLevel ? ActiveProgress.LoseXpPercent(DeathXpPenaltyShare) : 0;
+        public int ApplyDeathXpPenalty(DeathXpPenalty penalty) => ActiveProgress.LoseXpPercent(penalty.Share);
 
         /// <summary>
         /// Updates race/faction and ensures that

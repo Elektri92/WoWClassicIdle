@@ -174,6 +174,7 @@ public static class SimLoadoutOptimizer
         engine.SetCharacter(RaceClassInfo.RaceToFaction[template.Race], template.Race, cls, Gender.Male);
         engine.EnableRareRequeue = false;
         engine.DisableGearDrops  = true;
+        engine.DisableRacials    = template.RacialsDisabled;
 
         var player   = engine.Player;
         var progress = player.ClassProgress[cls];

@@ -12,7 +12,10 @@ public partial class IdleGameEngine
 
         lock (_simLock)
         {
-            _sharedInventory = new Inventory();
+            _sharedInventory = new Inventory
+            {
+                Copper = save.SharedCopper ?? save.Roster.Sum(s => s.Player.Copper)
+            };
 
             _roster.Clear();
             _professionLog.Clear();
@@ -31,6 +34,7 @@ public partial class IdleGameEngine
             SpeedMultiplier = 1.0;
             _nextSlotId     = save.NextSlotId;
 
+            RestoreFlightPoints(save); // before the slots: travel routes depend on known flight points
             foreach (var slotData in save.Roster)
                 _roster.Add(RestoreSlot(slotData));
 
@@ -166,7 +170,6 @@ public partial class IdleGameEngine
 
         var p = data.Player;
 
-        player.Copper = p.Copper;
         player.RestoreDisabledAutoUse(p.DisabledAutoUseConsumables);
 
         // Restore ClassProgress
@@ -237,11 +240,12 @@ public partial class IdleGameEngine
             Name    = player.Name,
             Faction = data.Faction,
             Race    = data.Race,
+            RaceChangedAtUtc = data.RaceChangedAt,
             Gender  = data.Gender,
             Player  = player,
         };
         RestoreRiding(characterSlot, data);      // before the travel: the route depends on the mount
-        RestoreExploration(characterSlot, data); // before the travel: the route depends on known flight points
+        RestoreExploration(characterSlot, data);
         RestoreDungeons(characterSlot, data);
         RestoreCombatZone(characterSlot, data);
         return characterSlot;

@@ -87,7 +87,7 @@ public partial class IdleGameEngine
         {
             FromZoneId   = entrance.Id,
             TargetZoneId = target.Id,
-            Route        = ZoneTravel.Route(entrance, target, slot.Faction, ground, slot.DiscoveredZoneIds).Faster(DungeonRules.ReturnTravelSpeed),
+            Route        = ZoneTravel.Route(entrance, target, slot.Faction, ground, _flightPoints).Faster(DungeonRules.ReturnTravelSpeed),
             IsDungeonReturn = true,
         };
         return target.Name;

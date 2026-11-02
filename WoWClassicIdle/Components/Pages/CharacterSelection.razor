@@ -86,7 +86,7 @@
                             <div class="char-card-sub">
                                 @if (!string.IsNullOrWhiteSpace(slot.Name))
                                 {
-                                    <span class="char-race">@slot.Race</span>
+                                    <span class="char-race">@slot.Race</span><span>&nbsp;</span>
                                     <span class="char-class class-@slot.Class.ToString().ToLowerInvariant()">@slot.Class</span>
                                     <span>&nbsp;·&nbsp;</span>
                                 }
@@ -208,9 +208,33 @@
                         </div>
                     }
                 </div>
+                @if (RaceBlocker is { } raceBlocker)
+                {
+                    <div class="cs-name-error">@raceBlocker</div>
+                }
+                else if (Engine.WouldChangeRace(selectedClass, selectedRace))
+                {
+                    <div class="cs-race-note">Changing race starts a @((int)IdleGameEngine.RaceChangeCooldown.TotalHours)-hour cooldown for this character.</div>
+                }
             </div>
 
             <div class="unit-frame cs-panel" style="--i: 2">
+                <h4>Racial Traits</h4>
+                <div class="cs-racials">
+                    @foreach (var trait in RacialRegistry.TraitsFor(selectedRace))
+                    {
+                        <div class="cs-racial">
+                            <img class="racial-icon" src="@trait.IconUrl" alt="" onerror="this.style.visibility='hidden'" />
+                            <div>
+                                <div class="cs-racial-name">@trait.Name</div>
+                                <div class="cs-racial-desc">@trait.Description</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="unit-frame cs-panel" style="--i: 3">
                 <h4>Gender</h4>
                 <div class="wow-button-group centered">
                     @foreach (var gender in new[] { Gender.Male, Gender.Female })
@@ -224,7 +248,7 @@
                 </div>
             </div>
 
-            <div class="unit-frame cs-panel" style="--i: 3">
+            <div class="unit-frame cs-panel" style="--i: 4">
                 <h4>Class</h4>
                 <div class="wow-button-group centered">
                     @foreach (CharacterClass cls in Enum.GetValues(typeof(CharacterClass)))
@@ -256,8 +280,8 @@
                         <span>Back</span>
                     </button>
                 }
-                <button class="wow-btn primary confirm-btn" disabled="@(CharacterNames.Validate(characterName) is not null)"
-                        title="@(CharacterNames.Validate(characterName) ?? "")"
+                <button class="wow-btn primary confirm-btn" disabled="@(ConfirmBlocker is not null)"
+                        title="@(ConfirmBlocker ?? "")"
                         @onclick="ConfirmAndPlay">
                     <img class="btn-icon" src="@IconUrls.ClassIconUrl(selectedClass)" alt="" aria-hidden="true" onerror="this.remove()" />
                     <span>Play as @PreviewName</span>

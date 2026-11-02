@@ -300,6 +300,7 @@ public static class ClassSimulator
 
         var engine = new IdleGameEngine();
         engine.SetCharacter(faction, race, cls, Gender.Male);
+        engine.DisableRacials = true;   // specs are compared independently of the race
 
         var player   = engine.Player;
         var progress = player.ClassProgress[cls];
@@ -346,6 +347,7 @@ public static class ClassSimulator
 
         var engine = new IdleGameEngine();
         engine.SetCharacter(faction, race, cls, Gender.Male);
+        engine.DisableRacials = true;   // specs are compared independently of the race
 
         var player   = engine.Player;
         var progress = player.ClassProgress[cls];

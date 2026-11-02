@@ -1,0 +1,48 @@
+@* Instance decoration behind the combat frames, replaces the outdoor silhouettes (css/dungeon-scenery.css) *@
+@switch (Theme)
+{
+    case "wailing":
+        <img class="ds-layer ds-cave" src="images/dungeons/wailing-cave.svg" alt="" />
+        <img class="ds-layer ds-floor wc-floor" src="images/dungeons/wailing-floor.svg" alt="" />
+        <img class="wc-mushrooms left" src="images/dungeons/wailing-mushrooms-left.svg" alt="" />
+        <img class="wc-mushrooms right" src="images/dungeons/wailing-mushrooms-right.svg" alt="" />
+        <span class="wc-spore" style="--x:12%;--d:0s;--t:9s"></span>
+        <span class="wc-spore" style="--x:29%;--d:-5s;--t:12s"></span>
+        <span class="wc-spore" style="--x:46%;--d:-2s;--t:10s"></span>
+        <span class="wc-spore" style="--x:58%;--d:-8s;--t:13s"></span>
+        <span class="wc-spore" style="--x:73%;--d:-4s;--t:9s"></span>
+        <span class="wc-spore" style="--x:90%;--d:-7s;--t:11s"></span>
+        <img class="wc-vine" src="images/dungeons/wailing-vine-a.svg" alt="" style="--x:1%;--h:88%;--d:-1s;--t:8s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-c.svg" alt="" style="--x:8%;--h:42%;--d:-4s;--t:6s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-b.svg" alt="" style="--x:17%;--h:60%;--d:-6s;--t:9s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-c.svg" alt="" style="--x:31%;--h:34%;--d:-2s;--t:7s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-b.svg" alt="" style="--x:42%;--h:52%;--d:-5s;--t:8s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-a.svg" alt="" style="--x:51%;--h:74%;--d:-3s;--t:10s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-c.svg" alt="" style="--x:62%;--h:38%;--d:-7s;--t:6s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-b.svg" alt="" style="--x:74%;--h:64%;--d:-1s;--t:9s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-c.svg" alt="" style="--x:85%;--h:46%;--d:-4s;--t:7s" />
+        <img class="wc-vine" src="images/dungeons/wailing-vine-a.svg" alt="" style="--x:92%;--h:92%;--d:-6s;--t:11s" />
+        <img class="ds-layer wc-ceiling" src="images/dungeons/wailing-ceiling.svg" alt="" />
+        break;
+
+    case "deadmines":
+        <img class="ds-layer ds-cave" src="images/dungeons/deadmines-cave.svg" alt="" />
+        <span class="dm-water"></span>
+        <img class="dm-ship" src="images/dungeons/deadmines-ship.svg" alt="" />
+        <img class="ds-layer ds-floor dm-dock" src="images/dungeons/deadmines-dock.svg" alt="" />
+        <img class="dm-prop dm-cargo" src="images/dungeons/deadmines-cargo.svg" alt="" />
+        <img class="dm-prop dm-chest" src="images/dungeons/deadmines-chest.svg" alt="" />
+        <img class="dm-prop dm-cannon" src="images/dungeons/deadmines-cannon.svg" alt="" />
+        <img class="dm-post left" src="images/dungeons/deadmines-post.svg" alt="" />
+        <img class="dm-post right" src="images/dungeons/deadmines-post.svg" alt="" />
+        <img class="ds-layer dm-beam" src="images/dungeons/deadmines-beam.svg" alt="" />
+        <img class="dm-banner" src="images/dungeons/deadmines-banner.svg" alt="" />
+        <span class="dm-lantern" style="--x:64%;--d:0s"><span class="dm-lantern-glow"></span><img src="images/dungeons/deadmines-lantern.svg" alt="" /></span>
+        <span class="dm-lantern" style="--x:84%;--d:-1.3s"><span class="dm-lantern-glow"></span><img src="images/dungeons/deadmines-lantern.svg" alt="" /></span>
+        break;
+}
+
+@code {
+    /// <summary>Dungeon zone theme (CombatZone.Theme); a theme without a case keeps only the gradient.</summary>
+    [Parameter, EditorRequired] public string Theme { get; set; } = "";
+}

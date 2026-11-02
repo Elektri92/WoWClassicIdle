@@ -1,0 +1,16 @@
+.death-penalty-label {
+    display: block;
+    margin-top: 2px;
+    color: #9a8a64;
+    font-size: .68rem;
+    cursor: help;
+}
+
+.death-penalty-label b {
+    color: #e8d9a8;
+    font-variant-numeric: tabular-nums;
+}
+
+.death-penalty-label b.reduced {
+    color: #1eff00;
+}

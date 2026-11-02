@@ -221,6 +221,30 @@
     padding: 4px 8px;
 }
 
+/* ── Passive racial abilities below the stats ── */
+.racial-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+.racial-row .tt-host {
+    display: inline-flex;
+    width: auto;
+}
+.racial-row-label {
+    color: var(--crest-text, #ffd100);
+    font-size: .85rem;
+}
+.racial-icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border: 1px solid var(--wow-border-dark);
+    border-radius: 3px;
+}
+
 /* ── Money (classic backpack money frame) ── */
 .money-frame {
     display: inline-flex;

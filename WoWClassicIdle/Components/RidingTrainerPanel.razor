@@ -62,8 +62,8 @@
                                     <span class="@(Engine.RidingRank >= skill.Rank - 1 ? "" : "trainer-missing")">@Mounts[skill.Rank - 2].Riding.Name</span>
                                 }
                             </div>
-                            <div class="trainer-cost @(Engine.Player.Copper < skill.Cost ? "too-expensive" : "")">
-                                Cost: <MoneyFrame Copper="skill.Cost" />
+                            <div class="trainer-cost @(Engine.Player.Copper < Engine.RidingCost(skill) ? "too-expensive" : "")">
+                                Cost: <MoneyFrame Copper="Engine.RidingCost(skill)" />
                             </div>
                         }
                     }
@@ -131,7 +131,7 @@
                 }
                 else
                 {
-                    <MoneyFrame Copper="skill.Cost" />
+                    <MoneyFrame Copper="Engine.RidingCost(skill)" />
                 }
             </span>
         </div>

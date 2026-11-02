@@ -67,7 +67,7 @@
 
         // Show a running disguise even without stock (remaining time)
         if (player.Costume != Costume.None && ConsumableRegistry.GetById(ConsumableRegistry.SavoryDeviateDelightId) is { } delight)
-            active.TryAdd(delight.BuffKey, new ActiveConsumable(delight, player.CostumeRemaining));
+            active.TryAdd(delight.BuffKey, new ActiveConsumable(delight, player.CostumeRemaining, delight.DurationSeconds));
 
         var tiles = new List<Tile>();
         foreach (var key in owned.Select(c => c.BuffKey).Concat(active.Keys).Distinct())
@@ -88,7 +88,7 @@
                     (Engine.ExplosiveCooldownRemaining, IdleGameEngine.ExplosiveCooldownSeconds, false),
                 ConsumableKind.Costume =>
                     (player.CostumeRemaining, item.DurationSeconds, player.Costume != Costume.None),
-                _ when buff is not null => (buff.Remaining, buff.Item.DurationSeconds, true),
+                _ when buff is not null => (buff.Remaining, buff.Duration, true),
                 _ => (0.0, 1.0, false),
             };
             tiles.Add(new Tile(key, item, count, remaining, total, isActive, player.IsAutoUseEnabled(item)));

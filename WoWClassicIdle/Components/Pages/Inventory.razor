@@ -135,6 +135,16 @@
                     </div>
                 </div>
             </div>
+
+            <div class="racial-row">
+                <span class="racial-row-label">@_engine.Player.Race Racials</span>
+                @foreach (var trait in RacialRegistry.TraitsFor(_engine.Player.Race))
+                {
+                    <StatTooltip StatName="@trait.Name" Description="@trait.Description">
+                        <img class="racial-icon" src="@trait.IconUrl" alt="@trait.Name" onerror="this.style.visibility='hidden'" />
+                    </StatTooltip>
+                }
+            </div>
         </div>
 
         @* ── Taschen ── *@

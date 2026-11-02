@@ -40,6 +40,9 @@ public static class DungeonRules
     /// <summary>The journey home after a run is this many times as fast as a normal journey.</summary>
     public const double ReturnTravelSpeed = 2.0;
 
+    /// <summary>Entrance of a boss in game seconds; the fight starts after it. The timeline is in css/boss-intro.css.</summary>
+    public const double BossIntroSeconds = 4.5;
+
     // Average output of an NPC: damage dealers per second as a share of the default enemy HP, healers as a share of the player's HP
     public const double NpcDamagePerSecond = 0.01;
     public const double HealerHpPerSecond  = 0.012;
@@ -93,6 +96,9 @@ public static class DungeonEnemies
             IsBoss       = boss,
             FromDungeon  = true,
             XpMultiplier = boss ? DungeonRules.BossXpMultiplier : DungeonRules.TrashXpMultiplier,
+            IntroSeconds   = boss ? DungeonRules.BossIntroSeconds : 0,
+            IntroRemaining = boss ? DungeonRules.BossIntroSeconds : 0,
+            SpawnQuote     = boss ? BossQuotes.Pick(mob.Name, rng) : null,
         };
     }
 

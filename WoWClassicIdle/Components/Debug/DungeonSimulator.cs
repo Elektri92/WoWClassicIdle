@@ -69,6 +69,8 @@ public static class DungeonSimulator
                 for (int kill = 0; kill < encounter.Kills && wipes < DungeonRules.MaxWipes;)
                 {
                     engine.CurrentEnemy = DungeonEnemies.Build(zone, encounter, level, rng);
+                    steps += (int)(engine.CurrentEnemy.IntroRemaining / engine.StepSeconds); // the entrance costs time, too
+                    engine.CurrentEnemy.IntroRemaining = 0;
                     int killsBefore = engine.TotalKills, deathsBefore = engine.TotalDeaths;
                     while (engine.TotalKills == killsBefore && engine.TotalDeaths == deathsBefore && steps < maxSteps)
                     {

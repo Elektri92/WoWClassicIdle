@@ -5,7 +5,7 @@ public static partial class StaticHelpers
 {
     // Tables go up to level 60; in Release the game is capped at ReleaseLevelCap for now.
     private const int TableMaxLevel   = 60;
-    public  const int ReleaseLevelCap = 10;
+    public  const int ReleaseLevelCap = 15;
 
     public static int MaxLevel =>
         WoWClassicIdle.Components.BuildInfo.IsDebug ? TableMaxLevel : ReleaseLevelCap;

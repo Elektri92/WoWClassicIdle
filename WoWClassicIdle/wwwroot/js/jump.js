@@ -1,9 +1,8 @@
 // Space on the /idle page makes the living player's portrait jump.
-// The next jump is possible 1 s after the animation has finished. Every jump is reported to the open
+// The next jump is possible as soon as the animation has finished. Every jump is reported to the open
 // page, which counts it for the jump achievements.
 (function () {
     const JUMP_MS = 500;
-    const COOLDOWN_MS = 1000;
     let readyAt = 0;
     let page = null;
 
@@ -25,13 +24,13 @@
         const area = document.querySelector('.player-frame .portrait-area');
         if (!area) return;
 
-        // Also while on cooldown or held down: no page scrolling, no click on a focused button
+        // Also while mid-jump or held down: no page scrolling, no click on a focused button
         e.preventDefault();
 
         const now = performance.now();
         if (e.repeat || now < readyAt || !area.querySelector('.race-portrait')) return;
 
-        readyAt = now + JUMP_MS + COOLDOWN_MS;
+        readyAt = now + JUMP_MS;
         page?.invokeMethodAsync('OnJumped').catch(() => { });   // Circuit gone: nothing left to count
         // Animates the images, not the area: spell effects recoil the area with their own transform
         for (const img of area.querySelectorAll('.race-portrait, .class-badge')) {

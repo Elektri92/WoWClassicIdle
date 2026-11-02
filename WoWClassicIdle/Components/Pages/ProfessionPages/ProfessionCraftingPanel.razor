@@ -160,10 +160,9 @@
 
                     <div class="prof-row">
                         @{ int amount = Math.Min(_amount ?? 0, craftable); }
-                        <button class="wow-btn small primary" disabled="@(craftable == 0 || !skillOk)" @onclick="() => Create(1)">Create</button>
+                        <button class="wow-btn small primary" disabled="@(amount <= 0 || !skillOk)" @onclick="() => Create(amount)">Create</button>
                         <input class="craft-amount" type="number" min="1" max="@craftable" aria-label="Amount to create"
                                @bind="_amount" @bind:event="oninput" />
-                        <button class="wow-btn small" disabled="@(amount <= 0 || !skillOk)" @onclick="() => Create(amount)">Create @Math.Max(amount, 0)</button>
                         <button class="wow-btn small" disabled="@(craftable == 0 || !skillOk)" @onclick="() => Create(craftable)">Create All (@craftable)</button>
                     </div>
                 </div>
@@ -216,7 +215,7 @@
     private Recipe? SelectedRecipe =>Recipes.FirstOrDefault(r => r.Id == _recipeId);
 
     // Amount field; null while it is being retyped
-    private int? _amount = 5;
+    private int? _amount = 1;
 
     protected override void OnParametersSet()
     {
@@ -225,6 +224,7 @@
         {
             _filterInitFor = Progress.Profession;
             _classFilter = RecipeClasses.Contains(Engine.PlayerClass) ? Engine.PlayerClass : null;
+            _amount = 1;
         }
 
         // Select the last chosen recipe again (crafting doesn't start automatically – it consumes materials)
@@ -237,6 +237,8 @@
 
     private void SelectRecipe(Recipe recipe)
     {
+        if (recipe.Id != _recipeId)
+            _amount = 1;
         _recipeId = recipe.Id;
         Engine.RememberProfessionTarget(Progress.Profession, recipe.Id);
     }

@@ -19,6 +19,8 @@ public class SaveData
     public List<ItemStackSaveData> SharedInventoryItems { get; set; } = new();
     // Bag slots 0-3 (from version 3)
     public List<BagItemSaveData> SharedBagItems { get; set; } = new();
+    // Account-wide money; null = legacy save → sum of the money of all characters
+    public long? SharedCopper { get; set; }
     // Account-wide professions (gathering + fishing) and passive profession slots (from version 4; name kept for compatibility)
     public List<ProfessionSaveData> SecondaryProfessions { get; set; } = new();
     public List<PassiveAssignmentSaveData> PassiveAssignments { get; set; } = new();
@@ -30,6 +32,8 @@ public class SaveData
     // Account-wide profession bonuses (ProfessionBonus.Key) and Profession.ToString() → slots; null = legacy save without these fields
     public List<string>? ProfessionBonuses { get; set; }
     public Dictionary<string, List<string?>>? EquippedProfessionBonuses { get; set; }
+    // Account-wide flight points (zones and dungeons); null = legacy save → everything the characters have visited
+    public List<string>? FlightPoints { get; set; }
     // Feature intros already shown; null = legacy save without this field
     public List<string>? SeenFeatureIntros { get; set; }
     // Merchant stock with restock time (real time); null = legacy save, stock full
@@ -55,6 +59,8 @@ public class SlotSaveData
     public string? Name { get; set; }
     public Faction Faction { get; set; }
     public Race Race { get; set; }
+    // Last race change (missing in legacy saves → no cooldown)
+    public DateTime? RaceChangedAt { get; set; }
     public Gender Gender { get; set; }
     public PlayerSaveData Player { get; set; } = new();
     // Combat zone (null = not chosen yet) and ongoing travel
@@ -82,6 +88,7 @@ public class SlotSaveData
 public class PlayerSaveData
 {
     public CharacterClass ActiveClass { get; set; }
+    // Legacy: money per character, only read for saves without SaveData.SharedCopper
     public long Copper { get; set; }
     // Current health and resource (mana/rage/energy); null = legacy save → full as after a fresh start
     public int? CurrentHp { get; set; }

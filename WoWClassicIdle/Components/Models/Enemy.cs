@@ -16,6 +16,13 @@ public class Enemy
     /// <summary>Factor on the kill XP (dungeon enemies are tougher than their level).</summary>
     public double XpMultiplier { get; init; } = 1.0;
 
+    /// <summary>Length of the entrance in game seconds; the fight only starts after it (0 = no entrance).</summary>
+    public double IntroSeconds { get; init; }
+    public double IntroRemaining { get; set; }
+    public bool IsInIntro => IntroRemaining > 0;
+    /// <summary>Line the enemy says on its entrance.</summary>
+    public string? SpawnQuote { get; init; }
+
     public int CurrentHp { get; private set; }
     public bool IsAlive => CurrentHp > 0;
 

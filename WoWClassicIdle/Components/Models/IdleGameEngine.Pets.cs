@@ -38,8 +38,8 @@ public partial class IdleGameEngine
         {
             Pet.AttackAcc -= def.AttackInterval;
             double variance = 0.85 + _rng.NextDouble() * 0.30;   // 85–115 % like enemy hits
-            int dmg = Math.Max(1, (int)Math.Round(PetRegistry.AverageHit(def, Player.Level) * variance * enemyDmgTakenMult
-                                                  * (1.0 + Player.PetDamageTalentBonus + Player.Buffs.PetDamageBonus)));
+            int dmg = Math.Max(1, (int)Math.Round(PetRegistry.AverageHit(def, Player.Level) * variance * enemyDmgTakenMult * RacialDamageFactor(enemy)
+                                                  * (1.0 + Player.PetDamageTalentBonus + Player.Buffs.PetDamageBonus + Player.Racial.PetDamageBonus)));
             Meter.RecordAbility(Pet.MeterSource, CombatActionKind.Damage, enemy.TakeDamage(dmg));
             CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, dmg, false));
             dealt += dmg;
