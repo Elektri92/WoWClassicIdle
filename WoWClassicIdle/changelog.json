@@ -1,5 +1,39 @@
 [
   {
+    "version": "0.0.48",
+    "date": "2026-11-03",
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "Druids in Cat or Bear Form now gain 1 attack power per point of Strength and Agility; Agility consumables are usable in feral forms.",
+          "Swipe no longer costs mana and is only usable in Bear or Cat Form."
+        ]
+      },
+      {
+        "category": "Combat",
+        "changes": [
+          "Dungeon companions now have traits: group buffs that fit your resource, and Druids or Warlocks can rescue a wipe once per run with Rebirth or Soulstone."
+        ]
+      },
+      {
+        "category": "World",
+        "changes": [
+          "New dungeons: Razorfen Kraul (Lv 29–35) and Scarlet Monastery (Lv 34–42), each with five bosses, loot and their own scenery.",
+          "Shadowfang Keep and Blackfathom Deeps now have their own dungeon scenery.",
+          "The return trip from a dungeon can no longer be cancelled."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "The death penalty badge now sits on the player portrait.",
+          "Fixed missing talent tree backgrounds."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.47",
     "date": "2026-11-03",
     "sections": [
