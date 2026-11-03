@@ -41,7 +41,12 @@
         }
     </Body>
     <ChildContent>
-        <span class="death-penalty-label">XP lost on death: <b class="@(Penalty.Share < Player.DeathXpPenaltyShare ? "reduced" : "")">@Percent(Penalty.Share * 100)</b></span>
+        @if (Penalty.Active && Penalty.Share > 0)
+        {
+            <span class="death-pct-badge @(Penalty.Share < Player.DeathXpPenaltyShare ? "reduced" : "")">
+                - @($"{(Penalty.Share * 100).ToString("0.##", CultureInfo.InvariantCulture)}%")
+            </span>
+        }
     </ChildContent>
 </WowTooltip>
 
