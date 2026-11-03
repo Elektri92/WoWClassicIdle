@@ -1,5 +1,20 @@
 [
   {
+    "version": "0.0.49",
+    "date": "2026-11-03",
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "Rogues are stronger from level 15: Deadly Poison rank 2 deals more damage, Cold Blood has a 15 sec cooldown, Virulent Poisons is twice as strong, Blade Flurry lasts 15 sec and Ghostly Strike hits harder with a 12 sec cooldown.",
+          "Druids: Improved Claw now also increases Rip damage (3 ranks, 20% each) and Improved Maul now also increases Swipe damage (12% per rank).",
+          "Holy Nova, Incinerate and Improved Fire Blast deal more damage.",
+          "Sniper Shot, Mongoose Bite, Siphon Life, Holy Shield and Lightning Shield rank 2 deal less damage; Improved Raptor Strike (Survival) gives 6% per rank and Shadowform increases damage by 20%."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.48",
     "date": "2026-11-03",
     "sections": [
