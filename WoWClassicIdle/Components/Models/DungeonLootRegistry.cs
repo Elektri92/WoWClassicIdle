@@ -126,6 +126,72 @@ public static class DungeonLootRegistry
         AddFree(wc, 4, Green(30172, "Murloc Hide Vest", "inv_chest_cloth_05", ArmorSlot.Chest, 20, new() { Stamina = 3, Spirit = 3 }));
         AddFree(wc, 4, Green(30173, "Deviate Pendant", "inv_jewelry_necklace_06", ArmorSlot.Neck, 20, new() { Agility = 3, Stamina = 3 }));
         AddFree(wc, 4, GreenWeapon(30174, "Nightmare Blade", "inv_sword_04", 2, 4, 2.3, WeaponType.Sword, 20, BladeWeapons, new() { Strength = 4, Agility = 3, Stamina = 8 }));
+
+        // ── Shadowfang Keep ──────────────────────────────────────────────────────
+        const string sfk = DungeonRegistry.ShadowfangKeepId;
+
+        AddFree(sfk, 0, Weapon(30200, "Rethilgore's Soulblade", "inv_weapon_shortblade_05", 3, 6, 1.8, WeaponType.Dagger, 22, AgilityWeapons, new() { Agility = 9, Stamina = 15 }));
+        AddFree(sfk, 0, Armor(30201, "Vambraces of the Forsaken", "inv_bracer_07", ArmorSlot.Wrists, 22, new() { Strength = 6, Stamina = 7 }));
+        AddFree(sfk, 0, Green(30220, "Rotting Cloak", "inv_misc_cape_18", ArmorSlot.Cape, 22, new() { Agility = 3, Stamina = 3 }));
+        AddFree(sfk, 0, Green(30221, "Feral Belt", "inv_belt_05", ArmorSlot.Belt, 22, new() { Strength = 3, Stamina = 3 }));
+        AddFree(sfk, 0, GreenWeapon(30222, "Wolfclaw Sword", "inv_sword_04", 2, 4, 2.3, WeaponType.Sword, 22, BladeWeapons, new() { Strength = 4, Stamina = 8 }));
+
+        AddFree(sfk, 1, Weapon(30202, "Butcher's Cleaver", "inv_axe_09", 3, 6, 2.8, WeaponType.Axe, 23, StrengthWeapons, new() { Strength = 10, Stamina = 16 }));
+        AddFree(sfk, 1, Armor(30203, "Worgen Pelt Vest", "inv_chest_cloth_05", ArmorSlot.Chest, 23, new() { Strength = 5, Agility = 4, Stamina = 5 }));
+        AddFree(sfk, 1, Green(30223, "Razorclaw's Paws", "inv_boots_08", ArmorSlot.Feet, 23, new() { Agility = 3, Stamina = 3 }));
+        AddFree(sfk, 1, Green(30224, "Butcher's Signet", "inv_jewelry_ring_03", ArmorSlot.Ring, 23, new() { Strength = 3, Agility = 3 }));
+        AddFree(sfk, 1, GreenWeapon(30225, "Hungering Wand", "inv_wand_05", 2, 4, 1.9, WeaponType.Wand, 23, Wands, new() { Intelligence = 4, Stamina = 8 }));
+
+        AddFree(sfk, 2, Armor(30204, "Silverlaine's Family Seal", "inv_jewelry_necklace_06", ArmorSlot.Trinket, 24, new() { Intelligence = 8, Spirit = 6 }));
+        AddFree(sfk, 2, Weapon(30205, "Baron's Crestfall Staff", "inv_staff_08", 3, 6, 3.0, WeaponType.Staff, 24, Staves, new() { Intelligence = 9, Spirit = 7, Stamina = 15 }));
+        AddFree(sfk, 2, Green(30226, "Silverlaine's Bracers", "inv_bracer_07", ArmorSlot.Wrists, 24, new() { Intelligence = 3, Spirit = 3 }));
+        AddFree(sfk, 2, Green(30227, "House Silverlaine Pendant", "inv_jewelry_necklace_06", ArmorSlot.Neck, 24, new() { Strength = 3, Stamina = 3 }));
+        AddFree(sfk, 2, GreenWeapon(30228, "Haunted Blade", "inv_sword_04", 2, 4, 2.3, WeaponType.Sword, 24, BladeWeapons, new() { Strength = 4, Agility = 3, Stamina = 8 }));
+
+        AddFree(sfk, 3, Armor(30206, "Springvale's Cloak", "inv_misc_cape_18", ArmorSlot.Cape, 25, new() { Intelligence = 5, Agility = 4, Stamina = 5 }));
+        AddFree(sfk, 3, Weapon(30207, "Commander's Scepter", "inv_hammer_05", 3, 6, 2.9, WeaponType.Mace, 25, HybridWeapons, new() { Strength = 7, Intelligence = 6, Stamina = 15 }));
+        AddFree(sfk, 3, Green(30229, "Commander's Legplates", "inv_pants_03", ArmorSlot.Legs, 25, new() { Strength = 3, Stamina = 4 }));
+        AddFree(sfk, 3, Green(30230, "Springvale's Ring", "inv_jewelry_ring_03", ArmorSlot.Ring, 25, new() { Intelligence = 3, Spirit = 3 }));
+        AddFree(sfk, 3, GreenWeapon(30231, "Vanguard's Mace", "inv_hammer_05", 2, 4, 2.9, WeaponType.Mace, 25, HybridWeapons, new() { Strength = 4, Intelligence = 3, Stamina = 8 }));
+
+        AddFree(sfk, 4, Armor(30208, "Robes of Arugal", "inv_chest_cloth_05", ArmorSlot.Chest, 26, new() { Intelligence = 7, Spirit = 5, Stamina = 5 }));
+        AddFree(sfk, 4, Armor(30209, "Meteor Shard", "inv_misc_rune_01", ArmorSlot.Trinket, 27, new() { Agility = 8, Stamina = 10 }));
+        AddFree(sfk, 4, Green(30232, "Arugal's Veil", "inv_helmet_03", ArmorSlot.Head, 27, new() { Intelligence = 3, Spirit = 3 }));
+        AddFree(sfk, 4, Green(30233, "Embroidered Belt", "inv_belt_05", ArmorSlot.Belt, 27, new() { Intelligence = 3, Stamina = 3 }));
+        AddFree(sfk, 4, GreenWeapon(30234, "Staff of the Archmage", "inv_staff_08", 2, 5, 3.0, WeaponType.Staff, 27, Staves, new() { Intelligence = 4, Spirit = 3, Stamina = 8 }));
+
+        // ── Blackfathom Deeps ────────────────────────────────────────────────────
+        const string bfd = DungeonRegistry.BlackfathomDeepsId;
+
+        AddFree(bfd, 0, Armor(30300, "Shell of Ghamoo-ra", "inv_misc_stonetablet_05", ArmorSlot.Trinket, 26, new() { Strength = 5, Stamina = 8 }));
+        AddFree(bfd, 0, Armor(30301, "Tortoiseshell Bracers", "inv_bracer_07", ArmorSlot.Wrists, 26, new() { Strength = 7, Stamina = 8 }));
+        AddFree(bfd, 0, Green(30320, "Tide-Woven Cloak", "inv_misc_cape_18", ArmorSlot.Cape, 26, new() { Intelligence = 3, Stamina = 3 }));
+        AddFree(bfd, 0, Green(30321, "Saltwater Belt", "inv_belt_05", ArmorSlot.Belt, 26, new() { Strength = 3, Agility = 3 }));
+        AddFree(bfd, 0, GreenWeapon(30322, "Turtle Scale Axe", "inv_axe_09", 2, 4, 2.6, WeaponType.Axe, 26, StrengthWeapons, new() { Strength = 4, Stamina = 8 }));
+
+        AddFree(bfd, 1, Weapon(30302, "Naga Heartpiercer", "inv_weapon_bow_07", 2, 5, 3.4, WeaponType.Bow, 27, Bows, new() { Agility = 10, Intelligence = 5, Stamina = 15 }));
+        AddFree(bfd, 1, Armor(30303, "Sarevess's Pendant", "inv_jewelry_necklace_06", ArmorSlot.Neck, 27, new() { Intelligence = 7, Spirit = 5, Stamina = 5 }));
+        AddFree(bfd, 1, Green(30323, "Scalemail Bracers", "inv_bracer_07", ArmorSlot.Wrists, 27, new() { Intelligence = 3, Spirit = 3 }));
+        AddFree(bfd, 1, Green(30324, "Coral Band", "inv_jewelry_ring_03", ArmorSlot.Ring, 27, new() { Agility = 3, Stamina = 4 }));
+        AddFree(bfd, 1, GreenWeapon(30325, "Undertow Mace", "inv_hammer_05", 2, 4, 2.9, WeaponType.Mace, 27, HybridWeapons, new() { Strength = 4, Intelligence = 3, Stamina = 8 }));
+
+        AddFree(bfd, 2, Armor(30304, "Reef Crawler's Chest", "inv_chest_cloth_05", ArmorSlot.Chest, 28, new() { Agility = 5, Strength = 4, Stamina = 5 }));
+        AddFree(bfd, 2, Weapon(30305, "Murloc Slayer", "inv_weapon_shortblade_05", 2, 5, 1.8, WeaponType.Dagger, 28, AgilityWeapons, new() { Agility = 10, Strength = 5, Stamina = 16 }));
+        AddFree(bfd, 2, Green(30326, "Murkwater Leggings", "inv_pants_03", ArmorSlot.Legs, 28, new() { Agility = 3, Stamina = 4 }));
+        AddFree(bfd, 2, Green(30327, "Gelihast's Ring", "inv_jewelry_ring_03", ArmorSlot.Ring, 28, new() { Strength = 3, Spirit = 3 }));
+        AddFree(bfd, 2, GreenWeapon(30328, "Shallow Grave Wand", "inv_wand_05", 2, 4, 1.9, WeaponType.Wand, 28, Wands, new() { Intelligence = 4, Stamina = 8 }));
+
+        AddFree(bfd, 3, Armor(30306, "Tidal Leggings", "inv_pants_03", ArmorSlot.Legs, 29, new() { Intelligence = 5, Spirit = 4, Stamina = 6 }));
+        AddFree(bfd, 3, Weapon(30307, "Serpentine Slicer", "inv_sword_04", 3, 6, 2.3, WeaponType.Sword, 29, BladeWeapons, new() { Agility = 10, Strength = 5, Stamina = 16 }));
+        AddFree(bfd, 3, Green(30329, "Serpentscale Boots", "inv_boots_08", ArmorSlot.Feet, 29, new() { Agility = 3, Stamina = 4 }));
+        AddFree(bfd, 3, Green(30330, "Deep Water Cloak", "inv_misc_cape_18", ArmorSlot.Cape, 29, new() { Strength = 3, Stamina = 3 }));
+        AddFree(bfd, 3, GreenWeapon(30331, "Reef Staff", "inv_staff_08", 2, 5, 3.0, WeaponType.Staff, 29, Staves, new() { Intelligence = 4, Spirit = 3, Stamina = 8 }));
+
+        AddFree(bfd, 4, Armor(30308, "Eye of Aku'mai", "inv_misc_eye_02", ArmorSlot.Trinket, 30, new() { Intelligence = 8, Spirit = 6, Stamina = 4 }));
+        AddFree(bfd, 4, Armor(30309, "Robes of the Blackfathom", "inv_chest_cloth_05", ArmorSlot.Chest, 30, new() { Intelligence = 7, Spirit = 5, Stamina = 5 }));
+        AddFree(bfd, 4, Green(30332, "Darkwater Helm", "inv_helmet_03", ArmorSlot.Head, 30, new() { Intelligence = 3, Stamina = 4 }));
+        AddFree(bfd, 4, Green(30333, "Ancient Naga Ring", "inv_jewelry_ring_03", ArmorSlot.Ring, 30, new() { Intelligence = 3, Spirit = 3 }));
+        AddFree(bfd, 4, GreenWeapon(30334, "Aku'mai's Tooth", "inv_staff_08", 2, 5, 3.0, WeaponType.Staff, 30, Staves, new() { Intelligence = 4, Spirit = 3, Stamina = 8 }));
     }
 
     private static PrimaryStats SwapStrengthAgility(PrimaryStats s) => s with { Strength = s.Agility, Agility = s.Strength };
