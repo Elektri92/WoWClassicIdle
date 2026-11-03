@@ -1,5 +1,38 @@
 [
   {
+    "version": "0.0.47",
+    "date": "2026-11-03",
+    "sections": [
+      {
+        "category": "Classes",
+        "changes": [
+          "Bear Form and Cat Form can no longer be learned together",
+          "Right-click a talent to remove a point again, as long as no other talent depends on it",
+          "New \"Improved\" talent in tier 4 of every tree that strengthens the ability talent of tier 2 (e.g. Improved Cat Form, Improved Evocation)",
+          "Faerie Fire (Bear/Cat) now requires Improved Maul/Improved Claw; talents that depend on each other are connected by arrows",
+          "Characters whose talents break the new rules get their talent points for that class refunded"
+        ]
+      },
+      {
+        "category": "World",
+        "changes": [
+          "The world map is more compact and looks more like a map; finished zones get a green check.",
+          "Zones far below your level no longer give discovery XP or zone objectives – only their profession drops remain. They are shown as small faded labels."
+        ]
+      },
+      {
+        "category": "Interface",
+        "changes": [
+          "Death penalty is now shown as a small circle badge (- 5%) on the XP bar instead of a separate text line.",
+          "Talent trees always show 7 tiers with a vertical tier bar showing the points needed for the next tier",
+          "Reworked talent tooltips: requirements such as level, current and next rank effect, click hints",
+          "Reset Talents button centered and styled like the menu buttons",
+          "The zone tooltip sums up the travel route in one line; the reduced XP hint is only shown in the tooltip."
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.0.46",
     "date": "2026-11-03",
     "sections": [
