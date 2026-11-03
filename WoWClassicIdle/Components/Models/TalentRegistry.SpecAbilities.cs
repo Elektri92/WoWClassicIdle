@@ -3,6 +3,7 @@ namespace Models;
 
 // Talent row 3 (Row = 2, from Lv 20, 10 points in the tree): one point per tree for the specialization ability
 // or – for pure passives (Flurry, Spirit of Redemption, Nightfall, Eclipse) – for the talent effect.
+// Abilities that require the row 2 talent sit directly below it (column 0) so the arrow runs straight down.
 public static partial class TalentRegistry
 {
     /// <summary>Minimum level of all specialization talents.</summary>
@@ -23,13 +24,13 @@ public static partial class TalentRegistry
         [
             Spec(cls, 0, "warrior_arms_overpower", "Overpower", "Overpower_r1",
                 "Teaches you Overpower: a quick weapon strike with +25% critical strike chance. Only usable in Battle Stance.",
-                requires: "warrior_arms_battle_stance"),
+                requires: "warrior_arms_battle_stance", column: 0),
             Passive(cls, 1, "warrior_fury_flurry", "Flurry", TalentEffectType.BerserkerFlurry, 0.30, "ability_ghoulfrenzy",
                 "Passive, like the Shaman talent: after a melee critical strike your next 3 swings are 30% faster. Only active in Berserker Stance.",
-                requires: "warrior_fury_berserker_stance"),
+                requires: "warrior_fury_berserker_stance", column: 0),
             Spec(cls, 2, "warrior_prot_intimidating_shout", "Intimidating Shout", "Intimidating_Shout_r1",
                 "Teaches you Intimidating Shout: the enemy flees in terror and cannot attack for 6 sec. Only usable in Defensive Stance.",
-                requires: "warrior_def_defensive_stance"),
+                requires: "warrior_def_defensive_stance", column: 0),
         ],
         CharacterClass.Priest =>
         [
@@ -40,7 +41,7 @@ public static partial class TalentRegistry
                 "Passive. A killing blow turns you into a Spirit of Redemption instead: for 8 sec you are immune, your next 10 spells cost no mana and your healing is increased by 50%. Can occur once every 2 min."),
             Spec(cls, 2, "priest_shadow_mind_flay", "Mind Flay", "Mind_Flay_r1",
                 "Teaches you Mind Flay: a channeled shadow spell that damages and slows the enemy. Only usable in Shadowform.",
-                requires: "priest_shadow_shadowform"),
+                requires: "priest_shadow_shadowform", column: 0),
         ],
         CharacterClass.Rogue =>
         [
@@ -93,10 +94,10 @@ public static partial class TalentRegistry
                 "Passive. Casting Wrath increases the damage of your next Starfire by 30%, casting Starfire increases the damage of your next Wrath by 75% – alternating always pays off."),
             Spec(cls, 1, "druid_feral_faerie_fire_bear", "Faerie Fire (Bear)", "Faerie_Fire_Bear",
                 "Teaches you Faerie Fire (Bear): damages the enemy, slows its attacks by 10% and increases its damage taken by 5%. Only usable in Bear Form.",
-                requires: "druid_feral_bear_form", column: 0),
+                requires: "druid_feral_imp_maul", column: 0),
             Spec(cls, 1, "druid_feral_faerie_fire_cat", "Faerie Fire (Cat)", "Faerie_Fire_Cat",
                 "Teaches you Faerie Fire (Cat): lowers the enemy's armor, increasing its damage taken by 8%. Only usable in Cat Form.",
-                requires: "druid_feral_cat_form", column: 2),
+                requires: "druid_feral_imp_claw", column: 3),
             Spec(cls, 2, "druid_resto_tranquility", "Tranquility", "Tranquility_r1",
                 "Teaches you Tranquility: channels waves of nature that damage the enemy and heal you at the same time."),
         ],
@@ -106,7 +107,7 @@ public static partial class TalentRegistry
     /// <summary>One point in row 3 with a pure passive effect without ability/slot (like Shaman Flurry).</summary>
     private static TalentDefinition Passive(
         CharacterClass cls, int tree, string id, string name, TalentEffectType effect, double effectPerRank,
-        string icon, string description, string? requires = null) => new()
+        string icon, string description, string? requires = null, int column = 1) => new()
     {
         Id               = id,
         Name             = name,
@@ -114,7 +115,7 @@ public static partial class TalentRegistry
         Class            = cls,
         TreeIndex        = tree,
         Row              = 2,
-        Column           = 1,
+        Column           = column,
         MaxRanks         = 1,
         LevelRequired    = SpecAbilityLevel,
         RequiresTalentId = requires,

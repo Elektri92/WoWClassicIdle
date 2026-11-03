@@ -124,14 +124,36 @@ namespace Models
             }
         }
 
-        /// <summary>Row 3 talents that improve a single ability (TalentRegistry.LevelAbilities.cs).</summary>
+        /// <summary>Talents that improve a single ability (TalentRegistry.LevelAbilities.cs / .Improved.cs).</summary>
         private Ability ApplyAbilityModifierTalents(Ability ability)
         {
             foreach (var talent in TalentRegistry.GetTalents(ActiveClass))
-                if (talent.AbilityModifier is not null && talent.ModifiedAbilityName == ability.Name && TalentState.GetRanks(talent.Id) > 0)
-                    ability = talent.AbilityModifier(ability);
+            {
+                if (talent.AbilityModifier is null || talent.ModifiedAbilityName != ability.Name) continue;
+                int ranks = TalentState.GetRanks(talent.Id);
+                if (ranks > 0)
+                    ability = talent.AbilityModifier(ability, ranks);
+            }
             return ability;
         }
+
+        /// <summary>Form data including "Improved … Form" talents; null = no form.</summary>
+        public ShapeshiftFormInfo? EffectiveFormInfo(DruidForm form)
+        {
+            var info = ShapeshiftForms.Get(form);
+            if (info is null) return null;
+            foreach (var talent in TalentRegistry.GetTalents(ActiveClass))
+            {
+                if (talent.FormModifier is null || talent.ModifiedForm != form) continue;
+                int ranks = TalentState.GetRanks(talent.Id);
+                if (ranks > 0)
+                    info = talent.FormModifier(info, ranks);
+            }
+            return info;
+        }
+
+        /// <summary>Additional Ignite damage (Improved Ignite).</summary>
+        public double IgniteTalentBonus => TalentBonus(TalentEffectType.IgniteDamage);
 
         /// <summary>Additional HP from Stamina through talents (Strong Life).</summary>
         private int StaminaTalentHp(PrimaryStats primary) =>

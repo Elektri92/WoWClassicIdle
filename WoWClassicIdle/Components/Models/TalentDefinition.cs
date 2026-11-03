@@ -13,6 +13,9 @@ public class TalentDefinition
     public int MaxRanks { get; init; } = 1;
     public string? RequiresTalentId { get; init; }
 
+    /// <summary>Talent that cannot be learned at the same time (e.g. Bear Form ↔ Cat Form).</summary>
+    public string? ExclusiveWithTalentId { get; init; }
+
     /// <summary>Minimum character level to invest (specialization talents: 20). 0 = row rule only.</summary>
     public int LevelRequired { get; init; }
     public TalentEffectType EffectType { get; init; }
@@ -27,8 +30,17 @@ public class TalentDefinition
     /// <summary>Name of the ability changed by <see cref="AbilityModifier"/> (<see cref="TalentEffectType.ModifyAbility"/>).</summary>
     public string? ModifiedAbilityName { get; init; }
 
-    /// <summary>Applied to the effective copy of the ability while the talent is skilled.</summary>
-    public Func<Ability, Ability>? AbilityModifier { get; init; }
+    /// <summary>Applied to the effective copy of the ability while the talent is skilled (ability, ranks).</summary>
+    public Func<Ability, int, Ability>? AbilityModifier { get; init; }
+
+    /// <summary>Form changed by <see cref="FormModifier"/> (<see cref="TalentEffectType.ImprovedForm"/>).</summary>
+    public DruidForm ModifiedForm { get; init; }
+
+    /// <summary>Applied to the form data while the talent is skilled (form, ranks).</summary>
+    public Func<ShapeshiftFormInfo, int, ShapeshiftFormInfo>? FormModifier { get; init; }
+
+    /// <summary>Player-facing effect text for a given rank count; overrides the generic text of <see cref="EffectType"/>.</summary>
+    public Func<int, string>? RankText { get; init; }
 
     /// <summary>All abilities unlocked by this talent.</summary>
     public IEnumerable<string> GrantedAbilityIds =>
@@ -42,7 +54,7 @@ public class TalentDefinition
     private IReadOnlyList<string>? _grantedRankIds;
 
     /// <summary>Description of the effect for a specific rank.</summary>
-    public string EffectDescription(int ranks) => EffectType switch
+    public string EffectDescription(int ranks) => RankText is not null ? RankText(ranks) : EffectType switch
     {
         TalentEffectType.CritChance =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Critical Strike Chance",
@@ -273,7 +285,9 @@ public class TalentDefinition
             $"Passive: Wrath empowers your next Starfire by {IdleGameEngine.LunarEclipseBonus * 100:0}%, Starfire your next Wrath by {IdleGameEngine.SolarEclipseBonus * 100:0}%",
         TalentEffectType.SerpentStingDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Serpent Sting damage",
-        TalentEffectType.ModifyAbility => Description,
+        TalentEffectType.IgniteDamage =>
+            $"+{(EffectPerRank * ranks * 100):0.##}% Ignite damage",
+        TalentEffectType.ModifyAbility or TalentEffectType.ImprovedForm => Description,
         _ => ""
     };
 }

@@ -153,7 +153,7 @@ public partial class IdleGameEngine
             && Player.TalentState.GetTotalBonus(Player.ActiveClass, TalentEffectType.GrantIgnite) > 0
             && enemy.IsAlive)
         {
-            int ignitePerTick = (int)Math.Max(1, Math.Round(abilityDmg * 0.40 / 3.0));
+            int ignitePerTick = (int)Math.Max(1, Math.Round(abilityDmg * 0.40 * (1.0 + Player.IgniteTalentBonus) / 3.0));
             var igniteDebuff = new Ability
             {
                 Id                    = "talent_ignite",

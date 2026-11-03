@@ -24,8 +24,40 @@ namespace Models
         {
             int available = GetAvailableTalentPoints(ActiveClass);
             bool ok = TalentState.Invest(talent, available, Level);
-            if (ok) RecalculateStats();
+            if (ok) OnTalentRanksChanged(talent);
             return ok;
+        }
+
+        /// <summary>Removes a talent point (right-click) and recalculates the stats.</summary>
+        public bool RemoveTalent(TalentDefinition talent)
+        {
+            bool ok = TalentState.Remove(talent);
+            if (!ok) return false;
+
+            // Last rank gone: the abilities of this talent are no longer available
+            if (TalentState.GetRanks(talent.Id) == 0 && talent.Class == ActiveClass && talent.GrantedRankIds.Count > 0)
+            {
+                var grantedIds = talent.GrantedRankIds.ToHashSet();
+                var loadout = GetCurrentLoadout();
+                if (loadout.EquippedAbilityIds.RemoveAll(grantedIds.Contains) > 0)
+                    ApplyLoadout(loadout);   // Update the ability cache and form
+                foreach (var id in grantedIds)
+                    Buffs.Remove(id);
+            }
+
+            OnTalentRanksChanged(talent);
+            return true;
+        }
+
+        /// <summary>
+        /// Talents that change an aura (stances, Paladin auras) only take effect when the aura is applied –
+        /// drop running auras so they are renewed with the new values on the next tick.
+        /// </summary>
+        private void OnTalentRanksChanged(TalentDefinition talent)
+        {
+            if (talent.Class == ActiveClass && talent.AbilityModifier is not null)
+                Buffs.RemoveAurasExcept([]);
+            RecalculateStats();
         }
 
         /// <summary>Resets all talents of the class and recalculates the stats.</summary>
@@ -57,6 +89,7 @@ namespace Models
         {
             foreach (var (talentId, ranks) in points)
                 TalentState.RestoreRanks(talentId, ranks);
+            TalentState.ResetInconsistentClasses();
             RecalculateStats();
         }
     }

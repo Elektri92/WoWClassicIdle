@@ -40,7 +40,7 @@ namespace Models
         private Stats ApplyFormStats(Stats stats)
         {
             _statsForm = ActiveForm;
-            var form = ShapeshiftForms.Get(_statsForm);
+            var form = EffectiveFormInfo(_statsForm);
             if (form is null || form.IsStance) return stats;   // Stances work via their aura buff
 
             if (form.Resource != ResourceKind.Mana)
@@ -50,6 +50,7 @@ namespace Models
                     ManaRegenPer5        = 0,
                     DamageTakenReduction = Math.Clamp(stats.DamageTakenReduction + form.DamageTakenReduction, 0, 0.99),
                     HealingMultiplier    = stats.HealingMultiplier + form.HealingBonus,
+                    CritChance           = stats.CritChance + form.CritChanceBonus,
                 };
 
             int spiritRegen = stats.ManaRegenPer5 - StatScaling.BaseManaRegenPer5;
@@ -58,13 +59,14 @@ namespace Models
                 ManaRegenPer5        = stats.ManaRegenPer5 + (int)Math.Round(spiritRegen * form.SpiritManaRegenBonus),
                 DamageTakenReduction = Math.Clamp(stats.DamageTakenReduction + form.DamageTakenReduction, 0, 0.99),
                 HealingMultiplier    = stats.HealingMultiplier + form.HealingBonus,
+                CritChance           = stats.CritChance + form.CritChanceBonus,
             };
         }
 
         /// <summary>Form damage bonus on specific spells (e.g. Moonkin → Wrath, Moonfire).</summary>
         private Ability ApplyFormBonus(Ability ability)
         {
-            var form = ShapeshiftForms.Get(ActiveForm);
+            var form = EffectiveFormInfo(ActiveForm);
             if (form is null || form.BoostedAbilityDamageBonus <= 0 || !form.BoostedAbilityNames.Contains(ability.Name))
                 return ability;
 

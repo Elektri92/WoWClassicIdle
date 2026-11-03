@@ -58,6 +58,23 @@ public partial class IdleGameEngine
         return ok;
     }
 
+    /// <summary>Removes a talent point of the active character. Returns null if successful, otherwise the reason.</summary>
+    public string? RemoveTalentPoint(string talentId)
+    {
+        var talent = TalentRegistry.GetById(Player.ActiveClass, talentId);
+        if (talent is null) return "Unknown talent.";
+        string? blocker;
+        lock (_simLock)
+        {
+            blocker = Player.TalentState.RemoveBlocker(talent);
+            if (blocker is null && !Player.RemoveTalent(talent))
+                blocker = "Cannot unlearn this talent.";
+        }
+        if (blocker is null)
+            TickUpdated?.Invoke();
+        return blocker;
+    }
+
     /// <summary>
     /// Applies a changed loadout to the running fight (thread-safe).
     /// Druid forms switch resource and stats in the process.

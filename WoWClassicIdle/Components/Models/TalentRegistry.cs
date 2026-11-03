@@ -3,13 +3,23 @@ namespace Models;
 
 public static partial class TalentRegistry
 {
+    /// <summary>Points needed in a tree per row to unlock the next one.</summary>
+    public const int PointsPerRow = 5;
+
+    /// <summary>Rows per talent tree (always shown, even if not all are filled yet).</summary>
+    public const int RowCount = 7;
+
+    /// <summary>Columns per talent tree.</summary>
+    public const int ColumnCount = 4;
+
     private static readonly Dictionary<CharacterClass, List<TalentDefinition>> _talents;
 
     static TalentRegistry()
     {
         _talents = new Dictionary<CharacterClass, List<TalentDefinition>>();
         foreach (CharacterClass cls in Enum.GetValues<CharacterClass>())
-            _talents[cls] = BuildTalents(cls).Concat(BuildSpecAbilityTalents(cls)).Concat(BuildLevelAbilityTalents(cls)).ToList();
+            _talents[cls] = BuildTalents(cls).Concat(BuildSpecAbilityTalents(cls)).Concat(BuildLevelAbilityTalents(cls))
+                .Concat(BuildImprovedTalents(cls)).ToList();
     }
 
     public static IReadOnlyList<TalentDefinition> GetTalents(CharacterClass cls) =>
@@ -29,7 +39,7 @@ public static partial class TalentRegistry
     {
         var parts = new List<string>();
         if (talent.Row > 0)
-            parts.Add($"{talent.Row * 5} points in {GetTreeName(talent)}");
+            parts.Add($"{talent.Row * PointsPerRow} points in {GetTreeName(talent)}");
         if (talent.LevelRequired > 0)
             parts.Add($"Level {talent.LevelRequired}");
         if (talent.RequiresTalentId is not null)

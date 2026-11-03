@@ -150,4 +150,6 @@ public enum TalentEffectType
     Eclipse,                    // Wrath empowers Starfire and vice versa
     SerpentStingDamage,         // +x% Serpent Sting damage
     ModifyAbility,              // Changes ModifiedAbilityName via AbilityModifier (Lv 11–15 spec abilities)
+    ImprovedForm,               // Changes ModifiedForm via FormModifier (Improved Bear Form …)
+    IgniteDamage,               // +x% Ignite damage
 }
