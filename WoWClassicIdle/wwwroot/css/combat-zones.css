@@ -647,6 +647,42 @@
     border-color: #7a6242;
 }
 
+/* Razorfen Kraul: earthen warren under giant brambles, torchlight */
+.zone-theme-razorfen {
+    background:
+        radial-gradient(ellipse at 22% 85%, rgba(255, 190, 90, .26), transparent 50%),
+        radial-gradient(ellipse at 80% 10%, rgba(140, 150, 70, .2), transparent 55%),
+        linear-gradient(180deg, #4a3822 0%, #33261a 50%, #1c140c 100%);
+    border-color: #7e6638;
+}
+
+/* Scarlet Monastery: crimson cathedral, light through stained glass */
+.zone-theme-scarlet {
+    background:
+        radial-gradient(ellipse at 66% 0%, rgba(255, 210, 150, .3), transparent 50%),
+        radial-gradient(ellipse at 20% 100%, rgba(200, 40, 40, .28), transparent 55%),
+        linear-gradient(180deg, #4a2224 0%, #321618 50%, #1a0b0c 100%);
+    border-color: #8a3436;
+}
+
+/* Shadowfang Keep: cursed castle under a pale moon */
+.zone-theme-shadowfang {
+    background:
+        radial-gradient(ellipse at 70% 8%, rgba(200, 210, 255, .26), transparent 48%),
+        radial-gradient(ellipse at 20% 100%, rgba(140, 100, 200, .22), transparent 55%),
+        linear-gradient(180deg, #2e2c44 0%, #211f32 50%, #121120 100%);
+    border-color: #5a5480;
+}
+
+/* Blackfathom Deeps: flooded naga ruins, deep teal water */
+.zone-theme-blackfathom {
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(110, 230, 230, .24), transparent 55%),
+        radial-gradient(ellipse at 80% 100%, rgba(150, 90, 220, .22), transparent 50%),
+        linear-gradient(180deg, #164048 0%, #0f2c36 50%, #081a22 100%);
+    border-color: #2a6a72;
+}
+
 /* Redridge: red cliffs */
 .zone-theme-redridge {
     background:

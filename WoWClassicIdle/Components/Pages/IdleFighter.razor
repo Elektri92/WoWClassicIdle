@@ -115,6 +115,7 @@ else if (!_engine.NeedsCombatZone)
                          src="@IconUrls.ClassIconUrl(_engine.Player.ActiveClass)"
                          alt="" onerror="this.style.display='none'" />
                 }
+                <DeathPenaltyInfo Penalty="_engine.CurrentDeathXpPenalty" Level="_engine.Player.Level" />
             </div>
             <div class="frame-info">
                 <div class="name-line">
@@ -189,7 +190,6 @@ else if (!_engine.NeedsCombatZone)
                             <span class="bar-text">@_engine.Player.Xp / @_engine.Player.XpToNextLevel</span>
                         }
                     </div>
-                    <DeathPenaltyInfo Penalty="_engine.CurrentDeathXpPenalty" Level="_engine.Player.Level" />
                 </div>
             </div>
         </div>
@@ -292,7 +292,7 @@ else if (!_engine.NeedsCombatZone)
     </div>
     @if (_engine.CurrentDungeonParty is { Count: > 0 } party)
     {
-        <DungeonPartyFrames Party="party" SelfRole="_engine.CurrentDungeonSelfRole" Level="_engine.Player.Level" />
+        <DungeonPartyFrames Party="party" SelfRole="_engine.CurrentDungeonSelfRole" Level="_engine.Player.Level" Resource="_engine.Player.Resource" />
     }
     </div>
 
@@ -1055,15 +1055,12 @@ else if (!_engine.NeedsCombatZone)
         width: 100%;
     }
 
-    .xp-row {
-        position: relative;
-    }
-
+    /* Death penalty pill: bottom left on the portrait, mirrors the class badge.
+       No transform here – it would become the containing block of the fixed tooltip. */
     .death-penalty {
         position: absolute;
-        right: 3px;
-        top: 50%;
-        transform: translateY(-50%);
+        bottom: -4px;
+        left: -6px;
     }
 
     .hp-bar, .mana-bar, .xp-bar {

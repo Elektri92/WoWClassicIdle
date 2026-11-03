@@ -13,6 +13,9 @@ namespace Models
         /// <summary>Class whose formulas the melee values scale with (Cat → Rogue, Bear → Warrior).</summary>
         public CharacterClass MeleeScalingClass => StatScaling.MeleeScalingClass(ActiveClass, ActiveForm);
 
+        /// <summary>Cat or Bear Form: Strength and Agility each give 1 attack power.</summary>
+        public bool IsFeralForm => StatScaling.IsFeralForm(ActiveClass, ActiveForm);
+
         /// <summary>Resource the abilities currently consume (class or form).</summary>
         public ResourceKind Resource => ShapeshiftForms.ResourceFor(ActiveClass, ActiveForm);
 

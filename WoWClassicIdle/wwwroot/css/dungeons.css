@@ -29,6 +29,62 @@
     --dp-done: #75624c;
     --dp-glow: rgba(255, 154, 60, .6);
 }
+.dp-theme-shadowfang {
+    --dp-bg-top: #22213a;
+    --dp-bg-bottom: #0f0e1c;
+    --dp-border: #4e4a76;
+    --dp-border-light: #78729e;
+    --dp-accent: #b49cff;
+    --dp-accent-dark: #5a3e9a;
+    --dp-accent-light: #e6dcff;
+    --dp-node: #1a1930;
+    --dp-rail: #090812;
+    --dp-muted: #aaa6c4;
+    --dp-done: #5e5a78;
+    --dp-glow: rgba(180, 156, 255, .6);
+}
+.dp-theme-blackfathom {
+    --dp-bg-top: #12303a;
+    --dp-bg-bottom: #08171e;
+    --dp-border: #2c6670;
+    --dp-border-light: #4e9098;
+    --dp-accent: #4fd8d4;
+    --dp-accent-dark: #1a6a70;
+    --dp-accent-light: #c4fbf6;
+    --dp-node: #0f252d;
+    --dp-rail: #050e12;
+    --dp-muted: #98bcc0;
+    --dp-done: #4c6c70;
+    --dp-glow: rgba(79, 216, 212, .6);
+}
+.dp-theme-razorfen {
+    --dp-bg-top: #2e2416;
+    --dp-bg-bottom: #150f08;
+    --dp-border: #6e5a30;
+    --dp-border-light: #94804a;
+    --dp-accent: #e3b54a;
+    --dp-accent-dark: #7e5e1c;
+    --dp-accent-light: #fbe6a8;
+    --dp-node: #251d10;
+    --dp-rail: #0d0904;
+    --dp-muted: #c4b28a;
+    --dp-done: #776a4c;
+    --dp-glow: rgba(227, 181, 74, .6);
+}
+.dp-theme-scarlet {
+    --dp-bg-top: #2e1618;
+    --dp-bg-bottom: #14090a;
+    --dp-border: #7a3236;
+    --dp-border-light: #a85a5a;
+    --dp-accent: #ef4b43;
+    --dp-accent-dark: #8a1c1e;
+    --dp-accent-light: #ffd2c4;
+    --dp-node: #26100f;
+    --dp-rail: #0d0505;
+    --dp-muted: #c8a8a2;
+    --dp-done: #7a5c58;
+    --dp-glow: rgba(239, 75, 67, .6);
+}
 
 /* ── Run progress ── */
 .dungeon-progress {
@@ -196,6 +252,9 @@
 .dp-spell img { width: 22px; height: 22px; border: 1px solid #000; border-radius: 3px; display: block; }
 .dp-spell-cd { position: absolute; inset: 0; border-radius: 3px; pointer-events: none; }
 .dp-spell.casting img { box-shadow: 0 0 8px 2px rgba(255, 220, 110, .9); }
+/* Rebirth / Soulstone: lit while ready, greyed out once used */
+.dp-rescue { flex: 0 0 16px; width: 16px; height: 16px; border: 1px solid #000; border-radius: 50%; }
+.dp-rescue.used { filter: grayscale(1) brightness(.5); }
 
 /* ── Group builder on entering a dungeon ── */
 .dpd-overlay {

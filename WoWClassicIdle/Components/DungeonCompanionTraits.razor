@@ -1,0 +1,19 @@
+@using Models
+
+@* Tooltip lines about a companion's strengths, shared by the group builder and the party frames *@
+<span class="zt-section">@DungeonPartyRegistry.ProfileLabel(Member.Trait.Profile)</span>
+@foreach (var (text, good) in DungeonPartyRegistry.TraitLines(Member, Resource))
+{
+    <span class="@(good ? "zt-good" : "zt-sub")">@text</span>
+}
+@if (RescueUsed)
+{
+    <span class="zt-warn">@NpcTrait.RescueName(Member.Trait.Rescue) already used in this run</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public DungeonPartyMember Member { get; set; } = null!;
+    /// <summary>Resource of the player: decides which group buff applies.</summary>
+    [Parameter] public ResourceKind Resource { get; set; }
+    [Parameter] public bool RescueUsed { get; set; }
+}

@@ -33,7 +33,7 @@ public static partial class CombatZoneRegistry
 
     // Dark zone themes: combat and travel backgrounds show a night sky
     private static readonly HashSet<string> NightThemes =
-        ["duskwood", "tirisfal", "teldrassil", "darkshore", "sorrows", "plague", "deadwind", "felwood", "blasted", "moonglade", "ashenvale", "silverpine", "wailing", "deadmines"];
+        ["duskwood", "tirisfal", "teldrassil", "darkshore", "sorrows", "plague", "deadwind", "felwood", "blasted", "moonglade", "ashenvale", "silverpine", "wailing", "deadmines", "razorfen", "scarlet", "shadowfang", "blackfathom"];
 
     public static bool IsNightTheme(string theme) => NightThemes.Contains(theme);
 

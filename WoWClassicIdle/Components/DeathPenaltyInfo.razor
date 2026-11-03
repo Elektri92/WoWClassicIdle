@@ -1,7 +1,7 @@
 @using System.Globalization
 @using Models
 
-@* XP loss per death below the XP bar; the tooltip explains what changes it. *@
+@* XP loss per death as a pill on the player portrait; the tooltip explains what changes it. *@
 <WowTooltip Class="death-penalty" Title="Death Penalty">
     <Body>
         @if (Penalty.Active)
@@ -44,7 +44,7 @@
         @if (Penalty.Active && Penalty.Share > 0)
         {
             <span class="death-pct-badge @(Penalty.Share < Player.DeathXpPenaltyShare ? "reduced" : "")">
-                - @($"{(Penalty.Share * 100).ToString("0.##", CultureInfo.InvariantCulture)}%")
+                −@($"{(Penalty.Share * 100).ToString("0.##", CultureInfo.InvariantCulture)}%")
             </span>
         }
     </ChildContent>

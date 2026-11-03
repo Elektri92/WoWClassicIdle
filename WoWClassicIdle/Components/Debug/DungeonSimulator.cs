@@ -8,6 +8,9 @@ public sealed record DungeonSimResult(
     string Dungeon, CharacterClass Class, string SpecName, DungeonRole Role, int Level,
     int Runs, int FailedRuns, int Deaths, double SecondsPerRun, double XpPerHour, double OpenZoneXpPerHour)
 {
+    /// <summary>Companion swapped in by the sweep (null = default group).</summary>
+    public (DungeonRole Role, CharacterClass Class)? Swapped { get; init; }
+
     public double DeathsPerRun => Runs > 0 ? (double)Deaths / Runs : 0;
     public double XpRatio => OpenZoneXpPerHour > 0 ? XpPerHour / OpenZoneXpPerHour : 0;
 }
@@ -43,16 +46,60 @@ public static class DungeonSimulator
         return results.OrderBy(r => r.Dungeon).ThenBy(r => r.Level).ThenBy(r => r.Class.ToString()).ThenBy(r => r.SpecName).ThenBy(r => r.Role).ToList();
     }
 
-    public static DungeonSimResult Run(CombatZone zone, CharacterClass cls, int level, SimSpec spec, DungeonRole role, CancellationToken ct = default)
+    /// <summary>
+    /// Every spec plays as damage dealer; one companion slot at a time runs through all classes of its role, the others stay default.
+    /// Shows whether the choice matters and whether one class wins for everyone.
+    /// </summary>
+    public static async Task<IReadOnlyList<DungeonSimResult>> RunCompanionSweepAsync(CombatZone zone, int level,
+        IProgress<string>? progress = null, CancellationToken ct = default)
     {
-        double openXpPerHour = ClassSimulator.Run(cls, level, OpenZoneMinutes, spec, ct) is { SimSeconds: > 0 } open
+        var jobs = new List<(CharacterClass Cls, SimSpec Spec, DungeonPartySetup Setup, (DungeonRole, CharacterClass) Swapped)>();
+        foreach (var cls in Enum.GetValues<CharacterClass>())
+        {
+            var faction = FactionOf(cls);
+            var baseline = DungeonPartyRegistry.DefaultSetup(level, faction, cls, DungeonRole.Damage);
+            var slots = DungeonPartyRegistry.NpcSlots(DungeonRole.Damage);
+            // One slot per role: tank, healer and the first damage dealer
+            foreach (int index in slots.Select((r, i) => (r, i)).GroupBy(x => x.r).Select(g => g.First().i))
+                foreach (var option in DungeonPartyRegistry.OptionsFor(slots[index], faction))
+                {
+                    var companions = baseline.Companions.ToList();
+                    int clash = companions.IndexOf(option);
+                    if (clash >= 0 && clash != index && slots[clash] == slots[index]) companions[clash] = companions[index];
+                    companions[index] = option;
+                    var setup = new DungeonPartySetup(DungeonRole.Damage, companions);
+                    if (!DungeonPartyRegistry.IsValid(setup, faction, cls)) continue;
+                    foreach (var spec in ClassSimulator.SpecsFor(cls))
+                        jobs.Add((cls, spec, setup, (slots[index], option)));
+                }
+        }
+
+        var results = new System.Collections.Concurrent.ConcurrentBag<DungeonSimResult>();
+        int done = 0;
+        var options = new ParallelOptions { CancellationToken = ct, MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1) };
+        await Parallel.ForEachAsync(jobs, options, (job, token) =>
+        {
+            results.Add(Run(zone, job.Cls, level, job.Spec, DungeonRole.Damage, token, job.Setup, compareOpenZone: false) with { Swapped = job.Swapped });
+            progress?.Report($"{Interlocked.Increment(ref done)}/{jobs.Count}");
+            return ValueTask.CompletedTask;
+        });
+        return results.ToList();
+    }
+
+    private static Faction FactionOf(CharacterClass cls) =>
+        RaceClassInfo.RaceToFaction[RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key];
+
+    public static DungeonSimResult Run(CombatZone zone, CharacterClass cls, int level, SimSpec spec, DungeonRole role, CancellationToken ct = default,
+        DungeonPartySetup? setup = null, bool compareOpenZone = true)
+    {
+        double openXpPerHour = compareOpenZone && ClassSimulator.Run(cls, level, OpenZoneMinutes, spec, ct) is { SimSeconds: > 0 } open
             ? open.XpGained / (open.SimSeconds / 3600.0)
             : 0;
 
         var (engine, _) = ClassSimulator.PrepareBenchmark(cls, level, spec, ct);
         var dungeon = zone.Dungeon!;
-        var faction = RaceClassInfo.RaceToFaction[RaceClassInfo.RaceToClasses.First(kv => kv.Value.Contains(cls)).Key];
-        engine.DebugSetSimParty(DungeonPartyRegistry.Build(level, faction, DungeonPartyRegistry.DefaultSetup(level, faction, cls, role)), role);
+        var faction = FactionOf(cls);
+        var party = DungeonPartyRegistry.Build(level, faction, setup ?? DungeonPartyRegistry.DefaultSetup(level, faction, cls, role));
         var progress = engine.Player.ClassProgress[cls];
         var rng = new Random(HashCode.Combine(zone.Id, cls, level, spec.Index));
 
@@ -62,6 +109,7 @@ public static class DungeonSimulator
 
         for (int run = 0; run < RunsPerSeries; run++)
         {
+            engine.DebugSetSimParty(party, role); // fresh group: rescues are ready again
             int wipes = 0;
             for (int index = 0; index < dungeon.Encounters.Count && wipes < DungeonRules.MaxWipes;)
             {

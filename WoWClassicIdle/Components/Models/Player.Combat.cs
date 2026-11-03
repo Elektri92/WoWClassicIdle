@@ -412,7 +412,7 @@ namespace Models
                 MaxMana                    = baseStats.MaxMana  + StatScaling.BonusMana(ActiveClass, armorBonus),
                 ManaRegenPer5              = ManaRegenWithSpiritBonus(StatScaling.ManaRegenPer5(ActiveClass, augPrimary), spiritRegenBonus),
                 HpRegenPer5                = StatScaling.HpRegenPer5(meleeClass, augPrimary),
-                AttackPower                = StatScaling.AttackPower(meleeClass, level, augPrimary),
+                AttackPower                = StatScaling.AttackPower(ActiveClass, ActiveForm, level, augPrimary),
             }));
 
             CurrentHp = Stats.MaxHp;

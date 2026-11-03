@@ -1,22 +1,23 @@
+/* Pill in the style of the class badge: gold frame, dark background */
 .death-pct-badge {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1.5px solid #8b1a1a;
-    background: rgba(20, 0, 0, 0.88);
-    color: #e84040;
-    font-size: .58rem;
-    font-weight: bold;
-    white-space: nowrap;
-    text-align: center;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    border: 2px solid #c5a55a;
+    background: #0e0b07;
+    box-shadow: 0 0 4px rgba(0,0,0,.8);
+    color: #ff4a3a;
+    font-size: .62rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
     line-height: 1;
+    white-space: nowrap;
+    text-shadow: 0 1px 1px #000;
     cursor: help;
 }
 
 .death-pct-badge.reduced {
     color: #1eff00;
-    border-color: #1a6a1a;
 }

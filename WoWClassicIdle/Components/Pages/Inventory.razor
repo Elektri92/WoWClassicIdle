@@ -100,10 +100,10 @@
 
             <div class="stats-area">
                 <div class="wow-inset stat-box">
-                    <StatTooltip StatName="Strength" Description="@StrengthTooltip(_engine.Player.MeleeScalingClass)" IsUseless="@IsStrengthUseless(_engine.Player.MeleeScalingClass)">
+                    <StatTooltip StatName="Strength" Description="@StrengthTooltip(_engine.Player.MeleeScalingClass, _engine.Player.IsFeralForm)" IsUseless="@IsStrengthUseless(_engine.Player.MeleeScalingClass)">
                         <div class="wow-stat-row"><span>Strength:</span><span>@Primary.Strength</span>@StatDelta("Strength")</div>
                     </StatTooltip>
-                    <StatTooltip StatName="Agility" Description="@AgilityTooltip(_engine.Player.MeleeScalingClass)" IsUseless="@IsAgilityUseless(_engine.Player.MeleeScalingClass)">
+                    <StatTooltip StatName="Agility" Description="@AgilityTooltip(_engine.Player.MeleeScalingClass, _engine.Player.IsFeralForm)" IsUseless="@IsAgilityUseless(_engine.Player.MeleeScalingClass, _engine.Player.IsFeralForm)">
                         <div class="wow-stat-row"><span>Agility:</span><span>@Primary.Agility</span>@StatDelta("Agility")</div>
                     </StatTooltip>
                     <StatTooltip StatName="Stamina" Description="@StaminaTooltip()">

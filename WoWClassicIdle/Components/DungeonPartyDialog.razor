@@ -191,7 +191,7 @@
                 </span>
                 <span class="dp-member-text">
                     <span class="dp-member-name">@NameOf(pick)</span>
-                    <span class="dpd-card-class">@ClassOf(pick)</span>
+                    <span class="dpd-card-class">@ClassOf(pick)@(pick.Npc is { } tagged ? $" · {DungeonPartyRegistry.ProfileLabel(tagged.Trait.Profile)}" : "")</span>
                 </span>
                 @if (pick.Npc is { } npc)
                 {
@@ -206,6 +206,7 @@
             <span class="zt-sub">@npc.Race @npc.Class · @DungeonPartyRegistry.RoleLabel(npc.Role)</span>
             <span class="zt-section">@npc.Spell.Name</span>
             <span class="zt-good">@npc.Spell.Description</span>
+            <DungeonCompanionTraits Member="npc" Resource="Slot.Player.Resource" />
         }
         else
         {

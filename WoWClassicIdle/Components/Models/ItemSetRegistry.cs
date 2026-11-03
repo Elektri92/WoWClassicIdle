@@ -23,6 +23,9 @@ public static class ItemSetRegistry
     public const string WailingCaster   = "wc_caster";
     public const string WailingMelee    = "wc_melee";
     public const string WailingHybrid   = "wc_hybrid";
+    public const string ScarletCaster   = "sm_caster";
+    public const string ScarletMelee    = "sm_melee";
+    public const string ScarletHybrid   = "sm_hybrid";
 
     private static readonly CharacterClass[] Casters = [CharacterClass.Mage, CharacterClass.Warlock, CharacterClass.Priest];
     private static readonly CharacterClass[] Melees  = [CharacterClass.Warrior, CharacterClass.Rogue, CharacterClass.Hunter];
@@ -31,7 +34,12 @@ public static class ItemSetRegistry
     private static readonly PrimaryStats IntTwo   = new() { Intelligence = 8 };
     private static readonly PrimaryStats SpiThree = new() { Spirit = 8, Stamina = 8 };
 
+    // Scarlet Monastery drops around level 35–40, so its bonuses are half as large again
+    private static readonly PrimaryStats ScarletIntTwo   = new() { Intelligence = 12 };
+    private static readonly PrimaryStats ScarletSpiThree = new() { Spirit = 12, Stamina = 12 };
+
     private const double FiveCrit = 0.02;
+    private const double ScarletFiveCrit = 0.03;
 
     private static readonly Dictionary<string, ItemSet> ById = new ItemSet[]
     {
@@ -41,6 +49,9 @@ public static class ItemSetRegistry
         new(WailingCaster,   "Raiment of the Fanglord",          Casters, IntTwo, SpiThree, FiveCrit),
         new(WailingMelee,    "Deviate Hunter's Scales",          Melees,  new() { Agility = 8 }, new() { Strength = 8, Stamina = 8 }, FiveCrit),
         new(WailingHybrid,   "Embrace of the Viper",             Hybrids, IntTwo, SpiThree, FiveCrit),
+        new(ScarletCaster,   "Vestments of the Inquisition",     Casters, ScarletIntTwo, ScarletSpiThree, ScarletFiveCrit),
+        new(ScarletMelee,    "Chain of the Scarlet Crusade",     Melees,  new() { Strength = 12 }, new() { Agility = 12, Stamina = 12 }, ScarletFiveCrit),
+        new(ScarletHybrid,   "Battlegear of the Crimson Vanguard", Hybrids, ScarletIntTwo, ScarletSpiThree, ScarletFiveCrit),
     }.ToDictionary(s => s.Id);
 
     public static ItemSet? Get(string? id) => id is not null && ById.TryGetValue(id, out var set) ? set : null;

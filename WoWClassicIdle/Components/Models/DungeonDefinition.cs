@@ -54,6 +54,12 @@ public static class DungeonRules
     // together they deal what two do, otherwise those runs would be faster and give more XP per hour
     public const double CompanionDamageWithoutSelfDps = 2.0 / 3.0;
 
+    /// <summary>Group buffs of the companions last the whole run; they are set again after a death or a form change.</summary>
+    public const double PartyAuraSeconds = 3600;
+
+    /// <summary>Health after a Rebirth or Soulstone, as a share of the maximum.</summary>
+    public const double RescueHpShare = 0.30;
+
     public const double TrashHpFactor     = 1.6;
     public const double TrashAttackFactor = 1.4;
     public const double BossHpFactor      = 3.2;

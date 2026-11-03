@@ -46,13 +46,14 @@ namespace Models
 
         /// <summary>
         /// Can the character make use of the stat buff? (see <see cref="StatScaling.IsUsefulStat"/>)
-        /// Druids in a form additionally count as their melee class (Cat → Rogue: Agility).
+        /// Druids in a form additionally count as their melee class; Cat and Bear Form also use Agility.
         /// Consumables without stat bonuses (potions, bandages, dynamite) are always useful.
         /// </summary>
         public bool CanUseConsumable(ConsumableItem item) =>
             item.Bonuses is not { } bonus
             || StatScaling.IsUsefulStat(ActiveClass, bonus)
-            || StatScaling.IsUsefulStat(MeleeScalingClass, bonus);
+            || StatScaling.IsUsefulStat(MeleeScalingClass, bonus)
+            || (bonus.Agility > 0 && IsFeralForm);
 
         /// <summary>Sum of the stat bonuses of all active consumables – flows into RecalculateStats.</summary>
         public PrimaryStats ConsumableBonus { get; private set; } = PrimaryStats.Zero;

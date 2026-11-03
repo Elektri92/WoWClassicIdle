@@ -237,8 +237,8 @@ public partial class AbilityLoadout
             var form = ShapeshiftForms.FormOf(CurrentLoadout);
             if (!ability.IsForm && !ShapeshiftForms.IsUsableIn(ability, form))
             {
-                SetStatus(ability.RequiredForm != DruidForm.None
-                    ? $"{ability.Name} requires {ShapeshiftForms.Get(ability.RequiredForm)?.Name}."
+                SetStatus(ShapeshiftForms.RequiredFormNames(ability) is { Length: > 0 } forms
+                    ? $"{ability.Name} requires {forms}."
                     : $"{ability.Name} cannot be equipped in {ShapeshiftForms.Get(form)?.Name}.", false);
                 return;
             }

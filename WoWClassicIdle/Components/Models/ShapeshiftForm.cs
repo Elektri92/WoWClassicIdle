@@ -127,14 +127,26 @@ public static class ShapeshiftForms
     /// <summary>
     /// Form-bound abilities (Maul, Claw) only in their form; in rage/energy forms
     /// no abilities that cost mana – unless they have their own <see cref="Ability.FormCosts"/> there.
+    /// Abilities with form costs but no mana cost (Swipe) only work in those forms.
     /// </summary>
     public static bool IsUsableIn(Ability ability, DruidForm form)
     {
         if (ability.RequiredForm != DruidForm.None) return ability.RequiredForm == form;
         if (ability.FormCosts.ContainsKey(form)) return true;
+        if (IsFormCostOnly(ability)) return false;
         if (form == DruidForm.None || ability.IsForm || ability.ManaCost == 0) return true;
         return Forms[form].IsStance || Forms[form].Resource == ResourceKind.Mana;
     }
+
+    /// <summary>Has only form costs (rage/energy) and no mana cost – unusable outside those forms.</summary>
+    public static bool IsFormCostOnly(Ability ability) =>
+        ability.ManaCost == 0 && ability.FormCosts.Count > 0;
+
+    /// <summary>Names of the forms an ability is restricted to, e.g. "Bear Form or Cat Form"; empty = no restriction.</summary>
+    public static string RequiredFormNames(Ability ability) =>
+        ability.RequiredForm != DruidForm.None ? Get(ability.RequiredForm)?.Name ?? ""
+        : IsFormCostOnly(ability) ? string.Join(" or ", ability.FormCosts.Keys.Select(f => Get(f)?.Name))
+        : "";
 
     /// <summary>Removes all abilities not usable in the equipped form. Returns them.</summary>
     public static List<Ability> PurgeIncompatible(ClassLoadout loadout)

@@ -51,63 +51,67 @@
     padding: 12px 8px 14px 4px;
 }
 
-/* ── Vertical tier rail: fills up as points are invested, badge per row ── */
+/* ── Vertical tier rail: fills up as points are invested, plate per row ──
+   Same frame as the HP/XP bars (dark trough, gold-brown border, inset shadow). */
 .tier-track {
     grid-column: 1;
     grid-row: 1 / -1;
     justify-self: center;
     position: relative;
-    width: 6px;
+    width: 10px;
     margin: calc(var(--row-h) / 2) 0;
-    border: 1px solid #2a2010;
+    border: 1px solid var(--wow-border);
     border-radius: 3px;
-    background: rgba(10, 8, 4, .8);
-    box-shadow: inset 0 0 3px #000;
+    background: var(--wow-bg-deep);
+    box-shadow: inset 0 0 4px #000, 0 0 0 1px #000;
+    overflow: hidden;
 }
+/* Sheen runs across the short axis like on the horizontal bars */
 .tier-track-fill {
     position: absolute;
     left: 0; right: 0; top: 0;
-    border-radius: 3px;
-    background: linear-gradient(180deg, #8a5c14 0%, #e0b84a 100%);
-    box-shadow: 0 0 6px rgba(255, 209, 0, .35);
+    background: linear-gradient(90deg, #8a5c14 0%, #e0b84a 50%, #8a5c14 100%);
     transition: height .4s ease;
 }
 
+/* Small bevelled plate, styled like the menu buttons */
 .tier-badge {
     grid-column: 1;
     align-self: center;
     justify-self: center;
     position: relative;
     display: flex; align-items: center; justify-content: center;
-    width: 24px; height: 24px;
-    border: 1px solid #3a2e18;
-    border-radius: 50%;
-    background: radial-gradient(circle at 50% 35%, #2a2010 0%, #0e0b05 100%);
-    box-shadow: 0 0 0 1px #000, 0 1px 3px rgba(0,0,0,.8);
-    font-family: 'Cinzel', serif;
-    font-size: .66rem;
+    width: 26px; height: 18px;
+    border: 1px solid var(--wow-border-dark);
+    border-top-color: var(--wow-border);
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--wow-panel-top) 0%, var(--wow-panel-bottom) 100%);
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.5), 0 0 0 1px #000, 0 1px 3px rgba(0,0,0,.8);
+    font-family: var(--wow-font-title);
+    font-size: .64rem;
     font-weight: 700;
     line-height: 1;
     color: #6a5a38;
-    text-shadow: 0 1px 2px #000;
+    text-shadow: 1px 1px 0 #000;
     cursor: default;
 }
 .tier-badge.tier-unlocked {
-    border-color: #c5a55a;
-    color: #ffd100;
-    background: radial-gradient(circle at 50% 35%, #5a3c0c 0%, #1e1406 100%);
+    border-color: var(--wow-gold-soft);
+    border-top-color: #e0c27a;
+    color: var(--wow-gold);
+    background: linear-gradient(180deg, #5a3c0c 0%, #2a1c06 100%);
 }
 .tier-badge.tier-next {
-    border-color: #ffd100;
-    color: #fff;
-    background: radial-gradient(circle at 50% 35%, #6e120d 0%, #2a0605 100%);
+    border-color: var(--wow-border-inner);
+    border-top-color: var(--wow-gold-soft);
+    color: var(--wow-gold-pale);
     animation: tier-next-pulse 1.8s ease-in-out infinite;
 }
-.tier-badge.tier-next::before { content: "+"; font-size: .55rem; margin-right: 1px; color: #ffd100; }
+.tier-badge.tier-next::before { content: "+"; font-size: .55rem; margin-right: 1px; color: var(--wow-gold); }
 
 @keyframes tier-next-pulse {
-    0%, 100% { box-shadow: 0 0 0 1px #000, 0 0 4px rgba(255,209,0,.35); }
-    50%      { box-shadow: 0 0 0 1px #000, 0 0 10px rgba(255,209,0,.75); }
+    0%, 100% { box-shadow: inset 0 -2px 3px rgba(0,0,0,.5), 0 0 0 1px #000, 0 0 3px rgba(255,209,0,.25); }
+    50%      { box-shadow: inset 0 -2px 3px rgba(0,0,0,.5), 0 0 0 1px #000, 0 0 8px rgba(255,209,0,.6); }
 }
 
 /* ── Requirement arrows: from the bottom of the prerequisite to the top of the dependent talent ── */

@@ -82,6 +82,8 @@ public class SlotSaveData
     public int? DungeonEncounter { get; set; }
     public int DungeonEncounterKills { get; set; }
     public int DungeonWipes { get; set; }
+    // Companions whose Rebirth or Soulstone is used up in the running run
+    public List<string>? DungeonRescuesUsed { get; set; }
     public List<DateTime>? DungeonRunStarts { get; set; }
     public Dictionary<string, int>? DungeonClears { get; set; }
 }

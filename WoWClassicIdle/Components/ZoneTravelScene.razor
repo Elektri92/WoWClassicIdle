@@ -116,9 +116,12 @@
             <span class="travel-route-end">@target?.Name</span>
         </div>
 
-        <WowTooltip Contents="true" Title="Turn back" Body="TurnBackTooltip(from)">
-            <button class="wow-btn primary travel-cancel" @onclick="Engine.CancelTravel">↩ Turn back</button>
-        </WowTooltip>
+        @if (!travel.IsDungeonReturn)
+        {
+            <WowTooltip Contents="true" Title="Turn back" Body="TurnBackTooltip(from)">
+                <button class="wow-btn primary travel-cancel" @onclick="Engine.CancelTravel">↩ Turn back</button>
+            </WowTooltip>
+        }
     </div>
 }
 

@@ -84,8 +84,8 @@ public static partial class AbilityText
 
     /// <summary>Gestalt-/Haltungs-Voraussetzung, z. B. „ Only usable in Battle Stance."</summary>
     private static string RequiredFormText(Ability ability) =>
-        ShapeshiftForms.Get(ability.RequiredForm) is { } form
-            ? (ability.IsPassive ? $" Only active in {form.Name}." : $" Only usable in {form.Name}.")
+        ShapeshiftForms.RequiredFormNames(ability) is { Length: > 0 } forms
+            ? (ability.IsPassive ? $" Only active in {forms}." : $" Only usable in {forms}.")
             : "";
 
     private static string Capitalize(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];

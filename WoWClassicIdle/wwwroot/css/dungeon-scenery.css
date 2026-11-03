@@ -156,11 +156,366 @@
     75%      { opacity: .92; }
 }
 
+/* ── Shadowfang Keep: moonlit castle hall, mist and hanging cages ── */
+.sk-floor { height: 20%; }
+
+.sk-window {
+    position: absolute;
+    top: 9%;
+    left: var(--x);
+    height: 40%;
+    transform: translateX(-50%);
+    filter: brightness(.85);
+}
+
+.sk-moonbeam {
+    position: absolute;
+    top: 16%;
+    left: var(--x);
+    width: 11%;
+    height: 80%;
+    background: linear-gradient(180deg, rgba(200, 215, 255, .2) 0%, rgba(170, 180, 255, .06) 60%, transparent 100%);
+    transform: translateX(-20%) skewX(14deg);
+    transform-origin: 50% 0;
+    animation: sm-ray 11s ease-in-out var(--d) infinite alternate;
+}
+
+/* Ground mist drifting slowly across the floor */
+.sk-mist {
+    position: absolute;
+    left: -50%;
+    bottom: 2%;
+    width: 200%;
+    height: 22%;
+    background:
+        radial-gradient(ellipse 18% 60% at 15% 70%, rgba(190, 195, 235, .16), transparent 70%),
+        radial-gradient(ellipse 22% 55% at 45% 60%, rgba(190, 195, 235, .13), transparent 70%),
+        radial-gradient(ellipse 16% 60% at 70% 75%, rgba(190, 195, 235, .15), transparent 70%),
+        radial-gradient(ellipse 20% 50% at 92% 65%, rgba(190, 195, 235, .12), transparent 70%);
+    animation: sk-mist var(--t) linear var(--d) infinite alternate;
+}
+.sk-mist.far { bottom: 10%; opacity: .7; }
+@keyframes sk-mist {
+    from { transform: translateX(0); }
+    to   { transform: translateX(22%); }
+}
+
+.sk-banner {
+    position: absolute;
+    top: 12%;
+    left: var(--x);
+    height: 30%;
+    transform-origin: 50% 0;
+    filter: brightness(.82);
+    animation: dm-banner 8s ease-in-out var(--d) infinite alternate;
+}
+
+.sk-cage {
+    position: absolute;
+    top: 6%;
+    left: var(--x);
+    height: 24%;
+    transform-origin: 50% 0;
+    filter: brightness(.85);
+    animation: dm-swing 6s ease-in-out var(--d) infinite alternate;
+}
+
+.sk-sconce {
+    position: absolute;
+    top: 20%;
+    left: var(--x);
+    height: 13%;
+    aspect-ratio: 60 / 122;
+}
+.sk-sconce img {
+    position: relative;
+    display: block;
+    height: 100%;
+}
+.sk-sconce-glow {
+    position: absolute;
+    left: 50%;
+    top: 18%;
+    width: 200px;
+    height: 200px;
+    margin: -100px 0 0 -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(150, 180, 255, .32) 0%, rgba(130, 150, 255, .1) 42%, transparent 70%);
+    animation: dm-flicker 3.6s steps(9) var(--d) infinite;
+}
+
+/* ── Blackfathom Deeps: flooded naga ruins ── */
+.bf-floor { height: 22%; }
+
+/* Light ripples from the water surface */
+.bf-caustics {
+    position: absolute;
+    inset: 0 0 40% 0;
+    background:
+        radial-gradient(ellipse 14% 22% at 22% 30%, rgba(120, 240, 235, .13), transparent 70%),
+        radial-gradient(ellipse 10% 16% at 47% 18%, rgba(120, 240, 235, .1), transparent 70%),
+        radial-gradient(ellipse 16% 24% at 72% 34%, rgba(120, 240, 235, .12), transparent 70%),
+        radial-gradient(ellipse 9% 14% at 90% 14%, rgba(120, 240, 235, .1), transparent 70%);
+    animation: bf-caustics 12s ease-in-out infinite alternate;
+}
+@keyframes bf-caustics {
+    from { transform: translateX(-2%); opacity: .7; }
+    to   { transform: translateX(2%); opacity: 1; }
+}
+
+.bf-pillar {
+    position: absolute;
+    bottom: 0;
+    height: 92%;
+}
+.bf-pillar.left  { left: 0; }
+.bf-pillar.right { right: 0; transform: scaleX(-1); }
+
+.bf-kelp {
+    position: absolute;
+    bottom: 4%;
+    left: var(--x);
+    height: var(--h);
+    transform-origin: 50% 100%;
+    filter: brightness(.85);
+    animation: bf-sway var(--t) ease-in-out var(--d) infinite alternate;
+}
+@keyframes bf-sway {
+    from { transform: rotate(-3deg); }
+    to   { transform: rotate(3deg); }
+}
+
+.bf-brazier {
+    position: absolute;
+    bottom: 6%;
+    left: var(--x);
+    height: 18%;
+    aspect-ratio: 80 / 126;
+}
+.bf-brazier img {
+    position: relative;
+    display: block;
+    height: 100%;
+}
+.bf-brazier-glow {
+    position: absolute;
+    left: 50%;
+    top: 16%;
+    width: 260px;
+    height: 260px;
+    margin: -130px 0 0 -130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(170, 110, 255, .38) 0%, rgba(140, 90, 240, .12) 42%, transparent 70%);
+    animation: dm-flicker 3s steps(9) var(--d) infinite;
+}
+
+.bf-bubble {
+    position: absolute;
+    bottom: 10%;
+    left: var(--x);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    border: 1px solid rgba(190, 255, 250, .7);
+    background: rgba(190, 255, 250, .12);
+    opacity: 0;
+    animation: bf-bubble var(--t) ease-in var(--d) infinite;
+}
+@keyframes bf-bubble {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    10%  { opacity: .9; }
+    50%  { transform: translate(8px, -160px); }
+    90%  { opacity: .6; }
+    100% { transform: translate(-4px, -320px); opacity: 0; }
+}
+
+/* ── Razorfen Kraul: earthen warren overgrown by giant brambles ── */
+.rk-floor   { height: 20%; }
+.rk-ceiling { top: 0; height: 18%; }
+
+.rk-thorns {
+    position: absolute;
+    bottom: 0;
+    height: 92%;
+    filter: brightness(.9);
+}
+.rk-thorns.left  { left: 0; }
+.rk-thorns.right { right: 0; }
+
+.rk-prop {
+    position: absolute;
+    bottom: 6%;
+    filter: brightness(.8);
+}
+/* Totem in the free left strip, bones below the enemy frame */
+.rk-totem { left: 2%; height: 40%; }
+.rk-bones { right: 31%; height: 11%; }
+
+.rk-brazier {
+    position: absolute;
+    bottom: 6%;
+    left: var(--x);
+    height: 19%;
+    aspect-ratio: 80 / 124;
+}
+.rk-brazier img {
+    position: relative;
+    display: block;
+    height: 100%;
+}
+.rk-fire-glow {
+    position: absolute;
+    left: 50%;
+    top: 14%;
+    width: 280px;
+    height: 280px;
+    margin: -140px 0 0 -140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 170, 70, .4) 0%, rgba(255, 140, 50, .13) 42%, transparent 70%);
+    animation: dm-flicker 2.7s steps(9) var(--d) infinite;
+}
+
+.rk-ember {
+    position: absolute;
+    bottom: 22%;
+    left: var(--x);
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #ffd27a;
+    box-shadow: 0 0 5px 2px rgba(255, 150, 50, .75);
+    opacity: 0;
+    animation: rk-ember var(--t) ease-out var(--d) infinite;
+}
+@keyframes rk-ember {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    10%  { opacity: 1; }
+    60%  { transform: translate(-10px, -110px); opacity: .7; }
+    100% { transform: translate(8px, -190px); opacity: 0; }
+}
+
+/* Dust trickling from the roots */
+.rk-dust {
+    position: absolute;
+    top: 12%;
+    left: var(--x);
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: #a08a62;
+    opacity: 0;
+    animation: rk-dust var(--t) linear var(--d) infinite;
+}
+@keyframes rk-dust {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    10%  { opacity: .7; }
+    90%  { opacity: .4; }
+    100% { transform: translate(12px, 300px); opacity: 0; }
+}
+
+/* ── Scarlet Monastery: cathedral nave with stained glass ── */
+.sm-floor { height: 20%; }
+
+.sm-window {
+    position: absolute;
+    top: 8%;
+    left: var(--x);
+    height: 44%;
+    transform: translateX(-50%);
+    filter: brightness(.82) saturate(.9);
+}
+
+.sm-rose {
+    position: absolute;
+    /* Above the enemy frame, like the masts in the Deadmines */
+    top: 3%;
+    left: 66%;
+    height: 34%;
+    transform: translateX(-50%);
+    filter: brightness(.82) saturate(.9);
+}
+
+/* Light falling from the windows, slowly breathing */
+.sm-ray {
+    position: absolute;
+    top: 14%;
+    left: var(--x);
+    width: 9%;
+    height: 82%;
+    background: linear-gradient(180deg, rgba(255, 190, 150, .22) 0%, rgba(255, 120, 100, .08) 55%, transparent 100%);
+    transform: translateX(-30%) skewX(-12deg);
+    transform-origin: 50% 0;
+    animation: sm-ray 9s ease-in-out var(--d) infinite alternate;
+}
+.sm-ray.wide { width: 18%; top: 22%; }
+@keyframes sm-ray {
+    from { opacity: .55; }
+    to   { opacity: 1; }
+}
+
+.sm-pillar {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+.sm-pillar.left  { left: 0; }
+.sm-pillar.right { right: 0; transform: scaleX(-1); }
+
+.sm-banner {
+    position: absolute;
+    top: 14%;
+    left: var(--x);
+    height: 30%;
+    transform-origin: 50% 0;
+    filter: brightness(.82);
+    animation: dm-banner 7s ease-in-out var(--d) infinite alternate;
+}
+
+.sm-candles {
+    position: absolute;
+    bottom: 6%;
+    left: var(--x);
+    height: 22%;
+    aspect-ratio: 70 / 200;
+}
+.sm-candles img {
+    position: relative;
+    display: block;
+    height: 100%;
+    filter: brightness(.9);
+}
+.sm-candle-glow {
+    position: absolute;
+    left: 50%;
+    top: 12%;
+    width: 200px;
+    height: 200px;
+    margin: -100px 0 0 -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 200, 120, .36) 0%, rgba(255, 170, 90, .12) 42%, transparent 70%);
+    animation: dm-flicker 3.4s steps(9) var(--d) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .wc-vine,
     .dm-banner,
     .dm-lantern,
-    .dm-lantern-glow { animation: none; }
+    .dm-lantern-glow,
+    .rk-fire-glow,
+    .sk-moonbeam,
+    .sk-mist,
+    .sk-banner,
+    .sk-cage,
+    .sk-sconce-glow,
+    .bf-caustics,
+    .bf-kelp,
+    .bf-brazier-glow,
+    .sm-ray,
+    .sm-banner,
+    .sm-candle-glow { animation: none; }
     .dm-ship { animation: none; transform: translateX(-50%); }
-    .wc-spore { display: none; }
+    .wc-spore,
+    .rk-ember,
+    .rk-dust,
+    .bf-bubble { display: none; }
 }

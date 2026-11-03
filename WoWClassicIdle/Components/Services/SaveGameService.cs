@@ -323,6 +323,7 @@ public class SaveGameService : ISaveGameService, IDisposable
         DungeonEncounter      = slot.DungeonRun?.EncounterIndex,
         DungeonEncounterKills = slot.DungeonRun?.KillsInEncounter ?? 0,
         DungeonWipes          = slot.DungeonRun?.Wipes ?? 0,
+        DungeonRescuesUsed    = slot.DungeonRun?.Party.Where(s => s.RescueUsed).Select(s => s.Member.Name).ToList(),
         DungeonRunStarts      = slot.DungeonRunStartsUtc.ToList(),
         DungeonClears         = slot.DungeonClears.ToDictionary(),
     };

@@ -378,6 +378,10 @@ public partial class IdleGameEngine
             Player.Buffs.ConsumeHitCharges();
         }
 
+        // ── Rebirth / Soulstone of a companion turns a wipe into a comeback ──
+        if (!Player.IsAlive)
+            TryPartyRescue();
+
         // ── Kill check after retaliation damage – otherwise the kill (XP, money, loot) would be lost ──
         // (If both die in the same step, the player's death counts)
         if (!CurrentEnemy.IsAlive && Player.IsAlive)

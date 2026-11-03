@@ -14,6 +14,36 @@
     </p>
     <button class="wow-btn primary" disabled="@_running" @onclick="Run">@(_running ? $"Running {_status}" : "Run simulation")</button>
     <button class="wow-btn" @onclick="Engine.DebugResetDungeonLockout">Reset lockout of active character</button>
+    <select class="wow-select" @bind="_sweepZoneId" disabled="@_running">
+        @foreach (var zone in CombatZoneRegistry.Dungeons)
+        {
+            <option value="@zone.Id">@zone.Name</option>
+        }
+    </select>
+    <button class="wow-btn" disabled="@_running" @onclick="Sweep">Companion sweep (MinLevel + 2)</button>
+
+    @if (_sweep is not null)
+    {
+        <p class="wow-hint">
+            XP/h relative to the mean of all options of the same role for the same spec, averaged over specs.
+            "Best for" = specs for which this companion gives the most XP/h in its role.
+        </p>
+        <table class="spawn-table">
+            <thead>
+                <tr><th>Role</th><th>Class</th><th>Profile</th><th>XP/h vs role mean</th><th>Spread</th><th>Deaths/run</th><th>Failed</th><th>Best for</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var row in _sweep)
+                {
+                    <tr>
+                        <td>@row.Role</td><td>@row.Class</td><td>@DungeonPartyRegistry.ProfileLabel(DungeonPartyRegistry.TraitOf(row.Role, row.Class).Profile)</td>
+                        <td>@((row.Relative - 1).ToString("+0.0%;-0.0%"))</td><td>@row.Min.ToString("+0%;-0%") … @row.Max.ToString("+0%;-0%")</td>
+                        <td>@row.DeathsPerRun.ToString("0.00")</td><td>@row.Failed</td><td>@row.BestFor/@row.Specs</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 
     @if (_results is not null)
     {
@@ -40,6 +70,43 @@
     private readonly CancellationTokenSource _cts = new();
     private bool _running;
     private string _status = "";
+
+    private sealed record SweepRow(DungeonRole Role, CharacterClass Class, double Relative, double Min, double Max, double DeathsPerRun, int Failed, int BestFor, int Specs);
+
+    private IReadOnlyList<SweepRow>? _sweep;
+    private string _sweepZoneId = CombatZoneRegistry.Dungeons.First().Id;
+
+    private async Task Sweep()
+    {
+        _running = true;
+        var zone = CombatZoneRegistry.Get(_sweepZoneId)!;
+        var progress = new Progress<string>(s => { _status = s; _ = InvokeAsync(StateHasChanged); });
+        try
+        {
+            var results = await Task.Run(() => DungeonSimulator.RunCompanionSweepAsync(zone, zone.MinLevel + 2, progress, _cts.Token));
+            _sweep = Summarize(results);
+        }
+        catch (OperationCanceledException) { }
+        _running = false;
+    }
+
+    private static IReadOnlyList<SweepRow> Summarize(IReadOnlyList<DungeonSimResult> results)
+    {
+        // Per spec and role: each option against the mean of all options
+        var perSpec = results.GroupBy(r => (r.Class, r.SpecName, r.Swapped!.Value.Role))
+            .SelectMany(g =>
+            {
+                double mean = g.Average(r => r.XpPerHour);
+                double best = g.Max(r => r.XpPerHour);
+                return g.Select(r => (Result: r, Relative: mean > 0 ? r.XpPerHour / mean : 0, IsBest: r.XpPerHour >= best));
+            });
+        return perSpec.GroupBy(x => x.Result.Swapped!.Value)
+            .Select(g => new SweepRow(g.Key.Role, g.Key.Class,
+                g.Average(x => x.Relative), g.Min(x => x.Relative - 1), g.Max(x => x.Relative - 1),
+                g.Average(x => x.Result.DeathsPerRun), g.Sum(x => x.Result.FailedRuns), g.Count(x => x.IsBest), g.Count()))
+            .OrderBy(r => r.Role).ThenByDescending(r => r.Relative)
+            .ToList();
+    }
 
     private async Task Run()
     {

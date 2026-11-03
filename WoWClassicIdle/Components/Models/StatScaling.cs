@@ -88,6 +88,23 @@ namespace Models
         });
 
         /// <summary>
+        /// Druid in Cat or Bear Form: Strength and Agility each give 1 attack power (instead of 2 per Strength).
+        /// </summary>
+        public static bool IsFeralForm(CharacterClass cls, DruidForm form) =>
+            cls == CharacterClass.Druid && form is DruidForm.Cat or DruidForm.Bear;
+
+        /// <summary>
+        /// Attack power incl. Druid forms: the level part follows the form's melee class (Cat → Rogue, Bear → Warrior),
+        /// Strength and Agility count 1:1 in both feral forms.
+        /// </summary>
+        public static int AttackPower(CharacterClass cls, DruidForm form, int level, PrimaryStats p) => form switch
+        {
+            _ when !IsFeralForm(cls, form) => AttackPower(MeleeScalingClass(cls, form), level, p),
+            DruidForm.Bear                 => Math.Max(0, level * 3 + p.Strength + p.Agility - 20),
+            _                              => Math.Max(0, level * 2 + p.Strength + p.Agility - 20),
+        };
+
+        /// <summary>
         /// Class factor on melee damage (auto-attacks and weapon strikes like Heroic Strike).
         /// Casters/hybrids in Classic don't live off white damage; melee classes are halved to idle level.
         /// </summary>

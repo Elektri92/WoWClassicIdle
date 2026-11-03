@@ -93,13 +93,6 @@ public partial class IdleGameEngine
         return target.Name;
     }
 
-    // Companions' buffs end with the group
-    private static void ClearPartyBuffs(CharacterSlot slot)
-    {
-        foreach (var state in slot.DungeonRun?.Party ?? [])
-            slot.Player.Buffs.Remove(state.SpellAbility.Id);
-    }
-
     /// <summary>Next enemy of the run – null without a running run.</summary>
     private Enemy? SpawnDungeonEnemy(CombatZone zone)
     {
@@ -221,84 +214,6 @@ public partial class IdleGameEngine
     private static IReadOnlyList<DungeonPartyMemberState> ToStates(IReadOnlyList<DungeonPartyMember> members) =>
         members.Select((member, i) => new DungeonPartyMemberState(member, member.Spell.Interval * (i + 1) / (members.Count + 1))).ToList();
 
-    private double PartyDamageReduction =>
-        CurrentEnemy is { FromDungeon: true } && CurrentDungeonSelfRole == DungeonRole.Tank ? DungeonRules.SelfTankReduction : 0;
-
-    // Damage the tank prevented counts as healing, like absorbs of the player's own shields
-    private void RecordPartyMitigation(int enemyDamage)
-    {
-        if (CurrentEnemy is not { FromDungeon: true }) return;
-        foreach (var state in CurrentDungeonParty)
-            if (Player.Buffs.IsActive(state.SpellAbility.Id))
-                Meter.RecordAbility(state.SpellAbility, CombatActionKind.Heal, (int)Math.Round(enemyDamage * state.Member.Spell.Reduction));
-    }
-
-    /// <summary>A companion casts its spell – the UI plays the animation. Fired before the matching combat number.</summary>
-    public event Action<DungeonPartyMemberState>? PartySpellCast;
-
-    /// <summary>The NPCs cast their spells on their own. Returns the damage dealt to the enemy.</summary>
-    private int UpdateDungeonParty(double dt, double enemyDmgTakenMult)
-    {
-        if (CurrentEnemy is not { FromDungeon: true, IsAlive: true } enemy) return 0;
-
-        UpdateSelfHealing(dt);
-
-        int dealt = 0;
-        foreach (var state in CurrentDungeonParty)
-        {
-            state.CastFlash = Math.Max(0, state.CastFlash - dt);
-            state.MitigationRemaining = Math.Max(0, state.MitigationRemaining - dt);
-            state.Cooldown = Math.Max(0, state.Cooldown - dt);
-            if (state.Cooldown > 0 || !enemy.IsAlive) continue;
-
-            var spell = state.Member.Spell;
-            switch (spell.Kind)
-            {
-                case NpcSpellKind.Damage:
-                    double variance = 0.85 + _rng.NextDouble() * 0.30;
-                    double roleFactor = CurrentDungeonSelfRole == DungeonRole.Damage ? 1.0 : DungeonRules.CompanionDamageWithoutSelfDps;
-                    int dmg = Math.Max(1, (int)Math.Round(spell.DamageAt(enemy.Stats.Level) * variance * enemyDmgTakenMult * roleFactor));
-                    PartySpellCast?.Invoke(state);
-                    Meter.RecordAbility(state.SpellAbility, CombatActionKind.Damage, enemy.TakeDamage(dmg));
-                    CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Enemy, CombatTextKind.Ability, dmg, FlightMs: spell.FlightMs));
-                    dealt += dmg;
-                    break;
-
-                case NpcSpellKind.Heal:
-                    if (Player.CurrentHp >= Player.Stats.MaxHp) continue; // nobody hurt: the spell stays ready
-                    int before = Player.CurrentHp;
-                    Player.RegenHp((int)Math.Ceiling(Player.Stats.MaxHp * spell.HealShare));
-                    int healed = Player.CurrentHp - before;
-                    PartySpellCast?.Invoke(state);
-                    Meter.RecordAbility(state.SpellAbility, CombatActionKind.Heal, healed);
-                    CombatTextRaised?.Invoke(new CombatText(CombatTextTarget.Player, CombatTextKind.Heal, healed, FlightMs: spell.FlightMs));
-                    break;
-
-                default:
-                    state.MitigationRemaining = spell.Duration;
-                    Player.Buffs.Apply(state.SpellAbility); // shows up in the player's buff bar
-                    PartySpellCast?.Invoke(state);
-                    break;
-            }
-            state.Cooldown = spell.Interval;
-            state.CastFlash = 0.4;
-        }
-        return dealt;
-    }
-
-    // Filling the healer slot: the character keeps itself up like an NPC healer would
-    private void UpdateSelfHealing(double dt)
-    {
-        if (CurrentDungeonSelfRole != DungeonRole.Healer) return;
-        _selfHealAcc += dt;
-        if (_selfHealAcc < 1.0) return;
-        _selfHealAcc -= 1.0;
-        int before = Player.CurrentHp;
-        Player.RegenHp((int)Math.Ceiling(Player.Stats.MaxHp * DungeonRules.HealerHpPerSecond));
-        if (Player.CurrentHp > before)
-            Meter.RecordTalentHeal("Healer role", Player.CurrentHp - before);
-    }
-
     /// <summary>Lockout and clears from the save game (before the zone: it restores the run).</summary>
     private static void RestoreDungeons(CharacterSlot slot, SlotSaveData data)
     {
@@ -327,6 +242,9 @@ public partial class IdleGameEngine
                 Party            = BuildPartyStates(slot),
                 SelfRole         = SelfRoleOf(slot),
             };
+            // Otherwise reloading would bring back a used Rebirth or Soulstone
+            foreach (var state in slot.DungeonRun.Party)
+                state.RescueUsed = data.DungeonRescuesUsed?.Contains(state.Member.Name) ?? false;
             return;
         }
         slot.CombatZoneId = dungeon.EntranceZoneId;

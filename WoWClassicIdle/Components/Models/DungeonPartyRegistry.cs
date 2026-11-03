@@ -20,18 +20,23 @@ public record NpcSpell(string Name, string Icon, NpcSpellKind Kind, double Inter
     {
         NpcSpellKind.Damage => $"Strikes the enemy every {Interval:0.0} s",
         NpcSpellKind.Heal   => $"Restores {HealShare * 100:0.#}% of your health every {Interval:0.0} s when you are hurt",
-        _                   => $"Reduces the damage you take by {Reduction * 100:0}% for {Duration:0} s, every {Interval:0} s",
+        _                   => $"Reduces the damage you take by {Mitigation * 100:0}% for {Duration:0} s, every {Interval:0} s",
     };
 
-    public double HealShare => DungeonRules.HealerHpPerSecond * Interval;
+    /// <summary>Share of the role's average output; companions with a lot of utility deal, heal or block less.</summary>
+    public double Scale { get; init; } = 1;
+
+    public double HealShare => DungeonRules.HealerHpPerSecond * Interval * Scale;
+
+    public double Mitigation => Reduction * Scale;
 
     /// <summary>Damage of one cast at the enemy level, before variance.</summary>
     public int DamageAt(int level) =>
-        (int)Math.Round(EnemyScaling.Hp(level, Archetypes.Humanoid) * DungeonRules.NpcDamagePerSecond * Interval);
+        (int)Math.Round(EnemyScaling.Hp(level, Archetypes.Humanoid) * DungeonRules.NpcDamagePerSecond * Interval * Scale);
 }
 
-/// <summary>Drawn NPC party member with the spell it casts on its own.</summary>
-public record DungeonPartyMember(string Name, Race Race, Gender Gender, CharacterClass Class, DungeonRole Role, NpcSpell Spell);
+/// <summary>Drawn NPC party member with the spell it casts on its own and the strengths of its class.</summary>
+public record DungeonPartyMember(string Name, Race Race, Gender Gender, CharacterClass Class, DungeonRole Role, NpcSpell Spell, NpcTrait Trait);
 
 /// <summary>Chosen group: own role plus one class per NPC slot, in the order of <see cref="DungeonPartyRegistry.NpcSlots"/>.</summary>
 public record DungeonPartySetup(DungeonRole SelfRole, IReadOnlyList<CharacterClass> Companions);
@@ -42,12 +47,27 @@ public sealed class DungeonPartyMemberState
     public DungeonPartyMember Member { get; }
 
     /// <summary>The spell as an ability: own meter row per NPC, for tanks also the buff on the player.</summary>
-    public Ability SpellAbility { get; }
+    public Ability SpellAbility { get; private set; }
+
+    /// <summary>Second spell that only hits trash (Consecration) or bosses (Revenge); null without one.</summary>
+    public Ability? ExtraSpellAbility { get; }
+
+    /// <summary>Power Word: Shield on a boss pull; null without one.</summary>
+    public Ability? OpenerAbility { get; }
 
     public double Cooldown { get; internal set; }
+    public double ExtraSpellCooldown { get; internal set; }
     public double MitigationRemaining { get; internal set; }
     /// <summary>Seconds left of the cast highlight on the party card.</summary>
     public double CastFlash { get; internal set; }
+    /// <summary>The once-per-run rescue (Rebirth, Soulstone) has been used.</summary>
+    public bool RescueUsed { get; internal set; }
+
+    /// <summary>Damage taken reduction of the last cast; the rage of the warrior tank makes it grow during a fight.</summary>
+    public double CurrentMitigation => SpellAbility.BuffDamageTakenReduction;
+
+    internal void SetMitigation(double reduction) =>
+        SpellAbility = SpellAbility with { BuffDamageTakenReduction = reduction };
 
     private int _hpLevel;
     private int _hp;
@@ -73,8 +93,22 @@ public sealed class DungeonPartyMemberState
             Name = $"{member.Spell.Name} ({member.Name})",
             IconUrl = member.Spell.IconUrl,
             BuffDuration = member.Spell.Duration,
-            BuffDamageTakenReduction = member.Spell.Reduction,
+            BuffDamageTakenReduction = member.Spell.Mitigation,
         };
+        if (member.Trait.ExtraSpell is { } extra)
+        {
+            ExtraSpellCooldown = initialCooldown;
+            ExtraSpellAbility = new Ability { Id = $"npc_{member.Name}_extra", Name = $"{extra.Name} ({member.Name})", IconUrl = extra.IconUrl };
+        }
+        if (member.Trait.BossOpenerShieldPct > 0)
+            OpenerAbility = new Ability
+            {
+                Id = $"npc_{member.Name}_opener",
+                Name = $"Power Word: Shield ({member.Name})",
+                IconUrl = NpcTrait.IconUrl("spell_holy_powerwordshield"),
+                BuffDuration = 15,
+                BuffShieldPct = member.Trait.BossOpenerShieldPct,
+            };
     }
 }
 
@@ -82,7 +116,7 @@ public sealed class DungeonPartyMemberState
 /// Groups always have 1 tank, 1 healer and 3 damage dealers; the own role takes one of those slots.
 /// Classes and races follow <see cref="RaceClassInfo"/>, names depend only on character and slot, so they stay stable.
 /// </summary>
-public static class DungeonPartyRegistry
+public static partial class DungeonPartyRegistry
 {
     private static readonly Dictionary<DungeonRole, Dictionary<CharacterClass, NpcSpell>> Spells = new()
     {
@@ -145,7 +179,7 @@ public static class DungeonPartyRegistry
     public static IReadOnlyList<CharacterClass> OptionsFor(DungeonRole role, Faction faction) =>
         Spells[role].Keys.Where(c => RacesFor(faction, c).Count > 0).ToList();
 
-    public static NpcSpell SpellOf(DungeonRole role, CharacterClass cls) => Spells[role][cls];
+    public static NpcSpell SpellOf(DungeonRole role, CharacterClass cls) => Spells[role][cls] with { Scale = TraitOf(role, cls).OutputScale };
 
     /// <summary>Damage dealer by default, otherwise the first role of the class.</summary>
     public static DungeonRole DefaultRole(CharacterClass cls) =>
@@ -196,7 +230,8 @@ public static class DungeonPartyRegistry
                 let entry = Names[race][(offset + n) % Names[race].Length]
                 select (Race: race, entry.Name, entry.Gender);
             var pick = candidates.First(c => pool.All(m => m.Name != c.Name));
-            pool.Add(new DungeonPartyMember(pick.Name, pick.Race, pick.Gender, combo.Class, combo.Role, SpellOf(combo.Role, combo.Class)));
+            pool.Add(new DungeonPartyMember(pick.Name, pick.Race, pick.Gender, combo.Class, combo.Role,
+                SpellOf(combo.Role, combo.Class), TraitOf(combo.Role, combo.Class)));
         }
         return pool.OrderBy(m => combos.IndexOf((m.Role, m.Class))).ToList();
     }

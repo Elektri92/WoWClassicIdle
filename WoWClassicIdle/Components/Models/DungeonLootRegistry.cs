@@ -6,7 +6,7 @@ namespace Models;
 /// 1–2 free blue items and 3 green items; a boss drops one of them. Weapons are bound to the classes that use them, armor outside of sets is free.
 /// Item IDs are saved in save games – never renumber them.
 /// </summary>
-public static class DungeonLootRegistry
+public static partial class DungeonLootRegistry
 {
     private const int BossCount = 5;
     private const long SellPrice = 16000;
@@ -192,16 +192,20 @@ public static class DungeonLootRegistry
         AddFree(bfd, 4, Green(30332, "Darkwater Helm", "inv_helmet_03", ArmorSlot.Head, 30, new() { Intelligence = 3, Stamina = 4 }));
         AddFree(bfd, 4, Green(30333, "Ancient Naga Ring", "inv_jewelry_ring_03", ArmorSlot.Ring, 30, new() { Intelligence = 3, Spirit = 3 }));
         AddFree(bfd, 4, GreenWeapon(30334, "Aku'mai's Tooth", "inv_staff_08", 2, 5, 3.0, WeaponType.Staff, 30, Staves, new() { Intelligence = 4, Spirit = 3, Stamina = 8 }));
+
+        AddRazorfenKraul();
+        AddScarletMonastery();
     }
 
     private static PrimaryStats SwapStrengthAgility(PrimaryStats s) => s with { Strength = s.Agility, Agility = s.Strength };
 
-    private static void AddSet(string dungeon, string setId, int firstId, PrimaryStats[] stats, int[] levels, string[] names)
+    private static void AddSet(string dungeon, string setId, int firstId, PrimaryStats[] stats, int[] levels, string[] names, string[]? icons = null)
     {
+        icons ??= SlotIcons;
         var pieces = new List<ArmorItem>();
         for (int boss = 0; boss < BossCount; boss++)
         {
-            var piece = new ArmorItem(firstId + boss, names[boss], SlotIcons[boss], SetSlots[boss], stats[boss],
+            var piece = new ArmorItem(firstId + boss, names[boss], icons[boss], SetSlots[boss], stats[boss],
                 levels[boss], ItemQuality.Rare, SellPrice, SetId: setId);
             pieces.Add(piece);
             AddFree(dungeon, boss, piece);

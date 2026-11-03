@@ -11,7 +11,7 @@
     @foreach (var state in Party)
     {
         var member = state.Member;
-        <WowTooltip Title="@member.Name" Body="MemberTooltip(member, state.MaxHpAt(Level))">
+        <WowTooltip Title="@member.Name" Body="MemberTooltip(state, state.MaxHpAt(Level))">
             <div class="dp-member @(state.MitigationRemaining > 0 ? "shielding" : "")" data-npc="@member.Name">
                 <span class="dp-portrait">
                     <img src="@IconUrls.RaceIconUrl(member.Race, member.Gender)" alt="" onerror="this.style.visibility='hidden'" />
@@ -21,6 +21,10 @@
                     <span class="dp-member-name">@member.Name</span>
                     <span class="dp-role role-@member.Role.ToString().ToLowerInvariant()"><img class="role-icon" src="@DungeonPartyRegistry.RoleIconUrl(member.Role)" alt="" /> @DungeonPartyRegistry.RoleLabel(member.Role)</span>
                 </span>
+                @if (member.Trait.Rescue != NpcRescue.None)
+                {
+                    <img class="dp-rescue @(state.RescueUsed ? "used" : "")" src="@NpcTrait.RescueIconUrl(member.Trait.Rescue)" alt="@NpcTrait.RescueName(member.Trait.Rescue)" onerror="this.style.visibility='hidden'" />
+                }
                 <span class="dp-spell @(state.CastFlash > 0 ? "casting" : "")">
                     <img src="@member.Spell.IconUrl" alt="@member.Spell.Name" onerror="this.style.visibility='hidden'" />
                     <span class="dp-spell-cd" style="background: conic-gradient(rgba(0,0,0,.65) @CooldownPct(state)%, transparent 0)"></span>
@@ -34,6 +38,7 @@
     [Parameter, EditorRequired] public IReadOnlyList<DungeonPartyMemberState> Party { get; set; } = null!;
     [Parameter] public DungeonRole? SelfRole { get; set; }
     [Parameter] public int Level { get; set; }
+    [Parameter] public ResourceKind Resource { get; set; }
 
     private static RenderFragment SelfTooltip(DungeonRole role) => @<text>
         <span class="zt-good">@DungeonPartyRegistry.SelfRoleEffect(role)</span>
@@ -42,10 +47,11 @@
     private static string CooldownPct(DungeonPartyMemberState state) =>
         (Math.Clamp(state.Cooldown / state.Member.Spell.Interval, 0, 1) * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
-    private static RenderFragment MemberTooltip(DungeonPartyMember member, int health) => @<text>
-        <span class="zt-sub">@member.Race @member.Class · @DungeonPartyRegistry.RoleLabel(member.Role)</span>
-        <span class="zt-section">@member.Spell.Name</span>
-        <span class="zt-good">@member.Spell.Description</span>
+    private RenderFragment MemberTooltip(DungeonPartyMemberState state, int health) => @<text>
+        <span class="zt-sub">@state.Member.Race @state.Member.Class · @DungeonPartyRegistry.RoleLabel(state.Member.Role)</span>
+        <span class="zt-section">@state.Member.Spell.Name</span>
+        <span class="zt-good">@state.Member.Spell.Description</span>
+        <DungeonCompanionTraits Member="state.Member" Resource="Resource" RescueUsed="state.RescueUsed" />
         <span class="zt-sub">Adds @health health to the group</span>
     </text>;
 }

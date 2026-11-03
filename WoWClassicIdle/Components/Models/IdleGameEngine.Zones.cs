@@ -72,12 +72,15 @@ public partial class IdleGameEngine
         return true;
     }
 
-    /// <summary>Cancel the travel – the character immediately returns to its previous zone.</summary>
+    /// <summary>
+    /// Cancel the travel – the character immediately returns to its previous zone.
+    /// The return trip from a dungeon cannot be cancelled: it always ends in the zone the character came from.
+    /// </summary>
     public void CancelTravel()
     {
         lock (_simLock)
         {
-            if (ActiveCharacter is not { Travel: not null } slot) return;
+            if (ActiveCharacter is not { Travel: { IsDungeonReturn: false } } slot) return;
             slot.Travel = null;
             LastLog = $"↩ Turned back to {CombatZoneRegistry.Get(slot.CombatZoneId)?.Name}";
         }

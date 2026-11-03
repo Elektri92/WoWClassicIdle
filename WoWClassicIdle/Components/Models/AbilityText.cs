@@ -25,8 +25,9 @@ public static partial class AbilityText
     /// <summary>Cost line – form-dependent costs are appended (e.g. "14 Mana / 10 Rage / 25 Energy").</summary>
     public static string CostText(Ability ability)
     {
-        if (ability.ManaCost <= 0) return "";
-        var parts = new List<string> { $"{ability.ManaCost} {ResourceName(ability)}" };
+        if (ability.ManaCost <= 0 && ability.FormCosts.Count == 0) return "";
+        var parts = new List<string>();
+        if (ability.ManaCost > 0) parts.Add($"{ability.ManaCost} {ResourceName(ability)}");
         foreach (var (form, cost) in ability.FormCosts)
             parts.Add($"{cost} {ShapeshiftForms.ResourceName(ShapeshiftForms.ResourceFor(CharacterClass.Druid, form))}");
         return string.Join(" / ", parts);

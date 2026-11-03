@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="3c981dae-9283-427f-acec-700f6031d058" />
+    <option name="activeSessionId" value="18c1823d-bfd9-472e-bb31-93caa769bb41" />
     <option name="openSessionIds">
       <list>
         <option value="2d4bd404-237c-4564-a973-5b9f9773147d" />
@@ -30,7 +30,7 @@
         <option value="ad5b653a-18e4-46d6-8507-92453bf7372e" />
         <option value="5a46012b-ec86-446b-a28d-aa7690c83bd0" />
         <option value="0c9f7588-5d24-4477-bd06-da159ee652f2" />
-        <option value="3c981dae-9283-427f-acec-700f6031d058" />
+        <option value="18c1823d-bfd9-472e-bb31-93caa769bb41" />
       </list>
     </option>
     <option name="sessionPaths">
@@ -40,13 +40,13 @@
         <entry key="0c9f7588-5d24-4477-bd06-da159ee652f2" value="/sessions/ef62819d-660b-4070-a5d6-363b08de45b4" />
         <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="/sessions/ca74c7ae-e88f-48ab-9d08-f40289b4c0b5" />
         <entry key="180cfe9e-30c4-4980-b5b4-ffb6754b0bde" value="/sessions/85f5d38e-d4d3-4832-baae-d19c52c9e98b" />
+        <entry key="18c1823d-bfd9-472e-bb31-93caa769bb41" value="/sessions/97538b08-4f06-4afb-a2c3-6b3238219ae7" />
         <entry key="20fac374-7a72-4161-9184-9713ae384f34" value="/sessions/225383d7-8ad4-4920-9af0-e46d651293d4" />
         <entry key="2832bf3c-4337-4c74-bae6-ce91f530cfe3" value="/sessions/2d90cc25-f497-4ccb-b92e-ee522e9d2995" />
         <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="/switch-account" />
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="/sessions/6b71fc4f-339c-4914-ab12-e2f5e40a451f" />
         <entry key="39c41c07-3cfb-43d9-ad79-e409b225ee45" value="/sessions/97b4bb4c-1eda-446c-a2c3-79171be9ea26" />
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="/sessions/131bc0ad-43a1-4009-9c5b-7eceef8a4cd1" />
-        <entry key="3c981dae-9283-427f-acec-700f6031d058" value="/sessions/836042dd-3d52-4b3b-a1e3-c8072939d9bc" />
         <entry key="3d692cac-c9c0-4714-919c-a2db7467d54d" value="/sessions/8add3aa3-8efd-4e6d-a3e3-9602d398b69b" />
         <entry key="4aadcd57-680a-44c6-9378-0dc4872b5397" value="/sessions/0e62f636-d144-4f11-a819-084bd4808dc0" />
         <entry key="4efa8263-9f1f-4a2f-bc18-c16843376c5d" value="/sessions/45b6dbf2-3eec-4a7d-9b52-4e530dc3181e" />
@@ -71,13 +71,13 @@
         <entry key="0c9f7588-5d24-4477-bd06-da159ee652f2" value="Passive Rassenfähigkeiten" />
         <entry key="11b24615-6c11-4eff-be84-3d562e5d074e" value="Das Default UI sieht irgendwie unsauber aus und sc" />
         <entry key="180cfe9e-30c4-4980-b5b4-ffb6754b0bde" value="Talentbäume aller Klassen" />
+        <entry key="18c1823d-bfd9-472e-bb31-93caa769bb41" value="GitHub-Änderungen veröffentlichen" />
         <entry key="20fac374-7a72-4161-9184-9713ae384f34" value="HP und Mana bei Equipment-Wechsel" />
         <entry key="2832bf3c-4337-4c74-bae6-ce91f530cfe3" value="Loottable zeigt nicht alle Items" />
         <entry key="2d4bd404-237c-4564-a973-5b9f9773147d" value="Claude Code" />
         <entry key="2edcaf7d-b25c-4dce-aa25-ed173b1b42d3" value="Kann ich dir auch einfach eine Frage stellen ohne" />
         <entry key="39c41c07-3cfb-43d9-ad79-e409b225ee45" value="didnt start debug as it should" />
         <entry key="3a376250-d1b4-47d9-872a-a19b6b219199" value="Warrior-Stances ohne Talentbaum-Skillung" />
-        <entry key="3c981dae-9283-427f-acec-700f6031d058" value="Alles auf GitHub veröffentlichen" />
         <entry key="3d692cac-c9c0-4714-919c-a2db7467d54d" value="Thematische Talentbaum-Hintergründe" />
         <entry key="4aadcd57-680a-44c6-9378-0dc4872b5397" value="Neue Loottables und Waffen" />
         <entry key="4efa8263-9f1f-4a2f-bc18-c16843376c5d" value="/inventory muss auch noch an den Style der anderen" />

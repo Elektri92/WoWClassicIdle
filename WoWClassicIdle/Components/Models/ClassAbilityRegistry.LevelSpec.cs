@@ -195,7 +195,8 @@ public static partial class ClassAbilityRegistry
             new Ability
             {
                 Id = "Swipe_r1", Name = "Swipe", IconUrl = IconBase + "ability_druid_swipe.jpg",
-                Cooldown = 8, ManaCost = 25, Damage = 6, AddsWeaponDamage = true,
+                Cooldown = 8, Damage = 6, AddsWeaponDamage = true,
+                // No mana cost: only usable in Bear or Cat Form
                 FormCosts = new Dictionary<DruidForm, int> { [DruidForm.Bear] = 20, [DruidForm.Cat] = 25 },
                 SpecHint = 1, LevelRequired = 13, Rank = 1,
             },

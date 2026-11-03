@@ -11,6 +11,8 @@ public static class DungeonRegistry
     public const string WailingCavernsId   = "wailing_caverns";
     public const string ShadowfangKeepId   = "shadowfang_keep";
     public const string BlackfathomDeepsId = "blackfathom_deeps";
+    public const string RazorfenKraulId    = "razorfen_kraul";
+    public const string ScarletMonasteryId = "scarlet_monastery";
 
     private const int TrashPerGroup = 2;
 
@@ -55,7 +57,7 @@ public static class DungeonRegistry
                 Mob("Gilnid",         Archetypes.Goblin,   "inv_misc_gear_03"),
                 Mob("Mr. Smite",      Archetypes.Humanoid, "inv_hammer_10"),
                 Mob("Edwin VanCleef", Archetypes.Humanoid, "ability_rogue_shadowstep")))),
-        new(ShadowfangKeepId, "Shadowfang Keep", 22, 27, Landmass.EasternKingdoms, -11000, 1000, "shadowfang_keep",
+        new(ShadowfangKeepId, "Shadowfang Keep", 22, 27, Landmass.EasternKingdoms, -11000, 1000, "shadowfang",
             "A cursed keep haunted by the worgen of Arugal",
             [
                 Mob("Wailing Guardsman", Archetypes.Undead,   "spell_shadow_raisedead"),
@@ -68,7 +70,7 @@ public static class DungeonRegistry
                 Mob("Baron Silverlaine",       Archetypes.Humanoid, "spell_shadow_possession"),
                 Mob("Commander Springvale",    Archetypes.Humanoid, "inv_shield_06"),
                 Mob("Archmage Arugal",         Archetypes.Humanoid, "spell_shadow_teleport")))),
-        new(BlackfathomDeepsId, "Blackfathom Deeps", 26, 32, Landmass.Kalimdor, -4200, -700, "blackfathom_deeps",
+        new(BlackfathomDeepsId, "Blackfathom Deeps", 26, 32, Landmass.Kalimdor, -4200, -700, "blackfathom",
             "Ancient ruins beneath Ashenvale, corrupted by the Old God Aku'mai",
             [
                 Mob("Naga Siren",         Archetypes.Humanoid, "spell_frost_frostnova"),
@@ -81,5 +83,31 @@ public static class DungeonRegistry
                 Mob("Gelihast",       Archetypes.Murloc,    "inv_misc_head_murloc_01"),
                 Mob("Old Serra'kis",  Archetypes.Crocolisk, "inv_misc_monsterscales_15"),
                 Mob("Aku'mai",        Archetypes.Demon,     "spell_shadow_demonbreath")))),
+        new(RazorfenKraulId, "Razorfen Kraul", 29, 35, Landmass.Kalimdor, -4470, -1680, "razorfen",
+            "A thorny warren where the quilboar worship the demigod Agamaggan",
+            [
+                Mob("Razorfen Spearhide", Archetypes.Humanoid, "inv_spear_07"),
+                Mob("Razorfen Geomancer", Archetypes.Humanoid, "spell_nature_resistnature"),
+                Mob("Kraul Bat",          Archetypes.Bird,     "ability_hunter_pet_bat", 2),
+            ],
+            new DungeonDefinition("barrens", Encounters(
+                Mob("Aggem Thorncurse",     Archetypes.Humanoid, "spell_nature_thorns"),
+                Mob("Death Speaker Jargba", Archetypes.Humanoid, "spell_shadow_shadowbolt"),
+                Mob("Overlord Ramtusk",     Archetypes.Ogre,     "inv_misc_head_quillboar_01"),
+                Mob("Agathelos the Raging", Archetypes.Boar,     "ability_hunter_pet_boar"),
+                Mob("Charlga Razorflank",   Archetypes.Humanoid, "spell_nature_naturetouchgrow")))),
+        new(ScarletMonasteryId, "Scarlet Monastery", 34, 42, Landmass.EasternKingdoms, 2870, -820, "scarlet",
+            "The fortified cathedral of the zealous Scarlet Crusade",
+            [
+                Mob("Scarlet Myrmidon",  Archetypes.Humanoid, "ability_defend"),
+                Mob("Scarlet Adept",     Archetypes.Humanoid, "spell_holy_holybolt"),
+                Mob("Haunting Phantasm", Archetypes.Undead,   "spell_shadow_raisedead", 2),
+            ],
+            new DungeonDefinition("tirisfal_glades", Encounters(
+                Mob("Interrogator Vishas",        Archetypes.Humanoid, "spell_shadow_shadowwordpain"),
+                Mob("Arcanist Doan",              Archetypes.Humanoid, "spell_fire_fireball"),
+                Mob("Herod",                      Archetypes.Humanoid, "ability_warrior_warcry"),
+                Mob("Scarlet Commander Mograine", Archetypes.Humanoid, "spell_holy_blessingofprotection"),
+                Mob("High Inquisitor Whitemane",  Archetypes.Humanoid, "spell_holy_flashheal")))),
     ];
 }

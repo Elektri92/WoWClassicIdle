@@ -47,7 +47,8 @@
             var invested  = State.TotalInvestedInTree(ActiveClass, treeIndex);
             var talents   = TalentRegistry.GetTalents(ActiveClass).Where(t => t.TreeIndex == treeIndex).ToList();
 
-            <div class="talent-tree" style="--tree-bg: url('@TalentRegistry.GetTreeBackgroundUrl(ActiveClass, treeIndex)')">
+            @* Root-relative: url() in a custom property resolves against talents.css (/css/), not the page *@
+            <div class="talent-tree" style="--tree-bg: url('/@TalentRegistry.GetTreeBackgroundUrl(ActiveClass, treeIndex)')">
                 <div class="tree-header">
                     <span class="tree-name">@TreeNames[treeIndex]</span>
                     <span class="tree-points">@invested pts</span>

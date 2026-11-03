@@ -140,6 +140,7 @@ public partial class IdleGameEngine
             {
                 Id                   = "talent_periodic_fire",
                 Name                 = "Periodic Fire",
+                IconUrl              = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_immolation.jpg",
                 DebuffDuration       = 5,
                 DebuffDotDamage      = (int)Math.Max(1, Math.Round(abilityDmg * dotPct)),
                 DebuffDotTickInterval = 5.0,
@@ -158,6 +159,7 @@ public partial class IdleGameEngine
             {
                 Id                    = "talent_ignite",
                 Name                  = "Ignite",
+                IconUrl               = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_incinerate.jpg",
                 DebuffDuration        = 3,
                 DebuffDotDamage       = ignitePerTick,
                 DebuffDotTickInterval = 1.0,

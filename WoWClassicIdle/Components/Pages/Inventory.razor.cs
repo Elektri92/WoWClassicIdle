@@ -58,7 +58,7 @@ public partial class Inventory
     private static string StaminaTooltip() =>
         $"+{StatScaling.HpPerStamina} maximum Health per point.";
 
-    private static string StrengthTooltip(CharacterClass cls) => cls switch
+    private static string StrengthTooltip(CharacterClass cls, bool feral) => feral ? "+1 Attack Power per point." : cls switch
     {
         CharacterClass.Warrior or CharacterClass.Paladin or CharacterClass.Shaman or CharacterClass.Druid
             => "+2 Attack Power per point.",
@@ -71,7 +71,7 @@ public partial class Inventory
     private static bool IsStrengthUseless(CharacterClass cls) => cls is
         CharacterClass.Mage or CharacterClass.Priest or CharacterClass.Warlock;
 
-    private static string AgilityTooltip(CharacterClass cls) => cls switch
+    private static string AgilityTooltip(CharacterClass cls, bool feral) => feral ? "+1 Attack Power per point." : cls switch
     {
         CharacterClass.Rogue or CharacterClass.Hunter
             => "+1 Attack Power per point.",
@@ -79,8 +79,8 @@ public partial class Inventory
             => "No benefit for this class.",
     };
 
-    private static bool IsAgilityUseless(CharacterClass cls) =>
-        cls is not (CharacterClass.Rogue or CharacterClass.Hunter);
+    private static bool IsAgilityUseless(CharacterClass cls, bool feral) =>
+        !feral && cls is not (CharacterClass.Rogue or CharacterClass.Hunter);
 
     private static string IntellectTooltip(CharacterClass cls) =>
         StatScaling.UsesMana(cls)
