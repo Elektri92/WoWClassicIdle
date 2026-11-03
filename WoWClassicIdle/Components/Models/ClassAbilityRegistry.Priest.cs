@@ -167,7 +167,7 @@ public static partial class ClassAbilityRegistry
             IconUrl = "https://wow.zamimg.com/images/wow/icons/large/spell_holy_holynova.jpg",
             Cooldown = 10,
             ManaCost = 25,
-            Damage = 12,                        // Damage + healing at the same time, no HP gate
+            Damage = 16,                        // Damage + healing at the same time, no HP gate (was 12 – Holy at −15 % XP/h on Lv 15–19)
             Heal = 12,
             TalentUnlockOnly = true,
             SpecHint = 1,

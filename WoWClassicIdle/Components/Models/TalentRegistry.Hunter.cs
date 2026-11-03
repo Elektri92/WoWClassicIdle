@@ -162,7 +162,7 @@ public static partial class TalentRegistry
         {
             Id              = "hunter_surv_mongoose_bite",
             Name            = "Mongoose Bite",
-            Description     = "Grants the ability Mongoose Bite: a weapon strike that increases the damage of your next Raptor Strike by 45%.",
+            Description     = "Grants the ability Mongoose Bite: a weapon strike that increases the damage of your next Raptor Strike by 30%.",
             Class           = CharacterClass.Hunter,
             TreeIndex       = 2,
             Row             = 1,
@@ -177,14 +177,14 @@ public static partial class TalentRegistry
         {
             Id            = "hunter_surv_imp_raptor_strike",
             Name          = "Improved Raptor Strike",
-            Description   = "Increases the damage of Raptor Strike by 10% and reduces its mana cost by 10% per rank.",
+            Description   = "Increases the damage of Raptor Strike by 6% and reduces its mana cost by 6% per rank.",
             Class         = CharacterClass.Hunter,
             TreeIndex     = 2,
             Row           = 1,
             Column        = 1,
             MaxRanks      = 3,
             EffectType    = TalentEffectType.RaptorStrikeBonus,
-            EffectPerRank = 0.10,
+            EffectPerRank = 0.06,           // was 0.10 – Survival at +23 % XP/h on Lv 15–19
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/ability_meleedamage.jpg",
         },
     ];

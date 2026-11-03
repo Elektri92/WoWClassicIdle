@@ -517,8 +517,17 @@ public static class ClassSimulator
             .ThenBy(t => t.Column)
             .ToList();
 
-        return SimTalentOptimizer.InvestPoints(player, talents, spec.TreeIndex, ct);
+        // Fixed form (Bear/Cat): the form talent comes first, otherwise the greedy choice may play the spec as a caster
+        var picks = new List<TalentPick>();
+        if (spec.Form is { } form && talents.FirstOrDefault(t => GrantsForm(t, form)) is { } formTalent)
+            picks.AddRange(SimTalentOptimizer.InvestPoints(player, [formTalent], spec.TreeIndex, ct));
+
+        picks.AddRange(SimTalentOptimizer.InvestPoints(player, talents, spec.TreeIndex, ct));
+        return picks;
     }
+
+    private static bool GrantsForm(TalentDefinition talent, DruidForm form) =>
+        !string.IsNullOrEmpty(talent.GrantsAbilityId) && ClassAbilityRegistry.FindById(talent.GrantsAbilityId) is { IsForm: true } a && a.Form == form;
 
     /// <summary>True if the talent (or one of its prerequisites) unlocks a form other than <paramref name="form"/>.</summary>
     private static bool GrantsOtherForm(TalentDefinition talent, DruidForm? form, IReadOnlyList<TalentDefinition> all)

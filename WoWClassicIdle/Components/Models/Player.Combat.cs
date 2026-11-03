@@ -221,7 +221,7 @@ namespace Models
                         DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)),
                     };
             }
-            if (ability.Id.StartsWith("Maul"))
+            if (ability.Id.StartsWith("Maul") || ability.Id.StartsWith("Swipe"))
             {
                 double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.MaulDamage);
                 if (bonus > 0)
@@ -232,6 +232,12 @@ namespace Models
                 double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.ClawDamage);
                 if (bonus > 0)
                     return ability.WithDamageBonus(bonus);
+            }
+            if (ability.Id.StartsWith("Rip"))
+            {
+                double bonus = TalentState.GetTotalBonus(ActiveClass, TalentEffectType.ClawDamage);
+                if (bonus > 0)
+                    return ability with { DebuffDotDamage = (int)Math.Round(ability.DebuffDotDamage * (1.0 + bonus)) };
             }
             if (ability.Id.StartsWith("Smite"))
             {

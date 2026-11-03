@@ -121,7 +121,7 @@ public class TalentDefinition
         TalentEffectType.RenewHealing =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Renew healing",
         TalentEffectType.GrantShadowForm =>
-            "Grants ability: Shadowform (+25% Smite, Mind Blast and Shadow Word: Pain damage, -15% damage taken)",
+            "Grants ability: Shadowform (+20% Smite, Mind Blast and Shadow Word: Pain damage, -15% damage taken)",
         TalentEffectType.MindBlastManaCost =>
             $"-{(EffectPerRank * ranks * 100):0.##}% Mind Blast mana cost",
         TalentEffectType.DrainManaBonus =>
@@ -183,11 +183,11 @@ public class TalentDefinition
         TalentEffectType.GrantBearForm =>
             "Grants abilities: Bear Form (uses Rage, -6% damage taken) and Maul",
         TalentEffectType.MaulDamage =>
-            $"+{(EffectPerRank * ranks * 100):0.##}% Maul damage",
+            $"+{(EffectPerRank * ranks * 100):0.##}% Maul and Swipe damage",
         TalentEffectType.GrantCatForm =>
             "Grants abilities: Cat Form (uses Energy), Claw and Rip",
         TalentEffectType.ClawDamage =>
-            $"+{(EffectPerRank * ranks * 100):0.##}% Claw damage",
+            $"+{(EffectPerRank * ranks * 100):0.##}% Claw and Rip damage",
         TalentEffectType.GrantTreeForm =>
             "Grants ability: Tree Form (+20% healing, +10% Wrath and Moonfire damage)",
         TalentEffectType.RegrowthHealing =>
@@ -219,7 +219,7 @@ public class TalentDefinition
         TalentEffectType.GrantColdBlood =>
             "Grants ability: Cold Blood (your next damaging ability is a guaranteed critical strike)",
         TalentEffectType.GrantBladeFlurry =>
-            "Grants ability: Blade Flurry (auto attacks strike twice for 10s)",
+            "Grants ability: Blade Flurry (auto attacks strike twice for 15s)",
         TalentEffectType.SinisterStrikeEnergyCost =>
             $"-{(EffectPerRank * ranks):0.##} Sinister Strike energy cost",
         TalentEffectType.SliceAndDiceBonus =>
@@ -239,7 +239,7 @@ public class TalentDefinition
         TalentEffectType.MultiShotDamage =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Multi-Shot damage",
         TalentEffectType.GrantMongooseBite =>
-            "Grants ability: Mongoose Bite (strike that empowers your next Raptor Strike by 45%)",
+            "Grants ability: Mongoose Bite (strike that empowers your next Raptor Strike by 30%)",
         TalentEffectType.RaptorStrikeBonus =>
             $"+{(EffectPerRank * ranks * 100):0.##}% Raptor Strike damage, -{(EffectPerRank * ranks * 100):0.##}% mana cost",
         TalentEffectType.GrantSiphonLife =>

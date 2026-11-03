@@ -158,7 +158,7 @@ public static partial class ClassAbilityRegistry
             Cooldown              = 0,
             ManaCost              = 20,
             DebuffDuration        = 15,
-            DebuffDotDamage       = 5,          // 5 ticks of 5 = 25 damage total (was 6 – Affliction Lv 15 at +16 %)
+            DebuffDotDamage       = 4,          // 5 ticks of 4 = 20 damage total (was 5 – Affliction Lv 15–20 at +13 %)
             DebuffDotTickInterval = 3,
             DebuffDotLifesteal    = 1.0,        // 100 % of the damage heals the player
             LevelRequired         = 1,
@@ -185,7 +185,7 @@ public static partial class ClassAbilityRegistry
             Cooldown         = 10,
             CastTime         = 2.5,
             ManaCost         = 30,
-            Damage           = 24,              // considerably more than Shadow Bolt, but with a cooldown
+            Damage           = 36,              // considerably more than Shadow Bolt, but with a cooldown (was 24 – Destruction at −10 to −13 %)
             LevelRequired    = 1,
             Rank             = 1,
             TalentUnlockOnly = true,

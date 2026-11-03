@@ -203,7 +203,7 @@ public static partial class TalentRegistry
         {
             Id            = "priest_shadow_shadowform",
             Name          = "Shadowform",
-            Description   = "Grants the ability Shadowform. While equipped, you assume a Shadowform: Smite, Mind Blast and Shadow Word: Pain deal 25% more damage and you take 15% less damage.",
+            Description   = "Grants the ability Shadowform. While equipped, you assume a Shadowform: Smite, Mind Blast and Shadow Word: Pain deal 20% more damage and you take 15% less damage.",
             Class         = CharacterClass.Priest,
             TreeIndex     = 2,
             Row           = 1,

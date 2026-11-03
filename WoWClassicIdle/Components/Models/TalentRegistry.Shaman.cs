@@ -54,14 +54,14 @@ public static partial class TalentRegistry
         {
             Id            = "shaman_ele_imp_flame_shock",
             Name          = "Improved Flame Shock",
-            Description   = "Increases the damage of Flame Shock (direct and over time) by 10% per rank.",
+            Description   = "Increases the damage of Flame Shock (direct and over time) by 4% per rank.",
             Class         = CharacterClass.Shaman,
             TreeIndex     = 0,
             Row           = 1,
             Column        = 1,
             MaxRanks      = 3,
             EffectType    = TalentEffectType.FlameShockDamage,
-            EffectPerRank = 0.10,
+            EffectPerRank = 0.04,           // was 0.10 – Elemental at +20 % XP/h on Lv 15–20
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_flameshock.jpg",
         },
 

@@ -92,7 +92,7 @@ public static class ShapeshiftForms
             PortraitUrl               = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_shadowform.jpg",
             DamageTakenReduction      = 0.15,
             // was +15 % on Mind Blast/SW:P only – useless until Mind Blast (Lv 18), Shadow was at −24 to −31 % XP/h
-            BoostedAbilityDamageBonus = 0.25,
+            BoostedAbilityDamageBonus = 0.20,   // was 0.25 – Shadow at +12 % XP/h on Lv 15–20
             BoostedAbilityNames       = ["Smite", "Mind Blast", "Shadow Word: Pain"],
         },
         [DruidForm.BattleStance]    = new ShapeshiftFormInfo { Form = DruidForm.BattleStance,    Name = "Battle Stance",    IsStance = true },

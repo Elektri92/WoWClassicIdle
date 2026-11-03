@@ -98,7 +98,7 @@ public static partial class ClassAbilityRegistry
             Cooldown = 0,
             ManaCost = 13,                  // ×1.25 compared to Rank 1
             BuffDuration = 30,
-            BuffRetaliationDamage = 6,      // ×1.5 compared to Rank 1
+            BuffRetaliationDamage = 5,      // was 6 – all Shaman specs at +10 to +21 % XP/h on Lv 17–20
             LevelRequired = 17,
             Rank = 2,
         },

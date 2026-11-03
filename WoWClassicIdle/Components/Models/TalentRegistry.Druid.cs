@@ -118,7 +118,7 @@ public static partial class TalentRegistry
         {
             Id               = "druid_feral_imp_maul",
             Name             = "Improved Maul",
-            Description      = "Increases the damage of Maul by 5% per rank.",
+            Description      = "Increases the damage of Maul and Swipe by 12% per rank.",
             Class            = CharacterClass.Druid,
             TreeIndex        = 1,
             Row              = 1,
@@ -126,7 +126,7 @@ public static partial class TalentRegistry
             MaxRanks         = 5,
             RequiresTalentId = "druid_feral_bear_form",
             EffectType       = TalentEffectType.MaulDamage,
-            EffectPerRank    = 0.05,
+            EffectPerRank    = 0.12,           // was Maul only, 5 % – Bear at −14 % XP/h on Lv 15–20
             IconUrl          = "https://wow.zamimg.com/images/wow/icons/medium/ability_druid_maul.jpg",
         },
         new TalentDefinition
@@ -151,15 +151,15 @@ public static partial class TalentRegistry
         {
             Id               = "druid_feral_imp_claw",
             Name             = "Improved Claw",
-            Description      = "Increases the damage of Claw by 5% per rank.",
+            Description      = "Increases the damage of Claw and Rip by 20% per rank.",
             Class            = CharacterClass.Druid,
             TreeIndex        = 1,
             Row              = 1,
             Column           = 3,
-            MaxRanks         = 5,
+            MaxRanks         = 3,
             RequiresTalentId = "druid_feral_cat_form",
             EffectType       = TalentEffectType.ClawDamage,
-            EffectPerRank    = 0.05,
+            EffectPerRank    = 0.20,           // was Claw only, 5 × 5 % – Cat at −21 % XP/h on Lv 15–20
             IconUrl          = "https://wow.zamimg.com/images/wow/icons/medium/ability_druid_rake.jpg",
         },
 

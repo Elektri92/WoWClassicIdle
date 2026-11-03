@@ -164,7 +164,7 @@ public static partial class ClassAbilityRegistry
             BuffDuration             = 10,
             BuffHitCharges           = 4,       // ends after 4 hits taken (was 3)
             BuffDamageTakenReduction = 0.35,    // −35 % damage from these hits (was 30 %)
-            BuffRetaliationDamage    = 16,      // Holy damage to the attacker (was 8 – Prot was at −14 % XP/h)
+            BuffRetaliationDamage    = 13,      // Holy damage to the attacker (was 16 – Prot at +10 % XP/h on Lv 15–20)
             LevelRequired            = 1,
             Rank                     = 1,
             TalentUnlockOnly         = true,

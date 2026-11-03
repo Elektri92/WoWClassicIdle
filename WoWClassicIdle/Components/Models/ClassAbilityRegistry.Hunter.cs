@@ -175,7 +175,7 @@ public static partial class ClassAbilityRegistry
             Cooldown         = 15,
             CastTime         = 3.0,
             ManaCost         = 25,
-            Damage           = 70,              // was 45 / 3.5 s – never chosen in the sim
+            Damage           = 47,              // was 70 – Marksmanship at +22 % XP/h on Lv 15–20 (45 / 3.5 s was never chosen)
             LevelRequired    = 1,
             Rank             = 1,
             TalentUnlockOnly = true,
@@ -187,10 +187,10 @@ public static partial class ClassAbilityRegistry
             IconUrl             = "https://wow.zamimg.com/images/wow/icons/large/ability_hunter_swiftstrike.jpg",
             Cooldown            = 8,
             ManaCost            = 15,
-            Damage              = 12,
+            Damage              = 6,            // was 12 – Survival at +13 % XP/h on Lv 15–20
             AddsWeaponDamage    = true,
             EmpowersAbilityName = "Raptor Strike",
-            EmpowerDamageBonus  = 0.45,         // next Raptor Strike +45 % damage (was 30 %, Survival at -10 % XP/h)
+            EmpowerDamageBonus  = 0.30,         // next Raptor Strike +30 % damage (was 45 % – Survival at +23 % XP/h on Lv 15–19)
             EmpowerDuration     = 10,
             LevelRequired       = 1,
             Rank                = 1,

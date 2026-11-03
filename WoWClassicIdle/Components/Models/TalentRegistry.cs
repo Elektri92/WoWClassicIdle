@@ -267,14 +267,14 @@ public static partial class TalentRegistry
         {
             Id            = "mage_fire_efficient_fb",
             Name          = "Improved Fire Blast",
-            Description   = "Increases the damage of Fire Blast by 6% per rank.",
+            Description   = "Increases the damage of Fire Blast by 10% per rank.",
             Class         = CharacterClass.Mage,
             TreeIndex     = 1,
             Row           = 1,
             Column        = 1,
             MaxRanks      = 3,
             EffectType    = TalentEffectType.FireBlastDamage,
-            EffectPerRank = 0.06,
+            EffectPerRank = 0.10,           // was 0.06 – Fire at −13 % XP/h on Lv 15–20
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/spell_fire_fireball.jpg",
         },
 

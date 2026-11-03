@@ -114,14 +114,14 @@ public static partial class TalentRegistry
         {
             Id            = "rogue_ass_poison_procs",
             Name          = "Virulent Poisons",
-            Description   = "Deadly Poison deals its damage 6% faster per rank.",
+            Description   = "Deadly Poison deals its damage 12% faster per rank.",
             Class         = CharacterClass.Rogue,
             TreeIndex     = 0,
             Row           = 1,
             Column        = 1,
             MaxRanks      = 5,
             EffectType    = TalentEffectType.DeadlyPoisonTickRate,
-            EffectPerRank = 0.06,
+            EffectPerRank = 0.12,           // was 0.06 – Assassination at −24 % XP/h on Lv 15–20
             IconUrl       = "https://wow.zamimg.com/images/wow/icons/medium/ability_rogue_dualweild.jpg",
         },
 
@@ -130,7 +130,7 @@ public static partial class TalentRegistry
         {
             Id              = "rogue_combat_blade_flurry",
             Name            = "Blade Flurry",
-            Description     = "Grants the ability Blade Flurry: your auto attacks strike twice for 10 seconds (45 sec cooldown).",
+            Description     = "Grants the ability Blade Flurry: your auto attacks strike twice for 15 seconds (45 sec cooldown).",
             Class           = CharacterClass.Rogue,
             TreeIndex       = 1,
             Row             = 1,

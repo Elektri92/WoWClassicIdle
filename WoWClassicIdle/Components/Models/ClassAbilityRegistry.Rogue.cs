@@ -78,9 +78,9 @@ public static partial class ClassAbilityRegistry
             IsPassive = true,
             ProcChance = 0.30,
             DebuffDuration = 15,
-            DebuffDotDamage = 1,        // int – scaling via stacks instead
+            DebuffDotDamage = 3,        // was 1 – all Rogue specs at −19 to −24 % XP/h on Lv 15–20
             DebuffDotTickInterval = 3,
-            DebuffMaxStacks = 7,        // ×1.4 max damage compared to Rank 1
+            DebuffMaxStacks = 7,        // with 3 damage per tick ×4.2 max damage compared to Rank 1
             LevelRequired = 15,
             Rank = 2,
         },
@@ -151,7 +151,7 @@ public static partial class ClassAbilityRegistry
             Id                 = "Cold_Blood_r1",
             Name               = "Cold Blood",
             IconUrl            = "https://wow.zamimg.com/images/wow/icons/large/spell_ice_lament.jpg",
-            Cooldown           = 30,
+            Cooldown           = 15,        // was 30 – Assassination at −24 % XP/h on Lv 15–20
             ManaCost           = 0,
             BuffDuration       = 20,
             BuffGuaranteesCrit = true,          // next damaging ability is a guaranteed crit
@@ -166,7 +166,7 @@ public static partial class ClassAbilityRegistry
             IconUrl               = "https://wow.zamimg.com/images/wow/icons/large/ability_warrior_punishingblow.jpg",
             Cooldown              = 45,
             ManaCost              = 25,         // 25 Energy
-            BuffDuration          = 10,
+            BuffDuration          = 15,         // was 10 – Combat at −23 % XP/h on Lv 15–20
             BuffExtraAttackChance = 1.0,        // every auto-attack hits twice
             BuffExtraAttacks      = 1,
             LevelRequired         = 1,
@@ -178,9 +178,9 @@ public static partial class ClassAbilityRegistry
             Id               = "Ghostly_Strike_r1",
             Name             = "Ghostly Strike",
             IconUrl          = "https://wow.zamimg.com/images/wow/icons/large/spell_shadow_curse.jpg",
-            Cooldown         = 20,
+            Cooldown         = 12,              // was 20 – Subtlety at −17 % XP/h on Lv 15–20
             ManaCost         = 40,              // 40 Energy
-            Damage           = 8,
+            Damage           = 20,              // was 8 – Subtlety at −19 % XP/h on Lv 15–20
             AddsWeaponDamage = true,
             BuffDuration     = 15,
             BuffShieldPct    = 0.10,            // Shield of 10 % max HP
