@@ -1,16 +1,22 @@
-.death-penalty-label {
-    display: block;
-    margin-top: 2px;
-    color: #9a8a64;
-    font-size: .68rem;
+.death-pct-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid #8b1a1a;
+    background: rgba(20, 0, 0, 0.88);
+    color: #e84040;
+    font-size: .58rem;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1;
     cursor: help;
 }
 
-.death-penalty-label b {
-    color: #e8d9a8;
-    font-variant-numeric: tabular-nums;
-}
-
-.death-penalty-label b.reduced {
+.death-pct-badge.reduced {
     color: #1eff00;
+    border-color: #1a6a1a;
 }
