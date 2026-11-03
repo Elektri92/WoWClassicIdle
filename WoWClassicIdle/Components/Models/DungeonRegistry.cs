@@ -7,8 +7,10 @@ namespace Models;
 /// </summary>
 public static class DungeonRegistry
 {
-    public const string DeadminesId      = "deadmines";
-    public const string WailingCavernsId = "wailing_caverns";
+    public const string DeadminesId        = "deadmines";
+    public const string WailingCavernsId   = "wailing_caverns";
+    public const string ShadowfangKeepId   = "shadowfang_keep";
+    public const string BlackfathomDeepsId = "blackfathom_deeps";
 
     private const int TrashPerGroup = 2;
 
@@ -53,5 +55,31 @@ public static class DungeonRegistry
                 Mob("Gilnid",         Archetypes.Goblin,   "inv_misc_gear_03"),
                 Mob("Mr. Smite",      Archetypes.Humanoid, "inv_hammer_10"),
                 Mob("Edwin VanCleef", Archetypes.Humanoid, "ability_rogue_shadowstep")))),
+        new(ShadowfangKeepId, "Shadowfang Keep", 22, 27, Landmass.EasternKingdoms, -11000, 1000, "shadowfang_keep",
+            "A cursed keep haunted by the worgen of Arugal",
+            [
+                Mob("Wailing Guardsman", Archetypes.Undead,   "spell_shadow_raisedead"),
+                Mob("Bleak Worg",        Archetypes.Wolf,     "ability_hunter_pet_wolf"),
+                Mob("Haunted Servitor",  Archetypes.Humanoid, "spell_shadow_antishadow", 2),
+            ],
+            new DungeonDefinition("silverpine_forest", Encounters(
+                Mob("Rethilgore",             Archetypes.Undead,   "spell_shadow_animatedead"),
+                Mob("Razorclaw the Butcher",  Archetypes.Wolf,     "ability_creature_disease_02"),
+                Mob("Baron Silverlaine",       Archetypes.Humanoid, "spell_shadow_possession"),
+                Mob("Commander Springvale",    Archetypes.Humanoid, "inv_shield_06"),
+                Mob("Archmage Arugal",         Archetypes.Humanoid, "spell_shadow_teleport")))),
+        new(BlackfathomDeepsId, "Blackfathom Deeps", 26, 32, Landmass.Kalimdor, -4200, -700, "blackfathom_deeps",
+            "Ancient ruins beneath Ashenvale, corrupted by the Old God Aku'mai",
+            [
+                Mob("Naga Siren",         Archetypes.Humanoid, "spell_frost_frostnova"),
+                Mob("Murkshallow Crawler", Archetypes.Crocolisk, "ability_hunter_pet_crocolisk"),
+                Mob("Twilight Acolyte",   Archetypes.Humanoid, "spell_shadow_shadowwordpain", 2),
+            ],
+            new DungeonDefinition("ashenvale", Encounters(
+                Mob("Ghamoo-ra",      Archetypes.Crocolisk, "ability_hunter_pet_crocolisk"),
+                Mob("Lady Sarevess",  Archetypes.Humanoid,  "spell_frost_frostbolt"),
+                Mob("Gelihast",       Archetypes.Murloc,    "inv_misc_head_murloc_01"),
+                Mob("Old Serra'kis",  Archetypes.Crocolisk, "inv_misc_monsterscales_15"),
+                Mob("Aku'mai",        Archetypes.Demon,     "spell_shadow_demonbreath")))),
     ];
 }
