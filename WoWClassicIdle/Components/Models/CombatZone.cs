@@ -29,5 +29,8 @@ public record CombatZone(
     /// <summary>Player level from which kills no longer grant XP (enemies are then 6+ levels below).</summary>
     public int NoXpLevel => MaxLevel + StaticHelpers.NoXpLevelDifference;
 
+    /// <summary>Zone left behind at this level: no discovery XP, no objectives – only profession drops still matter.</summary>
+    public bool IsOutgrownAt(int playerLevel) => !IsDungeon && playerLevel >= NoXpLevel;
+
     public string LevelRange => MinLevel == MaxLevel ? $"{MinLevel}" : $"{MinLevel}–{MaxLevel}";
 }

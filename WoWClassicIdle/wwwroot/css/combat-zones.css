@@ -36,7 +36,8 @@
     font-size: .75rem;
     white-space: nowrap;
 }
-.czone-legend-levels { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.czone-legend-levels { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-left: auto; }
+.czone-legend-done { display: inline-flex; align-items: center; gap: 4px; color: #e8e2c8; font-size: .74rem; font-weight: 600; }
 
 /* ----- Banner of the current zone ----- */
 .czone-banner {
@@ -82,13 +83,36 @@
 .czone-objective img { width: 20px; height: 20px; border: 1px solid #000; border-radius: 3px; }
 
 /* ----- World map: Kalimdor left, Eastern Kingdoms right ----- */
+/* The sea: continents float on dark water with faint latitude lines and a compass rose */
 .czone-map {
+    position: relative;
     display: grid;
-    grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr) 170px;
+    grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr) 150px;
     grid-template-areas: "dungeons-left kalimdor eastern dungeons-right";
     align-items: start;
-    gap: 14px;
+    gap: 14px 22px;
     margin-top: 12px;
+    padding: 16px 16px 56px;
+    border: 3px solid #6a5530;
+    border-radius: 8px;
+    background:
+        repeating-linear-gradient(0deg, rgba(160, 210, 230, .045) 0 1px, transparent 1px 48px),
+        repeating-linear-gradient(90deg, rgba(160, 210, 230, .045) 0 1px, transparent 1px 48px),
+        radial-gradient(ellipse at 50% 40%, #1d4252 0%, #12303d 45%, #0a1c25 100%);
+    box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #c5a55a, inset 0 0 40px rgba(0, 0, 0, .7), 0 6px 18px rgba(0, 0, 0, .6);
+}
+/* Compass rose at the bottom between the continents */
+.czone-map::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    width: 46px;
+    height: 46px;
+    margin-left: -23px;
+    opacity: .55;
+    pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%23c5a55a' stroke-width='2'/%3E%3Cpath d='M50 2 58 50 50 98 42 50Z' fill='%23c5a55a'/%3E%3Cpath d='M2 50 50 42 98 50 50 58Z' fill='%238a7440'/%3E%3Cpath d='M50 2 58 50H42Z' fill='%23ffec9b'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .continent-dungeons-kalimdor        { grid-area: dungeons-left; }
 .continent-kalimdor                 { grid-area: kalimdor; }
@@ -97,13 +121,12 @@
 
 /* The map with its dungeon columns needs more room than the combat view */
 .wow-page.idle-page:has(.czone-map) { max-width: 1240px; }
-.czone-map .czone-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
+.czone-map .czone-grid { grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); }
 .continent-dungeons-kalimdor .czone-grid,
 .continent-dungeons-eastern-kingdoms .czone-grid { grid-template-columns: minmax(0, 1fr); }
 
 /* Narrow tiles next to the dungeon columns: level and icons wrap instead of being cut off */
 .czone-map .czone-tile-head { flex-wrap: wrap; }
-.czone-map .czone-tile-mobs { flex-wrap: wrap; }
 .continent-dungeons-kalimdor .czone-continent-title,
 .continent-dungeons-eastern-kingdoms .czone-continent-title { font-size: .85rem; letter-spacing: .02em; }
 .continent-dungeons-kalimdor .czone-continent-header,
@@ -150,6 +173,7 @@
         linear-gradient(180deg, #2e2416 0%, #1c160d 100%);
     box-shadow:
         0 0 0 1px #000,
+        0 0 0 6px rgba(120, 190, 210, .08),
         inset 0 0 0 1px #c5a55a,
         inset 0 0 0 4px #2a2112,
         inset 0 0 0 5px rgba(197, 165, 90, .45),
@@ -180,6 +204,19 @@
     padding: 8px 14px;
     border-bottom: 2px solid #6a5530;
     text-shadow: 0 1px 3px #000;
+}
+/* Land tint per continent: sandy Kalimdor, greener Eastern Kingdoms */
+.czone-continent-frame.continent-kalimdor {
+    background:
+        repeating-linear-gradient(35deg, rgba(255, 236, 155, .025) 0 2px, transparent 2px 9px),
+        radial-gradient(ellipse at 50% 0%, rgba(255, 200, 120, .14), transparent 60%),
+        linear-gradient(180deg, #3a2a17 0%, #22180c 100%);
+}
+.czone-continent-frame.continent-eastern-kingdoms {
+    background:
+        repeating-linear-gradient(35deg, rgba(220, 236, 155, .025) 0 2px, transparent 2px 9px),
+        radial-gradient(ellipse at 50% 0%, rgba(200, 230, 140, .12), transparent 60%),
+        linear-gradient(180deg, #2b2e1a 0%, #181a0d 100%);
 }
 .continent-kalimdor .czone-continent-header {
     background: linear-gradient(180deg, #6a3a1c 0%, #3e200e 100%);
@@ -230,19 +267,19 @@
 .czone-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-    gap: 7px;
+    gap: 6px;
 }
+.czone-grid:empty { display: none; }
 
 /* ----- Zonen-Kachel ----- */
 .czone-tile {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    min-height: 108px;
-    padding: 8px 10px;
+    gap: 4px;
+    padding: 6px 8px;
     border: 2px solid var(--wow-border-dark);
-    border-radius: 8px;
+    border-radius: 6px;
     /* no own background – otherwise it overrides the zone-theme-* from professions.css */
     overflow: hidden;
     text-shadow: 0 1px 3px #000;
@@ -254,6 +291,51 @@
 .czone-tile.current { border-color: var(--wow-gold); box-shadow: 0 0 12px rgba(255, 209, 0, .45), inset 0 0 0 1px rgba(255, 236, 155, .3); }
 .czone-tile.target { border-color: #8fd0ff; border-style: dashed; animation: czone-target-pulse 1.6s ease-in-out infinite; }
 .czone-tile.locked { filter: grayscale(.8) brightness(.55); }
+
+/* Outgrown zones: small faded labels below their band, full opacity on hover */
+.czone-outgrown { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.czone-grid:empty + .czone-outgrown { margin-top: 0; }
+.czone-tile.outgrown {
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-width: 1px;
+    border-radius: 4px;
+    opacity: .45;
+    filter: saturate(.5);
+}
+.czone-tile.outgrown:hover,
+.czone-tile.outgrown.current,
+.czone-tile.outgrown.target { opacity: 1; filter: none; }
+.czone-tile.outgrown.selectable:hover { transform: none; }
+.czone-tile.outgrown .czone-tile-name { font-size: .75rem; }
+.czone-tile.outgrown .czone-level { padding: 0 4px; font-size: .66rem; }
+.czone-tile.outgrown .czone-badge { padding: 0 4px; font-size: .62rem; }
+.czone-tile.outgrown .czone-done { position: static; width: 14px; height: 14px; font-size: .62rem; }
+
+/* Green check: nothing left to do in this zone */
+.czone-done {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #0d3d0d;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #8dff7a, #2fb52a 55%, #157a12);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .6);
+    box-shadow: 0 0 6px rgba(79, 216, 79, .55), 0 1px 2px rgba(0, 0, 0, .8);
+}
+.czone-done.static { position: static; width: 16px; height: 16px; font-size: .68rem; }
 
 @keyframes czone-target-pulse {
     50% { box-shadow: 0 0 14px rgba(143, 208, 255, .55); }
@@ -335,10 +417,11 @@
 }
 
 .czone-tile-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
-.czone-tile-name { font-family: var(--wow-font-title); color: var(--wow-gold-pale); font-size: .95rem; font-weight: 700; line-height: 1.2; }
-.czone-tile-desc { color: #e8e2c8; font-size: .7rem; font-style: italic; line-height: 1.25; }
-.czone-tile-mobs img { width: 24px; height: 24px; }
-.czone-tile-mobs { display: flex; gap: 5px; margin-top: auto; }
+.czone-tile-name { font-family: var(--wow-font-title); color: var(--wow-gold-pale); font-size: .88rem; font-weight: 700; line-height: 1.2; }
+/* Mobs left, badges right in one row */
+.czone-tile-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: auto; padding-right: 22px; }
+.czone-tile-mobs img { width: 20px; height: 20px; border-radius: 3px; }
+.czone-tile-mobs { display: flex; gap: 3px; }
 
 /* Levelbadge in Quest-Farben */
 .czone-level {
@@ -357,25 +440,25 @@
 .czone-level.lvl-gray   { color: #a8a8a8; }
 
 .czone-status {
-    padding: 3px 7px;
+    padding: 2px 6px;
     border-radius: 4px;
     background: rgba(0, 0, 0, .55);
     font-size: .74rem;
     font-weight: 600;
 }
+.czone-tile .czone-status { font-size: .68rem; }
 .czone-status.here      { color: var(--wow-gold); }
 .czone-status.traveling { color: #8fd0ff; }
 .czone-status.locked    { color: #ff8a7a; }
-.czone-status.xp        { color: #ffb070; }
 
 /* Exploration + zone objectives on the tile */
-.czone-tile-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.czone-tile-badges { display: flex; flex-wrap: wrap; gap: 3px; }
 .czone-badge {
-    padding: 1px 6px;
+    padding: 0 5px;
     border-radius: 4px;
     background: rgba(0, 0, 0, .5);
     color: #e8e2c8;
-    font-size: .68rem;
+    font-size: .64rem;
     font-weight: 600;
 }
 .czone-badge.new      { color: #1eff00; }
@@ -393,10 +476,10 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 2px 8px;
-    padding: 18px 10px 7px;
+    padding: 14px 8px 5px;
     background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .88) 45%);
     color: #fff;
-    font-size: .8rem;
+    font-size: .74rem;
     opacity: 0;
     transform: translateY(100%);
     transition: opacity .15s, transform .15s;
@@ -406,7 +489,6 @@
 .czone-travel-time { color: var(--wow-gold-pale); font-weight: 700; font-variant-numeric: tabular-nums; }
 .czone-travel-legs { display: inline-flex; gap: 2px; }
 .czone-travel-leg + .czone-travel-leg::before { content: "›"; margin-right: 2px; color: var(--wow-muted); }
-.czone-travel-busy { flex-basis: 100%; color: #ff8a7a; font-size: .72rem; }
 
 /* ============================================
    Combat background in /idle: gradient of the current zone + mountain/hill silhouettes
@@ -798,15 +880,10 @@
 }
 .zt-mob-type { margin-left: auto; padding-left: 10px; color: #9d9d9d; font-size: .72rem; }
 
-.zt-leg {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    color: #e8e8e8;
-    font-size: .76rem;
-}
-.zt-leg-icon { width: 16px; flex-shrink: 0; text-align: center; }
-.zt-leg-time { margin-left: auto; padding-left: 10px; color: #ffd100; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Travel route in one line: mode icon + stop, separated by arrows */
+.zt-route { display: flex; flex-wrap: wrap; gap: 2px 4px; color: #e8e8e8; font-size: .76rem; }
+.zt-route-leg { white-space: nowrap; }
+.zt-route-leg + .zt-route-leg::before { content: "›"; margin-right: 4px; color: #9d9d9d; }
 
 .zt-warn  { margin-top: 4px; color: #ff9f40; }
 .zt-error { margin-top: 4px; color: #ff2020; }

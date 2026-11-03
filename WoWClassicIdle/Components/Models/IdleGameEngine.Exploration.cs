@@ -37,6 +37,14 @@ public partial class IdleGameEngine
     public bool IsZoneCompleted(CombatZone zone) =>
         IsZoneMastered(zone) && ProfessionBonusRegistry.ForZone(zone).All(OwnsProfessionBonus);
 
+    /// <summary>Zone is below the active character's level range: only its profession drops still matter.</summary>
+    public bool IsZoneOutgrown(CombatZone zone) => zone.IsOutgrownAt(Player.Level);
+
+    /// <summary>Nothing left to do here: completed, or outgrown with all of its drops found.</summary>
+    public bool IsZoneFinished(CombatZone zone) =>
+        !zone.IsDungeon && (IsZoneCompleted(zone)
+                            || IsZoneOutgrown(zone) && ProfessionBonusRegistry.ForZone(zone).All(OwnsProfessionBonus));
+
     /// <summary>Unlocks the flight point for the whole account; true = it was not known yet.</summary>
     private bool LearnFlightPoint(CombatZone zone)
     {
@@ -51,7 +59,8 @@ public partial class IdleGameEngine
         string flightNote = LearnFlightPoint(zone) ? ", flight point learned" : "";
         if (slot.DiscoveredZoneIds.Contains(zone.Id)) return;
         slot.DiscoveredZoneIds = slot.DiscoveredZoneIds.Add(zone.Id);
-        if (!grantXp) return;
+        // Outgrown zones are still marked as discovered, but give no XP anymore
+        if (!grantXp || zone.IsOutgrownAt(slot.Player.Level)) return;
 
         if (slot.Player != Player)
         {
@@ -72,8 +81,9 @@ public partial class IdleGameEngine
     private void TrackZoneObjectives(Enemy dead)
     {
         if (ActiveCharacter is not { } slot || IsTraveling || CurrentCombatZone is not { } zone) return;
-
-        foreach (var objective in ZoneObjectiveRegistry.For(zone))
+        // Objectives of outgrown zones can no longer be done
+        IReadOnlyList<ZoneObjective> objectives = IsZoneOutgrown(zone) ? [] : ZoneObjectiveRegistry.For(zone);
+        foreach (var objective in objectives)
         {
             bool counts = objective.Kind switch
             {
