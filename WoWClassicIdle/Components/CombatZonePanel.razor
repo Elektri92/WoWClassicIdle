@@ -23,7 +23,7 @@
                 }
             </div>
             @* Only what is still open: completed objectives and found drops disappear *@
-            @if (!current.IsDungeon && !Engine.IsZoneMastered(current))
+            @if (!current.IsDungeon && !Engine.IsZoneMastered(current) && !Engine.IsZoneOutgrown(current))
             {
                 <WowTooltip Title="@ObjectivesTitle(current)" TitleColor="#ffd100" Body="ObjectivesBody(current)">
                     <div class="czone-objectives">
@@ -81,8 +81,9 @@
             <span class="czone-legend-levels">
                 <span class="czone-level lvl-yellow">Full XP</span>
                 <span class="czone-level lvl-green">Reduced</span>
-                <span class="czone-level lvl-gray">No XP</span>
+                <span class="czone-level lvl-gray">Outgrown</span>
                 <span class="czone-level lvl-red">Locked</span>
+                <span class="czone-legend-done"><span class="czone-done static">✓</span> Finished</span>
             </span>
         </div>
 
@@ -109,8 +110,9 @@
             {
                 <div class="czone-band-title">@band.Title</div>
             }
+            @* Outgrown zones shrink to small, faded labels – only their profession drops still matter *@
             <div class="czone-grid">
-                @foreach (var zone in band.Zones)
+                @foreach (var zone in band.Zones.Where(z => !z.IsOutgrownAt(level)))
                 {
                     int delayIndex = tileIndex++; // staggered fade-in of the tiles
                     bool isHere = zone.Id == current?.Id && !needsZone;
@@ -119,52 +121,48 @@
                     var blocker = Engine.CombatZoneBlocker(zone);
                     var route = needsZone || isHere || locked ? null : RouteTo(zone);
                     <WowTooltip Contents="true" Title="@zone.Name" TitleColor="#ffd100" Body="ZoneTooltip(zone, level, blocker, route, needsZone)">
-                    <div class="czone-tile zone-theme-@zone.Theme @(isHere ? "current" : "") @(isTarget ? "target" : "") @(locked ? "locked" : "") @(blocker is null ? "selectable" : "")"
+                    <div class="czone-tile zone-theme-@zone.Theme @TileClasses(zone, isHere, isTarget, locked, blocker)"
                          style="--i: @delayIndex" @onclick="() => Select(zone)">
+                        @if (Engine.IsZoneFinished(zone))
+                        {
+                            <span class="czone-done" aria-label="Zone finished">✓</span>
+                        }
                         <div class="czone-tile-head">
                             <span class="czone-tile-name">@zone.Name</span>
                             <span class="czone-level @LevelClass(zone, level)">@zone.LevelRange</span>
                         </div>
-                        <div class="czone-tile-desc">@zone.Description</div>
-                        @if (!locked)
-                        {
-                            <div class="czone-tile-badges">
-                                @if (Engine.IsFlightPointKnown(zone))
+                        <div class="czone-tile-row">
+                            <div class="czone-tile-mobs">
+                                @foreach (var mob in zone.Dungeon?.Bosses ?? zone.Mobs)
                                 {
-                                    <span class="czone-badge flight" aria-label="Flight point known">🦅</span>
-                                }
-                                @if (zone.IsDungeon)
-                                {
-                                    <span class="czone-badge dungeon">🗝 Runs @Engine.DungeonRunsLeft/@DungeonRules.RunsPerWindow</span>
-                                    <span class="czone-badge">🏆 @Engine.DungeonClears(zone)</span>
-                                }
-                                else
-                                {
-                                @if (!Engine.IsZoneDiscovered(zone))
-                                {
-                                    <span class="czone-badge new">✦ Undiscovered</span>
-                                }
-                                @if (Engine.IsZoneMastered(zone))
-                                {
-                                    <span class="czone-badge mastered" aria-label="Zone mastered">🏆</span>
-                                }
-                                else
-                                {
-                                    <span class="czone-badge">📜 @Engine.CompletedObjectives(zone)/@ZoneObjectiveRegistry.For(zone).Count</span>
-                                }
-                                var bonuses = ProfessionBonusRegistry.ForZone(zone).ToList();
-                                int foundBonuses = bonuses.Count(Engine.OwnsProfessionBonus);
-                                @if (foundBonuses < bonuses.Count)
-                                {
-                                    <span class="czone-badge">🎁 @foundBonuses/@bonuses.Count</span>
-                                }
+                                    <img src="@mob.ImageUrl" alt="@mob.Name" onerror="this.style.visibility='hidden'" />
                                 }
                             </div>
-                        }
-                        <div class="czone-tile-mobs">
-                            @foreach (var mob in zone.Dungeon?.Bosses ?? zone.Mobs)
+                            @if (!locked)
                             {
-                                <img src="@mob.ImageUrl" alt="@mob.Name" title="@mob.Name" onerror="this.style.visibility='hidden'" />
+                                <div class="czone-tile-badges">
+                                    @if (Engine.IsFlightPointKnown(zone))
+                                    {
+                                        <span class="czone-badge flight" aria-label="Flight point known">🦅</span>
+                                    }
+                                    @if (zone.IsDungeon)
+                                    {
+                                        <span class="czone-badge dungeon">🗝 @Engine.DungeonRunsLeft/@DungeonRules.RunsPerWindow</span>
+                                        <span class="czone-badge">🏆 @Engine.DungeonClears(zone)</span>
+                                    }
+                                    else
+                                    {
+                                        @if (!Engine.IsZoneDiscovered(zone))
+                                        {
+                                            <span class="czone-badge new" aria-label="Undiscovered">✦</span>
+                                        }
+                                        @if (!Engine.IsZoneMastered(zone))
+                                        {
+                                            <span class="czone-badge">📜 @Engine.CompletedObjectives(zone)/@ZoneObjectiveRegistry.For(zone).Count</span>
+                                        }
+                                        @BonusBadge(zone)
+                                    }
+                                </div>
                             }
                         </div>
 
@@ -184,10 +182,6 @@
                         {
                             <div class="czone-status locked">🔒 @lockout</div>
                         }
-                        else if (XpHint(zone, level) is { } hint)
-                        {
-                            <div class="czone-status xp">@hint</div>
-                        }
 
                         @if (!locked && !isHere && !isTarget)
                         {
@@ -195,7 +189,7 @@
                             <div class="czone-travel">
                                 @if (route is null)
                                 {
-                                    <span>⚔ Start fighting here – no travel needed</span>
+                                    <span>⚔ No travel needed</span>
                                 }
                                 else
                                 {
@@ -206,10 +200,6 @@
                                             <span class="czone-travel-leg">@ModeEmoji(leg.Mode)</span>
                                         }
                                     </span>
-                                    @if (Engine.IsTraveling)
-                                    {
-                                        <span class="czone-travel-busy">Finish your current journey first</span>
-                                    }
                                 }
                             </div>
                         }
@@ -217,6 +207,30 @@
                     </WowTooltip>
                 }
             </div>
+            @if (band.Zones.Where(z => z.IsOutgrownAt(level)).ToList() is { Count: > 0 } outgrown)
+            {
+                <div class="czone-outgrown">
+                    @foreach (var zone in outgrown)
+                    {
+                        bool isHere = zone.Id == current?.Id && !needsZone;
+                        bool isTarget = zone.Id == Engine.Travel?.TargetZoneId;
+                        var blocker = Engine.CombatZoneBlocker(zone);
+                        var route = needsZone || isHere ? null : RouteTo(zone);
+                        <WowTooltip Contents="true" Title="@zone.Name" TitleColor="#ffd100" Body="ZoneTooltip(zone, level, blocker, route, needsZone)">
+                        <div class="czone-tile outgrown zone-theme-@zone.Theme @TileClasses(zone, isHere, isTarget, false, blocker)"
+                             @onclick="() => Select(zone)">
+                            @if (Engine.IsZoneFinished(zone))
+                            {
+                                <span class="czone-done" aria-label="Zone finished">✓</span>
+                            }
+                            <span class="czone-tile-name">@(isHere ? "📍 " : isTarget ? "🧭 " : "")@zone.Name</span>
+                            <span class="czone-level @LevelClass(zone, level)">@zone.LevelRange</span>
+                            @BonusBadge(zone)
+                        </div>
+                        </WowTooltip>
+                    }
+                </div>
+            }
             </div>
             }
             </section>
@@ -358,6 +372,23 @@
         : level < zone.NoXpLevel                ? "lvl-green"
         : "lvl-gray";
 
+    private static string TileClasses(CombatZone zone, bool isHere, bool isTarget, bool locked, string? blocker) =>
+        string.Join(' ', new[]
+        {
+            isHere ? "current" : "", isTarget ? "target" : "", locked ? "locked" : "", blocker is null ? "selectable" : "",
+        }.Where(c => c.Length > 0));
+
+    // Profession drops still missing in the zone (hidden once all are found)
+    private RenderFragment BonusBadge(CombatZone zone) => __builder =>
+    {
+        var bonuses = ProfessionBonusRegistry.ForZone(zone).ToList();
+        int found = bonuses.Count(Engine.OwnsProfessionBonus);
+        if (found < bonuses.Count)
+        {
+            <span class="czone-badge">🎁 @found/@bonuses.Count</span>
+        }
+    };
+
     private static string? XpHint(CombatZone zone, int level) =>
         level >= zone.NoXpLevel        ? "No XP – enemies are too low"
         : level - zone.MaxLevel >= 3   ? "Reduced XP – enemies are low level"
@@ -377,7 +408,7 @@
                 <span class="zt-mob-type">@mob.Archetype.Type</span>
             </span>
         }
-        @if (XpHint(zone, level) is { } hint)
+        @if (!zone.IsOutgrownAt(level) && XpHint(zone, level) is { } hint)
         {
             <span class="zt-warn">@hint</span>
         }
@@ -399,6 +430,10 @@
                 <span class="zt-sub">Reach it once to unlock its flight point for your account</span>
             }
         }
+        else if (zone.IsOutgrownAt(level))
+        {
+            <span class="zt-sub">Outgrown – no discovery XP or objectives, only profession drops remain</span>
+        }
         else if (level >= zone.MinLevel)
         {
             @if (!Engine.IsZoneDiscovered(zone))
@@ -418,15 +453,14 @@
         <ZoneBonusList Zone="zone" />
         @if (route is { Legs.Count: > 0 })
         {
-            <span class="zt-section">Travel time <b>@ZoneTravel.FormatDuration(route.Seconds)</b></span>
-            @foreach (var leg in route.Legs)
-            {
-                <span class="zt-leg">
-                    <span class="zt-leg-icon">@ModeEmoji(leg.Mode)</span>
-                    <span>@ZoneTravel.ModeLabel(leg.Mode, Engine.GroundTravel): @leg.From → @leg.To</span>
-                    <span class="zt-leg-time">@ZoneTravel.FormatDuration(leg.Seconds)</span>
-                </span>
-            }
+            @* One line: total time + chain of legs (mode icon + stop); details per leg on the travel scene *@
+            <span class="zt-section">Travel <b>@ZoneTravel.FormatDuration(route.Seconds)</b></span>
+            <span class="zt-route">
+                @foreach (var leg in route.Legs)
+                {
+                    <span class="zt-route-leg" title="@ZoneTravel.ModeLabel(leg.Mode, Engine.GroundTravel) · @ZoneTravel.FormatDuration(leg.Seconds)">@ModeEmoji(leg.Mode) @leg.To</span>
+                }
+            </span>
         }
         @if (blocker is not null)
         {
@@ -438,7 +472,7 @@
         }
         else
         {
-            <span class="zt-hint">@(zone.IsDungeon ? "Click to build your group" : "Click to travel here – no fighting on the road")</span>
+            <span class="zt-hint">@(zone.IsDungeon ? "Click to build your group" : "Click to travel here")</span>
         }
     </text>;
 
