@@ -2,12 +2,13 @@
     display: inline-flex;
 }
 
+/* ── Classic tooltip: same frame as the ability tooltip ── */
 .wow-tooltip {
     display: none;
     position: fixed;
     z-index: 1000;
     width: max-content;
-    max-width: 260px;
+    max-width: 280px;
     padding: 7px 10px;
     flex-direction: column;
     gap: 2px;
@@ -45,20 +46,47 @@
     white-space: nowrap;
 }
 
+.tt-rank-max {
+    color: #1eff00;
+}
+
+.tt-sub {
+    color: #9d9d9d;
+    font-size: .72rem;
+}
+
 .tt-req-missing {
     color: #ff2020;
 }
 
 .tt-desc {
     margin-top: 2px;
-    color: #c5c5c5;
-}
-
-.tt-effect {
-    margin-top: 3px;
     color: #ffd100;
 }
 
-.tt-next {
+.tt-label {
+    margin-top: 4px;
+    color: #fff;
+}
+
+.tt-effect {
+    color: #ffd100;
+}
+
+.tt-note {
+    margin-top: 3px;
     color: #9d9d9d;
+    font-style: italic;
+}
+
+.tt-hints {
+    display: flex;
+    flex-direction: column;
+    margin-top: 4px;
+    color: #9d9d9d;
+    font-size: .72rem;
+}
+
+.tt-hint-learn {
+    color: #1eff00;
 }

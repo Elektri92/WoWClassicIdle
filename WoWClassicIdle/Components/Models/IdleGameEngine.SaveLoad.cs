@@ -210,6 +210,7 @@ public partial class IdleGameEngine
         // Restore talents (before SetActiveClass so CritBonus flows into the stats)
         foreach (var (talentId, ranks) in p.TalentInvestedPoints)
             player.TalentState.RestoreRanks(talentId, ranks);
+        player.TalentState.ResetInconsistentClasses();
 
         // Restore professions
         foreach (var profData in p.Professions ?? [])

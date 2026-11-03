@@ -1,33 +1,68 @@
 @using Models
 
-@* Shows a WoW-style talent tooltip on hover. *@
+@* WoW-style talent tooltip: rank, unmet requirements, effect of the current and next rank, click hints. *@
 @if (Talent is null)
 {
     @ChildContent
 }
 else
 {
-    bool isMaxed = Ranks >= Talent.MaxRanks;
+    bool isMaxed      = Ranks >= Talent.MaxRanks;
+    bool multiRank    = Talent.MaxRanks > 1;
+    string mainText   = Talent.RankText is { } rankText ? rankText(Math.Max(1, Ranks)) : Talent.Description;
+    var exclusiveWith = Talent.ExclusiveWithTalentId is { } exId ? TalentRegistry.GetById(Talent.Class, exId) : null;
 
     <span class="tt-host" onmouseenter="wowTooltip.show(this)" onmouseleave="wowTooltip.hide(this)">
         @ChildContent
-        <span class="wow-tooltip" role="tooltip">
+        <span class="wow-tooltip talent-tt" role="tooltip">
             <span class="tt-line">
                 <span class="tt-name">@Talent.Name</span>
-                <span class="tt-rank">@Ranks / @Talent.MaxRanks</span>
+                <span class="tt-rank @(isMaxed ? "tt-rank-max" : "")">Rank @Ranks/@Talent.MaxRanks</span>
             </span>
-            @if (Locked && LockReason is not null)
-            {
-                <span class="tt-req-missing">@LockReason</span>
-            }
-            <span class="tt-desc">@Talent.Description</span>
-            @if (Ranks > 0)
-            {
-                <span class="tt-effect">Current: @Talent.EffectDescription(Ranks)</span>
-            }
+            <span class="tt-sub">@TalentRegistry.GetTreeName(Talent) talent · Tier @(Talent.Row + 1)</span>
+
             @if (!isMaxed)
             {
-                <span class="tt-next">Next rank: @Talent.EffectDescription(Ranks + 1)</span>
+                @foreach (var missing in Missing)
+                {
+                    <span class="tt-req-missing">@missing</span>
+                }
+            }
+
+            @if (multiRank && Ranks > 0 && Talent.RankText is null)
+            {
+                <span class="tt-desc">@Talent.Description</span>
+                <span class="tt-label">Current rank</span>
+                <span class="tt-effect">@Talent.EffectDescription(Ranks)</span>
+            }
+            else
+            {
+                <span class="tt-desc">@mainText</span>
+            }
+
+            @if (multiRank && Ranks > 0 && !isMaxed)
+            {
+                <span class="tt-label">Next rank</span>
+                <span class="tt-effect">@Talent.EffectDescription(Ranks + 1)</span>
+            }
+
+            @if (exclusiveWith is not null)
+            {
+                <span class="tt-note">Only one of @Talent.Name and @exclusiveWith.Name can be learned.</span>
+            }
+
+            @if (CanLearn || Ranks > 0)
+            {
+                <span class="tt-hints">
+                    @if (CanLearn)
+                    {
+                        <span class="tt-hint-learn">Click to learn</span>
+                    }
+                    @if (Ranks > 0)
+                    {
+                        <span>Right-click to unlearn</span>
+                    }
+                </span>
             }
         </span>
     </span>
@@ -36,7 +71,12 @@ else
 @code {
     [Parameter] public TalentDefinition? Talent { get; set; }
     [Parameter] public int Ranks { get; set; }
-    [Parameter] public bool Locked { get; set; }
-    [Parameter] public string? LockReason { get; set; }
+
+    /// <summary>Unmet requirements (level, points in the tree, required or exclusive talent).</summary>
+    [Parameter] public IReadOnlyList<string> Missing { get; set; } = [];
+
+    /// <summary>A point can be invested right now.</summary>
+    [Parameter] public bool CanLearn { get; set; }
+
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }

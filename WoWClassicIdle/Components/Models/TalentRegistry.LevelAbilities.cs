@@ -88,7 +88,7 @@ public static partial class TalentRegistry
         [
             Improve(cls, 0, "druid_bal_natures_grasp", "Nature's Grasp", "Entangling Roots",
                 "Increases the duration of Entangling Roots by 2 sec.", a => a with { DebuffDuration = a.DebuffDuration + 2 }),
-            // Column 1: Faerie Fire (Bear/Cat) occupy columns 0 and 2 of the Feral tree
+            // Column 1: Faerie Fire (Bear/Cat) occupy columns 0 and 3 of the Feral tree
             Improve(cls, 1, "druid_feral_savage_fury", "Savage Fury", "Swipe",
                 "Increases the damage of Swipe by 30%.", a => a.WithDamageBonus(0.30), column: 1),
             Improve(cls, 2, "druid_resto_improved_swiftmend", "Improved Swiftmend", "Swiftmend",
@@ -102,10 +102,13 @@ public static partial class TalentRegistry
     private static Ability DirectAndDot(Ability ability, double bonus) =>
         ability.WithDamageBonus(bonus) with { DebuffDotDamage = Percent(ability.DebuffDotDamage, bonus) };
 
-    /// <summary>One point in row 3 that improves the ability <paramref name="abilityName"/>; icon = ability icon.</summary>
+    /// <summary>
+    /// One point in row 3 that improves the ability <paramref name="abilityName"/>; icon = ability icon.
+    /// Column 2 by default – column 0 stays free for the arrow to the "Improved …" talent in row 4.
+    /// </summary>
     private static TalentDefinition Improve(
         CharacterClass cls, int tree, string id, string name, string abilityName, string description,
-        Func<Ability, Ability> modifier, int column = 0) => new()
+        Func<Ability, Ability> modifier, int column = 2) => new()
     {
         Id                  = id,
         Name                = name,
@@ -119,7 +122,7 @@ public static partial class TalentRegistry
         EffectType          = TalentEffectType.ModifyAbility,
         EffectPerRank       = 1.0,
         ModifiedAbilityName = abilityName,
-        AbilityModifier     = modifier,
+        AbilityModifier     = (ability, _) => modifier(ability),
         IconUrl             = (ClassAbilityRegistry.FindByName(cls, abilityName)?.IconUrl ?? "").Replace("/large/", "/medium/"),
     };
 }

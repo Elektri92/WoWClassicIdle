@@ -27,6 +27,9 @@ public sealed record ShapeshiftFormInfo
     /// <summary>More mana regeneration from Spirit (0.50 = +50 %).</summary>
     public double SpiritManaRegenBonus { get; init; }
 
+    /// <summary>Additional critical strike chance (0.02 = +2 %).</summary>
+    public double CritChanceBonus { get; init; }
+
     /// <summary>Damage bonus (direct + DoT) for the spells in <see cref="BoostedAbilityNames"/>.</summary>
     public double BoostedAbilityDamageBonus { get; init; }
     public IReadOnlyList<string> BoostedAbilityNames { get; init; } = [];

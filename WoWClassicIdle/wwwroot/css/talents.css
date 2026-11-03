@@ -1,0 +1,263 @@
+/* Talents page (Components/Pages/Talents.razor) – header styles come from ability-loadout.css */
+
+.talents-page { max-width: 960px; }
+
+.talent-points-badge {
+    display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+    padding: 6px 12px; border: 1px solid var(--wow-border); border-radius: 6px;
+    background: rgba(0,0,0,.55); box-shadow: inset 0 0 6px #000;
+}
+.pts-label { font-size: .7rem; text-transform: uppercase; color: #c8b88a; text-shadow: 0 1px 2px #000; }
+.pts-value { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; text-shadow: 0 1px 2px #000; }
+.pts-available { color: #ffd100; text-shadow: 0 0 8px rgba(255,209,0,.5); }
+.pts-zero { color: #7a6a48; }
+
+.trees-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: .5rem;
+}
+
+/* Spec background like in the original; gradient darkens for readability */
+.talent-tree {
+    background:
+        linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.45) 100%),
+        var(--tree-bg, none) center top / cover no-repeat,
+        #0a0806;
+    border: 1px solid #3a2e18;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 0 40px rgba(0,0,0,.8);
+}
+
+.tree-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px;
+    background: linear-gradient(180deg, #2b2214 0%, #1a1509 100%);
+    border-bottom: 1px solid #3a2e18;
+}
+.tree-name { font-family: 'Cinzel', serif; font-size: .9rem; font-weight: 700; color: #c5a55a; }
+.tree-points { font-size: .8rem; color: #9a8a64; }
+
+/* ── Tree grid: tier rail + 4 talent columns, 7 rows ── */
+.talent-grid {
+    --row-h: 52px;
+    --row-gap: 12px;
+    display: grid;
+    grid-template-columns: 30px repeat(4, 1fr);
+    grid-template-rows: repeat(7, var(--row-h));
+    row-gap: var(--row-gap);
+    padding: 12px 8px 14px 4px;
+}
+
+/* ── Vertical tier rail: fills up as points are invested, badge per row ── */
+.tier-track {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    justify-self: center;
+    position: relative;
+    width: 6px;
+    margin: calc(var(--row-h) / 2) 0;
+    border: 1px solid #2a2010;
+    border-radius: 3px;
+    background: rgba(10, 8, 4, .8);
+    box-shadow: inset 0 0 3px #000;
+}
+.tier-track-fill {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #8a5c14 0%, #e0b84a 100%);
+    box-shadow: 0 0 6px rgba(255, 209, 0, .35);
+    transition: height .4s ease;
+}
+
+.tier-badge {
+    grid-column: 1;
+    align-self: center;
+    justify-self: center;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    border: 1px solid #3a2e18;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 35%, #2a2010 0%, #0e0b05 100%);
+    box-shadow: 0 0 0 1px #000, 0 1px 3px rgba(0,0,0,.8);
+    font-family: 'Cinzel', serif;
+    font-size: .66rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #6a5a38;
+    text-shadow: 0 1px 2px #000;
+    cursor: default;
+}
+.tier-badge.tier-unlocked {
+    border-color: #c5a55a;
+    color: #ffd100;
+    background: radial-gradient(circle at 50% 35%, #5a3c0c 0%, #1e1406 100%);
+}
+.tier-badge.tier-next {
+    border-color: #ffd100;
+    color: #fff;
+    background: radial-gradient(circle at 50% 35%, #6e120d 0%, #2a0605 100%);
+    animation: tier-next-pulse 1.8s ease-in-out infinite;
+}
+.tier-badge.tier-next::before { content: "+"; font-size: .55rem; margin-right: 1px; color: #ffd100; }
+
+@keyframes tier-next-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px #000, 0 0 4px rgba(255,209,0,.35); }
+    50%      { box-shadow: 0 0 0 1px #000, 0 0 10px rgba(255,209,0,.75); }
+}
+
+/* ── Requirement arrows: from the bottom of the prerequisite to the top of the dependent talent ── */
+.talent-arrow {
+    position: relative;
+    justify-self: center;
+    width: 14px;
+    pointer-events: none;
+    --arrow-color: #5a4a28;
+}
+.talent-arrow::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: var(--row-h);
+    bottom: calc(var(--row-h) + 7px);
+    width: 4px;
+    transform: translateX(-50%);
+    background: var(--arrow-color);
+    box-shadow: 0 0 0 1px #000;
+}
+.talent-arrow::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: var(--row-h);
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid var(--arrow-color);
+    filter: drop-shadow(0 1px 0 #000);
+}
+.talent-arrow.arrow-active { --arrow-color: #ffd100; }
+.talent-arrow.arrow-active::before { box-shadow: 0 0 0 1px #000, 0 0 6px rgba(255,209,0,.5); }
+
+/* ── Talent nodes ── */
+/* No z-index here: a stacking context per cell would trap the (position: fixed) tooltip below later cells.
+   Cells come after the arrows in the DOM and therefore paint above them. */
+.talent-cell {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.talent-node {
+    position: relative;
+    width: 52px; height: 52px;
+    border: 2px solid #3a2e18;
+    border-radius: 6px;
+    background: #0a0806;
+    cursor: default;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: border-color .15s, box-shadow .15s;
+    overflow: hidden;
+    user-select: none;
+}
+
+.talent-icon {
+    width: 40px; height: 40px;
+    border-radius: 4px;
+    object-fit: cover;
+    display: block;
+}
+
+.talent-ranks {
+    position: absolute;
+    bottom: 1px; right: 3px;
+    font-size: .65rem; font-weight: 700;
+    color: #ffd100;
+    text-shadow: 0 1px 2px #000, 0 0 3px #000;
+    line-height: 1;
+}
+
+/* States */
+.talent-locked .talent-icon  { filter: grayscale(1) brightness(.35); }
+.talent-locked .talent-ranks { color: #5a4a28; }
+.talent-locked               { border-color: #221a0a; }
+
+.talent-empty .talent-icon   { filter: grayscale(.7) brightness(.6); }
+
+.talent-partial              { border-color: #8a7444; cursor: context-menu; }
+.talent-partial .talent-icon { filter: none; }
+
+.talent-maxed {
+    border-color: #1eff00;
+    box-shadow: 0 0 6px rgba(30,255,0,.3);
+    cursor: context-menu;
+}
+.talent-maxed .talent-ranks { color: #1eff00; }
+
+.talent-clickable {
+    cursor: pointer;
+    border-color: #c5a55a;
+}
+.talent-clickable:hover {
+    border-color: #ffd100;
+    box-shadow: 0 0 10px rgba(255,209,0,.4);
+}
+
+/* ── Reset button: same look as the navigation buttons ── */
+.talent-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.talent-reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 2.4rem;
+    padding: 0 18px 0 8px;
+    font-family: var(--wow-font-title, 'Cinzel', serif);
+    font-size: .85rem;
+    font-weight: 700;
+    letter-spacing: .4px;
+    line-height: 1;
+    color: #e0b84a;
+    text-shadow: 1px 1px 0 #000;
+    background: linear-gradient(180deg, #4a0f0b 0%, #330806 100%);
+    border: 1px solid var(--wow-border);
+    border-top-color: #7a6438;
+    border-radius: 4px;
+    box-shadow: inset 0 -2px 3px rgba(0, 0, 0, .5), 0 1px 3px rgba(0, 0, 0, .6);
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.talent-reset-btn:hover:not(:disabled) {
+    color: var(--wow-gold-pale);
+    border-color: var(--wow-border-inner);
+    background: linear-gradient(180deg, #5a130e 0%, #3e0a07 100%);
+}
+.talent-reset-btn:disabled {
+    cursor: default;
+    opacity: .5;
+}
+
+.talent-reset-icon {
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--wow-border-inner);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #000, 0 1px 3px rgba(0, 0, 0, .8);
+    filter: saturate(.7) brightness(.85);
+}
+.talent-reset-btn:hover:not(:disabled) .talent-reset-icon { filter: none; }
+
+.talents-page .wow-alert { margin-top: .75rem; }
+
+@media (max-width: 760px) {
+    .trees-wrapper { grid-template-columns: 1fr; }
+}
